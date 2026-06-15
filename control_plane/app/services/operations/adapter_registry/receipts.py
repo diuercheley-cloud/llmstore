@@ -1,4 +1,3 @@
-
 from app.core.time import utc_now
 from app.models.operations.adapter_registry import (
     AdapterRegistryAllowlistEntry,
@@ -22,7 +21,7 @@ def build_registry_entry_receipt(entry: SignedAdapterRegistryEntry) -> AdapterRe
     payload_hash = sha256_hex(canonical_json(payload))
     # Deterministic immutable_hash
     immutable_hash = sha256_hex(f"receipt_entry_{entry.immutable_hash}")
-    
+
     return AdapterRegistryReceipt(
         client_id=entry.client_id,
         registry_entry_id=entry.id,
@@ -30,8 +29,9 @@ def build_registry_entry_receipt(entry: SignedAdapterRegistryEntry) -> AdapterRe
         payload_hash=payload_hash,
         immutable_hash=immutable_hash,
         signature=f"receipt_sig_{payload_hash[:16]}",
-        generated_at=utc_now()
+        generated_at=utc_now(),
     )
+
 
 def build_registry_decision_receipt(decision: AdapterRegistryDecision) -> AdapterRegistryReceipt:
     payload = {
@@ -43,7 +43,7 @@ def build_registry_decision_receipt(decision: AdapterRegistryDecision) -> Adapte
     payload_hash = sha256_hex(canonical_json(payload))
     # Deterministic immutable_hash
     immutable_hash = sha256_hex(f"receipt_decision_{decision.immutable_hash}")
-    
+
     return AdapterRegistryReceipt(
         client_id=decision.client_id,
         registry_entry_id=decision.registry_entry_id,
@@ -51,12 +51,13 @@ def build_registry_decision_receipt(decision: AdapterRegistryDecision) -> Adapte
         payload_hash=payload_hash,
         immutable_hash=immutable_hash,
         signature=f"receipt_sig_{payload_hash[:16]}",
-        generated_at=utc_now()
+        generated_at=utc_now(),
     )
+
 
 def build_policy_receipt(policy: AdapterRegistryPolicy) -> dict:
     # This might return a dict since there's no subject_id in the receipt model for policies
-    # but the requirement says "build_policy_receipt". 
+    # but the requirement says "build_policy_receipt".
     # I'll return a dict representation or a receipt if I can link it.
     # The requirement says receipts are for actions on registry entries.
     return {
@@ -65,8 +66,9 @@ def build_policy_receipt(policy: AdapterRegistryPolicy) -> dict:
         "subject_id": str(policy.id),
         "payload_hash": policy.immutable_hash,
         "signature": f"policy_sig_{policy.immutable_hash[:16]}",
-        "generated_at": utc_now().isoformat()
+        "generated_at": utc_now().isoformat(),
     }
+
 
 def build_allowlist_receipt(item: AdapterRegistryAllowlistEntry) -> dict:
     return {
@@ -75,8 +77,9 @@ def build_allowlist_receipt(item: AdapterRegistryAllowlistEntry) -> dict:
         "subject_id": str(item.id),
         "payload_hash": item.immutable_hash,
         "signature": f"allow_sig_{item.immutable_hash[:16]}",
-        "generated_at": utc_now().isoformat()
+        "generated_at": utc_now().isoformat(),
     }
+
 
 def build_blocklist_receipt(item: AdapterRegistryBlocklistEntry) -> dict:
     return {
@@ -85,5 +88,5 @@ def build_blocklist_receipt(item: AdapterRegistryBlocklistEntry) -> dict:
         "subject_id": str(item.id),
         "payload_hash": item.immutable_hash,
         "signature": f"block_sig_{item.immutable_hash[:16]}",
-        "generated_at": utc_now().isoformat()
+        "generated_at": utc_now().isoformat(),
     }

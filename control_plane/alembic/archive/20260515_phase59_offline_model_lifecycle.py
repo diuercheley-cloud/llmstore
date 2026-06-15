@@ -21,7 +21,9 @@ def _dialect_name() -> str:
 
 
 def _uuid_type():
-    return postgresql.UUID(as_uuid=True) if _dialect_name() == "postgresql" else sa.String(length=36)
+    return (
+        postgresql.UUID(as_uuid=True) if _dialect_name() == "postgresql" else sa.String(length=36)
+    )
 
 
 def _json_type():
@@ -57,11 +59,23 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
-        sa.ForeignKeyConstraint(["registry_entry_id"], ["commercial_signed_model_registry_entries.id"]),
+        sa.ForeignKeyConstraint(
+            ["registry_entry_id"], ["commercial_signed_model_registry_entries.id"]
+        ),
         sa.ForeignKeyConstraint(["provenance_id"], ["commercial_model_provenance_attestations.id"]),
     )
-    op.create_index("ix_lifecycle_records_model_state", "commercial_model_lifecycle_records", ["model_name", "lifecycle_state"], unique=False)
-    op.create_index("ix_lifecycle_records_cluster_state", "commercial_model_lifecycle_records", ["cluster_id", "lifecycle_state"], unique=False)
+    op.create_index(
+        "ix_lifecycle_records_model_state",
+        "commercial_model_lifecycle_records",
+        ["model_name", "lifecycle_state"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_lifecycle_records_cluster_state",
+        "commercial_model_lifecycle_records",
+        ["cluster_id", "lifecycle_state"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_model_promotion_requests",
@@ -87,7 +101,12 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["lifecycle_record_id"], ["commercial_model_lifecycle_records.id"]),
         sa.ForeignKeyConstraint(["bundle_id"], ["commercial_model_promotion_bundles.id"]),
     )
-    op.create_index("ix_promotion_requests_status", "commercial_model_promotion_requests", ["status", "target_state"], unique=False)
+    op.create_index(
+        "ix_promotion_requests_status",
+        "commercial_model_promotion_requests",
+        ["status", "target_state"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_model_lineages",
@@ -110,8 +129,18 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["parent_lineage_id"], ["commercial_model_lineages.id"]),
         sa.ForeignKeyConstraint(["provenance_id"], ["commercial_model_provenance_attestations.id"]),
     )
-    op.create_index("ix_model_lineages_hash_chain", "commercial_model_lineages", ["artifact_hash", "predecessor_hash"], unique=False)
-    op.create_index("ix_model_lineages_depth", "commercial_model_lineages", ["lifecycle_record_id", "depth"], unique=False)
+    op.create_index(
+        "ix_model_lineages_hash_chain",
+        "commercial_model_lineages",
+        ["artifact_hash", "predecessor_hash"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_model_lineages_depth",
+        "commercial_model_lineages",
+        ["lifecycle_record_id", "depth"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_model_rollback_records",
@@ -132,7 +161,9 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
         sa.ForeignKeyConstraint(["lifecycle_record_id"], ["commercial_model_lifecycle_records.id"]),
-        sa.ForeignKeyConstraint(["promotion_request_id"], ["commercial_model_promotion_requests.id"]),
+        sa.ForeignKeyConstraint(
+            ["promotion_request_id"], ["commercial_model_promotion_requests.id"]
+        ),
     )
 
     op.create_table(
@@ -161,11 +192,18 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.ForeignKeyConstraint(["lifecycle_record_id"], ["commercial_model_lifecycle_records.id"]),
     )
-    op.create_index("ix_offline_model_verifications_lookup", "commercial_offline_model_verifications", ["model_name", "verification_type", "overall_valid"], unique=False)
+    op.create_index(
+        "ix_offline_model_verifications_lookup",
+        "commercial_offline_model_verifications",
+        ["model_name", "verification_type", "overall_valid"],
+        unique=False,
+    )
 
 
 def downgrade() -> None:
-    op.drop_index("ix_offline_model_verifications_lookup", table_name="commercial_offline_model_verifications")
+    op.drop_index(
+        "ix_offline_model_verifications_lookup", table_name="commercial_offline_model_verifications"
+    )
     op.drop_table("commercial_offline_model_verifications")
     op.drop_table("commercial_model_rollback_records")
     op.drop_index("ix_model_lineages_depth", table_name="commercial_model_lineages")
@@ -173,6 +211,10 @@ def downgrade() -> None:
     op.drop_table("commercial_model_lineages")
     op.drop_index("ix_promotion_requests_status", table_name="commercial_model_promotion_requests")
     op.drop_table("commercial_model_promotion_requests")
-    op.drop_index("ix_lifecycle_records_cluster_state", table_name="commercial_model_lifecycle_records")
-    op.drop_index("ix_lifecycle_records_model_state", table_name="commercial_model_lifecycle_records")
+    op.drop_index(
+        "ix_lifecycle_records_cluster_state", table_name="commercial_model_lifecycle_records"
+    )
+    op.drop_index(
+        "ix_lifecycle_records_model_state", table_name="commercial_model_lifecycle_records"
+    )
     op.drop_table("commercial_model_lifecycle_records")

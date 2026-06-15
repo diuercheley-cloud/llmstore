@@ -15,33 +15,33 @@ def test_profile_unknown_env_override_fails():
         with pytest.raises(ValueError, match="Unknown environment override"):
             resolver.resolve("appliance")
 
+
 def test_profile_high_risk_blocked_without_auth():
     resolver = ProfileResolver()
-    with patch_env({
-        "AGENT_CODE_SANDBOX_PROVIDER": "firecracker",
-        "ALLOW_HIGH_RISK_PROFILE_OVERRIDE": "false"
-    }):
+    with patch_env(
+        {"AGENT_CODE_SANDBOX_PROVIDER": "firecracker", "ALLOW_HIGH_RISK_PROFILE_OVERRIDE": "false"}
+    ):
         with pytest.raises(ValueError, match="High risk override.*is blocked"):
             resolver.resolve("appliance")
 
+
 def test_profile_high_risk_allowed_with_auth():
     resolver = ProfileResolver()
-    with patch_env({
-        "AGENT_CODE_SANDBOX_PROVIDER": "firecracker",
-        "ALLOW_HIGH_RISK_PROFILE_OVERRIDE": "true"
-    }):
+    with patch_env(
+        {"AGENT_CODE_SANDBOX_PROVIDER": "firecracker", "ALLOW_HIGH_RISK_PROFILE_OVERRIDE": "true"}
+    ):
         res = resolver.resolve("appliance")
         assert res["flags"]["AGENT_CODE_SANDBOX_PROVIDER"] == "firecracker"
 
+
 def test_production_profile_validation_requires_worker():
     resolver = ProfileResolver()
-    with patch_env({
-        "AGENT_WORKER_ENABLED": "false"
-    }):
+    with patch_env({"AGENT_WORKER_ENABLED": "false"}):
         with pytest.raises(ValueError, match="requires 'AGENT_WORKER_ENABLED' to be true"):
             resolver.resolve("agentic-production")
 
-class patch_env(object):
+
+class patch_env:
     def __init__(self, env_dict):
         self.env_dict = env_dict
         self.original_env = {}

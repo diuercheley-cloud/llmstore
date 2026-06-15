@@ -22,9 +22,15 @@ class InferenceBackend(Base):
     max_parallel_requests: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     current_running: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     metadata_json: Mapped[str | None] = mapped_column(Text(), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
 
     models = relationship("ModelRegistry", back_populates="inference_backend")
-    model_routes = relationship("ModelBackendRoute", back_populates="inference_backend", cascade="all, delete-orphan")
+    model_routes = relationship(
+        "ModelBackendRoute", back_populates="inference_backend", cascade="all, delete-orphan"
+    )
     generation_jobs = relationship("GenerationJob", back_populates="inference_backend")

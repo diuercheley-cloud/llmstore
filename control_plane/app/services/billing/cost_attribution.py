@@ -1,6 +1,5 @@
 import logging
 import uuid
-from typing import Optional
 
 from app.models.billing.cost_event import CostEvent
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,19 +14,19 @@ class CostAttributionService:
     async def record_event(
         self,
         tenant_id: str,
-        user_id: Optional[str] = None,
-        agent_id: Optional[uuid.UUID] = None,
-        workflow_id: Optional[str] = None,
-        tool_name: Optional[str] = None,
-        model: Optional[str] = None,
-        backend: Optional[str] = None,
-        route_decision_id: Optional[str] = None,
+        user_id: str | None = None,
+        agent_id: uuid.UUID | None = None,
+        workflow_id: str | None = None,
+        tool_name: str | None = None,
+        model: str | None = None,
+        backend: str | None = None,
+        route_decision_id: str | None = None,
         input_tokens: int = 0,
         output_tokens: int = 0,
-        latency_ms: Optional[int] = None,
+        latency_ms: int | None = None,
         estimated_cost: float = 0.0,
         currency: str = "USD",
-        cost_policy_version: Optional[str] = None,
+        cost_policy_version: str | None = None,
     ) -> CostEvent:
         """
         Records a CostEvent for unified cost attribution.

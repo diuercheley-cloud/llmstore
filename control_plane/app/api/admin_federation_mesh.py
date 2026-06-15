@@ -1,9 +1,8 @@
-import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from app.services.runtime_dependencies import get_db_session
 from app.models.core.federation_mesh import FederationPeer
 from app.services.federation.mesh.mesh_sync import MeshSyncService
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,8 +19,7 @@ async def list_peers(db: AsyncSession = Depends(get_db_session)):
 
 @router.post("/sync/export")
 async def export_sync_bundle(
-    since_hash: Optional[str] = None,
-    db: AsyncSession = Depends(get_db_session)
+    since_hash: str | None = None, db: AsyncSession = Depends(get_db_session)
 ):
     # In a real system, node_id would come from config
     service = MeshSyncService(db, node_id="local-cluster-01")
@@ -30,10 +28,7 @@ async def export_sync_bundle(
 
 
 @router.post("/sync/import")
-async def import_sync_bundle(
-    bundle: Dict[str, Any],
-    db: AsyncSession = Depends(get_db_session)
-):
+async def import_sync_bundle(bundle: dict[str, Any], db: AsyncSession = Depends(get_db_session)):
     service = MeshSyncService(db, node_id="local-cluster-01")
     try:
         results = await service.import_bundle(bundle)
@@ -43,10 +38,7 @@ async def import_sync_bundle(
 
 
 @router.post("/sync/dry-run")
-async def dry_run_sync_bundle(
-    bundle: Dict[str, Any],
-    db: AsyncSession = Depends(get_db_session)
-):
+async def dry_run_sync_bundle(bundle: dict[str, Any], db: AsyncSession = Depends(get_db_session)):
     service = MeshSyncService(db, node_id="local-cluster-01")
     try:
         results = await service.import_bundle(bundle, dry_run=True)

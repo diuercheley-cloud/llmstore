@@ -6,8 +6,9 @@ import logging
 import time
 import uuid
 from collections import deque
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from app.core.time import utc_now
 
@@ -113,13 +114,15 @@ class AgentGraphEngine:
                 if result_path.exists():
                     try:
                         data = json.loads(result_path.read_text())
-                        runs.append({
-                            "run_id": data.get("run_id"),
-                            "status": data.get("status"),
-                            "started_at": data.get("started_at"),
-                            "completed_at": data.get("completed_at"),
-                            "error": data.get("error"),
-                        })
+                        runs.append(
+                            {
+                                "run_id": data.get("run_id"),
+                                "status": data.get("status"),
+                                "started_at": data.get("started_at"),
+                                "completed_at": data.get("completed_at"),
+                                "error": data.get("error"),
+                            }
+                        )
                     except Exception:
                         pass
         runs.sort(key=lambda r: r.get("started_at", ""), reverse=True)
@@ -163,8 +166,7 @@ class AgentGraphEngine:
 
         # Topological processing with parallel execution
         ready = deque(
-            nid for nid, deg in in_degree.items()
-            if deg == 0 and nid not in result.node_results
+            nid for nid, deg in in_degree.items() if deg == 0 and nid not in result.node_results
         )
         semaphore = asyncio.Semaphore(graph.max_concurrency)
         pending: set[asyncio.Task] = set()
@@ -224,8 +226,7 @@ class AgentGraphEngine:
             for nr in result.node_results.values()
         )
         result.status = (
-            GraphExecutionStatus.COMPLETED if all_completed
-            else GraphExecutionStatus.FAILED
+            GraphExecutionStatus.COMPLETED if all_completed else GraphExecutionStatus.FAILED
         )
 
     async def _run_node_with_semaphore(
@@ -280,15 +281,23 @@ class AgentGraphEngine:
                 logger.info("Node %s completed in %.0fms", node.id, duration)
                 return nr
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 last_error = f"Timeout after {node.timeout_seconds}s"
-                logger.warning("Node %s timeout (attempt %d/%d)", node.id, attempt + 1, node.max_retries + 1)
+                logger.warning(
+                    "Node %s timeout (attempt %d/%d)", node.id, attempt + 1, node.max_retries + 1
+                )
             except Exception as exc:
                 last_error = str(exc)
-                logger.warning("Node %s failed (attempt %d/%d): %s", node.id, attempt + 1, node.max_retries + 1, exc)
+                logger.warning(
+                    "Node %s failed (attempt %d/%d): %s",
+                    node.id,
+                    attempt + 1,
+                    node.max_retries + 1,
+                    exc,
+                )
 
             if attempt < node.max_retries:
-                await asyncio.sleep(2 ** attempt)  # exponential backoff
+                await asyncio.sleep(2**attempt)  # exponential backoff
 
         duration = (time.perf_counter() - start) * 1000
         return NodeExecutionResult(
@@ -309,9 +318,12 @@ class AgentGraphEngine:
             return await self._runner(node, {"global_input": global_input, "run_id": run_id})
         return self._default_node_runner(node, global_input)
 
-    def _default_node_runner(self, node: AgentNode, global_input: dict[str, Any] | None) -> dict[str, Any]:
+    def _default_node_runner(
+        self, node: AgentNode, global_input: dict[str, Any] | None
+    ) -> dict[str, Any]:
         """Simulated node execution for testing."""
         import time as _time
+
         _time.sleep(0.05)  # simulate work
         return {
             "node_id": node.id,
@@ -324,7 +336,9 @@ class AgentGraphEngine:
     # Topological sort & cycle detection
     # ------------------------------------------------------------------
 
-    def _detect_cycle(self, node_map: dict[str, AgentNode], adj: dict[str, list[GraphEdge]]) -> bool:
+    def _detect_cycle(
+        self, node_map: dict[str, AgentNode], adj: dict[str, list[GraphEdge]]
+    ) -> bool:
         visited: set[str] = set()
         rec_stack: set[str] = set()
 
@@ -404,7 +418,9 @@ class AgentGraphEngine:
         except Exception:
             return None
 
-    def _build_checkpoint(self, node: AgentNode, output: dict[str, Any] | None, run_id: str) -> dict[str, Any]:
+    def _build_checkpoint(
+        self, node: AgentNode, output: dict[str, Any] | None, run_id: str
+    ) -> dict[str, Any]:
         return {
             "node_id": node.id,
             "type": node.type.value,

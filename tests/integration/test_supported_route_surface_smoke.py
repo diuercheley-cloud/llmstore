@@ -1,6 +1,5 @@
-from fastapi.routing import APIRoute
-
 from app.bootstrap.app_factory import create_app
+from fastapi.routing import APIRoute
 
 
 def test_supported_routes_have_minimal_surface_coverage():

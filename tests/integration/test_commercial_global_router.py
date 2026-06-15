@@ -10,11 +10,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 def admin_token():
     return os.environ.get("ADMIN_TOKEN", "test-admin-token")
 
+
 @pytest.mark.asyncio
 async def test_global_router_overview_empty(admin_client: AsyncClient, admin_token: str):
     response = await admin_client.get(
-        "/admin/routing/global-router/overview",
-        headers={"X-Admin-Token": admin_token}
+        "/admin/routing/global-router/overview", headers={"X-Admin-Token": admin_token}
     )
     assert response.status_code == 200
     data = response.json()
@@ -22,16 +22,22 @@ async def test_global_router_overview_empty(admin_client: AsyncClient, admin_tok
     assert "mode" in data
     assert "clusters" in data
 
+
 @pytest.mark.asyncio
-async def test_global_router_ranking(session: AsyncSession, admin_client: AsyncClient, admin_token: str):
+async def test_global_router_ranking(
+    session: AsyncSession, admin_client: AsyncClient, admin_token: str
+):
     # Register some clusters
-    await register_cluster(session, cluster_id="cluster-a", region="us-east", status="active", priority=100)
-    await register_cluster(session, cluster_id="cluster-b", region="us-west", status="active", priority=200)
+    await register_cluster(
+        session, cluster_id="cluster-a", region="us-east", status="active", priority=100
+    )
+    await register_cluster(
+        session, cluster_id="cluster-b", region="us-west", status="active", priority=200
+    )
     await session.commit()
-    
+
     response = await admin_client.get(
-        "/admin/routing/global-router/overview",
-        headers={"X-Admin-Token": admin_token}
+        "/admin/routing/global-router/overview", headers={"X-Admin-Token": admin_token}
     )
     assert response.status_code == 200
     data = response.json()
@@ -40,19 +46,22 @@ async def test_global_router_ranking(session: AsyncSession, admin_client: AsyncC
     scores = {c["cluster_id"]: c["score"] for c in data["clusters"]}
     assert scores["cluster-a"] > scores["cluster-b"]
 
+
 @pytest.mark.asyncio
-async def test_global_router_offline_rejected(session: AsyncSession, admin_client: AsyncClient, admin_token: str):
+async def test_global_router_offline_rejected(
+    session: AsyncSession, admin_client: AsyncClient, admin_token: str
+):
     await register_cluster(session, cluster_id="cluster-offline", status="offline")
     await session.commit()
-    
+
     response = await admin_client.get(
-        "/admin/routing/global-router/overview",
-        headers={"X-Admin-Token": admin_token}
+        "/admin/routing/global-router/overview", headers={"X-Admin-Token": admin_token}
     )
     assert response.status_code == 200
     data = response.json()
     rejected_ids = [c["cluster_id"] for c in data["rejected"]]
     assert "cluster-offline" in rejected_ids
+
 
 @pytest.mark.asyncio
 async def test_global_router_simulate(admin_client: AsyncClient, admin_token: str):
@@ -63,38 +72,37 @@ async def test_global_router_simulate(admin_client: AsyncClient, admin_token: st
     response = await admin_client.post(
         "/admin/routing/global-router/simulate",
         headers={"X-Admin-Token": admin_token},
-        json=payload
+        json=payload,
     )
     assert response.status_code == 200
     data = response.json()
     assert "recommended_cluster" in data
     assert data["simulation_params"]["tenant_id"] == "tenant-test"
 
+
 @pytest.mark.asyncio
 async def test_global_router_export(admin_client: AsyncClient, admin_token: str):
     # JSON
     response = await admin_client.get(
-        "/admin/routing/global-router/export?format=json",
-        headers={"X-Admin-Token": admin_token}
+        "/admin/routing/global-router/export?format=json", headers={"X-Admin-Token": admin_token}
     )
     assert response.status_code == 200
     assert response.json()["clusters"] is not None
-    
+
     # CSV
     response = await admin_client.get(
-        "/admin/routing/global-router/export?format=csv",
-        headers={"X-Admin-Token": admin_token}
+        "/admin/routing/global-router/export?format=csv", headers={"X-Admin-Token": admin_token}
     )
     assert response.status_code == 200
     assert "text/csv" in response.headers["content-type"]
-    
+
     # HTML
     response = await admin_client.get(
-        "/admin/routing/global-router/export?format=html",
-        headers={"X-Admin-Token": admin_token}
+        "/admin/routing/global-router/export?format=html", headers={"X-Admin-Token": admin_token}
     )
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
+
 
 @pytest.mark.asyncio
 async def test_global_router_auth_required(admin_client: AsyncClient):

@@ -23,9 +23,9 @@ class SABImporter:
             name=f"[Imported] {manifest.name}",
             version=manifest.version,
             instructions=manifest.instructions,
-            model_id="gpt-4o", # Default for import
+            model_id="gpt-4o",  # Default for import
             owner="imported-system",
-            status="draft" # Never activate automatically
+            status="draft",  # Never activate automatically
         )
         self.db.add(agent)
         await self.db.commit()

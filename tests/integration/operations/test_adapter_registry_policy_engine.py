@@ -18,9 +18,9 @@ class TestAdapterRegistryPolicyEngine:
         policy = AdapterRegistryPolicy(
             allowed_adapter_types_json={"allowed_types": ["remediation"]},
             denied_capabilities_json={"denied": ["network_admin"]},
-            require_approval=True
+            require_approval=True,
         )
-        
+
         allowed, reason = engine.evaluate_manifest(manifest, policy)
         assert allowed is True
         assert "complies" in reason
@@ -37,9 +37,9 @@ class TestAdapterRegistryPolicyEngine:
         )
         policy = AdapterRegistryPolicy(
             allowed_adapter_types_json={"allowed_types": ["remediation"]},
-            denied_capabilities_json={"denied": []}
+            denied_capabilities_json={"denied": []},
         )
-        
+
         allowed, reason = engine.evaluate_manifest(manifest, policy)
         assert allowed is False
         assert "sandbox_required=False is blocked" in reason
@@ -57,9 +57,9 @@ class TestAdapterRegistryPolicyEngine:
         )
         policy = AdapterRegistryPolicy(
             allowed_adapter_types_json={"allowed_types": ["remediation"]},
-            denied_capabilities_json={"denied": ["root_access"]}
+            denied_capabilities_json={"denied": ["root_access"]},
         )
-        
+
         allowed, reason = engine.evaluate_manifest(manifest, policy)
         assert allowed is False
         assert "explicitly denied" in reason

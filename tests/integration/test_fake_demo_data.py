@@ -190,9 +190,7 @@ class TestFakeDataSafety:
         for f in FAKE_DIR.rglob("*"):
             if f.is_file() and f.suffix in (".json", ".txt"):
                 content = f.read_text().lower()
-                assert "demo" in content or "ficticio" in content, (
-                    f"No DEMO marker in {f}"
-                )
+                assert "demo" in content or "ficticio" in content, f"No DEMO marker in {f}"
 
     def test_no_real_email_domains(self):
         real_domains = [
@@ -290,7 +288,9 @@ class TestFakeDataPrompts:
     def test_prompts_mention_ficticio(self):
         data = json.loads((FAKE_DIR / "prompts.json").read_text())
         for p in data["prompts"]:
-            assert "ficticio" in p["user_prompt"].lower() or "ficticio" in p["system_prompt"].lower()
+            assert (
+                "ficticio" in p["user_prompt"].lower() or "ficticio" in p["system_prompt"].lower()
+            )
 
 
 class TestFakeDataTts:

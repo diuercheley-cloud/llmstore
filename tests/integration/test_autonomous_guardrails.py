@@ -7,7 +7,9 @@ from app.models.commercial.commercial_autonomous_guardrails import (
 )
 from app.models.commercial.commercial_governance import CommercialPolicyBundle
 from app.models.commercial.commercial_runtime_fabric import CommercialRuntimeFabricHealth
-from app.models.commercial.commercial_sovereign_governance import CommercialHardwareAttestationRecord
+from app.models.commercial.commercial_sovereign_governance import (
+    CommercialHardwareAttestationRecord,
+)
 from app.services.governance.autonomous_guardrails import AutonomousGuardrailsService
 from app.services.governance.blast_radius_analysis import sha256_hex
 from sqlalchemy import desc, select
@@ -90,22 +92,36 @@ async def test_approval_execute_receipt_verify_flow(session):
     assert first["status"] == "pending_approval"
 
     checkpoints = (
-        await session.execute(
-            select(CommercialHumanApprovalCheckpoint).order_by(CommercialHumanApprovalCheckpoint.created_at.asc())
+        (
+            await session.execute(
+                select(CommercialHumanApprovalCheckpoint).order_by(
+                    CommercialHumanApprovalCheckpoint.created_at.asc()
+                )
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     assert checkpoints
     for checkpoint in checkpoints:
-        await service.checkpointing.approve_checkpoint(session, checkpoint_id=checkpoint.id, approver="approver-1")
+        await service.checkpointing.approve_checkpoint(
+            session, checkpoint_id=checkpoint.id, approver="approver-1"
+        )
 
     second = await service.execute_guarded_action(session, request=request)
     assert second["status"] == "executed"
 
     receipt = (
-        await session.execute(
-            select(CommercialAutonomousExecutionReceipt).order_by(desc(CommercialAutonomousExecutionReceipt.created_at))
+        (
+            await session.execute(
+                select(CommercialAutonomousExecutionReceipt).order_by(
+                    desc(CommercialAutonomousExecutionReceipt.created_at)
+                )
+            )
         )
-    ).scalars().first()
+        .scalars()
+        .first()
+    )
     verified = await service.verify_receipt(session, receipt.id)
 
     assert verified.verification_status == "verified"
@@ -130,7 +146,9 @@ async def test_guardrails_admin_endpoints(session, app_client_factory, admin_tok
         assert checkpoints.status_code == 200
         assert isinstance(checkpoints.json(), list)
 
-        blast_radius = await client.get("/admin/guardrails/blast-radius", headers=admin_token_headers)
+        blast_radius = await client.get(
+            "/admin/guardrails/blast-radius", headers=admin_token_headers
+        )
         assert blast_radius.status_code == 200
         assert "items" in blast_radius.json()
 

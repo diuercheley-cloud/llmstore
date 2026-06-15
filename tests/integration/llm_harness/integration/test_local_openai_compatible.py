@@ -24,8 +24,12 @@ pytestmark = [
     pytest.mark.integration,
     pytest.mark.local_llm,
     pytest.mark.skipif(not RUN_LOCAL, reason="LLM_HARNESS_RUN_LOCAL_LLM_TESTS not set to 1"),
-    pytest.mark.skipif(not BASE_URL or not MODEL, reason="LLM_HARNESS_LOCAL_BASE_URL or LLM_HARNESS_LOCAL_MODEL not set")
+    pytest.mark.skipif(
+        not BASE_URL or not MODEL,
+        reason="LLM_HARNESS_LOCAL_BASE_URL or LLM_HARNESS_LOCAL_MODEL not set",
+    ),
 ]
+
 
 @pytest.fixture
 def agent_client():
@@ -36,7 +40,7 @@ def agent_client():
         provider="local-openai-compatible",
         base_url=cast(str, BASE_URL),
         model=cast(str, MODEL),
-        api_key_env="LLM_HARNESS_LOCAL_API_KEY"
+        api_key_env="LLM_HARNESS_LOCAL_API_KEY",
     )
 
 
@@ -58,6 +62,7 @@ def _local_provider_config(**overrides):
     config.update(overrides)
     return config
 
+
 @pytest.mark.asyncio
 async def test_local_llm_health(agent_client):
     """Test health check against local LLM provider."""
@@ -75,6 +80,7 @@ async def test_local_llm_health(agent_client):
     health = await provider.health_check()
     assert health["status"] == "healthy"
     assert health["details"]
+
 
 @pytest.mark.asyncio
 async def test_local_llm_simple_chat(agent_client):
@@ -136,6 +142,7 @@ async def test_local_llm_inline_edit_smoke(tmp_path):
 
         assert result["success"] is True
         assert "return a + b" in workspace.read_file("calc.py")
+
 
 @pytest.mark.asyncio
 async def test_local_llm_coding_loop_minimal(tmp_path):

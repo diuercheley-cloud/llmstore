@@ -94,7 +94,6 @@ async def test_coding_loop_short_circuit_disabled_by_default():
             mock_chat.assert_called_once()
 
 
-
 @pytest.mark.asyncio
 async def test_coding_loop_emits_complete_subaction_sequence():
     client = AgentClient(agent_id="test")
@@ -102,16 +101,28 @@ async def test_coding_loop_emits_complete_subaction_sequence():
         ws.write_file("hello.txt", "hello")
         loop = CodingLoop(agent_client=client, workspace=ws)
 
-        with patch.object(loop.test_tools, "run_pytest", AsyncMock(return_value={"success": True, "exit_code": 0, "output": "ok", "error": ""})), patch.object(
-            loop.patcher,
-            "apply_patch",
-            return_value=PatchResult(success=True, mode="apply"),
+        with (
+            patch.object(
+                loop.test_tools,
+                "run_pytest",
+                AsyncMock(
+                    return_value={"success": True, "exit_code": 0, "output": "ok", "error": ""}
+                ),
+            ),
+            patch.object(
+                loop.patcher,
+                "apply_patch",
+                return_value=PatchResult(success=True, mode="apply"),
+            ),
         ):
             result = await loop.run(
                 task="Implement change",
                 action_plan=[
                     {"action_type": "plan", "message": "Planning steps"},
-                    {"action_type": "apply_patch", "diff": "--- a/hello.txt\n+++ b/hello.txt\n@@ -1 +1 @@\n-hello\n+hello world"},
+                    {
+                        "action_type": "apply_patch",
+                        "diff": "--- a/hello.txt\n+++ b/hello.txt\n@@ -1 +1 @@\n-hello\n+hello world",
+                    },
                     {"action_type": "run_tests", "test_path": "tests/"},
                     {"action_type": "final", "message": "done"},
                 ],
@@ -144,7 +155,9 @@ async def test_coding_loop_emits_complete_subaction_sequence():
             "final",
             "loop",
         ]
-        assert [event["step"] for event in result.events] == sorted(event["step"] for event in result.events)
+        assert [event["step"] for event in result.events] == sorted(
+            event["step"] for event in result.events
+        )
 
 
 @pytest.mark.asyncio
@@ -152,7 +165,18 @@ async def test_coding_loop_emits_action_failed_when_tool_fails():
     client = AgentClient(agent_id="test")
     async with Workspace() as ws:
         loop = CodingLoop(agent_client=client, workspace=ws)
-        with patch.object(loop.test_tools, "run_pytest", AsyncMock(return_value={"success": False, "exit_code": 1, "output": "Authorization: Bearer abc", "error": "api_key=sk-fail"})):
+        with patch.object(
+            loop.test_tools,
+            "run_pytest",
+            AsyncMock(
+                return_value={
+                    "success": False,
+                    "exit_code": 1,
+                    "output": "Authorization: Bearer abc",
+                    "error": "api_key=sk-fail",
+                }
+            ),
+        ):
             result = await loop.run(
                 task="Run tests",
                 action_plan=[{"action_type": "run_tests", "test_path": "tests/"}],
@@ -188,7 +212,18 @@ async def test_coding_loop_sanitizes_event_messages():
     client = AgentClient(agent_id="test")
     async with Workspace() as ws:
         loop = CodingLoop(agent_client=client, workspace=ws)
-        with patch.object(loop.test_tools, "run_pytest", AsyncMock(return_value={"success": False, "exit_code": 1, "output": "Bearer token-123", "error": "Authorization: Bearer token-123 api_key=sk-secret"})):
+        with patch.object(
+            loop.test_tools,
+            "run_pytest",
+            AsyncMock(
+                return_value={
+                    "success": False,
+                    "exit_code": 1,
+                    "output": "Bearer token-123",
+                    "error": "Authorization: Bearer token-123 api_key=sk-secret",
+                }
+            ),
+        ):
             result = await loop.run(
                 task="Run tests",
                 action_plan=[{"action_type": "run_tests", "test_path": "tests/"}],
@@ -505,7 +540,16 @@ async def test_coding_loop_executes_mocked_real_sequence():
     client = AgentClient(agent_id="test")
     client.chat_completion = AsyncMock(  # type: ignore[method-assign]
         side_effect=[
-            {"choices": [{"message": {"role": "assistant", "content": '{"action_type":"plan","message":"Planning"}'}}]},
+            {
+                "choices": [
+                    {
+                        "message": {
+                            "role": "assistant",
+                            "content": '{"action_type":"plan","message":"Planning"}',
+                        }
+                    }
+                ]
+            },
             {
                 "choices": [
                     {
@@ -541,14 +585,19 @@ async def test_coding_loop_executes_mocked_real_sequence():
     async with Workspace() as ws:
         ws.write_file("hello.txt", "hello")
         loop = CodingLoop(agent_client=client, workspace=ws, max_steps=4)
-        with patch.object(
-            loop.test_tools,
-            "run_pytest",
-            AsyncMock(return_value={"success": True, "exit_code": 0, "output": "ok", "error": ""}),
-        ), patch.object(
-            loop.patcher,
-            "apply_patch",
-            return_value=PatchResult(success=True, mode="apply"),
+        with (
+            patch.object(
+                loop.test_tools,
+                "run_pytest",
+                AsyncMock(
+                    return_value={"success": True, "exit_code": 0, "output": "ok", "error": ""}
+                ),
+            ),
+            patch.object(
+                loop.patcher,
+                "apply_patch",
+                return_value=PatchResult(success=True, mode="apply"),
+            ),
         ):
             result = await loop.run(task="Implement change")
 
@@ -584,7 +633,10 @@ async def test_trace_hash_changes_when_output_changes():
         ):
             first = await loop.run(
                 task="Run command",
-                action_plan=[{"action_type": "run_shell", "command": "echo first"}, {"action_type": "final", "message": "done"}],
+                action_plan=[
+                    {"action_type": "run_shell", "command": "echo first"},
+                    {"action_type": "final", "message": "done"},
+                ],
             )
 
         loop2 = CodingLoop(agent_client=client, workspace=ws)
@@ -595,7 +647,10 @@ async def test_trace_hash_changes_when_output_changes():
         ):
             second = await loop2.run(
                 task="Run command",
-                action_plan=[{"action_type": "run_shell", "command": "echo second"}, {"action_type": "final", "message": "done"}],
+                action_plan=[
+                    {"action_type": "run_shell", "command": "echo second"},
+                    {"action_type": "final", "message": "done"},
+                ],
             )
 
     assert first.trace_hash
@@ -620,7 +675,10 @@ async def test_trace_sanitizes_secrets():
         ):
             result = await loop.run(
                 task="Run command",
-                action_plan=[{"action_type": "run_shell", "command": "echo secret"}, {"action_type": "final", "message": "done"}],
+                action_plan=[
+                    {"action_type": "run_shell", "command": "echo secret"},
+                    {"action_type": "final", "message": "done"},
+                ],
             )
 
     serialized = str(result.trace)

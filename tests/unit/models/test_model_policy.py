@@ -100,12 +100,36 @@ def test_serialize_model_card_uses_alias_as_public_id():
 
 
 def test_plan_routing_order_prefers_healthy_before_degraded():
-    model = ModelRegistry(model_id="gemma", provider="llama.cpp", model_file="gemma.gguf", context_length=2048, is_active=True, is_default=True, status="configured")
-    healthy_backend = InferenceBackend(name="primary", provider="llama.cpp", backend_url="http://primary", is_active=True, status="healthy")
-    degraded_backend = InferenceBackend(name="secondary", provider="llama.cpp", backend_url="http://secondary", is_active=True, status="healthy")
+    model = ModelRegistry(
+        model_id="gemma",
+        provider="llama.cpp",
+        model_file="gemma.gguf",
+        context_length=2048,
+        is_active=True,
+        is_default=True,
+        status="configured",
+    )
+    healthy_backend = InferenceBackend(
+        name="primary",
+        provider="llama.cpp",
+        backend_url="http://primary",
+        is_active=True,
+        status="healthy",
+    )
+    degraded_backend = InferenceBackend(
+        name="secondary",
+        provider="llama.cpp",
+        backend_url="http://secondary",
+        is_active=True,
+        status="healthy",
+    )
     model.backend_routes = [
-        ModelBackendRoute(priority=5, weight=10, state="degraded", inference_backend=degraded_backend),
-        ModelBackendRoute(priority=10, weight=10, state="healthy", inference_backend=healthy_backend),
+        ModelBackendRoute(
+            priority=5, weight=10, state="degraded", inference_backend=degraded_backend
+        ),
+        ModelBackendRoute(
+            priority=10, weight=10, state="healthy", inference_backend=healthy_backend
+        ),
     ]
 
     ordered = plan_routing_order(model, random.Random(0))
@@ -114,12 +138,36 @@ def test_plan_routing_order_prefers_healthy_before_degraded():
 
 
 def test_plan_routing_order_uses_weight_inside_same_priority_group():
-    model = ModelRegistry(model_id="gemma", provider="llama.cpp", model_file="gemma.gguf", context_length=2048, is_active=True, is_default=True, status="configured")
-    high_weight_backend = InferenceBackend(name="high-weight", provider="llama.cpp", backend_url="http://one", is_active=True, status="healthy")
-    low_weight_backend = InferenceBackend(name="low-weight", provider="llama.cpp", backend_url="http://two", is_active=True, status="healthy")
+    model = ModelRegistry(
+        model_id="gemma",
+        provider="llama.cpp",
+        model_file="gemma.gguf",
+        context_length=2048,
+        is_active=True,
+        is_default=True,
+        status="configured",
+    )
+    high_weight_backend = InferenceBackend(
+        name="high-weight",
+        provider="llama.cpp",
+        backend_url="http://one",
+        is_active=True,
+        status="healthy",
+    )
+    low_weight_backend = InferenceBackend(
+        name="low-weight",
+        provider="llama.cpp",
+        backend_url="http://two",
+        is_active=True,
+        status="healthy",
+    )
     model.backend_routes = [
-        ModelBackendRoute(priority=1, weight=100, state="healthy", inference_backend=high_weight_backend),
-        ModelBackendRoute(priority=1, weight=1, state="healthy", inference_backend=low_weight_backend),
+        ModelBackendRoute(
+            priority=1, weight=100, state="healthy", inference_backend=high_weight_backend
+        ),
+        ModelBackendRoute(
+            priority=1, weight=1, state="healthy", inference_backend=low_weight_backend
+        ),
     ]
 
     first_choices = {"high-weight": 0, "low-weight": 0}
@@ -142,8 +190,16 @@ async def test_resolve_requested_model_rejects_unknown_model(monkeypatch):
         is_default=True,
         status="configured",
     )
-    backend = InferenceBackend(name="primary", provider="llama.cpp", backend_url="http://primary", is_active=True, status="healthy")
-    model.backend_routes = [ModelBackendRoute(priority=1, weight=100, state="healthy", inference_backend=backend)]
+    backend = InferenceBackend(
+        name="primary",
+        provider="llama.cpp",
+        backend_url="http://primary",
+        is_active=True,
+        status="healthy",
+    )
+    model.backend_routes = [
+        ModelBackendRoute(priority=1, weight=100, state="healthy", inference_backend=backend)
+    ]
 
     async def fake_models(_session):
         return [model]
@@ -151,7 +207,9 @@ async def test_resolve_requested_model_rejects_unknown_model(monkeypatch):
     monkeypatch.setattr("app.services.model_policy.list_active_registry_models", fake_models)
 
     with pytest.raises(HTTPException) as exc:
-        await resolve_requested_model(None, client=Client(name="demo"), requested_model="model-not-allowed")
+        await resolve_requested_model(
+            None, client=Client(name="demo"), requested_model="model-not-allowed"
+        )
 
     assert exc.value.status_code == 404
 
@@ -168,18 +226,30 @@ async def test_resolve_requested_model_allows_explicit_default(monkeypatch):
         is_default=True,
         status="configured",
     )
-    backend = InferenceBackend(name="primary", provider="llama.cpp", backend_url="http://primary", is_active=True, status="healthy")
-    model.backend_routes = [ModelBackendRoute(priority=1, weight=100, state="healthy", inference_backend=backend)]
+    backend = InferenceBackend(
+        name="primary",
+        provider="llama.cpp",
+        backend_url="http://primary",
+        is_active=True,
+        status="healthy",
+    )
+    model.backend_routes = [
+        ModelBackendRoute(priority=1, weight=100, state="healthy", inference_backend=backend)
+    ]
 
     async def fake_models(_session):
         return [model]
 
     monkeypatch.setattr("app.services.model_policy.list_active_registry_models", fake_models)
+
     async def fake_trust(*_args, **_kwargs):
         return {"allowed": True, "trust_state": "disabled", "mode": "disabled"}
+
     monkeypatch.setattr("app.services.model_policy.enforce_model_trust_or_warn", fake_trust)
 
-    selected, requested = await resolve_requested_model(None, client=Client(name="demo"), requested_model="default")
+    selected, requested = await resolve_requested_model(
+        None, client=Client(name="demo"), requested_model="default"
+    )
 
     assert selected is model
     assert requested == "default"

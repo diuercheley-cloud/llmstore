@@ -7,15 +7,11 @@ Demonstrates:
   3. Convert to native AgentTeam
 """
 
-from scripts.llm_harness.compat.report import CompatibilityAnalyzer
 from scripts.llm_harness.compat.autogen import (
-    AutoGenImporter,
     AutoGenConverter,
-    ConversableAgent,
-    AssistantAgent,
-    UserProxyAgent,
-    GroupChat,
+    AutoGenImporter,
 )
+from scripts.llm_harness.compat.report import CompatibilityAnalyzer
 
 # --- 1. Simulate an existing AutoGen setup ---
 source_code = """

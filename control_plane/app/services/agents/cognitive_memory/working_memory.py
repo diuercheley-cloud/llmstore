@@ -11,7 +11,9 @@ class WorkingMemoryService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def active(self, tenant_id: str, agent_id, ttl_seconds: int = 3600) -> list[AgentMemoryItem]:
+    async def active(
+        self, tenant_id: str, agent_id, ttl_seconds: int = 3600
+    ) -> list[AgentMemoryItem]:
         threshold = utc_now() - timedelta(seconds=ttl_seconds)
         stmt = select(AgentMemoryItem).where(
             AgentMemoryItem.tenant_id == tenant_id,

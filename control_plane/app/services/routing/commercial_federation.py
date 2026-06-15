@@ -48,7 +48,15 @@ ALLOWED_AGGREGATE_FIELDS = {
     "error_count",
     "received_at",
 }
-REJECTED_SECRET_FRAGMENTS = ("token", "secret", "password", "authorization", "api_key", "prompt", "response")
+REJECTED_SECRET_FRAGMENTS = (
+    "token",
+    "secret",
+    "password",
+    "authorization",
+    "api_key",
+    "prompt",
+    "response",
+)
 
 
 def _clean_scalar(value: Any) -> Any:
@@ -123,13 +131,17 @@ def _parse_datetime(value: Any) -> datetime | None:
 async def dedupe_federated_aggregate(db: AsyncSession, dedupe_key: str) -> bool:
     row = (
         await db.execute(
-            select(CommercialFederatedAggregate.id).where(CommercialFederatedAggregate.dedupe_key == dedupe_key)
+            select(CommercialFederatedAggregate.id).where(
+                CommercialFederatedAggregate.dedupe_key == dedupe_key
+            )
         )
     ).first()
     return row is not None
 
 
-def _serialize_local_aggregate(row: CommercialClusterAggregate, *, source_cluster_id: str) -> dict[str, Any]:
+def _serialize_local_aggregate(
+    row: CommercialClusterAggregate, *, source_cluster_id: str
+) -> dict[str, Any]:
     bucket_start = row.bucket_start.isoformat()
     return {
         "source_cluster_id": source_cluster_id,
@@ -150,7 +162,9 @@ def _serialize_local_aggregate(row: CommercialClusterAggregate, *, source_cluste
         "avg_latency_ms": round(float(row.avg_latency_ms or 0), 2),
         "error_count": int(row.error_count or 0),
         "received_at": utc_now().isoformat(),
-        "dedupe_key": _build_dedupe_key(source_cluster_id, bucket_start, row.provider, row.model, row.client_id, None),
+        "dedupe_key": _build_dedupe_key(
+            source_cluster_id, bucket_start, row.provider, row.model, row.client_id, None
+        ),
     }
 
 
@@ -164,22 +178,30 @@ async def export_local_aggregates_for_federation(
     await ensure_local_cluster_registered(db, settings=cfg)
     since = utc_now() - timedelta(hours=hours)
     rows = (
-        await db.execute(
-            select(CommercialClusterAggregate)
-            .where(CommercialClusterAggregate.bucket_start >= since)
-            .order_by(CommercialClusterAggregate.bucket_start.asc())
+        (
+            await db.execute(
+                select(CommercialClusterAggregate)
+                .where(CommercialClusterAggregate.bucket_start >= since)
+                .order_by(CommercialClusterAggregate.bucket_start.asc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     payload = {
         "source_cluster_id": _cluster_key(cfg),
         "generated_at_utc": utc_now().isoformat(),
         "period_hours": hours,
-        "aggregates": [_serialize_local_aggregate(row, source_cluster_id=_cluster_key(cfg)) for row in rows],
+        "aggregates": [
+            _serialize_local_aggregate(row, source_cluster_id=_cluster_key(cfg)) for row in rows
+        ],
     }
     return sanitize_report_payload(payload)
 
 
-async def _create_sync_log(db: AsyncSession, *, source_cluster_id: str, sync_type: str) -> CommercialClusterSyncLog:
+async def _create_sync_log(
+    db: AsyncSession, *, source_cluster_id: str, sync_type: str
+) -> CommercialClusterSyncLog:
     row = CommercialClusterSyncLog(
         source_cluster_id=source_cluster_id,
         sync_type=sync_type,
@@ -216,7 +238,11 @@ async def ingest_federated_aggregates(
         return {"accepted": False, "reason": "invalid_payload"}
 
     row = (
-        await db.execute(select(CommercialClusterRegistry).where(CommercialClusterRegistry.cluster_id == source_cluster_id))
+        await db.execute(
+            select(CommercialClusterRegistry).where(
+                CommercialClusterRegistry.cluster_id == source_cluster_id
+            )
+        )
     ).scalar_one_or_none()
     if row is None:
         row = await register_cluster(
@@ -251,12 +277,16 @@ async def ingest_federated_aggregates(
         model = _clean_scalar(item.get("model"))
         client_id = _clean_scalar(item.get("client_id"))
         tenant_id = _clean_scalar(item.get("tenant_id"))
-        allowed, reason = validate_tenant_scope(row.tenant_scope_json, tenant_id, allow_local=allow_local_scope)
+        allowed, reason = validate_tenant_scope(
+            row.tenant_scope_json, tenant_id, allow_local=allow_local_scope
+        )
         if not allowed:
             rejected += 1
             sync_log.error_message = reason
             continue
-        dedupe_key = _build_dedupe_key(source_cluster_id, bucket_start.isoformat(), provider, model, client_id, tenant_id)
+        dedupe_key = _build_dedupe_key(
+            source_cluster_id, bucket_start.isoformat(), provider, model, client_id, tenant_id
+        )
         if await dedupe_federated_aggregate(db, dedupe_key):
             duplicates += 1
             continue
@@ -295,8 +325,10 @@ async def ingest_federated_aggregates(
     )
     sync_log.records_processed = processed
     sync_log.records_duplicate = duplicates
-    sync_log.status = "duplicate" if processed == 0 and duplicates > 0 and rejected == 0 else (
-        "partial" if rejected > 0 else "success"
+    sync_log.status = (
+        "duplicate"
+        if processed == 0 and duplicates > 0 and rejected == 0
+        else ("partial" if rejected > 0 else "success")
     )
     if processed == 0 and duplicates == 0 and rejected > 0:
         sync_log.status = "failed"
@@ -344,11 +376,27 @@ async def summarize_federated_overview(
     local_cluster_id = _cluster_key(cfg)
 
     local_rows = (
-        await db.execute(select(CommercialClusterAggregate).where(CommercialClusterAggregate.bucket_start >= since))
-    ).scalars().all()
+        (
+            await db.execute(
+                select(CommercialClusterAggregate).where(
+                    CommercialClusterAggregate.bucket_start >= since
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
     federated_rows = (
-        await db.execute(select(CommercialFederatedAggregate).where(CommercialFederatedAggregate.bucket_start >= since))
-    ).scalars().all()
+        (
+            await db.execute(
+                select(CommercialFederatedAggregate).where(
+                    CommercialFederatedAggregate.bucket_start >= since
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
     registry_rows = await list_clusters(db, settings=cfg)
 
     cluster_rollups: dict[str, dict[str, Any]] = defaultdict(_seed_cluster_rollup)
@@ -365,7 +413,9 @@ async def summarize_federated_overview(
         bucket["error_count"] += int(row.error_count or 0)
         bucket["providers"].add(row.provider or "-")
         if row.avg_latency_ms is not None and row.requests_count:
-            bucket["latency_weighted_total"] += float(row.avg_latency_ms or 0) * int(row.requests_count or 0)
+            bucket["latency_weighted_total"] += float(row.avg_latency_ms or 0) * int(
+                row.requests_count or 0
+            )
             bucket["latency_weight"] += int(row.requests_count or 0)
 
     for row in federated_rows:
@@ -381,7 +431,9 @@ async def summarize_federated_overview(
         bucket["error_count"] += int(row.error_count or 0)
         bucket["providers"].add(row.provider or "-")
         if row.avg_latency_ms is not None and row.requests_count:
-            bucket["latency_weighted_total"] += float(row.avg_latency_ms or 0) * int(row.requests_count or 0)
+            bucket["latency_weighted_total"] += float(row.avg_latency_ms or 0) * int(
+                row.requests_count or 0
+            )
             bucket["latency_weight"] += int(row.requests_count or 0)
 
     cluster_meta = {row["cluster_id"]: row for row in registry_rows}
@@ -390,7 +442,11 @@ async def summarize_federated_overview(
     for cluster_id in sorted(set(cluster_meta) | set(cluster_rollups)):
         stats = cluster_rollups[cluster_id]
         meta = cluster_meta.get(cluster_id, {})
-        avg_latency = (stats["latency_weighted_total"] / stats["latency_weight"]) if stats["latency_weight"] else 0.0
+        avg_latency = (
+            (stats["latency_weighted_total"] / stats["latency_weight"])
+            if stats["latency_weight"]
+            else 0.0
+        )
         cluster_entry = {
             "cluster_id": cluster_id,
             "name": meta.get("name", cluster_id),
@@ -409,7 +465,9 @@ async def summarize_federated_overview(
             "actual_margin_brl": round(stats["actual_margin_brl"], 4),
             "avg_latency_ms": round(avg_latency, 2),
             "error_count": stats["error_count"],
-            "providers": sorted(provider for provider in stats["providers"] if provider and provider != "-"),
+            "providers": sorted(
+                provider for provider in stats["providers"] if provider and provider != "-"
+            ),
             "last_seen_at": meta.get("last_seen_at"),
         }
         clusters.append(cluster_entry)
@@ -461,7 +519,10 @@ async def summarize_federated_overview(
         "actual_cost_brl": round(totals["actual_cost_brl"], 4),
         "actual_margin_brl": round(totals["actual_margin_brl"], 4),
         "avg_latency_ms": round(
-            (totals["latency_weighted_total"] / totals["latency_weight"]) if totals["latency_weight"] else 0, 2
+            (totals["latency_weighted_total"] / totals["latency_weight"])
+            if totals["latency_weight"]
+            else 0,
+            2,
         ),
         "error_count": totals["error_count"],
         "clusters": clusters,
@@ -479,9 +540,19 @@ async def compare_clusters(
     overview = await summarize_federated_overview(db, hours=hours, settings=settings)
     clusters = list(overview.get("clusters", []))
     if not clusters:
-        return {"generated_at_utc": utc_now().isoformat(), "clusters": [], "comparisons": [], "anomalies": []}
-    sorted_by_margin = sorted(clusters, key=lambda item: item.get("actual_margin_brl", 0), reverse=True)
-    baseline_latency = min((item.get("avg_latency_ms", 0) for item in clusters if item.get("avg_latency_ms", 0) > 0), default=0)
+        return {
+            "generated_at_utc": utc_now().isoformat(),
+            "clusters": [],
+            "comparisons": [],
+            "anomalies": [],
+        }
+    sorted_by_margin = sorted(
+        clusters, key=lambda item: item.get("actual_margin_brl", 0), reverse=True
+    )
+    baseline_latency = min(
+        (item.get("avg_latency_ms", 0) for item in clusters if item.get("avg_latency_ms", 0) > 0),
+        default=0,
+    )
     comparisons = []
     anomalies = list(overview.get("anomalies_cross_cluster", []))
     for item in sorted_by_margin:
@@ -522,7 +593,9 @@ async def cleanup_federated_retention(
     cutoff = utc_now() - timedelta(days=cfg.commercial_federation_retention_days)
     aggregate_deleted = (
         await db.execute(
-            delete(CommercialFederatedAggregate).where(CommercialFederatedAggregate.bucket_start < cutoff)
+            delete(CommercialFederatedAggregate).where(
+                CommercialFederatedAggregate.bucket_start < cutoff
+            )
         )
     ).rowcount or 0
     sync_log_deleted = (
@@ -549,19 +622,27 @@ async def export_federated_payload(
     since = utc_now() - timedelta(hours=hours)
     local_cluster_id = _cluster_key(settings or get_settings())
     local_rows = (
-        await db.execute(
-            select(CommercialClusterAggregate)
-            .where(CommercialClusterAggregate.bucket_start >= since)
-            .order_by(CommercialClusterAggregate.bucket_start.desc())
+        (
+            await db.execute(
+                select(CommercialClusterAggregate)
+                .where(CommercialClusterAggregate.bucket_start >= since)
+                .order_by(CommercialClusterAggregate.bucket_start.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     aggregates = (
-        await db.execute(
-            select(CommercialFederatedAggregate)
-            .where(CommercialFederatedAggregate.bucket_start >= since)
-            .order_by(CommercialFederatedAggregate.bucket_start.desc())
+        (
+            await db.execute(
+                select(CommercialFederatedAggregate)
+                .where(CommercialFederatedAggregate.bucket_start >= since)
+                .order_by(CommercialFederatedAggregate.bucket_start.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return sanitize_report_payload(
         {
             "overview": overview,
@@ -584,7 +665,8 @@ async def export_federated_payload(
                     "error_count": row.error_count,
                 }
                 for row in local_rows
-            ] + [
+            ]
+            + [
                 {
                     "source_cluster_id": row.source_cluster_id,
                     "bucket_start": row.bucket_start.isoformat(),
@@ -612,7 +694,11 @@ async def export_federated_payload(
 def export_federated_csv(report: dict[str, Any]) -> str:
     rows = report.get("aggregates", [])
     output = io.StringIO()
-    fieldnames = list(rows[0].keys()) if rows else ["source_cluster_id", "bucket_start", "provider", "requests_count"]
+    fieldnames = (
+        list(rows[0].keys())
+        if rows
+        else ["source_cluster_id", "bucket_start", "provider", "requests_count"]
+    )
     writer = csv.DictWriter(output, fieldnames=fieldnames)
     writer.writeheader()
     for row in rows:
@@ -683,36 +769,72 @@ async def sync_federation_clusters(
 ) -> dict[str, Any]:
     cfg = settings or get_settings()
     await ensure_local_cluster_registered(db, settings=cfg)
-    if cfg.commercial_federation_mode not in {"push", "hybrid"} or not cfg.commercial_federation_allow_push:
-        return {"executed": False, "reason": "push_disabled", "mode": cfg.commercial_federation_mode, "results": []}
+    if (
+        cfg.commercial_federation_mode not in {"push", "hybrid"}
+        or not cfg.commercial_federation_allow_push
+    ):
+        return {
+            "executed": False,
+            "reason": "push_disabled",
+            "mode": cfg.commercial_federation_mode,
+            "results": [],
+        }
     payload = await export_local_aggregates_for_federation(db, hours=24, settings=cfg)
     peers = (
-        await db.execute(
-            select(CommercialClusterRegistry)
-            .where(CommercialClusterRegistry.cluster_id != _cluster_key(cfg))
-            .where(CommercialClusterRegistry.status != "disabled")
-            .order_by(CommercialClusterRegistry.priority.asc())
+        (
+            await db.execute(
+                select(CommercialClusterRegistry)
+                .where(CommercialClusterRegistry.cluster_id != _cluster_key(cfg))
+                .where(CommercialClusterRegistry.status != "disabled")
+                .order_by(CommercialClusterRegistry.priority.asc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     results = []
     for peer in peers:
         if not peer.base_url:
-            results.append({"cluster_id": peer.cluster_id, "status": "skipped", "reason": "missing_base_url"})
+            results.append(
+                {"cluster_id": peer.cluster_id, "status": "skipped", "reason": "missing_base_url"}
+            )
             continue
         try:
             headers = {"Content-Type": "application/json"}
             if cfg.commercial_federation_require_token and cfg.commercial_federation_shared_token:
                 headers["X-Federation-Token"] = cfg.commercial_federation_shared_token
             async with httpx.AsyncClient(timeout=15.0) as client:
-                response = await client.post(f"{peer.base_url.rstrip('/')}/admin/routing/federation/ingest", headers=headers, json=payload)
+                response = await client.post(
+                    f"{peer.base_url.rstrip('/')}/admin/routing/federation/ingest",
+                    headers=headers,
+                    json=payload,
+                )
             if response.status_code >= 400:
                 await update_cluster_status(db, cluster_id=peer.cluster_id, status="degraded")
-                results.append({"cluster_id": peer.cluster_id, "status": "failed", "http_status": response.status_code})
+                results.append(
+                    {
+                        "cluster_id": peer.cluster_id,
+                        "status": "failed",
+                        "http_status": response.status_code,
+                    }
+                )
                 continue
-            await update_cluster_status(db, cluster_id=peer.cluster_id, status="active", last_seen_at=utc_now())
-            results.append({"cluster_id": peer.cluster_id, "status": "success", "result": sanitize_report_payload(response.json())})
+            await update_cluster_status(
+                db, cluster_id=peer.cluster_id, status="active", last_seen_at=utc_now()
+            )
+            results.append(
+                {
+                    "cluster_id": peer.cluster_id,
+                    "status": "success",
+                    "result": sanitize_report_payload(response.json()),
+                }
+            )
         except Exception as exc:
             logger.warning("federation sync failed for %s: %s", peer.cluster_id, exc)
             await mark_cluster_offline(db, cluster_id=peer.cluster_id)
             results.append({"cluster_id": peer.cluster_id, "status": "failed", "error": str(exc)})
-    return {"executed": True, "mode": cfg.commercial_federation_mode, "results": sanitize_report_payload(results)}
+    return {
+        "executed": True,
+        "mode": cfg.commercial_federation_mode,
+        "results": sanitize_report_payload(results),
+    }

@@ -17,11 +17,13 @@ Feature flags consulted:
   AGENT_KG_PGVECTOR_ENABLED         - real vector search vs ILIKE fallback
   AGENT_KG_PGROUTING_ENABLED        - shortest-path within graph traversal
 """
+
 from __future__ import annotations
 
 import time
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Sequence
+from typing import Any
 
 from app.core.config import get_settings
 from app.services.agents.knowledge_graph.graph_cache import adjacency_cache
@@ -116,6 +118,7 @@ class VectorGraphHybrid:
             from app.services.agents.knowledge_graph.providers.postgres_graph import (
                 PostgresGraphProvider,
             )
+
             return PostgresGraphProvider(self.db)
         except Exception:
             return None
@@ -145,10 +148,11 @@ class VectorGraphHybrid:
             ]
 
         # Fallback: text match with constant score
-        entities = await self._provider.list_entities(
-            req.tenant_id, entity_name=req.text
-        )
-        return [HybridCandidate(entity=_orm_to_entity(e), vector_score=0.5) for e in entities[: req.limit * 2]]
+        entities = await self._provider.list_entities(req.tenant_id, entity_name=req.text)
+        return [
+            HybridCandidate(entity=_orm_to_entity(e), vector_score=0.5)
+            for e in entities[: req.limit * 2]
+        ]
 
     async def _expand_graph(
         self,
@@ -183,9 +187,7 @@ class VectorGraphHybrid:
                     graph_proximity=proximity,
                 )
             else:
-                candidates[eid].graph_proximity = max(
-                    candidates[eid].graph_proximity, proximity
-                )
+                candidates[eid].graph_proximity = max(candidates[eid].graph_proximity, proximity)
 
             if depth >= req.max_depth:
                 continue
@@ -196,6 +198,7 @@ class VectorGraphHybrid:
                 neighbour_entities, neighbour_relations = cached
             else:
                 import uuid as _uuid
+
                 try:
                     eid_uuid = _uuid.UUID(eid)
                 except ValueError:
@@ -206,9 +209,10 @@ class VectorGraphHybrid:
                         req.tenant_id, eid_uuid, max_fan_out=req.max_fan_out
                     )
                 else:
-                    neighbour_entities_orm, neighbour_relations_orm = await self._provider.related_entities(
-                        req.tenant_id, eid_uuid
-                    )
+                    (
+                        neighbour_entities_orm,
+                        neighbour_relations_orm,
+                    ) = await self._provider.related_entities(req.tenant_id, eid_uuid)
                 neighbour_entities = [_orm_to_entity(e) for e in neighbour_entities_orm]
                 neighbour_relations = [_orm_to_relation(r) for r in neighbour_relations_orm]
 
@@ -217,9 +221,7 @@ class VectorGraphHybrid:
                     neighbour_relations, req.max_fan_out
                 )
 
-                adjacency_cache.set(
-                    req.tenant_id, eid, (neighbour_entities, neighbour_relations)
-                )
+                adjacency_cache.set(req.tenant_id, eid, (neighbour_entities, neighbour_relations))
 
             for rel in neighbour_relations:
                 if rel not in all_relations:
@@ -311,6 +313,7 @@ class VectorGraphHybrid:
 # Helper converters (ORM → Pydantic)
 # ------------------------------------------------------------------
 
+
 def _orm_to_entity(record) -> Entity:
     metadata = getattr(record, "metadata_", None) or {}
     return Entity(
@@ -330,7 +333,11 @@ def _orm_to_entity(record) -> Entity:
 
 def _orm_to_relation(record) -> Relation:
     # Use __dict__ to avoid collision with SQLAlchemy's MetaData attribute
-    metadata = record.__dict__.get("metadata", {}) if isinstance(record.__dict__.get("metadata"), dict) else {}
+    metadata = (
+        record.__dict__.get("metadata", {})
+        if isinstance(record.__dict__.get("metadata"), dict)
+        else {}
+    )
     return Relation(
         id=str(record.id),
         tenant_id=record.tenant_id,

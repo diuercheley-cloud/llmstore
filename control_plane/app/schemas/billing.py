@@ -1,7 +1,6 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -11,9 +10,9 @@ class BillingDisputeOpen(BaseModel):
     # qos_usage|wallet_debit|invoice_amount|priority_charge|other
     claimed_amount_brl: Decimal
     disputed_reason: str
-    qos_billing_record_id: Optional[uuid.UUID] = None
-    invoice_id: Optional[uuid.UUID] = None
-    wallet_transaction_id: Optional[uuid.UUID] = None
+    qos_billing_record_id: uuid.UUID | None = None
+    invoice_id: uuid.UUID | None = None
+    wallet_transaction_id: uuid.UUID | None = None
 
 
 class BillingDisputeRead(BaseModel):
@@ -25,8 +24,8 @@ class BillingDisputeRead(BaseModel):
     status: str
     claimed_amount_brl: Decimal
     disputed_reason: str
-    admin_notes: Optional[str] = None
-    resolution_notes: Optional[str] = None
+    admin_notes: str | None = None
+    resolution_notes: str | None = None
     created_at: datetime
     updated_at: datetime
-    resolved_at: Optional[datetime] = None
+    resolved_at: datetime | None = None

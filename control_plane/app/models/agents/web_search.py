@@ -72,9 +72,7 @@ class AgentWebSearchCache(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    query_hash: Mapped[str] = mapped_column(
-        String(64), nullable=False, unique=True, index=True
-    )
+    query_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
     results_json: Mapped[dict] = mapped_column(JSON, nullable=False)
     ttl_seconds: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at: Mapped[datetime] = mapped_column(

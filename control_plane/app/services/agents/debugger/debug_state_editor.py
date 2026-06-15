@@ -1,6 +1,6 @@
 # Owner: agent-platform
 import uuid
-from typing import Any, Dict
+from typing import Any
 
 from app.core.config import get_settings
 from app.models.agents.agent_debugger import AgentDebugReplay, AgentDebugStateEdit
@@ -13,12 +13,8 @@ class DebugStateEditor:
         self.settings = get_settings()
 
     async def edit_state(
-        self, 
-        replay_id: uuid.UUID, 
-        field_path: str, 
-        new_value: Any, 
-        editor_id: str
-    ) -> Dict[str, Any]:
+        self, replay_id: uuid.UUID, field_path: str, new_value: Any, editor_id: str
+    ) -> dict[str, Any]:
         """
         Manually modifies a field in the debug session state before continuing execution.
         """
@@ -28,16 +24,13 @@ class DebugStateEditor:
         replay = await self.db.get(AgentDebugReplay, replay_id)
         if not replay:
             raise ValueError("Replay session not found")
-            
+
         if replay.status != "active":
             raise ValueError("State edits can only be applied to active debug sessions.")
 
         # Record the edit
         edit = AgentDebugStateEdit(
-            replay_id=replay_id,
-            field_path=field_path,
-            new_value=new_value,
-            editor_id=editor_id
+            replay_id=replay_id, field_path=field_path, new_value=new_value, editor_id=editor_id
         )
         self.db.add(edit)
         await self.db.commit()

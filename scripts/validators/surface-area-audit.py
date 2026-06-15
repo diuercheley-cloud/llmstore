@@ -15,53 +15,56 @@ from app.services.platform.surface_audit import SurfaceAuditService
 def validate_ga_surface():
     api_surface_path = os.path.join(base_dir, "config/api-surface.yaml")
     if os.path.exists(api_surface_path):
-        with open(api_surface_path, "r", encoding="utf-8") as f:
+        with open(api_surface_path, encoding="utf-8") as f:
             data = yaml.safe_load(f) or []
-            
+
         errors = []
         for entry in data:
             path = entry.get("path") or entry.get("endpoint", "unknown")
             method = entry.get("method", "unknown")
             ref = f"{method} {path}"
-            
+
             if not entry.get("owner"):
                 errors.append(f"{ref} sem owner")
             if not entry.get("status"):
                 errors.append(f"{ref} sem status")
             if "auth_required" not in entry:
                 errors.append(f"{ref} sem auth classification")
-            
+
             status = entry.get("status", "")
             if status in ["supported", "beta", "experimental"] and not entry.get("docs_url"):
-                if "internal" not in status: # internal ones might not need public docs
+                if "internal" not in status:  # internal ones might not need public docs
                     errors.append(f"{ref} public sem docs")
-                    
-            if status in ["beta", "experimental"] and (not entry.get("feature_flag") or entry.get("feature_flag") == "none"):
+
+            if status in ["beta", "experimental"] and (
+                not entry.get("feature_flag") or entry.get("feature_flag") == "none"
+            ):
                 errors.append(f"{ref} beta/experimental sem feature flag")
-                
+
             if status == "deprecated":
                 if not entry.get("replacement") and not entry.get("justification"):
                     errors.append(f"{ref} deprecated sem replacement ou justification")
-                    
+
         if os.environ.get("GA_MODE") == "true" and errors:
             print("GA Validation Failed for API Surface:")
             for err in errors:
                 print(f" - {err}")
             sys.exit(1)
 
+
 def generate_markdown_reports():
     validate_ga_surface()
     print("Running platform surface area audit...")
     service = SurfaceAuditService(base_dir=base_dir)
     audit_results = service.run_audit()
-    
+
     # 1. Create artifacts directory if not exists
     artifacts_dir = os.path.join(base_dir, "artifacts/platform")
     os.makedirs(artifacts_dir, exist_ok=True)
-    
+
     # 2. Write surface-audit.md
     audit_md_path = os.path.join(artifacts_dir, "surface-audit.md")
-    
+
     apis = audit_results["apis"]
     ui = audit_results["ui_pages"]
     srv = audit_results["services"]
@@ -70,12 +73,14 @@ def generate_markdown_reports():
     adp = audit_results["adapters"]
     db = audit_results["dashboards"]
     tst = audit_results["tests"]
-    
+
     # Classify components for the report
     with open(audit_md_path, "w", encoding="utf-8") as f:
         f.write("# Platform Surface Area Audit\n\n")
-        f.write("Generated platform surface area audit report tracking operational complexity and dead code.\n\n")
-        
+        f.write(
+            "Generated platform surface area audit report tracking operational complexity and dead code.\n\n"
+        )
+
         f.write("## 1. APIs Audit\n")
         f.write(f"- **Duplicate Routes ({len(apis['duplicates'])})**:\n")
         if apis["duplicates"]:
@@ -83,14 +88,14 @@ def generate_markdown_reports():
                 f.write(f"  - `{d}`\n")
         else:
             f.write("  - None\n")
-            
+
         f.write(f"- **Unreferenced Registry ({len(apis['unreferenced_registry'])})**:\n")
         if apis["unreferenced_registry"]:
             for u in apis["unreferenced_registry"]:
                 f.write(f"  - `{u}`\n")
         else:
             f.write("  - None\n")
-            
+
         unclassified_len = len(apis.get("unclassified", []))
         if unclassified_len > 0:
             f.write(f"- **Unclassified Endpoints ({unclassified_len})**:\n")
@@ -103,7 +108,7 @@ def generate_markdown_reports():
                 f.write(f"  - `{u}`\n")
         else:
             f.write("  - None\n")
-            
+
         f.write("\n## 2. Pages UI Audit\n")
         f.write(f"- **Orphaned UI Pages ({len(ui['orphaned_pages'])})**:\n")
         if ui["orphaned_pages"]:
@@ -111,7 +116,7 @@ def generate_markdown_reports():
                 f.write(f"  - `{p}`\n")
         else:
             f.write("  - None\n")
-            
+
         f.write("\n## 3. Services Audit\n")
         f.write(f"- **Orphaned Services ({len(srv['orphaned_services'])})**:\n")
         if srv["orphaned_services"]:
@@ -159,17 +164,21 @@ def generate_markdown_reports():
                 f.write(f"  - `{t}`\n")
         else:
             f.write("  - None\n")
-            
+
     print(f"Audit report written to {audit_md_path}")
 
     # 3. Write deprecation-report.md
     dep_md_path = os.path.join(artifacts_dir, "deprecation-report.md")
     with open(dep_md_path, "w", encoding="utf-8") as f:
         f.write("# API Deprecation & Sunset Report\n\n")
-        f.write("List of deprecated endpoints in the platform's API surface with active sunset schedules.\n\n")
-        f.write("| Endpoint | Method | Sunset Date | Replacement / Migration Path | Required Headers |\n")
+        f.write(
+            "List of deprecated endpoints in the platform's API surface with active sunset schedules.\n\n"
+        )
+        f.write(
+            "| Endpoint | Method | Sunset Date | Replacement / Migration Path | Required Headers |\n"
+        )
         f.write("| :--- | :--- | :--- | :--- | :--- |\n")
-        
+
         deprecated_list = apis["deprecated_apis"]
         if deprecated_list:
             for dep in deprecated_list:
@@ -178,21 +187,24 @@ def generate_markdown_reports():
                 replacement = dep["replacement"] or "None"
                 sunset_date = dep["sunset_date"]
                 headers = "`X-Deprecated-Endpoint`, `Sunset`, `X-Sunset-Date`"
-                f.write(f"| `{endpoint}` | `{method}` | {sunset_date} | `{replacement}` | {headers} |\n")
+                f.write(
+                    f"| `{endpoint}` | `{method}` | {sunset_date} | `{replacement}` | {headers} |\n"
+                )
         else:
             f.write("| - | - | - | - | - |\n")
-            
+
     print(f"Deprecation report written to {dep_md_path}")
-    
+
     # Also write a copy to control_plane/artifacts/ if required by release gate
     cp_artifacts_dir = os.path.join(base_dir, "control_plane/artifacts/platform")
     os.makedirs(cp_artifacts_dir, exist_ok=True)
     with open(os.path.join(cp_artifacts_dir, "surface-audit.md"), "w", encoding="utf-8") as f:
-        with open(audit_md_path, "r", encoding="utf-8") as src:
+        with open(audit_md_path, encoding="utf-8") as src:
             f.write(src.read())
     with open(os.path.join(cp_artifacts_dir, "deprecation-report.md"), "w", encoding="utf-8") as f:
-        with open(dep_md_path, "r", encoding="utf-8") as src:
+        with open(dep_md_path, encoding="utf-8") as src:
             f.write(src.read())
+
 
 if __name__ == "__main__":
     generate_markdown_reports()

@@ -8,8 +8,8 @@ This demonstrates the full pipeline:
   4. Register with the harness
 """
 
+from scripts.llm_harness.compat.langgraph import LangGraphConverter, LangGraphImporter
 from scripts.llm_harness.compat.report import CompatibilityAnalyzer
-from scripts.llm_harness.compat.langgraph import LangGraphImporter, LangGraphConverter, StateGraph
 
 # --- 1. Simulate an existing LangGraph agent ---
 source_code = """

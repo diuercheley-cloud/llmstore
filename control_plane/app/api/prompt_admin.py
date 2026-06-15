@@ -1,6 +1,6 @@
 # Owner: agent-platform
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.api import deps
 from app.core.config import get_settings
@@ -8,8 +8,8 @@ from app.services.prompts.prompt_ab_testing import PromptABTestingService
 from app.services.prompts.prompt_playground import PromptPlayground
 from app.services.prompts.prompt_registry import PromptRegistry
 from app.services.prompts.prompt_template_playground import PromptTemplatePlaygroundService
-from app.services.prompts.prompt_template_renderer import PromptTemplateRenderer
 from app.services.prompts.prompt_template_registry import PromptTemplateRegistryService
+from app.services.prompts.prompt_template_renderer import PromptTemplateRenderer
 from app.services.prompts.prompt_template_validator import PromptTemplateValidator
 from app.services.prompts.prompt_template_versioning import PromptTemplateVersioningService
 from app.services.prompts.prompt_versioning import PromptVersioningService
@@ -34,8 +34,8 @@ def _require_playground_enabled():
 @router.post("/")
 async def create_template(
     name: str = Body(...),
-    description: Optional[str] = Body(None),
-    variable_schema: Optional[Dict] = Body(None),
+    description: str | None = Body(None),
+    variable_schema: dict | None = Body(None),
     db: AsyncSession = Depends(deps.get_db),
     current_user=Depends(deps.get_current_admin_user),
 ):
@@ -61,7 +61,7 @@ async def create_version(
     template_id: uuid.UUID,
     content: str = Body(...),
     version_tag: str = Body(...),
-    provider_settings: Optional[Dict] = Body(None),
+    provider_settings: dict | None = Body(None),
     db: AsyncSession = Depends(deps.get_db),
     current_user=Depends(deps.get_current_admin_user),
 ):
@@ -77,7 +77,7 @@ async def create_version(
 async def run_playground(
     template_id: uuid.UUID,
     version_id: uuid.UUID = Body(...),
-    variables: Dict[str, Any] = Body(...),
+    variables: dict[str, Any] = Body(...),
     db: AsyncSession = Depends(deps.get_db),
     current_user=Depends(deps.get_current_admin_user),
 ):
@@ -136,10 +136,11 @@ async def promote_version(
 
 # --- New Template Engine Endpoints (v2) ---
 
+
 @router.post("/templates")
 async def create_prompt_template(
     name: str = Body(...),
-    description: Optional[str] = Body(None),
+    description: str | None = Body(None),
     db: AsyncSession = Depends(deps.get_db),
     current_user=Depends(deps.get_current_admin_user),
 ):
@@ -161,8 +162,13 @@ async def create_prompt_template(
         "name": template.name,
         "description": template.description,
         "variables": [
-            {"name": v.name, "type": v.var_type, "required": v.required,
-             "default": v.default, "description": v.description}
+            {
+                "name": v.name,
+                "type": v.var_type,
+                "required": v.required,
+                "default": v.default,
+                "description": v.description,
+            }
             for v in vars_data
         ],
         "created_at": template.created_at.isoformat(),
@@ -173,27 +179,34 @@ async def create_prompt_template(
 async def list_prompt_templates(
     db: AsyncSession = Depends(deps.get_db),
     current_user=Depends(deps.get_current_admin_user),
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     _require_templates_enabled()
     svc = PromptTemplateRegistryService(db)
     templates = await svc.list_templates(tenant_id=current_user.tenant_id)
     result = []
     for t in templates:
         vars_data = await svc.get_declared_variables(t.id)
-        result.append({
-            "id": str(t.id),
-            "name": t.name,
-            "description": t.description,
-            "active_version_id": str(t.active_version_id) if t.active_version_id else None,
-            "variables_count": len(vars_data),
-            "variables": [
-                {"name": v.name, "type": v.var_type, "required": v.required,
-                 "default": v.default, "description": v.description}
-                for v in vars_data
-            ],
-            "created_at": t.created_at.isoformat(),
-            "updated_at": t.updated_at.isoformat(),
-        })
+        result.append(
+            {
+                "id": str(t.id),
+                "name": t.name,
+                "description": t.description,
+                "active_version_id": str(t.active_version_id) if t.active_version_id else None,
+                "variables_count": len(vars_data),
+                "variables": [
+                    {
+                        "name": v.name,
+                        "type": v.var_type,
+                        "required": v.required,
+                        "default": v.default,
+                        "description": v.description,
+                    }
+                    for v in vars_data
+                ],
+                "created_at": t.created_at.isoformat(),
+                "updated_at": t.updated_at.isoformat(),
+            }
+        )
     return result
 
 
@@ -203,11 +216,11 @@ async def declare_template_variable(
     name: str = Body(...),
     var_type: str = Body("string"),
     required: bool = Body(True),
-    default: Optional[str] = Body(None),
-    description: Optional[str] = Body(None),
+    default: str | None = Body(None),
+    description: str | None = Body(None),
     db: AsyncSession = Depends(deps.get_db),
     current_user=Depends(deps.get_current_admin_user),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     _require_templates_enabled()
     svc = PromptTemplateRegistryService(db)
     try:
@@ -238,10 +251,10 @@ async def create_template_version(
     template_id: uuid.UUID,
     content: str = Body(...),
     version_tag: str = Body(...),
-    provider_settings: Optional[Dict[str, Any]] = Body(None),
+    provider_settings: dict[str, Any] | None = Body(None),
     db: AsyncSession = Depends(deps.get_db),
     current_user=Depends(deps.get_current_admin_user),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     _require_templates_enabled()
     svc = PromptTemplateRegistryService(db)
     try:
@@ -270,17 +283,22 @@ async def create_template_version(
 async def render_template(
     template_id: uuid.UUID,
     version_id: uuid.UUID = Body(...),
-    variables: Dict[str, Any] = Body(...),
+    variables: dict[str, Any] = Body(...),
     db: AsyncSession = Depends(deps.get_db),
     current_user=Depends(deps.get_current_admin_user),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     _require_templates_enabled()
     svc = PromptTemplateRegistryService(db)
     declared = await svc.get_declared_variables(template_id)
 
     declared_list = [
-        {"name": v.name, "type": v.var_type, "required": v.required,
-         "default": v.default, "description": v.description}
+        {
+            "name": v.name,
+            "type": v.var_type,
+            "required": v.required,
+            "default": v.default,
+            "description": v.description,
+        }
         for v in declared
     ]
 
@@ -313,18 +331,23 @@ async def render_template(
 async def template_playground(
     template_id: uuid.UUID,
     version_id: uuid.UUID = Body(...),
-    variables: Dict[str, Any] = Body(...),
+    variables: dict[str, Any] = Body(...),
     db: AsyncSession = Depends(deps.get_db),
     current_user=Depends(deps.get_current_admin_user),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     _require_templates_enabled()
     _require_playground_enabled()
 
     svc = PromptTemplateRegistryService(db)
     declared = await svc.get_declared_variables(template_id)
     declared_list = [
-        {"name": v.name, "type": v.var_type, "required": v.required,
-         "default": v.default, "description": v.description}
+        {
+            "name": v.name,
+            "type": v.var_type,
+            "required": v.required,
+            "default": v.default,
+            "description": v.description,
+        }
         for v in declared
     ]
 
@@ -355,7 +378,7 @@ async def promote_template_version(
     target_status: str = Body(...),
     db: AsyncSession = Depends(deps.get_db),
     current_user=Depends(deps.get_current_admin_user),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     _require_templates_enabled()
     versioning = PromptTemplateVersioningService(db)
 
@@ -389,14 +412,18 @@ async def rollback_template(
     to_version_id: uuid.UUID = Body(...),
     db: AsyncSession = Depends(deps.get_db),
     current_user=Depends(deps.get_current_admin_user),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     _require_templates_enabled()
     versioning = PromptTemplateVersioningService(db)
     success = await versioning.rollback(template_id, to_version_id)
     if not success:
         raise HTTPException(status_code=400, detail="Rollback failed")
     await db.commit()
-    return {"status": "rolled_back", "template_id": str(template_id), "to_version_id": str(to_version_id)}
+    return {
+        "status": "rolled_back",
+        "template_id": str(template_id),
+        "to_version_id": str(to_version_id),
+    }
 
 
 @router.post("/validate")
@@ -404,7 +431,7 @@ async def validate_template_content(
     content: str = Body(...),
     db: AsyncSession = Depends(deps.get_db),
     current_user=Depends(deps.get_current_admin_user),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     _require_templates_enabled()
     validator = PromptTemplateValidator(  # type: ignore[call-arg]
         PromptTemplateRenderer()  # type: ignore[arg-type]
@@ -419,7 +446,7 @@ async def list_render_events(
     limit: int = Query(100, ge=1, le=500),
     db: AsyncSession = Depends(deps.get_db),
     current_user=Depends(deps.get_current_admin_user),
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     _require_templates_enabled()
     svc = PromptTemplateRegistryService(db)
     events = await svc.count_render_events(template_id, limit=limit)

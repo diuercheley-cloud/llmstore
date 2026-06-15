@@ -9,11 +9,18 @@ class MCPServer:
     def __init__(self):
         self.security = MCPSecurity()
         self.tools = {
-            "safe_echo": lambda arguments: {"echo": self.security.sanitize_text(arguments.get("text", ""))},
+            "safe_echo": lambda arguments: {
+                "echo": self.security.sanitize_text(arguments.get("text", ""))
+            },
             "readiness": lambda arguments: {"status": "ok", "surface": "agentic-platform"},
-            "agent_run_status": lambda arguments: {"run_id": arguments.get("run_id"), "status": "unknown"},
+            "agent_run_status": lambda arguments: {
+                "run_id": arguments.get("run_id"),
+                "status": "unknown",
+            },
         }
-        self.resources = [{"uri": "mcp://status", "name": "status", "mime_type": "application/json"}]
+        self.resources = [
+            {"uri": "mcp://status", "name": "status", "mime_type": "application/json"}
+        ]
         self.prompts = [{"name": "safe-summary", "description": "Summarize sanitized content"}]
 
     def list_tools(self) -> list[dict[str, Any]]:

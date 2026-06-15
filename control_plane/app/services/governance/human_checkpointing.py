@@ -29,13 +29,15 @@ class HumanCheckpointingService:
         persist: bool = True,
     ) -> list[CommercialHumanApprovalCheckpoint]:
         sanitized = sanitize_report_payload(request)
-        stage_defs = (policy.approval_stages_json if policy and policy.approval_stages_json else None) or [
-            {"stage": 1, "required_approvals": 1}
-        ]
+        stage_defs = (
+            policy.approval_stages_json if policy and policy.approval_stages_json else None
+        ) or [{"stage": 1, "required_approvals": 1}]
         checkpoints: list[CommercialHumanApprovalCheckpoint] = []
         for stage_def in stage_defs:
             stage = int(stage_def.get("stage") or stage_def.get("checkpoint_stage") or 1)
-            required = int(stage_def.get("required_approvals") or stage_def.get("approver_count") or 1)
+            required = int(
+                stage_def.get("required_approvals") or stage_def.get("approver_count") or 1
+            )
             checkpoint = CommercialHumanApprovalCheckpoint(
                 policy_id=policy.id if policy else None,
                 approval_chain_id=approval_chain_id,
@@ -95,7 +97,9 @@ class HumanCheckpointingService:
                 }
             )
         checkpoint.approvals_json = approvals
-        checkpoint.status = "approved" if len(approvals) >= checkpoint.required_approvals else "pending"
+        checkpoint.status = (
+            "approved" if len(approvals) >= checkpoint.required_approvals else "pending"
+        )
         checkpoint.decided_at = utc_now() if checkpoint.status == "approved" else None
         await db.commit()
         await db.refresh(checkpoint)
@@ -113,7 +117,9 @@ class HumanCheckpointingService:
         if checkpoint is None:
             raise ValueError("checkpoint_not_found")
         rejections = list(checkpoint.rejections_json or [])
-        rejections.append({"approver": approver, "reason": reason, "rejected_at": utc_now().isoformat()})
+        rejections.append(
+            {"approver": approver, "reason": reason, "rejected_at": utc_now().isoformat()}
+        )
         checkpoint.rejections_json = rejections
         checkpoint.status = "rejected"
         checkpoint.decided_at = utc_now()

@@ -15,11 +15,12 @@ async def setup_db():
         await conn.run_sync(Base.metadata.create_all)
     yield
 
+
 def test_runtime_profiles_service_basics():
     service = RuntimeProfilesService()
     profiles = service.get_all_profiles()
     assert len(profiles) == 5
-    
+
     # Check specific profiles exist
     ids = [p["profile_id"] for p in profiles]
     assert "appliance-small" in ids
@@ -38,33 +39,32 @@ def test_runtime_profiles_service_basics():
     assert valid is False
     assert len(errors) > 0
 
+
 @pytest.mark.asyncio
 async def test_api_list_profiles(async_client: AsyncClient, admin_token_headers: dict):
-    response = await async_client.get(
-        "/admin/runtime-profiles",
-        headers=admin_token_headers
-    )
+    response = await async_client.get("/admin/runtime-profiles", headers=admin_token_headers)
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
     assert len(data) == 5
 
+
 @pytest.mark.asyncio
 async def test_api_get_current_settings(async_client: AsyncClient, admin_token_headers: dict):
     response = await async_client.get(
-        "/admin/runtime-profiles/current",
-        headers=admin_token_headers
+        "/admin/runtime-profiles/current", headers=admin_token_headers
     )
     assert response.status_code == 200
     data = response.json()
     assert "DEPLOYMENT_MODE" in data or "PROJECT_NAME" in data
+
 
 @pytest.mark.asyncio
 async def test_api_validate_profile(async_client: AsyncClient, admin_token_headers: dict):
     response = await async_client.post(
         "/admin/runtime-profiles/validate",
         json={"profile_id": "appliance-small"},
-        headers=admin_token_headers
+        headers=admin_token_headers,
     )
     assert response.status_code == 200
     assert response.json()["status"] == "valid"
@@ -73,16 +73,17 @@ async def test_api_validate_profile(async_client: AsyncClient, admin_token_heade
     response = await async_client.post(
         "/admin/runtime-profiles/validate",
         json={"profile_id": "non-existent"},
-        headers=admin_token_headers
+        headers=admin_token_headers,
     )
     assert response.status_code == 400
+
 
 @pytest.mark.asyncio
 async def test_api_apply_profile_dry_run(async_client: AsyncClient, admin_token_headers: dict):
     response = await async_client.post(
         "/admin/runtime-profiles/apply",
         json={"profile_id": "appliance-small", "dry_run": True},
-        headers=admin_token_headers
+        headers=admin_token_headers,
     )
     assert response.status_code == 200
     data = response.json()
@@ -90,8 +91,11 @@ async def test_api_apply_profile_dry_run(async_client: AsyncClient, admin_token_
     assert data["dry_run"] is True
     assert "diff" in data
 
+
 @pytest.mark.asyncio
-async def test_api_apply_profile_live_disabled_by_default(async_client: AsyncClient, admin_token_headers: dict):
+async def test_api_apply_profile_live_disabled_by_default(
+    async_client: AsyncClient, admin_token_headers: dict
+):
     # Ensure apply enabled env var is cleared/disabled
     old_env = os.environ.get("RUNTIME_PROFILE_APPLY_ENABLED")
     if "RUNTIME_PROFILE_APPLY_ENABLED" in os.environ:
@@ -101,7 +105,7 @@ async def test_api_apply_profile_live_disabled_by_default(async_client: AsyncCli
         response = await async_client.post(
             "/admin/runtime-profiles/apply",
             json={"profile_id": "appliance-small", "dry_run": False},
-            headers=admin_token_headers
+            headers=admin_token_headers,
         )
         assert response.status_code == 403
         assert "disabled" in response.json()["detail"].lower()
@@ -109,11 +113,12 @@ async def test_api_apply_profile_live_disabled_by_default(async_client: AsyncCli
         if old_env is not None:
             os.environ["RUNTIME_PROFILE_APPLY_ENABLED"] = old_env
 
+
 @pytest.mark.asyncio
 async def test_api_apply_profile_live_enabled(async_client: AsyncClient, admin_token_headers: dict):
     os.environ["RUNTIME_PROFILE_APPLY_ENABLED"] = "true"
     service = RuntimeProfilesService()
-    
+
     # Ensure a clean slate for the test mock env file
     if os.path.exists(service.env_path):
         os.remove(service.env_path)
@@ -127,21 +132,21 @@ async def test_api_apply_profile_live_enabled(async_client: AsyncClient, admin_t
         response = await async_client.post(
             "/admin/runtime-profiles/apply",
             json={"profile_id": "appliance-small", "dry_run": False},
-            headers=admin_token_headers
+            headers=admin_token_headers,
         )
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "success"
         assert data["dry_run"] is False
-        
+
         # Verify the backup file was created
         assert os.path.exists(service.backup_path)
-        
+
         # Verify rollback API works
         response_rollback = await async_client.post(
             "/admin/runtime-profiles/apply",
             json={"rollback": True, "dry_run": False},
-            headers=admin_token_headers
+            headers=admin_token_headers,
         )
         assert response_rollback.status_code == 200
         data_rb = response_rollback.json()

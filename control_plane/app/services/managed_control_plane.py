@@ -2,7 +2,6 @@ import logging
 import secrets
 import uuid
 from datetime import timedelta
-from typing import List, Optional
 
 from app.core.time import utc_now
 from app.models.core.managed_control_plane import (
@@ -23,6 +22,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
+
 
 class ManagedControlPlaneService:
     def __init__(self, session: AsyncSession):
@@ -49,10 +49,12 @@ class ManagedControlPlaneService:
         await self.session.refresh(db_ws)
         return db_ws
 
-    async def generate_enrollment_token(self, workspace_id: uuid.UUID, expires_in_hours: int = 24) -> ApplianceEnrollment:
+    async def generate_enrollment_token(
+        self, workspace_id: uuid.UUID, expires_in_hours: int = 24
+    ) -> ApplianceEnrollment:
         token = secrets.token_urlsafe(32)
         expires_at = utc_now() + timedelta(hours=expires_in_hours)
-        
+
         db_enrollment = ApplianceEnrollment(
             workspace_id=workspace_id,
             enrollment_token=token,
@@ -63,20 +65,20 @@ class ManagedControlPlaneService:
         await self.session.refresh(db_enrollment)
         return db_enrollment
 
-    async def enroll_appliance(self, enroll_in: ApplianceEnrollRequest) -> Optional[ManagedAppliance]:
+    async def enroll_appliance(self, enroll_in: ApplianceEnrollRequest) -> ManagedAppliance | None:
         # 1. Validate token
         stmt = select(ApplianceEnrollment).where(
             ApplianceEnrollment.enrollment_token == enroll_in.enrollment_token,
             ApplianceEnrollment.is_used == False,
-            ApplianceEnrollment.expires_at > utc_now()
+            ApplianceEnrollment.expires_at > utc_now(),
         )
         result = await self.session.execute(stmt)
         enrollment = result.scalar_one_or_none()
-        
+
         if not enrollment:
             logger.warning(f"Invalid or expired enrollment token: {enroll_in.enrollment_token}")
             return None
-        
+
         # 2. Create appliance
         db_appliance = ManagedAppliance(
             workspace_id=enrollment.workspace_id,
@@ -85,26 +87,28 @@ class ManagedControlPlaneService:
             status="enrolled",
         )
         self.session.add(db_appliance)
-        await self.session.flush() # Get ID
-        
+        await self.session.flush()  # Get ID
+
         # 3. Mark token as used
         enrollment.is_used = True
         enrollment.used_at = utc_now()
         enrollment.used_by_appliance_id = db_appliance.id
-        
+
         await self.session.commit()
         await self.session.refresh(db_appliance)
         return db_appliance
 
-    async def record_heartbeat(self, appliance_id: uuid.UUID, payload: ApplianceHeartbeatPayload) -> bool:
+    async def record_heartbeat(
+        self, appliance_id: uuid.UUID, payload: ApplianceHeartbeatPayload
+    ) -> bool:
         # 1. Check if appliance exists and is not revoked
         stmt = select(ManagedAppliance).where(ManagedAppliance.id == appliance_id)
         result = await self.session.execute(stmt)
         appliance = result.scalar_one_or_none()
-        
+
         if not appliance or appliance.status == "revoked":
             return False
-        
+
         # 2. Record heartbeat history
         db_heartbeat = ApplianceHeartbeat(
             appliance_id=appliance_id,
@@ -116,7 +120,7 @@ class ManagedControlPlaneService:
             available_models=payload.available_models,
         )
         self.session.add(db_heartbeat)
-        
+
         # 3. Update appliance current status
         appliance.status = "online"
         appliance.version = payload.version
@@ -126,33 +130,39 @@ class ManagedControlPlaneService:
         appliance.capacity_summary = payload.capacity_summary
         appliance.enabled_providers = payload.enabled_providers
         appliance.available_models = payload.available_models
-        
+
         # 4. Update metrics
         managed_appliance_heartbeats_total.labels(appliance_id=str(appliance_id)).inc()
-        
+
         await self.session.commit()
         return True
 
     async def revoke_appliance(self, appliance_id: uuid.UUID) -> bool:
-        stmt = update(ManagedAppliance).where(ManagedAppliance.id == appliance_id).values(status="revoked", updated_at=utc_now())
+        stmt = (
+            update(ManagedAppliance)
+            .where(ManagedAppliance.id == appliance_id)
+            .values(status="revoked", updated_at=utc_now())
+        )
         await self.session.execute(stmt)
         await self.session.commit()
         return True
 
-    async def list_appliances(self, workspace_id: Optional[uuid.UUID] = None) -> List[ManagedAppliance]:
+    async def list_appliances(
+        self, workspace_id: uuid.UUID | None = None
+    ) -> list[ManagedAppliance]:
         stmt = select(ManagedAppliance)
         if workspace_id:
             stmt = stmt.where(ManagedAppliance.workspace_id == workspace_id)
-        
+
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_organization(self, org_id: uuid.UUID) -> Optional[ManagedOrganization]:
+    async def get_organization(self, org_id: uuid.UUID) -> ManagedOrganization | None:
         stmt = select(ManagedOrganization).where(ManagedOrganization.id == org_id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def get_workspace(self, workspace_id: uuid.UUID) -> Optional[ManagedWorkspace]:
+    async def get_workspace(self, workspace_id: uuid.UUID) -> ManagedWorkspace | None:
         stmt = select(ManagedWorkspace).where(ManagedWorkspace.id == workspace_id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()

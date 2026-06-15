@@ -25,7 +25,7 @@ export const RagDocs = () => {
   }, []);
 
   useEffect(() => {
-    loadDocs();
+    void Promise.resolve().then(() => loadDocs());
   }, [loadDocs]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

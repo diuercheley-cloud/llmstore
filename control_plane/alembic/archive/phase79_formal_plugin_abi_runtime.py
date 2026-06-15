@@ -35,14 +35,54 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_plugin_abi_contracts_client_id"), "plugin_abi_contracts", ["client_id"], unique=False)
-    op.create_index(op.f("ix_plugin_abi_contracts_plugin_name"), "plugin_abi_contracts", ["plugin_name"], unique=False)
-    op.create_index(op.f("ix_plugin_abi_contracts_plugin_version"), "plugin_abi_contracts", ["plugin_version"], unique=False)
-    op.create_index(op.f("ix_plugin_abi_contracts_abi_version"), "plugin_abi_contracts", ["abi_version"], unique=False)
-    op.create_index(op.f("ix_plugin_abi_contracts_contract_scope"), "plugin_abi_contracts", ["contract_scope"], unique=False)
-    op.create_index(op.f("ix_plugin_abi_contracts_contract_status"), "plugin_abi_contracts", ["contract_status"], unique=False)
-    op.create_index(op.f("ix_plugin_abi_contracts_contract_hash"), "plugin_abi_contracts", ["contract_hash"], unique=True)
-    op.create_index(op.f("ix_plugin_abi_contracts_immutable_hash"), "plugin_abi_contracts", ["immutable_hash"], unique=True)
+    op.create_index(
+        op.f("ix_plugin_abi_contracts_client_id"),
+        "plugin_abi_contracts",
+        ["client_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_abi_contracts_plugin_name"),
+        "plugin_abi_contracts",
+        ["plugin_name"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_abi_contracts_plugin_version"),
+        "plugin_abi_contracts",
+        ["plugin_version"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_abi_contracts_abi_version"),
+        "plugin_abi_contracts",
+        ["abi_version"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_abi_contracts_contract_scope"),
+        "plugin_abi_contracts",
+        ["contract_scope"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_abi_contracts_contract_status"),
+        "plugin_abi_contracts",
+        ["contract_status"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_abi_contracts_contract_hash"),
+        "plugin_abi_contracts",
+        ["contract_hash"],
+        unique=True,
+    )
+    op.create_index(
+        op.f("ix_plugin_abi_contracts_immutable_hash"),
+        "plugin_abi_contracts",
+        ["immutable_hash"],
+        unique=True,
+    )
 
     op.create_table(
         "plugin_capability_boundaries",
@@ -59,13 +99,30 @@ def upgrade() -> None:
         sa.Column("external_secret_access_allowed", sa.Boolean(), nullable=False),
         sa.Column("immutable_hash", sa.String(length=64), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["abi_contract_id"], ["plugin_abi_contracts.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["abi_contract_id"], ["plugin_abi_contracts.id"], ondelete="CASCADE"
+        ),
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_plugin_capability_boundaries_client_id"), "plugin_capability_boundaries", ["client_id"], unique=False)
-    op.create_index(op.f("ix_plugin_capability_boundaries_abi_contract_id"), "plugin_capability_boundaries", ["abi_contract_id"], unique=False)
-    op.create_index(op.f("ix_plugin_capability_boundaries_immutable_hash"), "plugin_capability_boundaries", ["immutable_hash"], unique=True)
+    op.create_index(
+        op.f("ix_plugin_capability_boundaries_client_id"),
+        "plugin_capability_boundaries",
+        ["client_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_capability_boundaries_abi_contract_id"),
+        "plugin_capability_boundaries",
+        ["abi_contract_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_capability_boundaries_immutable_hash"),
+        "plugin_capability_boundaries",
+        ["immutable_hash"],
+        unique=True,
+    )
 
     op.create_table(
         "plugin_runtime_compatibility_checks",
@@ -79,15 +136,42 @@ def upgrade() -> None:
         sa.Column("reason", sa.Text(), nullable=False),
         sa.Column("immutable_hash", sa.String(length=64), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["abi_contract_id"], ["plugin_abi_contracts.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["abi_contract_id"], ["plugin_abi_contracts.id"], ondelete="CASCADE"
+        ),
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_plugin_runtime_compatibility_checks_client_id"), "plugin_runtime_compatibility_checks", ["client_id"], unique=False)
-    op.create_index(op.f("ix_plugin_runtime_compatibility_checks_abi_contract_id"), "plugin_runtime_compatibility_checks", ["abi_contract_id"], unique=False)
-    op.create_index(op.f("ix_plugin_runtime_compatibility_checks_runtime_version"), "plugin_runtime_compatibility_checks", ["runtime_version"], unique=False)
-    op.create_index(op.f("ix_plugin_runtime_compatibility_checks_compatibility_status"), "plugin_runtime_compatibility_checks", ["compatibility_status"], unique=False)
-    op.create_index(op.f("ix_plugin_runtime_compatibility_checks_immutable_hash"), "plugin_runtime_compatibility_checks", ["immutable_hash"], unique=True)
+    op.create_index(
+        op.f("ix_plugin_runtime_compatibility_checks_client_id"),
+        "plugin_runtime_compatibility_checks",
+        ["client_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_runtime_compatibility_checks_abi_contract_id"),
+        "plugin_runtime_compatibility_checks",
+        ["abi_contract_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_runtime_compatibility_checks_runtime_version"),
+        "plugin_runtime_compatibility_checks",
+        ["runtime_version"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_runtime_compatibility_checks_compatibility_status"),
+        "plugin_runtime_compatibility_checks",
+        ["compatibility_status"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_runtime_compatibility_checks_immutable_hash"),
+        "plugin_runtime_compatibility_checks",
+        ["immutable_hash"],
+        unique=True,
+    )
 
     op.create_table(
         "deterministic_extension_load_plans",
@@ -100,15 +184,42 @@ def upgrade() -> None:
         sa.Column("dry_run", sa.Boolean(), nullable=False),
         sa.Column("immutable_hash", sa.String(length=64), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["abi_contract_id"], ["plugin_abi_contracts.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["abi_contract_id"], ["plugin_abi_contracts.id"], ondelete="CASCADE"
+        ),
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_deterministic_extension_load_plans_client_id"), "deterministic_extension_load_plans", ["client_id"], unique=False)
-    op.create_index(op.f("ix_deterministic_extension_load_plans_abi_contract_id"), "deterministic_extension_load_plans", ["abi_contract_id"], unique=False)
-    op.create_index(op.f("ix_deterministic_extension_load_plans_load_plan_hash"), "deterministic_extension_load_plans", ["load_plan_hash"], unique=True)
-    op.create_index(op.f("ix_deterministic_extension_load_plans_load_status"), "deterministic_extension_load_plans", ["load_status"], unique=False)
-    op.create_index(op.f("ix_deterministic_extension_load_plans_immutable_hash"), "deterministic_extension_load_plans", ["immutable_hash"], unique=True)
+    op.create_index(
+        op.f("ix_deterministic_extension_load_plans_client_id"),
+        "deterministic_extension_load_plans",
+        ["client_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_deterministic_extension_load_plans_abi_contract_id"),
+        "deterministic_extension_load_plans",
+        ["abi_contract_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_deterministic_extension_load_plans_load_plan_hash"),
+        "deterministic_extension_load_plans",
+        ["load_plan_hash"],
+        unique=True,
+    )
+    op.create_index(
+        op.f("ix_deterministic_extension_load_plans_load_status"),
+        "deterministic_extension_load_plans",
+        ["load_status"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_deterministic_extension_load_plans_immutable_hash"),
+        "deterministic_extension_load_plans",
+        ["immutable_hash"],
+        unique=True,
+    )
 
     op.create_table(
         "plugin_isolation_policies",
@@ -126,10 +237,30 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_plugin_isolation_policies_client_id"), "plugin_isolation_policies", ["client_id"], unique=False)
-    op.create_index(op.f("ix_plugin_isolation_policies_policy_name"), "plugin_isolation_policies", ["policy_name"], unique=False)
-    op.create_index(op.f("ix_plugin_isolation_policies_isolation_level"), "plugin_isolation_policies", ["isolation_level"], unique=False)
-    op.create_index(op.f("ix_plugin_isolation_policies_immutable_hash"), "plugin_isolation_policies", ["immutable_hash"], unique=True)
+    op.create_index(
+        op.f("ix_plugin_isolation_policies_client_id"),
+        "plugin_isolation_policies",
+        ["client_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_isolation_policies_policy_name"),
+        "plugin_isolation_policies",
+        ["policy_name"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_isolation_policies_isolation_level"),
+        "plugin_isolation_policies",
+        ["isolation_level"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_isolation_policies_immutable_hash"),
+        "plugin_isolation_policies",
+        ["immutable_hash"],
+        unique=True,
+    )
 
     op.create_table(
         "plugin_lifecycle_events",
@@ -141,15 +272,42 @@ def upgrade() -> None:
         sa.Column("reason", sa.Text(), nullable=False),
         sa.Column("immutable_hash", sa.String(length=64), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["abi_contract_id"], ["plugin_abi_contracts.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["abi_contract_id"], ["plugin_abi_contracts.id"], ondelete="CASCADE"
+        ),
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_plugin_lifecycle_events_client_id"), "plugin_lifecycle_events", ["client_id"], unique=False)
-    op.create_index(op.f("ix_plugin_lifecycle_events_abi_contract_id"), "plugin_lifecycle_events", ["abi_contract_id"], unique=False)
-    op.create_index(op.f("ix_plugin_lifecycle_events_lifecycle_event_type"), "plugin_lifecycle_events", ["lifecycle_event_type"], unique=False)
-    op.create_index(op.f("ix_plugin_lifecycle_events_lifecycle_status"), "plugin_lifecycle_events", ["lifecycle_status"], unique=False)
-    op.create_index(op.f("ix_plugin_lifecycle_events_immutable_hash"), "plugin_lifecycle_events", ["immutable_hash"], unique=True)
+    op.create_index(
+        op.f("ix_plugin_lifecycle_events_client_id"),
+        "plugin_lifecycle_events",
+        ["client_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_lifecycle_events_abi_contract_id"),
+        "plugin_lifecycle_events",
+        ["abi_contract_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_lifecycle_events_lifecycle_event_type"),
+        "plugin_lifecycle_events",
+        ["lifecycle_event_type"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_lifecycle_events_lifecycle_status"),
+        "plugin_lifecycle_events",
+        ["lifecycle_status"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_lifecycle_events_immutable_hash"),
+        "plugin_lifecycle_events",
+        ["immutable_hash"],
+        unique=True,
+    )
 
     op.create_table(
         "plugin_replay_verification_results",
@@ -162,15 +320,42 @@ def upgrade() -> None:
         sa.Column("deterministic_summary", sa.Text(), nullable=False),
         sa.Column("immutable_hash", sa.String(length=64), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["abi_contract_id"], ["plugin_abi_contracts.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["abi_contract_id"], ["plugin_abi_contracts.id"], ondelete="CASCADE"
+        ),
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_plugin_replay_verification_results_client_id"), "plugin_replay_verification_results", ["client_id"], unique=False)
-    op.create_index(op.f("ix_plugin_replay_verification_results_abi_contract_id"), "plugin_replay_verification_results", ["abi_contract_id"], unique=False)
-    op.create_index(op.f("ix_plugin_replay_verification_results_verification_status"), "plugin_replay_verification_results", ["verification_status"], unique=False)
-    op.create_index(op.f("ix_plugin_replay_verification_results_replay_hash"), "plugin_replay_verification_results", ["replay_hash"], unique=False)
-    op.create_index(op.f("ix_plugin_replay_verification_results_immutable_hash"), "plugin_replay_verification_results", ["immutable_hash"], unique=True)
+    op.create_index(
+        op.f("ix_plugin_replay_verification_results_client_id"),
+        "plugin_replay_verification_results",
+        ["client_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_replay_verification_results_abi_contract_id"),
+        "plugin_replay_verification_results",
+        ["abi_contract_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_replay_verification_results_verification_status"),
+        "plugin_replay_verification_results",
+        ["verification_status"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_replay_verification_results_replay_hash"),
+        "plugin_replay_verification_results",
+        ["replay_hash"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_replay_verification_results_immutable_hash"),
+        "plugin_replay_verification_results",
+        ["immutable_hash"],
+        unique=True,
+    )
 
     op.create_table(
         "plugin_federation_compatibility",
@@ -184,17 +369,54 @@ def upgrade() -> None:
         sa.Column("replay_safe", sa.Boolean(), nullable=False),
         sa.Column("immutable_hash", sa.String(length=64), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["abi_contract_id"], ["plugin_abi_contracts.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["abi_contract_id"], ["plugin_abi_contracts.id"], ondelete="CASCADE"
+        ),
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_plugin_federation_compatibility_client_id"), "plugin_federation_compatibility", ["client_id"], unique=False)
-    op.create_index(op.f("ix_plugin_federation_compatibility_abi_contract_id"), "plugin_federation_compatibility", ["abi_contract_id"], unique=False)
-    op.create_index(op.f("ix_plugin_federation_compatibility_source_environment"), "plugin_federation_compatibility", ["source_environment"], unique=False)
-    op.create_index(op.f("ix_plugin_federation_compatibility_target_environment"), "plugin_federation_compatibility", ["target_environment"], unique=False)
-    op.create_index(op.f("ix_plugin_federation_compatibility_federation_status"), "plugin_federation_compatibility", ["federation_status"], unique=False)
-    op.create_index(op.f("ix_plugin_federation_compatibility_compatibility_hash"), "plugin_federation_compatibility", ["compatibility_hash"], unique=True)
-    op.create_index(op.f("ix_plugin_federation_compatibility_immutable_hash"), "plugin_federation_compatibility", ["immutable_hash"], unique=True)
+    op.create_index(
+        op.f("ix_plugin_federation_compatibility_client_id"),
+        "plugin_federation_compatibility",
+        ["client_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_federation_compatibility_abi_contract_id"),
+        "plugin_federation_compatibility",
+        ["abi_contract_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_federation_compatibility_source_environment"),
+        "plugin_federation_compatibility",
+        ["source_environment"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_federation_compatibility_target_environment"),
+        "plugin_federation_compatibility",
+        ["target_environment"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_federation_compatibility_federation_status"),
+        "plugin_federation_compatibility",
+        ["federation_status"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_federation_compatibility_compatibility_hash"),
+        "plugin_federation_compatibility",
+        ["compatibility_hash"],
+        unique=True,
+    )
+    op.create_index(
+        op.f("ix_plugin_federation_compatibility_immutable_hash"),
+        "plugin_federation_compatibility",
+        ["immutable_hash"],
+        unique=True,
+    )
 
     op.create_table(
         "plugin_runtime_receipts",
@@ -206,15 +428,42 @@ def upgrade() -> None:
         sa.Column("immutable_hash", sa.String(length=64), nullable=False),
         sa.Column("signature_placeholder", sa.String(length=255), nullable=False),
         sa.Column("generated_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["abi_contract_id"], ["plugin_abi_contracts.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["abi_contract_id"], ["plugin_abi_contracts.id"], ondelete="CASCADE"
+        ),
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_plugin_runtime_receipts_client_id"), "plugin_runtime_receipts", ["client_id"], unique=False)
-    op.create_index(op.f("ix_plugin_runtime_receipts_abi_contract_id"), "plugin_runtime_receipts", ["abi_contract_id"], unique=False)
-    op.create_index(op.f("ix_plugin_runtime_receipts_receipt_type"), "plugin_runtime_receipts", ["receipt_type"], unique=False)
-    op.create_index(op.f("ix_plugin_runtime_receipts_payload_hash"), "plugin_runtime_receipts", ["payload_hash"], unique=False)
-    op.create_index(op.f("ix_plugin_runtime_receipts_immutable_hash"), "plugin_runtime_receipts", ["immutable_hash"], unique=True)
+    op.create_index(
+        op.f("ix_plugin_runtime_receipts_client_id"),
+        "plugin_runtime_receipts",
+        ["client_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_runtime_receipts_abi_contract_id"),
+        "plugin_runtime_receipts",
+        ["abi_contract_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_runtime_receipts_receipt_type"),
+        "plugin_runtime_receipts",
+        ["receipt_type"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_runtime_receipts_payload_hash"),
+        "plugin_runtime_receipts",
+        ["payload_hash"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_plugin_runtime_receipts_immutable_hash"),
+        "plugin_runtime_receipts",
+        ["immutable_hash"],
+        unique=True,
+    )
 
 
 def downgrade() -> None:

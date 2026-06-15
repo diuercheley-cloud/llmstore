@@ -21,7 +21,7 @@ export function useAgentRunStream(runId?: string) {
 
   const token = useAuthStore((state) => state.token);
 
-  const connect = useCallback(() => {
+  const connect = useCallback(function doConnect() {
     if (!runId || !token) {
       setStatus(runId ? 'failed' : 'idle');
       if (runId && !token) setError('Missing auth token');
@@ -77,7 +77,7 @@ export function useAgentRunStream(runId?: string) {
         const delay = Math.min(1000 * Math.pow(2, retryCountRef.current), 10000);
         retryCountRef.current += 1;
         reconnectTimeoutRef.current = window.setTimeout(() => {
-          connect();
+          doConnect();
         }, delay);
       } else {
         setStatus('failed');

@@ -4,6 +4,7 @@ MCP Prompt Adapter
 
 Normalises raw prompt records from an MCP server.
 """
+
 from __future__ import annotations
 
 from typing import Any

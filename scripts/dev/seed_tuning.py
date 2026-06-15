@@ -15,5 +15,6 @@ async def main():
         await service.seed_default_profiles()
         print("Perfis semeados com sucesso.")
 
+
 if __name__ == "__main__":
     asyncio.run(main())

@@ -1,6 +1,6 @@
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -79,11 +79,9 @@ class DeterministicFailureForecastingEngine:
         if not normalized:
             return self._zero_risk_forecast(forecast_type, input_hash)
 
-        timestamps = [
-            s["observed_at"] for s in normalized if s["observed_at"] is not None
-        ]
+        timestamps = [s["observed_at"] for s in normalized if s["observed_at"] is not None]
         if reference_time is None:
-            reference_time = max(timestamps) if timestamps else datetime(1970, 1, 1, tzinfo=timezone.utc)
+            reference_time = max(timestamps) if timestamps else datetime(1970, 1, 1, tzinfo=UTC)
 
         severity_scores: list[float] = []
         type_counts: dict[str, int] = {}
@@ -99,7 +97,8 @@ class DeterministicFailureForecastingEngine:
 
         recency_factor = 1.0
         recent_count = sum(
-            1 for s in normalized
+            1
+            for s in normalized
             if _is_within_window(s["observed_at"], reference_time, window_minutes)
         )
         if recent_count > 0:

@@ -2,9 +2,8 @@ import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from fastapi import HTTPException
-
 from app.services.agents.a2a.a2a_discovery import A2ADiscoveryService
+from fastapi import HTTPException
 
 
 @pytest.mark.asyncio

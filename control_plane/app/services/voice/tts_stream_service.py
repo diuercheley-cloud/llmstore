@@ -1,6 +1,6 @@
 # Owner: voice-agent
 import logging
-from typing import AsyncGenerator, Optional
+from collections.abc import AsyncGenerator
 
 import httpx
 from app.core.config import get_settings
@@ -28,7 +28,7 @@ class TTSStreamService:
         self,
         text: str,
         voice: str = "default",
-        tenant_id: Optional[str] = None,
+        tenant_id: str | None = None,
     ) -> AsyncGenerator[bytes, None]:
         """Synthesize text to audio chunks."""
         if self.provider == "mock":
@@ -51,7 +51,7 @@ class TTSStreamService:
             yield f"AUDIO_CHUNK_{i}_DATA".encode()
 
     async def _pocket_tts_synthesize(
-        self, text: str, voice: str, tenant_id: Optional[str]
+        self, text: str, voice: str, tenant_id: str | None
     ) -> AsyncGenerator[bytes, None]:
         """Proxy to Pocket-TTS microservice."""
         try:

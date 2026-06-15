@@ -69,7 +69,7 @@ def test_sanitize_redacts_sensitive_keywords():
     result = _sanitize_reason("my api_key is secret and token=abc")
     assert "api_key" not in result
     assert "secret" not in result
-    assert "token" not in result or "token" == result
+    assert "token" not in result or result == "token"
 
 
 def test_sanitize_handles_none():
@@ -82,7 +82,11 @@ def test_log_does_not_contain_raw_prompt():
     inp = _make_input(strategy=RoutingStrategy.local_first)
     sr.route(inp)
     for entry in sr.decision_log:
-        assert "prompt" not in str(entry).lower() or "prompt_estimated_tokens" in str(entry) or "routing_strategy" in str(entry)
+        assert (
+            "prompt" not in str(entry).lower()
+            or "prompt_estimated_tokens" in str(entry)
+            or "routing_strategy" in str(entry)
+        )
         assert "api_key" not in str(entry).lower()
         assert "secret" not in str(entry).lower()
 
@@ -91,7 +95,13 @@ def test_simulation_does_not_leak_sensitive_data():
     sr = SmartRouter()
     inp = _make_input(strategy=RoutingStrategy.local_first)
     decision, strategies, provider_states, config_snapshot = sr.simulate(inp)
-    dump = json.dumps({"decision": decision.model_dump(), "strategies": strategies, "config": {k: str(v) for k, v in config_snapshot.items()}})
+    dump = json.dumps(
+        {
+            "decision": decision.model_dump(),
+            "strategies": strategies,
+            "config": {k: str(v) for k, v in config_snapshot.items()},
+        }
+    )
     assert "api_key" not in dump.lower()
     assert "secret" not in dump.lower()
     assert "sk-" not in dump

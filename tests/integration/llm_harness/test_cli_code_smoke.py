@@ -12,74 +12,96 @@ import pytest
 RESPONSES = [
     # 1. Plan
     {
-        "choices": [{
-            "message": {
-                "role": "assistant",
-                "content": json.dumps({
-                    "type": "plan",
-                    "reason": "Identify and fix addition bug",
-                    "payload": {"message": "I will read app.py and fix the bug"}
-                })
+        "choices": [
+            {
+                "message": {
+                    "role": "assistant",
+                    "content": json.dumps(
+                        {
+                            "type": "plan",
+                            "reason": "Identify and fix addition bug",
+                            "payload": {"message": "I will read app.py and fix the bug"},
+                        }
+                    ),
+                }
             }
-        }],
-        "usage": {"total_tokens": 100}
+        ],
+        "usage": {"total_tokens": 100},
     },
     # 2. Read File
     {
-        "choices": [{
-            "message": {
-                "role": "assistant",
-                "content": json.dumps({
-                    "type": "read_file",
-                    "reason": "Need to see the code",
-                    "payload": {"path": "app.py"}
-                })
+        "choices": [
+            {
+                "message": {
+                    "role": "assistant",
+                    "content": json.dumps(
+                        {
+                            "type": "read_file",
+                            "reason": "Need to see the code",
+                            "payload": {"path": "app.py"},
+                        }
+                    ),
+                }
             }
-        }],
-        "usage": {"total_tokens": 100}
+        ],
+        "usage": {"total_tokens": 100},
     },
     # 3. Apply Patch
     {
-        "choices": [{
-            "message": {
-                "role": "assistant",
-                "content": json.dumps({
-                    "type": "apply_patch",
-                    "reason": "Correcting subtraction to addition",
-                    "payload": {"diff": "--- app.py\n+++ app.py\n@@ -1,2 +1,2 @@\n def add(a, b):\n-    return a - b\n+    return a + b\n"}
-                })
+        "choices": [
+            {
+                "message": {
+                    "role": "assistant",
+                    "content": json.dumps(
+                        {
+                            "type": "apply_patch",
+                            "reason": "Correcting subtraction to addition",
+                            "payload": {
+                                "diff": "--- app.py\n+++ app.py\n@@ -1,2 +1,2 @@\n def add(a, b):\n-    return a - b\n+    return a + b\n"
+                            },
+                        }
+                    ),
+                }
             }
-        }],
-        "usage": {"total_tokens": 100}
+        ],
+        "usage": {"total_tokens": 100},
     },
     # 4. Run Tests
     {
-        "choices": [{
-            "message": {
-                "role": "assistant",
-                "content": json.dumps({
-                    "type": "run_tests",
-                    "reason": "Verify the fix",
-                    "payload": {"test_path": "tests/test_app.py"}
-                })
+        "choices": [
+            {
+                "message": {
+                    "role": "assistant",
+                    "content": json.dumps(
+                        {
+                            "type": "run_tests",
+                            "reason": "Verify the fix",
+                            "payload": {"test_path": "tests/test_app.py"},
+                        }
+                    ),
+                }
             }
-        }],
-        "usage": {"total_tokens": 100}
+        ],
+        "usage": {"total_tokens": 100},
     },
     # 5. Final
     {
-        "choices": [{
-            "message": {
-                "role": "assistant",
-                "content": json.dumps({
-                    "type": "final",
-                    "reason": "Verified and fixed",
-                    "payload": {"message": "Bug fixed successfully"}
-                })
+        "choices": [
+            {
+                "message": {
+                    "role": "assistant",
+                    "content": json.dumps(
+                        {
+                            "type": "final",
+                            "reason": "Verified and fixed",
+                            "payload": {"message": "Bug fixed successfully"},
+                        }
+                    ),
+                }
             }
-        }],
-        "usage": {"total_tokens": 100}
-    }
+        ],
+        "usage": {"total_tokens": 100},
+    },
 ]
 
 
@@ -93,7 +115,7 @@ class MockLLMHandler(http.server.BaseHTTPRequestHandler):
         else:
             resp = MockLLMHandler.responses[MockLLMHandler.count]
             MockLLMHandler.count += 1
-        
+
         content = json.dumps(resp).encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
@@ -200,7 +222,7 @@ def test_cli_code_smoke_real_cycle(mock_llm_server):
         assert res.returncode == 0
 
         # 2. File was altered
-        with open(app_file, "r") as f:
+        with open(app_file) as f:
             content = f.read()
             assert "return a + b" in content
 
@@ -208,29 +230,29 @@ def test_cli_code_smoke_real_cycle(mock_llm_server):
         files = os.listdir(tmp_dir)
         json_reports = [f for f in files if f.startswith("report_") and f.endswith(".json")]
         md_reports = [f for f in files if f.startswith("report_") and f.endswith(".md")]
-        
+
         assert len(json_reports) == 1
         assert len(md_reports) == 1
 
         json_report_path = os.path.join(tmp_dir, json_reports[0])
         md_report_path = os.path.join(tmp_dir, md_reports[0])
 
-        with open(json_report_path, "r") as f:
+        with open(json_report_path) as f:
             json_data = json.load(f)
             assert json_data["success"] is True
 
-        with open(md_report_path, "r") as f:
+        with open(md_report_path) as f:
             md_content = f.read()
             assert "Success" in md_content or "success" in md_content.lower()
 
         # 4. No secrets leaked in stdout, stderr, or reports
         assert "sk-test-key" not in res.stdout
         assert "sk-test-key" not in res.stderr
-        
-        with open(json_report_path, "r") as f:
+
+        with open(json_report_path) as f:
             assert "sk-test-key" not in f.read()
-            
-        with open(md_report_path, "r") as f:
+
+        with open(md_report_path) as f:
             assert "sk-test-key" not in f.read()
 
     finally:
@@ -287,7 +309,7 @@ def test_cli_stub_warning():
         assert len(md_reports) == 1
 
         md_report_path = os.path.join(tmp_dir, md_reports[0])
-        with open(md_report_path, "r") as f:
+        with open(md_report_path) as f:
             md_content = f.read()
             # The template report.md.jinja warns when provider == "stub":
             # WARNING: code agent provider is stub; no real task execution was performed.

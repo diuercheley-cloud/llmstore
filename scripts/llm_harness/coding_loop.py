@@ -83,7 +83,7 @@ class CodingLoop:
         self.self_heal = self_heal
         self.max_steps = max(1, max_steps)
         self.cache = cache
-        self.max_parallel_actions = 2 # Default limit
+        self.max_parallel_actions = 2  # Default limit
 
         policy_config = {}
         if max_cost is not None:
@@ -99,15 +99,12 @@ class CodingLoop:
             max_context_tokens=max_tokens or 4096,
             reserved_output_tokens=1024,
             token_counter=self.tokenizer,
-            summarize_func=self._summarize_content
+            summarize_func=self._summarize_content,
         )
 
         self.memory = None
         if memory_mode == "local":
-            self.memory = LocalMemory(
-                memory_dir=memory_dir,
-                retention_days=memory_retention_days
-            )
+            self.memory = LocalMemory(memory_dir=memory_dir, retention_days=memory_retention_days)
 
         self.approval_provider = ApprovalProvider(
             mode=approval_mode,
@@ -180,7 +177,7 @@ class CodingLoop:
         self.tracer = Tracer()
         self.webhooks = WebhookManager(
             url=self.policy_engine.config.get("webhook_url"),
-            enabled_events=self.policy_engine.config.get("webhook_events")
+            enabled_events=self.policy_engine.config.get("webhook_events"),
         )
 
         self.history: list[dict[str, Any]] = []
@@ -291,7 +288,7 @@ class CodingLoop:
         if not abs_path.startswith(workspace_root) or not os.path.exists(abs_path):
             return False
         try:
-            with open(abs_path, "r", encoding="utf-8") as handle:
+            with open(abs_path, encoding="utf-8") as handle:
                 current = handle.read()
         except OSError:
             return False
@@ -307,14 +304,14 @@ class CodingLoop:
         summary_prompt = (
             "Summarize the following tool output or file content concisely, "
             "preserving only key information (errors, success markers, or critical data):\n\n"
-            f"{content[:5000]}" # Limit input to avoid infinite recursion/token limits
+            f"{content[:5000]}"  # Limit input to avoid infinite recursion/token limits
         )
 
         try:
             # We use a direct call to the agent client to avoid the full coding loop overhead
-            response = await self.agent_client.chat_completion([
-                {"role": "user", "content": summary_prompt}
-            ])
+            response = await self.agent_client.chat_completion(
+                [{"role": "user", "content": summary_prompt}]
+            )
             summary = response["choices"][0]["message"]["content"].strip()
             return f"[Summarized Output]: {summary}"
         except Exception as e:
@@ -584,19 +581,13 @@ class CodingLoop:
 
         managed_history = await self.context_manager.manage_context(self.history)
         ctx_metrics = self.context_manager.get_metrics()
-        self._emit_event(
-            "context.managed",
-            action_type="context",
-            metadata=ctx_metrics
-        )
+        self._emit_event("context.managed", action_type="context", metadata=ctx_metrics)
 
         class _ClientError(Exception):
             pass
 
         async def _do_chat():
-            with self.tracer.trace_span(
-                "llm_call", attributes={"model": self.agent_client.model}
-            ):
+            with self.tracer.trace_span("llm_call", attributes={"model": self.agent_client.model}):
                 return await self.agent_client.chat_completion(managed_history)
 
         try:
@@ -628,9 +619,7 @@ class CodingLoop:
             self.completion_tokens += c_tokens
 
         cost_result = self.pricing_manager.calculate_cost(
-            model=self.agent_client.model,
-            prompt_tokens=p_tokens,
-            completion_tokens=c_tokens
+            model=self.agent_client.model, prompt_tokens=p_tokens, completion_tokens=c_tokens
         )
         cost_value = cost_result.cost if cost_result is not None else 0.0
         if cost_result is not None:
@@ -750,7 +739,7 @@ class CodingLoop:
                 {"blocked": True, "reason": decision.reason},
             )
             raise PermissionError(decision.reason or "Path blocked by policy")
-        
+
         await self._run_action(
             "write_file", self.file_tools.write_file, path, content, metadata={"path": path}
         )
@@ -790,9 +779,9 @@ class CodingLoop:
             old_content,
             new_content,
             metadata={"path": path},
-            failure_message=lambda succeeded: "replace_content did not find the target text"
-            if not succeeded
-            else None,
+            failure_message=lambda succeeded: (
+                "replace_content did not find the target text" if not succeeded else None
+            ),
         )
         self.changed_files.add(path)
         self._record_trace(
@@ -978,10 +967,10 @@ class CodingLoop:
             test_path,
             metadata={"test_path": test_path},
             failure_message=lambda result: (
-                result.get("error") or result.get("output") or "Tests failed"
-            )
-            if not result.get("success", False)
-            else None,
+                (result.get("error") or result.get("output") or "Tests failed")
+                if not result.get("success", False)
+                else None
+            ),
         )
         self._record_trace(
             "run_tests",
@@ -1056,6 +1045,7 @@ class CodingLoop:
         config = getattr(self, "config", None)
         if config and hasattr(config, "agent_registry_file"):
             from .mas.registry import AgentRegistry
+
             try:
                 self._registry_cache = AgentRegistry.load(config.agent_registry_file)
                 return self._registry_cache
@@ -1093,29 +1083,29 @@ class CodingLoop:
                     )
                 else:
                     allowed = registry.is_tool_allowed(self.current_agent, action_type)
-                
+
                 if not allowed:
                     error_msg = (
                         f"Tool '{action_type}' is not allowed for agent '{self.current_agent}'"
                     )
                     if self.current_team:
                         error_msg += f" in team '{self.current_team}'"
-                    
+
                     logger.warning(error_msg)
                     if self.blackboard:
                         self.blackboard.log_policy_block(
                             self.current_agent, action_type, "Role/Agent tool restriction"
                         )
-                    
+
                     self._emit_event(
                         "agent.tool_blocked",
                         action_type=action_type,
                         status="blocked",
                         message=error_msg,
-                        metadata={"agent": self.current_agent, "team": self.current_team}
+                        metadata={"agent": self.current_agent, "team": self.current_team},
                     )
                     raise PermissionError(error_msg)
-                
+
                 # Side-effect based governance
                 risk_level = registry.get_tool_risk_level(action_type)
                 if risk_level == "destructive":
@@ -1128,7 +1118,7 @@ class CodingLoop:
                             self.current_agent, action_type, "Hard-deny destructive"
                         )
                     raise PermissionError(error_msg)
-                
+
                 if risk_level == "network":
                     error_msg = (
                         f"Policy-deny: Network tools like '{action_type}' are blocked by default."
@@ -1141,12 +1131,17 @@ class CodingLoop:
                     raise PermissionError(error_msg)
 
         if self.blackboard:
-             # arguments can be large, we'll see if we want to limit it here
-             self.blackboard._add_audit_event("tool_attempt", {
-                 "agent_id": self.current_agent,
-                 "tool_name": action_type,
-                 "arguments": {k: v for k, v in action.items() if k not in {"type", "action_type"}}
-             })
+            # arguments can be large, we'll see if we want to limit it here
+            self.blackboard._add_audit_event(
+                "tool_attempt",
+                {
+                    "agent_id": self.current_agent,
+                    "tool_name": action_type,
+                    "arguments": {
+                        k: v for k, v in action.items() if k not in {"type", "action_type"}
+                    },
+                },
+            )
 
         if self._run_started_perf > 0 and self.time_to_first_action_ms is None:
             elapsed = time.perf_counter() - self._run_started_perf
@@ -1198,24 +1193,17 @@ class CodingLoop:
                 action["pattern"],
                 path=action.get("path", "."),
                 regex=action.get("regex", False),
-                recursive=action.get("recursive", True)
+                recursive=action.get("recursive", True),
             )
         elif action_type == "ast_search":
-            return self.search_tools.ast_search(
-                action["symbol_name"],
-                path=action.get("path", ".")
-            )
+            return self.search_tools.ast_search(action["symbol_name"], path=action.get("path", "."))
         elif action_type == "find_replace":
             return self.editor_tools.find_replace(
-                action["filename"],
-                action["find_str"],
-                action["replace_str"]
+                action["filename"], action["find_str"], action["replace_str"]
             )
         elif action_type == "insert_after":
             return self.editor_tools.insert_after(
-                action["filename"],
-                action["anchor"],
-                action["content"]
+                action["filename"], action["anchor"], action["content"]
             )
         elif action_type == "apply_patch":
             return await self.apply_patch(action["diff"], dry_run=action.get("dry_run", False))
@@ -1230,6 +1218,7 @@ class CodingLoop:
             return await self._execute_parallel_actions(sub_actions)
         else:
             from .plugins import plugin_registry
+
             if action_type in plugin_registry.list_tools():
                 tool_callable = plugin_registry.list_tools()[action_type]
                 res = tool_callable(
@@ -1248,7 +1237,13 @@ class CodingLoop:
     async def _execute_parallel_actions(self, actions: list[dict[str, Any]]) -> list[Any]:
         # Only allow read-only actions in parallel
         allowed_parallel = {
-            "read_file", "plan", "search", "grep", "ast_search", "git_status", "git_diff"
+            "read_file",
+            "plan",
+            "search",
+            "grep",
+            "ast_search",
+            "git_status",
+            "git_diff",
         }
 
         # Note: 'search', 'grep', 'git_status', 'git_diff' might be mapped to 'run_shell'
@@ -1341,9 +1336,7 @@ class CodingLoop:
                 raise ValueError("Tool call is missing function.name")
             try:
                 arguments = (
-                    json.loads(raw_arguments)
-                    if isinstance(raw_arguments, str)
-                    else raw_arguments
+                    json.loads(raw_arguments) if isinstance(raw_arguments, str) else raw_arguments
                 )
             except json.JSONDecodeError as exc:
                 raise ValueError(f"Invalid tool_call arguments for {name}") from exc
@@ -1449,13 +1442,17 @@ class CodingLoop:
         if model_profile_override:
             try:
                 from .model_router import ModelRouter
+
                 router = ModelRouter(self.config)
                 profile_cfg = router.resolve_profile(model_profile_override)
                 if profile_cfg:
                     from .providers import create_code_agent
+
                     cfg_dict = self.config.model_dump()
                     cfg_dict.update(profile_cfg)
-                    self.agent_client = create_code_agent(profile_cfg.get("provider", "stub"), cfg_dict)
+                    self.agent_client = create_code_agent(
+                        profile_cfg.get("provider", "stub"), cfg_dict
+                    )
                     logger.info(f"Switched to model profile: {model_profile_override}")
             except Exception as e:
                 logger.warning(f"Failed to switch to model profile {model_profile_override}: {e}")
@@ -1472,14 +1469,16 @@ class CodingLoop:
             system_prompt = system_override
         else:
             system_prompt = self.prompt_builder.build_system_prompt()
-            
+
         if self.current_agent:
             registry = self._get_registry()
             if registry:
                 agent_def = registry.get_agent(self.current_agent)
                 if agent_def:
                     allowed_tools = ", ".join(agent_def.tools)
-                    system_prompt += f"\n\nVOCÊ ESTÁ ATUANDO COMO O AGENTE: {self.current_agent.upper()}."
+                    system_prompt += (
+                        f"\n\nVOCÊ ESTÁ ATUANDO COMO O AGENTE: {self.current_agent.upper()}."
+                    )
                     system_prompt += f"\nFERRAMENTAS PERMITIDAS: {allowed_tools}."
                     system_prompt += "\nNÃO tente usar ferramentas fora desta lista."
 
@@ -1581,10 +1580,14 @@ class CodingLoop:
                                 final_from_tool_calls = (
                                     result if isinstance(result, str) else str(result)
                                 )
-                            rendered = result if isinstance(result, str) else json.dumps(
-                                Sanitizer.sanitize_data(result),
-                                ensure_ascii=True,
-                                default=str,
+                            rendered = (
+                                result
+                                if isinstance(result, str)
+                                else json.dumps(
+                                    Sanitizer.sanitize_data(result),
+                                    ensure_ascii=True,
+                                    default=str,
+                                )
                             )
                             tool_outputs.append((tool_call["id"], rendered, True))
                             if final_from_tool_calls:
@@ -1681,7 +1684,8 @@ class CodingLoop:
                                     action_results.append(f"{atype}: completed")
                             if action_results:
                                 self._append_tool_result(
-                                    "actions", True,
+                                    "actions",
+                                    True,
                                     output="\n".join(action_results),
                                 )
                         except PermissionError as exc:
@@ -1748,9 +1752,7 @@ class CodingLoop:
                         )
                     continue
 
-                task_str_lower = (
-                    task.lower() if isinstance(task, str) else str(task).lower()
-                )
+                task_str_lower = task.lower() if isinstance(task, str) else str(task).lower()
                 if (
                     self.allow_test_short_circuit
                     and self.provider == "stub"

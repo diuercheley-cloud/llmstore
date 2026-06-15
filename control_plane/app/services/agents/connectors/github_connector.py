@@ -1,5 +1,5 @@
 # Owner: Platform Operations
-from typing import Any, Dict, List
+from typing import Any
 
 from app.services.agents.connectors.base import (
     ConnectorAdapter,
@@ -33,31 +33,40 @@ class GitHubConnector(ConnectorAdapter):
         return "GitHub"
 
     @property
-    def capabilities(self) -> List[ConnectorCapability]:
+    def capabilities(self) -> list[ConnectorCapability]:
         return [
             ConnectorCapability.SEARCH,
             ConnectorCapability.READ,
             ConnectorCapability.COMMENT,
-            ConnectorCapability.CREATE
+            ConnectorCapability.CREATE,
         ]
 
     @property
-    def input_schema(self) -> Dict[str, Any]:
+    def input_schema(self) -> dict[str, Any]:
         return {
             "type": "object",
             "properties": {
-                "action": {"type": "string", "enum": ["search_repositories", "get_issue", "create_issue_comment", "create_issue", "list_issues"]},
-                "params": {"type": "object"}
+                "action": {
+                    "type": "string",
+                    "enum": [
+                        "search_repositories",
+                        "get_issue",
+                        "create_issue_comment",
+                        "create_issue",
+                        "list_issues",
+                    ],
+                },
+                "params": {"type": "object"},
             },
-            "required": ["action"]
+            "required": ["action"],
         }
 
     @property
-    def output_schema(self) -> Dict[str, Any]:
+    def output_schema(self) -> dict[str, Any]:
         return {"type": "object"}
 
     @property
-    def required_scopes(self) -> List[str]:
+    def required_scopes(self) -> list[str]:
         return ["repo", "user"]
 
     @property
@@ -69,42 +78,48 @@ class GitHubConnector(ConnectorAdapter):
         return SideEffectLevel.EXTERNAL
 
     @property
-    def rate_limit_policy(self) -> Dict[str, Any]:
+    def rate_limit_policy(self) -> dict[str, Any]:
         return {"requests_per_minute": 5000}
 
     async def healthcheck(self) -> bool:
         return True
 
-    async def dry_run(self, tenant_id: str, credentials: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+    async def dry_run(
+        self, tenant_id: str, credentials: dict[str, Any], **kwargs
+    ) -> dict[str, Any]:
         return self._with_execution_metadata(
             {"status": "dry_run_success", "action": kwargs.get("action")},
             mode="dry_run",
         )
 
-    async def execute(self, tenant_id: str, credentials: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+    async def execute(
+        self, tenant_id: str, credentials: dict[str, Any], **kwargs
+    ) -> dict[str, Any]:
         action = kwargs.get("action")
         params = kwargs.get("params", {})
-        
+
         # 1. Governance check (Feature Flags)
         capability_map = {
             "search_repositories": ConnectorCapability.SEARCH,
             "get_issue": ConnectorCapability.READ,
             "list_issues": ConnectorCapability.READ,
             "create_issue_comment": ConnectorCapability.COMMENT,
-            "create_issue": ConnectorCapability.CREATE
+            "create_issue": ConnectorCapability.CREATE,
         }
-        
+
         capability = capability_map.get(action)
         if not capability:
             raise ValueError(f"Unknown action: {action}")
-        
+
         self._check_feature_flags(capability)
 
         # Agent IAM Check
         await self.check_iam(tenant_id, credentials, action)
 
         # Audit event
-        await self.audit_connector_call(tenant_id, credentials, action, {"params": params, "mode": self.mode})
+        await self.audit_connector_call(
+            tenant_id, credentials, action, {"params": params, "mode": self.mode}
+        )
 
         # Mode-based execution
         if self.mode == ConnectorMode.REAL:
@@ -113,15 +128,19 @@ class GitHubConnector(ConnectorAdapter):
             real_kwargs.pop("action", None)
             real_kwargs.pop("params", None)
             return self._with_execution_metadata(
-                await self._execute_real(action, params, credentials, tenant_id=tenant_id, **real_kwargs),
+                await self._execute_real(
+                    action, params, credentials, tenant_id=tenant_id, **real_kwargs
+                ),
                 mode="real",
             )
         return await self._execute_mock(action, params)
 
-    async def _execute_real(self, action: str, params: Dict[str, Any], credentials: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+    async def _execute_real(
+        self, action: str, params: dict[str, Any], credentials: dict[str, Any], **kwargs
+    ) -> dict[str, Any]:
         tenant_id = kwargs.get("tenant_id")
         invocation_id = kwargs.get("invocation_id", "manual")
-        
+
         ConnectorRuntime.ensure_real_allowed(self.connector_name)
         ConnectorRuntime.validate_credentials(self.connector_name, credentials)
 
@@ -134,8 +153,8 @@ class GitHubConnector(ConnectorAdapter):
             headers={
                 "Authorization": f"token {token}",
                 "Accept": "application/vnd.github.v3+json",
-                "User-Agent": "Agentic-AI-Platform"
-            }
+                "User-Agent": "Agentic-AI-Platform",
+            },
         )
 
         if action == "list_issues":
@@ -143,15 +162,17 @@ class GitHubConnector(ConnectorAdapter):
             repo = params.get("repo")
             if not owner or not repo:
                 raise ValueError("owner and repo are required for list_issues")
-            
+
             # Implementation of pagination for list_issues
             all_issues = []
             async for issue in client.paginate(
-                "GET", 
+                "GET",
                 f"/repos/{owner}/{repo}/issues",
                 extract_list=lambda r: r if isinstance(r, list) else [],
-                next_page_params=lambda r, cp: {"page": cp.get("page", 1) + 1} if isinstance(r, list) and len(r) > 0 else None,
-                params=params
+                next_page_params=lambda r, cp: (
+                    {"page": cp.get("page", 1) + 1} if isinstance(r, list) and len(r) > 0 else None
+                ),
+                params=params,
             ):
                 all_issues.append(issue)
                 if len(all_issues) >= params.get("limit", 100):
@@ -179,15 +200,17 @@ class GitHubConnector(ConnectorAdapter):
                 issue_number = params.get("issue_number")
                 body = params.get("body")
                 if not owner or not repo or not issue_number or not body:
-                    raise ValueError("owner, repo, issue_number, and body are required for create_issue_comment")
-                
+                    raise ValueError(
+                        "owner, repo, issue_number, and body are required for create_issue_comment"
+                    )
+
                 result = await client.request(
-                    "POST", 
-                    f"/repos/{owner}/{repo}/issues/{issue_number}/comments", 
+                    "POST",
+                    f"/repos/{owner}/{repo}/issues/{issue_number}/comments",
                     json_data={"body": body},
-                    idempotency_key=idempotency_key
+                    idempotency_key=idempotency_key,
                 )
-            else: # create_issue
+            else:  # create_issue
                 owner = params.get("owner")
                 repo = params.get("repo")
                 title = params.get("title")
@@ -196,12 +219,12 @@ class GitHubConnector(ConnectorAdapter):
                 payload = {"title": title}
                 if params.get("body"):
                     payload["body"] = params["body"]
-                
+
                 result = await client.request(
-                    "POST", 
-                    f"/repos/{owner}/{repo}/issues", 
+                    "POST",
+                    f"/repos/{owner}/{repo}/issues",
                     json_data=payload,
-                    idempotency_key=idempotency_key
+                    idempotency_key=idempotency_key,
                 )
 
             await self._register_receipt(tenant_id, result, invocation_id)
@@ -216,10 +239,16 @@ class GitHubConnector(ConnectorAdapter):
         raise self._unsupported_action(
             action,
             mode="real",
-            supported_actions=["create_issue", "create_issue_comment", "get_issue", "list_issues", "search_repositories"],
+            supported_actions=[
+                "create_issue",
+                "create_issue_comment",
+                "get_issue",
+                "list_issues",
+                "search_repositories",
+            ],
         )
 
-    async def _execute_mock(self, action: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def _execute_mock(self, action: str, params: dict[str, Any]) -> dict[str, Any]:
         if action == "search_repositories":
             return self._with_execution_metadata(
                 {"repositories": [{"name": "repo1", "url": "https://github.com/org/repo1"}]},
@@ -232,7 +261,12 @@ class GitHubConnector(ConnectorAdapter):
             )
         elif action == "list_issues":
             return self._with_execution_metadata(
-                {"issues": [{"id": 1, "title": "Mock Issue 1"}, {"id": 2, "title": "Mock Issue 2"}]},
+                {
+                    "issues": [
+                        {"id": 1, "title": "Mock Issue 1"},
+                        {"id": 2, "title": "Mock Issue 2"},
+                    ]
+                },
                 mode="mock",
             )
         elif action == "create_issue_comment":
@@ -245,9 +279,15 @@ class GitHubConnector(ConnectorAdapter):
                 {"status": "success", "issue_id": "mock_issue_456"},
                 mode="mock",
             )
-            
+
         raise self._unsupported_action(
             action,
             mode="mock",
-            supported_actions=["create_issue", "create_issue_comment", "get_issue", "list_issues", "search_repositories"],
+            supported_actions=[
+                "create_issue",
+                "create_issue_comment",
+                "get_issue",
+                "list_issues",
+                "search_repositories",
+            ],
         )

@@ -1,10 +1,10 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from app.services.operations.forecasting.deterministic_engine import (
     DeterministicFailureForecastingEngine,
 )
 
-T0 = datetime(2026, 5, 15, 12, 0, 0, tzinfo=timezone.utc)
+T0 = datetime(2026, 5, 15, 12, 0, 0, tzinfo=UTC)
 ENGINE = DeterministicFailureForecastingEngine()
 
 
@@ -24,7 +24,6 @@ def _signal(**kw):
 
 
 class TestDeterminism:
-
     def test_same_input_produces_same_output(self):
         sigs = [
             _signal(signal_type="latency_spike", severity="critical"),
@@ -57,9 +56,16 @@ class TestDeterminism:
 
 
 class TestNoMutation:
-
     def test_normalize_does_not_mutate_original(self):
-        original = [{"signal_type": "latency", "source_domain": "runtime", "severity": "critical", "confidence": 0.9, "observed_at": T0}]
+        original = [
+            {
+                "signal_type": "latency",
+                "source_domain": "runtime",
+                "severity": "critical",
+                "confidence": 0.9,
+                "observed_at": T0,
+            }
+        ]
         copy_before = list(original)
         ENGINE.normalize_signals(original)
         assert original == copy_before
@@ -75,7 +81,6 @@ class TestNoMutation:
 
 
 class TestZeroRisk:
-
     def test_empty_signals_returns_zero_risk(self):
         f = ENGINE.forecast([])
         assert f["risk_score"] == 0.0
@@ -94,7 +99,6 @@ class TestZeroRisk:
 
 
 class TestSeverityDrivesRisk:
-
     def test_info_lowest_risk(self):
         f = ENGINE.forecast([_signal(severity="info")])
         assert f["risk_score"] > 0.0
@@ -120,7 +124,6 @@ class TestSeverityDrivesRisk:
 
 
 class TestInputHash:
-
     def test_hash_stable_for_same_signals(self):
         sigs = [
             _signal(signal_type="cpu", severity="info"),
@@ -151,7 +154,6 @@ class TestInputHash:
 
 
 class TestRecencyHeuristic:
-
     def test_recent_signals_boost_risk(self):
         recent = T0 - timedelta(minutes=5)
         old = T0 - timedelta(minutes=120)
@@ -173,7 +175,6 @@ class TestRecencyHeuristic:
 
 
 class TestRepetitionHeuristic:
-
     def test_repeated_signals_increase_risk(self):
         one = [_signal(signal_type="cpu", severity="warning")]
         many = [
@@ -195,7 +196,6 @@ class TestRepetitionHeuristic:
 
 
 class TestDomainDiversity:
-
     def test_more_domains_increase_confidence(self):
         single = [
             _signal(signal_type="cpu", source_domain="runtime"),
@@ -210,10 +210,7 @@ class TestDomainDiversity:
         assert f_multi["confidence"] > f_single["confidence"]
 
     def test_confidence_never_exceeds_0_95(self):
-        many_domains = [
-            _signal(signal_type=f"t{i}", source_domain=f"domain{i}")
-            for i in range(20)
-        ]
+        many_domains = [_signal(signal_type=f"t{i}", source_domain=f"domain{i}") for i in range(20)]
         f = ENGINE.forecast(many_domains)
         assert f["confidence"] <= 0.95
 
@@ -222,7 +219,6 @@ class TestDomainDiversity:
 
 
 class TestOutputContract:
-
     def test_forecast_contains_all_required_keys(self):
         f = ENGINE.forecast([_signal()])
         assert "forecast_type" in f
@@ -262,7 +258,6 @@ class TestOutputContract:
 
 
 class TestExplain:
-
     def test_explain_zero_risk(self):
         f = ENGINE.forecast([])
         text = ENGINE.explain_forecast(f)
@@ -283,7 +278,6 @@ class TestExplain:
 
 
 class TestEdgeCases:
-
     def test_missing_fields_do_not_crash(self):
         sigs = [{}]
         f = ENGINE.forecast(sigs)
@@ -297,7 +291,7 @@ class TestEdgeCases:
         assert f["advisory_only"] is True
 
     def test_explicit_reference_time(self):
-        custom_time = datetime(2025, 1, 1, tzinfo=timezone.utc)
+        custom_time = datetime(2025, 1, 1, tzinfo=UTC)
         f = ENGINE.forecast(
             [_signal(observed_at=T0)],
             reference_time=custom_time,
@@ -306,7 +300,12 @@ class TestEdgeCases:
 
     def test_forecast_with_no_timestamps(self):
         sigs = [
-            {"signal_type": "cpu", "source_domain": "runtime", "severity": "warning", "confidence": 0.5},
+            {
+                "signal_type": "cpu",
+                "source_domain": "runtime",
+                "severity": "warning",
+                "confidence": 0.5,
+            },
         ]
         f = ENGINE.forecast(sigs)
         assert f["risk_score"] > 0.0

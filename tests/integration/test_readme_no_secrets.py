@@ -56,7 +56,11 @@ def test_readme_no_real_api_keys():
 def test_readme_no_env_file_values():
     content = README.read_text(encoding="utf-8")
     for line in content.splitlines():
-        if "ADMIN_TOKEN=" in line and not line.strip().startswith("#") and not line.strip().startswith("```"):
+        if (
+            "ADMIN_TOKEN=" in line
+            and not line.strip().startswith("#")
+            and not line.strip().startswith("```")
+        ):
             value = line.split("ADMIN_TOKEN=", 1)[1].strip()
             assert "ChangeMe" in value or "***" in value or "..." in value or value == "", (
                 "Possible real ADMIN_TOKEN in README"
@@ -67,7 +71,9 @@ def test_check_secrets_on_readme():
     """Run check-secrets.sh --path on README.md."""
     result = subprocess.run(
         ["bash", str(CHECK_SECRETS), "--path", str(README), "--verbose"],
-        capture_output=True, text=True, timeout=30,
+        capture_output=True,
+        text=True,
+        timeout=30,
     )
     print(f"STDOUT:\n{result.stdout}")
     assert result.returncode == 0, f"Secrets found in README.md:\n{result.stdout}"
@@ -77,7 +83,9 @@ def test_check_secrets_on_validate_script():
     """Run check-secrets on the validate script."""
     result = subprocess.run(
         ["bash", str(CHECK_SECRETS), "--path", str(SCRIPT), "--verbose"],
-        capture_output=True, text=True, timeout=30,
+        capture_output=True,
+        text=True,
+        timeout=30,
     )
     print(f"STDOUT:\n{result.stdout}")
     assert result.returncode == 0, f"Secrets found in validate script:\n{result.stdout}"
@@ -91,6 +99,8 @@ def test_validate_script_exists():
 def test_validate_script_help():
     result = subprocess.run(
         ["bash", str(SCRIPT), "--help"],
-        capture_output=True, text=True, timeout=30,
+        capture_output=True,
+        text=True,
+        timeout=30,
     )
     assert result.returncode != 0 or "Usage" in result.stdout or "Validate" in result.stdout

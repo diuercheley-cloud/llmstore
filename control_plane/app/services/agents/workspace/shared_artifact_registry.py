@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.time import utc_now
 from app.models.agents.agent_workspace import (
@@ -21,17 +21,14 @@ SUPPORTED_ARTIFACT_TYPES = {
     "support_bundle",
     "workflow_definition",
     "prompt_baseline",
-    "tool_definition"
+    "tool_definition",
 }
+
 
 class SharedArtifactRegistry:
     @staticmethod
     async def create_workspace(
-        db: AsyncSession,
-        name: str,
-        tenant_id: str,
-        owner_id: str,
-        description: Optional[str] = None
+        db: AsyncSession, name: str, tenant_id: str, owner_id: str, description: str | None = None
     ) -> AgentWorkspace:
         """Creates a new collaborative workspace context."""
         workspace = AgentWorkspace(
@@ -40,7 +37,7 @@ class SharedArtifactRegistry:
             description=description,
             owner_id=owner_id,
             created_at=utc_now(),
-            updated_at=utc_now()
+            updated_at=utc_now(),
         )
         db.add(workspace)
         await db.commit()
@@ -48,7 +45,9 @@ class SharedArtifactRegistry:
         return workspace
 
     @staticmethod
-    async def get_workspace(db: AsyncSession, workspace_id: uuid.UUID, tenant_id: str) -> AgentWorkspace | None:
+    async def get_workspace(
+        db: AsyncSession, workspace_id: uuid.UUID, tenant_id: str
+    ) -> AgentWorkspace | None:
         """Gets a workspace, enforcing strict tenant isolation."""
         stmt = select(AgentWorkspace).where(AgentWorkspace.id == workspace_id)
         result = await db.execute(stmt)
@@ -58,7 +57,7 @@ class SharedArtifactRegistry:
         return workspace
 
     @staticmethod
-    async def list_workspaces(db: AsyncSession, tenant_id: str) -> List[AgentWorkspace]:
+    async def list_workspaces(db: AsyncSession, tenant_id: str) -> list[AgentWorkspace]:
         """Lists workspaces under a tenant."""
         stmt = select(AgentWorkspace).where(AgentWorkspace.tenant_id == tenant_id)
         result = await db.execute(stmt)
@@ -74,11 +73,11 @@ class SharedArtifactRegistry:
         artifact_type: str,
         content: str,
         creator_id: str,
-        creator_type: str, # human|agent
-        run_id: Optional[uuid.UUID] = None,
-        step_id: Optional[uuid.UUID] = None,
-        change_summary: Optional[str] = None,
-        version_metadata: Optional[Dict[str, Any]] = None
+        creator_type: str,  # human|agent
+        run_id: uuid.UUID | None = None,
+        step_id: uuid.UUID | None = None,
+        change_summary: str | None = None,
+        version_metadata: dict[str, Any] | None = None,
     ) -> AgentSharedArtifact:
         """Creates a shared artifact inside a workspace with an initial immutable version."""
         # 1. Fetch and validate workspace
@@ -88,7 +87,9 @@ class SharedArtifactRegistry:
 
         # 2. Validate artifact type
         if artifact_type not in SUPPORTED_ARTIFACT_TYPES:
-            raise ValueError(f"Unsupported artifact type '{artifact_type}'. Must be one of {SUPPORTED_ARTIFACT_TYPES}")
+            raise ValueError(
+                f"Unsupported artifact type '{artifact_type}'. Must be one of {SUPPORTED_ARTIFACT_TYPES}"
+            )
 
         # 3. Create the artifact skeleton
         artifact = AgentSharedArtifact(
@@ -99,10 +100,10 @@ class SharedArtifactRegistry:
             owner_id=owner_id,
             status="draft",
             created_at=utc_now(),
-            updated_at=utc_now()
+            updated_at=utc_now(),
         )
         db.add(artifact)
-        await db.flush() # Populate artifact.id
+        await db.flush()  # Populate artifact.id
 
         # 4. Create the initial version
         await ArtifactVersioningManager.create_version(
@@ -114,7 +115,7 @@ class SharedArtifactRegistry:
             run_id=run_id,
             step_id=step_id,
             change_summary=change_summary,
-            version_metadata=version_metadata
+            version_metadata=version_metadata,
         )
 
         # 5. Log artifact creation event
@@ -124,7 +125,7 @@ class SharedArtifactRegistry:
             actor_id=creator_id,
             actor_type=creator_type,
             payload={"name": name, "artifact_type": artifact_type},
-            created_at=utc_now()
+            created_at=utc_now(),
         )
         db.add(event)
         await db.commit()
@@ -133,7 +134,9 @@ class SharedArtifactRegistry:
         return artifact
 
     @staticmethod
-    async def get_artifact(db: AsyncSession, artifact_id: uuid.UUID, tenant_id: str) -> AgentSharedArtifact | None:
+    async def get_artifact(
+        db: AsyncSession, artifact_id: uuid.UUID, tenant_id: str
+    ) -> AgentSharedArtifact | None:
         """Gets an artifact, enforcing strict tenant isolation."""
         stmt = select(AgentSharedArtifact).where(AgentSharedArtifact.id == artifact_id)
         result = await db.execute(stmt)
@@ -143,7 +146,9 @@ class SharedArtifactRegistry:
         return artifact
 
     @staticmethod
-    async def list_artifacts(db: AsyncSession, workspace_id: uuid.UUID, tenant_id: str) -> List[AgentSharedArtifact]:
+    async def list_artifacts(
+        db: AsyncSession, workspace_id: uuid.UUID, tenant_id: str
+    ) -> list[AgentSharedArtifact]:
         """Lists artifacts inside a workspace, enforcing strict tenant isolation."""
         workspace = await SharedArtifactRegistry.get_workspace(db, workspace_id, tenant_id)
         if not workspace:
@@ -151,7 +156,7 @@ class SharedArtifactRegistry:
 
         stmt = select(AgentSharedArtifact).where(
             AgentSharedArtifact.workspace_id == workspace_id,
-            AgentSharedArtifact.tenant_id == tenant_id
+            AgentSharedArtifact.tenant_id == tenant_id,
         )
         result = await db.execute(stmt)
         return list(result.scalars().all())

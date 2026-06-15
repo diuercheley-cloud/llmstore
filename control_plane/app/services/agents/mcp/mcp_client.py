@@ -33,6 +33,7 @@ Feature flags:
   AGENT_MCP_CALL_TIMEOUT_MS
   AGENT_MCP_CALL_MAX_RETRIES
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -254,7 +255,9 @@ class MCPClient:
             if not server:
                 raise KeyError(f"MCP server '{server_id}' not found")
             if tenant_id and server.tenant_id != tenant_id:
-                raise PermissionError(f"Access denied to MCP server '{server_id}' for tenant '{tenant_id}'")
+                raise PermissionError(
+                    f"Access denied to MCP server '{server_id}' for tenant '{tenant_id}'"
+                )
             server.approved_tools.add(safe_name)
             MCPAuditLog.record(
                 "mcp_approve_tool",
@@ -265,7 +268,9 @@ class MCPClient:
             return {"server_id": server_id, "tool_name": safe_name, "approved": True}
         return self._approve_tool_async(server_id, tool_name, tenant_id)
 
-    async def _approve_tool_async(self, server_id: str, tool_name: str, tenant_id: str | None = None) -> dict[str, Any]:
+    async def _approve_tool_async(
+        self, server_id: str, tool_name: str, tenant_id: str | None = None
+    ) -> dict[str, Any]:
         """Add tool_name to the server's approved set."""
         server = await self._get_server(server_id, tenant_id)
         # Sanitize before adding to approved list
@@ -378,5 +383,7 @@ class MCPClient:
         if not server:
             raise KeyError(f"MCP server '{server_id}' not found")
         if tenant_id and server.tenant_id != tenant_id:
-            raise PermissionError(f"Access denied to MCP server '{server_id}' for tenant '{tenant_id}'")
+            raise PermissionError(
+                f"Access denied to MCP server '{server_id}' for tenant '{tenant_id}'"
+            )
         return server

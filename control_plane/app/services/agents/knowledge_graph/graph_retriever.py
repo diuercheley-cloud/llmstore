@@ -8,6 +8,7 @@ Exposes:
   - get_subgraph: bounded BFS subgraph from a starting entity
   - get_dependencies: directed dependency traversal
 """
+
 from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncSession

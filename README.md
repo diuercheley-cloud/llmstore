@@ -2,6 +2,14 @@
 
 **Sovereign, offline-first, deterministic AI platform with governed agentic runtime.**
 
+[![CI](https://github.com/diuercheley-cloud/llmstore/actions/workflows/ci.yml/badge.svg)](https://github.com/diuercheley-cloud/llmstore/actions/workflows/ci.yml)
+[![Security Scan](https://github.com/diuercheley-cloud/llmstore/actions/workflows/security-scheduled.yml/badge.svg)](https://github.com/diuercheley-cloud/llmstore/actions/workflows/security-scheduled.yml)
+[![Coverage](https://img.shields.io/badge/Coverage-Ratchets%20Enforced-blue)](docs/COVERAGE_CORE_AREAS.md)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-v2.0.9-blue)](https://github.com/diuercheley-cloud/llmstore/releases)
+[![Python Version](https://img.shields.io/badge/Python-3.12-blue.svg)](https://python.org)
+[![Node Version](https://img.shields.io/badge/Node-20.x-green.svg)](https://nodejs.org)
+
 > Current build: `v2.0.9`
 > Supported docs: [`docs/CANONICAL_INDEX.md`](docs/CANONICAL_INDEX.md)  
 > Supported surfaces: [`docs/support/supported-surface-area.md`](docs/support/supported-surface-area.md)  
@@ -90,6 +98,16 @@ The platform is organized into 12 bounded contexts with explicit contracts:
 | `operations` | Deterministic workflows, events, recovery |
 | `security` | Trust boundaries, crypto readiness, isolation |
 | `financial` | Billing, finance governance |
+
+## Operations
+
+To ensure project sustainability and reduce the [bus factor](docs/OWNERSHIP.md), we maintain comprehensive operational documentation:
+
+- **[Maintainer Runbook](docs/MAINTAINER_RUNBOOK.md)**: Procedures for local setup, testing, releases, rollbacks, and incident response.
+- **[Project Ownership](docs/OWNERSHIP.md)**: Domain-level responsibilities and governance rules.
+- **[Onboarding Checklist](docs/ONBOARDING_MAINTAINER.md)**: Step-by-step guide for new maintainers.
+- **[Dependency Update Policy](docs/DEPENDENCY_UPDATES.md)**: How automated updates are handled.
+
 | `sovereign` | Airgap, locality, tenant sovereignty |
 | `observability` | Local metrics, traces, sanitized visibility |
 | `data_governance` | Data zoning, lineage, retention |
@@ -530,6 +548,32 @@ Ambos os portais (**Admin Dashboard** e **Client Portal**) foram refatorados par
 - **Ícones:** Lucide React
 - **Gráficos:** Recharts (Responsive Containers)
 - **Build Tool:** Vite 8
+
+---
+
+## Code of Conduct
+
+We are committed to fostering a welcoming and safe community. Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+
+## License
+
+```
+Copyright 2026 Kleber AI / LLM Inference Stack Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
+
+This project is [Apache 2.0](LICENSE) licensed — see the [`LICENSE`](LICENSE) file for details.
 
 ---
 

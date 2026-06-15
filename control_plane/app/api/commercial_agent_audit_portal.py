@@ -4,14 +4,14 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from app.services.runtime_dependencies import get_db_session
-from app.models.core.client import Client
 from app.models.commercial.commercial_agents import (
     CommercialAgentAction,
     CommercialAgentExecution,
     CommercialAgentReplayRecord,
 )
+from app.models.core.client import Client
 from app.services.auth import require_client
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,13 +26,17 @@ async def list_portal_agent_executions(
 ) -> dict[str, Any]:
     tenant_id = str(client.id)
     rows = (
-        await db.execute(
-            select(CommercialAgentExecution)
-            .where(CommercialAgentExecution.tenant_id == tenant_id)
-            .order_by(desc(CommercialAgentExecution.started_at))
-            .limit(100)
+        (
+            await db.execute(
+                select(CommercialAgentExecution)
+                .where(CommercialAgentExecution.tenant_id == tenant_id)
+                .order_by(desc(CommercialAgentExecution.started_at))
+                .limit(100)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {
         "items": [
             {
@@ -89,13 +93,17 @@ async def list_portal_agent_replays(
 ) -> dict[str, Any]:
     tenant_id = str(client.id)
     rows = (
-        await db.execute(
-            select(CommercialAgentReplayRecord)
-            .where(CommercialAgentReplayRecord.tenant_id == tenant_id)
-            .order_by(desc(CommercialAgentReplayRecord.created_at))
-            .limit(100)
+        (
+            await db.execute(
+                select(CommercialAgentReplayRecord)
+                .where(CommercialAgentReplayRecord.tenant_id == tenant_id)
+                .order_by(desc(CommercialAgentReplayRecord.created_at))
+                .limit(100)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {
         "items": [
             {
@@ -118,16 +126,20 @@ async def list_portal_agent_violations(
 ) -> dict[str, Any]:
     tenant_id = str(client.id)
     rows = (
-        await db.execute(
-            select(CommercialAgentAction)
-            .where(
-                CommercialAgentAction.tenant_id == tenant_id,
-                CommercialAgentAction.status == "denied",
+        (
+            await db.execute(
+                select(CommercialAgentAction)
+                .where(
+                    CommercialAgentAction.tenant_id == tenant_id,
+                    CommercialAgentAction.status == "denied",
+                )
+                .order_by(desc(CommercialAgentAction.executed_at))
+                .limit(limit)
             )
-            .order_by(desc(CommercialAgentAction.executed_at))
-            .limit(limit)
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {
         "items": [
             {

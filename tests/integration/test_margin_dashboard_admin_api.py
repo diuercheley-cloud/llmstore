@@ -1,14 +1,16 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
-from app.models.core.client import Client
 from app.models.billing.request_financial import RequestFinancial
+from app.models.core.client import Client
 from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
 async def test_margin_dashboard_empty(admin_client: AsyncClient, admin_token_headers: dict):
-    response = await admin_client.get("/admin/financials/margin-dashboard", headers=admin_token_headers)
+    response = await admin_client.get(
+        "/admin/financials/margin-dashboard", headers=admin_token_headers
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["revenue_today_brl"] == 0.0
@@ -17,18 +19,21 @@ async def test_margin_dashboard_empty(admin_client: AsyncClient, admin_token_hea
     assert isinstance(data["requests_by_provider"], list)
     assert isinstance(data["clients_with_negative_margin"], list)
 
+
 @pytest.mark.asyncio
 async def test_margin_dashboard_no_leaks(admin_client: AsyncClient, admin_token_headers: dict):
-    response = await admin_client.get("/admin/financials/margin-dashboard", headers=admin_token_headers)
+    response = await admin_client.get(
+        "/admin/financials/margin-dashboard", headers=admin_token_headers
+    )
     assert response.status_code == 200
     data_str = response.text
-    
+
     # Ensure no secrets leak
     assert "api_key" not in data_str.lower()
     assert "sk-" not in data_str
     assert "prompt" not in data_str.lower()
     assert "completion" not in data_str.lower()
-    
+
     data = response.json()
     # Ensure schema matches what's expected without sensitive fields
     assert "generated_at_utc" in data
@@ -52,7 +57,7 @@ async def test_margin_dashboard_aggregates_current_day(
         session.add_all([client, loss_client])
         await session.flush()
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         session.add_all(
             [
                 RequestFinancial(
@@ -91,7 +96,9 @@ async def test_margin_dashboard_aggregates_current_day(
     finally:
         await session_generator.aclose()
 
-    response = await admin_client.get("/admin/financials/margin-dashboard", headers=admin_token_headers)
+    response = await admin_client.get(
+        "/admin/financials/margin-dashboard", headers=admin_token_headers
+    )
     assert response.status_code == 200
 
     data = response.json()

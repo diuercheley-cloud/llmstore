@@ -10,4 +10,3 @@ def build_trace_hash(client_id: str, trace_name: str, trace_scope: str, subject_
             "subject_ref": subject_ref,
         }
     )
-

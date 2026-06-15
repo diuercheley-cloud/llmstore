@@ -95,32 +95,40 @@ class SWEBenchAdapter:
                     try:
                         proc = subprocess.run(
                             ["python3", "-m", "pytest", tp, "-x", "--tb=short"],
-                            capture_output=True, text=True, timeout=30,
+                            capture_output=True,
+                            text=True,
+                            timeout=30,
                         )
                         passed = proc.returncode == 0
-                        test_results.append({
-                            "test_path": tp,
-                            "passed": passed,
-                            "output": proc.stdout[-200:] if proc.stdout else "",
-                            "error": proc.stderr[-200:] if proc.stderr else "",
-                        })
+                        test_results.append(
+                            {
+                                "test_path": tp,
+                                "passed": passed,
+                                "output": proc.stdout[-200:] if proc.stdout else "",
+                                "error": proc.stderr[-200:] if proc.stderr else "",
+                            }
+                        )
                         if passed:
                             tests_passed += 1
                         else:
                             tests_failed += 1
                     except subprocess.TimeoutExpired:
-                        test_results.append({
-                            "test_path": tp,
-                            "passed": False,
-                            "error": "timeout",
-                        })
+                        test_results.append(
+                            {
+                                "test_path": tp,
+                                "passed": False,
+                                "error": "timeout",
+                            }
+                        )
                         tests_failed += 1
                     except FileNotFoundError:
-                        test_results.append({
-                            "test_path": tp,
-                            "passed": False,
-                            "error": "pytest not found",
-                        })
+                        test_results.append(
+                            {
+                                "test_path": tp,
+                                "passed": False,
+                                "error": "pytest not found",
+                            }
+                        )
                         tests_failed += 1
 
         solved = res.success and tests_failed == 0

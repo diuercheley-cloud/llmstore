@@ -5,7 +5,7 @@ import logging
 import time
 import uuid
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.config import get_settings
 from app.models.agents.agents import AgentDefinition, AgentRun
@@ -41,9 +41,21 @@ class ProviderResponse(dict):
     """Structured provider response that is also dict-compatible for backward compatibility."""
 
     _KNOWN_KEYS = [
-        "type", "output", "usage", "cost_brl", "provider_type", "model_id",
-        "backend_id", "backend_name", "execution_mode", "tokens", "latency",
-        "fallback_used", "validation_status", "tool_name", "tool_input",
+        "type",
+        "output",
+        "usage",
+        "cost_brl",
+        "provider_type",
+        "model_id",
+        "backend_id",
+        "backend_name",
+        "execution_mode",
+        "tokens",
+        "latency",
+        "fallback_used",
+        "validation_status",
+        "tool_name",
+        "tool_input",
         "route_decision_id",
     ]
 
@@ -51,20 +63,20 @@ class ProviderResponse(dict):
         self,
         type: str = "final",
         output: str = "",
-        usage: Optional[Dict[str, int]] = None,
+        usage: dict[str, int] | None = None,
         cost_brl: float = 0.0,
         provider_type: str = "",
         model_id: str = "",
         backend_id: str = "",
         backend_name: str = "",
         execution_mode: str = "",
-        tokens: Optional[Dict[str, int]] = None,
+        tokens: dict[str, int] | None = None,
         latency: float = 0.0,
         fallback_used: bool = False,
         validation_status: str = "not_validated",
-        tool_name: Optional[str] = None,
-        tool_input: Optional[Dict[str, Any]] = None,
-        route_decision_id: Optional[str] = None,
+        tool_name: str | None = None,
+        tool_input: dict[str, Any] | None = None,
+        route_decision_id: str | None = None,
     ):
         _usage = usage or {"prompt_tokens": 0, "completion_tokens": 0}
         _tokens = tokens or {}
@@ -99,7 +111,7 @@ class ProviderResponse(dict):
         return self.get("output", "")
 
     @property
-    def usage(self) -> Dict[str, int]:
+    def usage(self) -> dict[str, int]:
         return self.get("usage", {"prompt_tokens": 0, "completion_tokens": 0})
 
     @property
@@ -127,7 +139,7 @@ class ProviderResponse(dict):
         return self.get("execution_mode", "")
 
     @property
-    def tokens(self) -> Dict[str, int]:
+    def tokens(self) -> dict[str, int]:
         return self.get("tokens", {})
 
     @property
@@ -143,18 +155,18 @@ class ProviderResponse(dict):
         return self.get("validation_status", "not_validated")
 
     @property
-    def tool_name(self) -> Optional[str]:
+    def tool_name(self) -> str | None:
         return self.get("tool_name")
 
     @property
-    def tool_input(self) -> Optional[Dict[str, Any]]:
+    def tool_input(self) -> dict[str, Any] | None:
         return self.get("tool_input")
 
     @property
-    def route_decision_id(self) -> Optional[str]:
+    def route_decision_id(self) -> str | None:
         return self.get("route_decision_id")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return dict(self)
 
 
@@ -172,8 +184,8 @@ class AgentLLMProvider(abc.ABC):
         self,
         agent_def: AgentDefinition,
         run: AgentRun,
-        allowed_tools: List[str],
-        input_override: Optional[str] = None,
+        allowed_tools: list[str],
+        input_override: str | None = None,
     ) -> ProviderResponse:
         pass
 
@@ -186,7 +198,7 @@ class AgentLLMProvider(abc.ABC):
 class MockAgentLLMProvider(AgentLLMProvider):
     """Mock LLM Provider for testing agent executions. NEVER used silently in production."""
 
-    def __init__(self, responses: Optional[List[Dict[str, Any]]] = None):
+    def __init__(self, responses: list[dict[str, Any]] | None = None):
         self.responses = responses or []
         self.current_idx = 0
         self._provider_type = LLMProviderType.MOCK
@@ -199,8 +211,8 @@ class MockAgentLLMProvider(AgentLLMProvider):
         self,
         agent_def: AgentDefinition,
         run: AgentRun,
-        allowed_tools: List[str],
-        input_override: Optional[str] = None,
+        allowed_tools: list[str],
+        input_override: str | None = None,
     ) -> ProviderResponse:
         start_time = time.time()
 
@@ -212,7 +224,7 @@ class MockAgentLLMProvider(AgentLLMProvider):
                 "type": "final",
                 "output": "Default mock response",
                 "usage": {"prompt_tokens": 10, "completion_tokens": 5},
-                "cost_brl": 0.00075
+                "cost_brl": 0.00075,
             }
 
         latency = (time.time() - start_time) * 1000
@@ -226,7 +238,10 @@ class MockAgentLLMProvider(AgentLLMProvider):
             provider_type=LLMProviderType.MOCK.value,
             model_id=agent_def.model_id if agent_def else "mock-model",
             execution_mode=self._detect_execution_mode(),
-            tokens={"prompt": usage.get("prompt_tokens", 0), "completion": usage.get("completion_tokens", 0)},
+            tokens={
+                "prompt": usage.get("prompt_tokens", 0),
+                "completion": usage.get("completion_tokens", 0),
+            },
             latency=latency,
             fallback_used=False,
             validation_status="mock_bypass",
@@ -260,27 +275,33 @@ class GatewayAgentLLMProvider(AgentLLMProvider):
 
         try:
             client_uuid = uuid.UUID(run.tenant_id)
-            stmt = select(Client).options(
-                selectinload(Client.billing_plan).selectinload(BillingPlan.pricing_rules)
-            ).where(Client.id == client_uuid)
+            stmt = (
+                select(Client)
+                .options(selectinload(Client.billing_plan).selectinload(BillingPlan.pricing_rules))
+                .where(Client.id == client_uuid)
+            )
         except ValueError:
-            stmt = select(Client).options(
-                selectinload(Client.billing_plan).selectinload(BillingPlan.pricing_rules)
-            ).where(Client.name == run.tenant_id)
+            stmt = (
+                select(Client)
+                .options(selectinload(Client.billing_plan).selectinload(BillingPlan.pricing_rules))
+                .where(Client.name == run.tenant_id)
+            )
 
         res = await self.db.execute(stmt)
         client = res.scalar_one_or_none()
 
         if not client:
-            raise HTTPException(status_code=403, detail=f"No client found for tenant {run.tenant_id}")
+            raise HTTPException(
+                status_code=403, detail=f"No client found for tenant {run.tenant_id}"
+            )
         return client
 
     async def generate(
         self,
         agent_def: AgentDefinition,
         run: AgentRun,
-        allowed_tools: List[str],
-        input_override: Optional[str] = None,
+        allowed_tools: list[str],
+        input_override: str | None = None,
     ) -> ProviderResponse:
         start_time = time.time()
 
@@ -296,9 +317,7 @@ class GatewayAgentLLMProvider(AgentLLMProvider):
             client = await self._resolve_client(run)
 
             selected_model, _ = await resolve_requested_model(
-                self.db,
-                client=client,
-                requested_model=agent_def.model_id
+                self.db, client=client, requested_model=agent_def.model_id
             )
 
             routes = plan_routing_order(selected_model, client=client)
@@ -308,6 +327,7 @@ class GatewayAgentLLMProvider(AgentLLMProvider):
             raise ProviderUnavailableError(f"Provider unavailable: {e.detail}") from e
 
         from app.services.agents.agent_memory import AgentMemoryService
+
         memory_service = AgentMemoryService(self.db)
         history = await memory_service.get_chat_history(run.id)
 
@@ -317,7 +337,7 @@ class GatewayAgentLLMProvider(AgentLLMProvider):
 
         effective_input = input_override if input_override is not None else run.input_text
         multimodal_asset_id = getattr(run, "multimodal_asset_id", None)
-        
+
         asset_info = ""
         settings = get_settings()
         if settings.multimodal_enabled and multimodal_asset_id:
@@ -332,7 +352,9 @@ class GatewayAgentLLMProvider(AgentLLMProvider):
                 if asset:
                     if asset.asset_type == "image" and settings.vision_input_enabled:
                         vision = VisionService(self.db)
-                        res = await vision.analyze_image(asset.client_id, asset.tenant_id, asset.id, do_ocr=True)
+                        res = await vision.analyze_image(
+                            asset.client_id, asset.tenant_id, asset.id, do_ocr=True
+                        )
                         asset_info = f"\n[Asset Description: {res.get('description')}][Asset OCR: {res.get('ocr_text')}]"
                     elif asset.asset_type == "document" and settings.document_vision_enabled:
                         doc = DocumentVisionService(self.db)
@@ -351,7 +373,9 @@ class GatewayAgentLLMProvider(AgentLLMProvider):
                 content = f"{content}\n[Asset Reference: {multimodal_asset_id}]{asset_info}"
             messages.append({"role": "user", "content": content})
         elif multimodal_asset_id:
-            messages.append({"role": "user", "content": f"[Asset Reference: {multimodal_asset_id}]{asset_info}"})
+            messages.append(
+                {"role": "user", "content": f"[Asset Reference: {multimodal_asset_id}]{asset_info}"}
+            )
 
         payload = {
             "model": selected_model.model_id,
@@ -362,9 +386,9 @@ class GatewayAgentLLMProvider(AgentLLMProvider):
         if allowed_tools:
             from app.models.agents.agents import AgentTool
             from sqlalchemy import select as sa_select
+
             stmt_tools = sa_select(AgentTool).where(
-                AgentTool.name.in_(allowed_tools),
-                AgentTool.enabled == True
+                AgentTool.name.in_(allowed_tools), AgentTool.enabled == True
             )
             res_tools = await self.db.execute(stmt_tools)
             db_tools = res_tools.scalars().all()
@@ -379,14 +403,16 @@ class GatewayAgentLLMProvider(AgentLLMProvider):
                         except json.JSONDecodeError:
                             schema = {"type": "object", "properties": {}}
 
-                    payload["tools"].append({
-                        "type": "function",
-                        "function": {
-                            "name": t.name,
-                            "description": t.description or "",
-                            "parameters": schema or {"type": "object", "properties": {}}
+                    payload["tools"].append(
+                        {
+                            "type": "function",
+                            "function": {
+                                "name": t.name,
+                                "description": t.description or "",
+                                "parameters": schema or {"type": "object", "properties": {}},
+                            },
                         }
-                    })
+                    )
 
         last_exc = None
         effective_plan = resolve_effective_plan(client)
@@ -408,7 +434,7 @@ class GatewayAgentLLMProvider(AgentLLMProvider):
                     effective_plan.weekly_token_quota,
                     effective_plan.monthly_token_quota,
                     incoming_tokens=0,
-                    requests_per_day_limit=effective_plan.requests_per_day
+                    requests_per_day_limit=effective_plan.requests_per_day,
                 )
 
                 forward_result: ForwardResult = await self.proxy.chat(
@@ -437,16 +463,21 @@ class GatewayAgentLLMProvider(AgentLLMProvider):
                     prompt_tokens=prompt_tokens,
                     completion_tokens=completion_tokens,
                     token_count_method=usage.get("tokenizer_used"),
-                    tokens_estimated=usage.get("fallback_used", True)
+                    tokens_estimated=usage.get("fallback_used", True),
                 )
 
                 from decimal import Decimal
-                cost_est = float(estimate_request_cost(
-                    monthly_tokens_used_before=0,
-                    request_tokens=prompt_tokens + completion_tokens,
-                    included_monthly_tokens=effective_plan.monthly_token_quota,
-                    overage_price_per_1k_tokens=Decimal(str(effective_plan.overage_price_per_1k_tokens))
-                ))
+
+                cost_est = float(
+                    estimate_request_cost(
+                        monthly_tokens_used_before=0,
+                        request_tokens=prompt_tokens + completion_tokens,
+                        included_monthly_tokens=effective_plan.monthly_token_quota,
+                        overage_price_per_1k_tokens=Decimal(
+                            str(effective_plan.overage_price_per_1k_tokens)
+                        ),
+                    )
+                )
 
                 choices = response_data.get("choices", [])
                 if not choices:
@@ -489,7 +520,9 @@ class GatewayAgentLLMProvider(AgentLLMProvider):
                 return resp
 
             except Exception as e:
-                logger.exception(f"LLM Gateway call failed on route {route.id} for backend {backend.name}")
+                logger.exception(
+                    f"LLM Gateway call failed on route {route.id} for backend {backend.name}"
+                )
                 last_exc = e
                 fallback_used = True
                 continue
@@ -513,8 +546,8 @@ class RealAgentLLMProvider(AgentLLMProvider):
         self,
         agent_def: AgentDefinition,
         run: AgentRun,
-        allowed_tools: List[str],
-        input_override: Optional[str] = None,
+        allowed_tools: list[str],
+        input_override: str | None = None,
     ) -> ProviderResponse:
         start_time = time.time()
 
@@ -564,7 +597,7 @@ def validate_provider_for_mode(provider_type: LLMProviderType, deployment_mode: 
 
 def get_agent_llm_provider(
     db: AsyncSession,
-    proxy: Optional[InferenceProxy] = None,
+    proxy: InferenceProxy | None = None,
 ) -> AgentLLMProvider:
     settings = get_settings()
     provider_str = getattr(settings, "agent_llm_provider", "mock")

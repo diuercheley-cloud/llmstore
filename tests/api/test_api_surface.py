@@ -18,11 +18,13 @@ async def setup_db():
 
 
 @pytest.mark.asyncio
-async def test_api_surface_deprecated_endpoint(async_client: AsyncClient, admin_token_headers: dict):
+async def test_api_surface_deprecated_endpoint(
+    async_client: AsyncClient, admin_token_headers: dict
+):
     # GET /admin/models/runtime is marked as deprecated
     response = await async_client.get("/admin/models/runtime", headers=admin_token_headers)
     assert response.status_code == 200
-    
+
     assert response.headers.get("X-API-Surface-Status") == "deprecated"
     assert response.headers.get("X-Deprecated-Endpoint") == "true"
     assert response.headers.get("X-Replacement-Endpoint") == "/admin/models/lifecycle"
@@ -33,21 +35,23 @@ async def test_api_surface_supported_endpoint(async_client: AsyncClient, admin_t
     # GET /admin/system/api-surface is marked as supported
     response = await async_client.get("/admin/system/api-surface", headers=admin_token_headers)
     assert response.status_code == 200
-    
+
     assert response.headers.get("X-API-Surface-Status") == "supported"
     assert "X-Deprecated-Endpoint" not in response.headers
     assert "X-Replacement-Endpoint" not in response.headers
 
 
 @pytest.mark.asyncio
-async def test_api_surface_get_system_api_surface_data(async_client: AsyncClient, admin_token_headers: dict):
+async def test_api_surface_get_system_api_surface_data(
+    async_client: AsyncClient, admin_token_headers: dict
+):
     response = await async_client.get("/admin/system/api-surface", headers=admin_token_headers)
     assert response.status_code == 200
-    
+
     data = response.json()
     assert isinstance(data, list)
     assert len(data) > 0
-    
+
     # Check that a known entry exists
     found_deprecated = False
     for entry in data:
@@ -56,7 +60,7 @@ async def test_api_surface_get_system_api_surface_data(async_client: AsyncClient
             assert entry["replacement"] == "/admin/models/lifecycle"
             found_deprecated = True
             break
-            
+
     assert found_deprecated is True
 
 
@@ -73,12 +77,12 @@ def test_api_surface_check_fails_on_unclassified(monkeypatch, tmp_path):
             "replacement": None,
             "since_version": "1.0.0",
             "deprecation_version": None,
-            "docs_url": "/docs/api/supported-api-surface.md"
+            "docs_url": "/docs/api/supported-api-surface.md",
         }
     ]
     with open(mock_yaml, "w", encoding="utf-8") as f:
         yaml.safe_dump(mock_data, f)
-        
+
     # Monkeypatch the base_dir or yaml_path in scripts/check_api_surface
     monkeypatch.setattr("scripts.check_api_surface.base_dir", str(tmp_path))
     # Rename mock file to expected location

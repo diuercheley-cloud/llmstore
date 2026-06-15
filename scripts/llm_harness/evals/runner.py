@@ -23,7 +23,6 @@ logger = logging.getLogger(__name__)
 
 
 class EvalRunner:
-
     def __init__(
         self,
         suite: EvalSuite,
@@ -110,9 +109,7 @@ class EvalRunner:
 
     def _get_judge(self) -> Any:
         if self._judge_instance is None:
-            self._judge_instance = create_judge(
-                str(self.judge_provider), self._judge_config
-            )
+            self._judge_instance = create_judge(str(self.judge_provider), self._judge_config)
         return self._judge_instance
 
     async def run_all(self, concurrency: int = 1) -> EvalResult:
@@ -169,14 +166,13 @@ class EvalRunner:
         # Store feedback in memory if available
         # Need to import LocalMemory and initialize it if enabled
         from ..memory import LocalMemory
+
         # Re-using track_dir for memory if not explicitly provided
         memory = LocalMemory(memory_dir=".llm_harness_memory")
         memory.store_eval_feedback(self.suite.name, feedback)
 
         judge_scores = [
-            cs.judge_verdict.score
-            for cs in case_scores
-            if cs.judge_verdict is not None
+            cs.judge_verdict.score for cs in case_scores if cs.judge_verdict is not None
         ]
         judge_avg = sum(judge_scores) / len(judge_scores) if judge_scores else 0.0
 
@@ -239,10 +235,11 @@ class EvalRunner:
             metadata = {
                 "run_id": self._run_id,
                 "config": metrics.to_dict(),
-                "metrics": metrics.to_dict()
+                "metrics": metrics.to_dict(),
             }
             if self.mlflow_tracking_uri:
                 import os
+
                 os.environ["MLFLOW_TRACKING_URI"] = self.mlflow_tracking_uri
 
             exporter.export_run(tracker.run_dir, metadata)
@@ -254,6 +251,7 @@ class EvalRunner:
         logger.info("Running case '%s': %s", case.id, case.task)
 
         from ..tracing import Tracer
+
         tracer = Tracer()
         span_id = tracer.start_span("eval_case", attributes={"case_id": case.id, "task": case.task})
         loop_timeout = case.timeout_seconds or 300

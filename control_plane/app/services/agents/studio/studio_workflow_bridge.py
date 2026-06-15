@@ -1,6 +1,6 @@
 import logging
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.models.agents.agent_studio import AgentFlowDefinition, AgentFlowVersion
 from app.models.agents.agent_workflows import AgentWorkflowRun
@@ -28,7 +28,7 @@ class StudioWorkflowBridge:
         self,
         flow_id: uuid.UUID,
         tenant_id: str,
-        input_data: Optional[Dict[str, Any]] = None,
+        input_data: dict[str, Any] | None = None,
     ) -> AgentWorkflowRun:
         flow = await self.db.get(AgentFlowDefinition, flow_id)
         if not flow or flow.tenant_id != tenant_id:
@@ -37,6 +37,7 @@ class StudioWorkflowBridge:
         # Get active version
         from app.models.agents.agent_studio import AgentFlowVersion
         from sqlalchemy import select
+
         stmt = select(AgentFlowVersion).where(
             AgentFlowVersion.flow_id == flow_id,
             AgentFlowVersion.is_active == True,
@@ -56,6 +57,7 @@ class StudioWorkflowBridge:
 
         # Create workflow definition from flow
         from app.models.agents.agent_workflows import AgentWorkflowDefinition
+
         wf_def = AgentWorkflowDefinition(
             name=flow.name,
             tenant_id=tenant_id,
@@ -77,7 +79,7 @@ class StudioWorkflowBridge:
     async def compile_flow_to_dag(
         self,
         version_id: uuid.UUID,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         version = await self.db.get(AgentFlowVersion, version_id)
         if not version:
             raise ValueError("Version not found")

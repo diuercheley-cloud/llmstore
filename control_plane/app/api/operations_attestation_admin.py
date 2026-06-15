@@ -1,5 +1,5 @@
 # Owner: platform-ops
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 from app.api.dependencies import get_current_admin, get_db
@@ -87,7 +87,7 @@ class AttestationResponse(BaseModel):
     attestation_status: str
     payload_hash: str
     attestation_hash: str
-    previous_attestation_hash: Optional[str]
+    previous_attestation_hash: str | None
     signature: str
     attestation_chain_position: str
     replay_verifiable: bool
@@ -147,7 +147,9 @@ def _serialize_bundle(bundle: AttestationFederationBundle) -> dict[str, Any]:
     }
 
 
-async def _get_attestation_or_404(db: AsyncSession, attestation_id: str, client_id: UUID) -> SovereignExecutionAttestation:
+async def _get_attestation_or_404(
+    db: AsyncSession, attestation_id: str, client_id: UUID
+) -> SovereignExecutionAttestation:
     result = await db.execute(
         select(SovereignExecutionAttestation).where(
             SovereignExecutionAttestation.id == attestation_id,
@@ -162,15 +164,21 @@ async def _get_attestation_or_404(db: AsyncSession, attestation_id: str, client_
 
 async def _get_or_create_policy(db: AsyncSession, client_id: UUID) -> AttestationTrustPolicy:
     result = await db.execute(
-        select(AttestationTrustPolicy).where(AttestationTrustPolicy.client_id == client_id).order_by(AttestationTrustPolicy.created_at.desc())
+        select(AttestationTrustPolicy)
+        .where(AttestationTrustPolicy.client_id == client_id)
+        .order_by(AttestationTrustPolicy.created_at.desc())
     )
     policy = result.scalars().first()
     if policy:
         return policy
     allowed = {"allowed": list(ATTESTATION_TYPES)}
-    immutable_hash = sha256_hex({"kind": "attestation_policy", "client_id": str(client_id), "allowed": allowed})
+    immutable_hash = sha256_hex(
+        {"kind": "attestation_policy", "client_id": str(client_id), "allowed": allowed}
+    )
     policy = AttestationTrustPolicy(
-        id=sha256_hex({"kind": "attestation_policy_id", "client_id": str(client_id), "policy_name": "default"}),
+        id=sha256_hex(
+            {"kind": "attestation_policy_id", "client_id": str(client_id), "policy_name": "default"}
+        ),
         client_id=client_id,
         policy_name="default",
         allowed_attestation_types_json=allowed,
@@ -208,7 +216,9 @@ async def create_attestation(
             "payload": request.payload,
             "signature": request.signature,
             "previous_attestation_hash": previous.attestation_hash if previous else None,
-            "attestation_chain_position": str((int(previous.attestation_chain_position) + 1) if previous else 1),
+            "attestation_chain_position": str(
+                (int(previous.attestation_chain_position) + 1) if previous else 1
+            ),
             "replay_verifiable": True,
             "offline_verifiable": True,
         },
@@ -217,7 +227,13 @@ async def create_attestation(
     db.add(attestation)
     receipt_payload = build_attestation_receipt(attestation)
     receipt = AttestationReceipt(
-        id=sha256_hex({"kind": "attestation_receipt_id", "attestation_id": attestation.id, "payload_hash": receipt_payload["payload_hash"]}),
+        id=sha256_hex(
+            {
+                "kind": "attestation_receipt_id",
+                "attestation_id": attestation.id,
+                "payload_hash": receipt_payload["payload_hash"],
+            }
+        ),
         client_id=attestation.client_id,
         attestation_id=attestation.id,
         receipt_type=receipt_payload["receipt_type"],
@@ -234,7 +250,9 @@ async def create_attestation(
             **receipt_payload,
             "generated_at": receipt_payload["generated_at"].isoformat(),
         },
-        "audit_event": build_attestation_audit_event("attestation_issued", str(attestation.client_id), {"attestation_id": attestation.id}),
+        "audit_event": build_attestation_audit_event(
+            "attestation_issued", str(attestation.client_id), {"attestation_id": attestation.id}
+        ),
     }
 
 
@@ -282,9 +300,26 @@ async def verify_attestation(
     verification.replay_verified = replay_result["match"]
     verification.chain_verified = ATTESTATION_SERVICE.validate_chain_integrity(chain)
     verification.offline_verified = attestation.offline_verifiable
-    verification.verification_status = "passed" if verification.replay_verified and verification.chain_verified and verification.offline_verified and policy_result["allowed"] else "failed"
-    verification.immutable_hash = sha256_hex({"kind": "verification", "attestation_id": attestation.id, "status": verification.verification_status})
-    attestation.attestation_status = "verified" if verification.verification_status == "passed" else attestation.attestation_status
+    verification.verification_status = (
+        "passed"
+        if verification.replay_verified
+        and verification.chain_verified
+        and verification.offline_verified
+        and policy_result["allowed"]
+        else "failed"
+    )
+    verification.immutable_hash = sha256_hex(
+        {
+            "kind": "verification",
+            "attestation_id": attestation.id,
+            "status": verification.verification_status,
+        }
+    )
+    attestation.attestation_status = (
+        "verified"
+        if verification.verification_status == "passed"
+        else attestation.attestation_status
+    )
     db.add(verification)
     await db.commit()
     verification_receipt = build_verification_receipt(verification)
@@ -317,7 +352,11 @@ async def revoke_attestation(
     await db.commit()
     return {
         "attestation": _serialize_attestation(attestation),
-        "audit_event": build_attestation_audit_event("attestation_revoked", str(request.client_id), {"attestation_id": attestation.id, "reason": request.reason}),
+        "audit_event": build_attestation_audit_event(
+            "attestation_revoked",
+            str(request.client_id),
+            {"attestation_id": attestation.id, "reason": request.reason},
+        ),
     }
 
 
@@ -390,13 +429,19 @@ async def import_attestation_bundle(
     if existing_bundle:
         return {
             "bundle": _serialize_bundle(existing_bundle),
-            "audit_event": build_attestation_audit_event("attestation_bundle_imported", str(request.client_id), {"bundle_id": existing_bundle.id}),
+            "audit_event": build_attestation_audit_event(
+                "attestation_bundle_imported",
+                str(request.client_id),
+                {"bundle_id": existing_bundle.id},
+            ),
         }
     db.add(bundle)
     await db.commit()
     return {
         "bundle": _serialize_bundle(bundle),
-        "audit_event": build_attestation_audit_event("attestation_bundle_imported", str(request.client_id), {"bundle_id": bundle.id}),
+        "audit_event": build_attestation_audit_event(
+            "attestation_bundle_imported", str(request.client_id), {"bundle_id": bundle.id}
+        ),
     }
 
 
@@ -483,10 +528,20 @@ async def create_attestation_receipt(
                 **receipt_payload,
                 "generated_at": existing_receipt.generated_at.isoformat(),
             },
-            "audit_event": build_attestation_audit_event("attestation_receipt_created", str(request.client_id), {"attestation_id": attestation.id}),
+            "audit_event": build_attestation_audit_event(
+                "attestation_receipt_created",
+                str(request.client_id),
+                {"attestation_id": attestation.id},
+            ),
         }
     receipt = AttestationReceipt(
-        id=sha256_hex({"kind": "attestation_receipt_id", "attestation_id": attestation.id, "immutable_hash": receipt_payload["immutable_hash"]}),
+        id=sha256_hex(
+            {
+                "kind": "attestation_receipt_id",
+                "attestation_id": attestation.id,
+                "immutable_hash": receipt_payload["immutable_hash"],
+            }
+        ),
         client_id=attestation.client_id,
         attestation_id=attestation.id,
         receipt_type=receipt_payload["receipt_type"],
@@ -501,5 +556,9 @@ async def create_attestation_receipt(
             **receipt_payload,
             "generated_at": receipt_payload["generated_at"].isoformat(),
         },
-        "audit_event": build_attestation_audit_event("attestation_receipt_created", str(request.client_id), {"attestation_id": attestation.id}),
+        "audit_event": build_attestation_audit_event(
+            "attestation_receipt_created",
+            str(request.client_id),
+            {"attestation_id": attestation.id},
+        ),
     }

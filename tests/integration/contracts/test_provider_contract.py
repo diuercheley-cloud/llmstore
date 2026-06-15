@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any
 
 import pytest
 from app.contracts.provider import (
@@ -10,10 +10,10 @@ from app.contracts.provider import (
 
 
 class MockProvider(ProviderContract):
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         return {"status": "ok"}
 
-    async def list_models(self) -> List[str]:
+    async def list_models(self) -> list[str]:
         return ["model-1"]
 
     async def chat_completion(self, request: ProviderRequest) -> ProviderResponse:
@@ -31,19 +31,21 @@ class MockProvider(ProviderContract):
     def validate_contract(self) -> bool:
         return True
 
+
 @pytest.mark.asyncio
 async def test_provider_contract_implementation():
     provider = MockProvider()
     assert provider.validate_contract() is True
-    
+
     request = ProviderRequest(model="test-model", payload={"messages": []})
     response = await provider.chat_completion(request)
     assert response.id == "1"
     assert response.model == "test-model"
-    
+
     caps = provider.capabilities()
     assert caps.chat is True
     assert caps.streaming is False
+
 
 def test_provider_contract_runtime_check():
     assert isinstance(MockProvider(), ProviderContract)

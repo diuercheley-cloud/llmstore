@@ -1,14 +1,13 @@
 # Owner: commercial-ops
 import uuid
-from datetime import datetime, UTC
-from typing import Optional
+from datetime import UTC, datetime
 
-from app.services.runtime_dependencies import get_db_session
 from app.models.commercial.commercial_financial_anomaly import CommercialFinancialAnomaly
 from app.models.commercial.commercial_revenue_forecast import CommercialRevenueForecast
 from app.services.auth import require_admin
 from app.services.billing.financial_anomaly_detection import FinancialAnomalyDetectionService
 from app.services.billing.revenue_forecasting import RevenueForecastingService
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import desc, select
@@ -30,26 +29,26 @@ class ForecastOverview(BaseModel):
 
 
 class AnomalyAckRequest(BaseModel):
-    explanation: Optional[str] = None
+    explanation: str | None = None
 
 
 @router.get("/forecast/overview", response_model=ForecastOverview)
 async def get_forecast_overview(session: AsyncSession = Depends(get_db_session)):
     svc = RevenueForecastingService(session)
-    
+
     # Get latest forecasts for the main metrics
     stmt = select(CommercialRevenueForecast).order_by(desc(CommercialRevenueForecast.created_at))
     result = await session.execute(stmt)
     forecasts = result.scalars().all()
-    
+
     overview = ForecastOverview(
         next_30_days_revenue=0.0,
         next_30_days_cost=0.0,
         next_30_days_margin=0.0,
         confidence="low",
-        last_updated=datetime.now(UTC)
+        last_updated=datetime.now(UTC),
     )
-    
+
     found = {"revenue": False, "cost": False, "margin": False}
     for f in forecasts:
         if f.forecast_type == "revenue" and not found["revenue"]:
@@ -63,10 +62,10 @@ async def get_forecast_overview(session: AsyncSession = Depends(get_db_session))
         elif f.forecast_type == "margin" and not found["margin"]:
             overview.next_30_days_margin = float(f.predicted_amount_brl)
             found["margin"] = True
-            
+
         if all(found.values()):
             break
-            
+
     return overview
 
 
@@ -82,19 +81,22 @@ async def run_forecast(session: AsyncSession = Depends(get_db_session)):
 
 @router.get("/forecast/records")
 async def list_forecast_records(
-    limit: int = Query(default=50, ge=1, le=500),
-    session: AsyncSession = Depends(get_db_session)
+    limit: int = Query(default=50, ge=1, le=500), session: AsyncSession = Depends(get_db_session)
 ):
-    stmt = select(CommercialRevenueForecast).order_by(desc(CommercialRevenueForecast.created_at)).limit(limit)
+    stmt = (
+        select(CommercialRevenueForecast)
+        .order_by(desc(CommercialRevenueForecast.created_at))
+        .limit(limit)
+    )
     result = await session.execute(stmt)
     return result.scalars().all()
 
 
 @router.get("/anomalies")
 async def list_anomalies(
-    status: Optional[str] = None,
+    status: str | None = None,
     limit: int = Query(default=50, ge=1, le=500),
-    session: AsyncSession = Depends(get_db_session)
+    session: AsyncSession = Depends(get_db_session),
 ):
     stmt = select(CommercialFinancialAnomaly).order_by(desc(CommercialFinancialAnomaly.detected_at))
     if status:
@@ -119,16 +121,14 @@ async def run_anomaly_detection(session: AsyncSession = Depends(get_db_session))
 
 @router.post("/anomalies/{anomaly_id}/ack")
 async def acknowledge_anomaly(
-    anomaly_id: uuid.UUID,
-    req: AnomalyAckRequest,
-    session: AsyncSession = Depends(get_db_session)
+    anomaly_id: uuid.UUID, req: AnomalyAckRequest, session: AsyncSession = Depends(get_db_session)
 ):
     stmt = select(CommercialFinancialAnomaly).where(CommercialFinancialAnomaly.id == anomaly_id)
     result = await session.execute(stmt)
     anomaly = result.scalar_one_or_none()
     if not anomaly:
         raise HTTPException(status_code=404, detail="Anomaly not found")
-        
+
     anomaly.status = "acknowledged"
     if req.explanation:
         anomaly.explanation = (anomaly.explanation or "") + f" | ACK: {req.explanation}"
@@ -138,16 +138,14 @@ async def acknowledge_anomaly(
 
 @router.post("/anomalies/{anomaly_id}/resolve")
 async def resolve_anomaly(
-    anomaly_id: uuid.UUID,
-    req: AnomalyAckRequest,
-    session: AsyncSession = Depends(get_db_session)
+    anomaly_id: uuid.UUID, req: AnomalyAckRequest, session: AsyncSession = Depends(get_db_session)
 ):
     stmt = select(CommercialFinancialAnomaly).where(CommercialFinancialAnomaly.id == anomaly_id)
     result = await session.execute(stmt)
     anomaly = result.scalar_one_or_none()
     if not anomaly:
         raise HTTPException(status_code=404, detail="Anomaly not found")
-        
+
     anomaly.status = "resolved"
     if req.explanation:
         anomaly.explanation = (anomaly.explanation or "") + f" | RESOLVED: {req.explanation}"
@@ -157,16 +155,14 @@ async def resolve_anomaly(
 
 @router.post("/anomalies/{anomaly_id}/ignore")
 async def ignore_anomaly(
-    anomaly_id: uuid.UUID,
-    req: AnomalyAckRequest,
-    session: AsyncSession = Depends(get_db_session)
+    anomaly_id: uuid.UUID, req: AnomalyAckRequest, session: AsyncSession = Depends(get_db_session)
 ):
     stmt = select(CommercialFinancialAnomaly).where(CommercialFinancialAnomaly.id == anomaly_id)
     result = await session.execute(stmt)
     anomaly = result.scalar_one_or_none()
     if not anomaly:
         raise HTTPException(status_code=404, detail="Anomaly not found")
-        
+
     anomaly.status = "ignored"
     if req.explanation:
         anomaly.explanation = (anomaly.explanation or "") + f" | IGNORED: {req.explanation}"

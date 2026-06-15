@@ -86,7 +86,13 @@ async def log_security_event(
     SECURITY_EVENT_COUNTER.labels(event_type=event_type, severity=severity).inc()
     logger.warning(
         "security event recorded",
-        extra={"extra_data": {"event_type": event_type, "severity": severity, "client_id": str(client_id) if client_id else None}},
+        extra={
+            "extra_data": {
+                "event_type": event_type,
+                "severity": severity,
+                "client_id": str(client_id) if client_id else None,
+            }
+        },
     )
     return event
 
@@ -108,7 +114,9 @@ async def enforce_client_ip_policy(session: AsyncSession, client: Client, source
             details={"source_ip": source_ip},
         )
         await session.commit()
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="source ip is blocked for this client")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="source ip is blocked for this client"
+        )
     if allowlist and source_ip not in allowlist:
         await log_security_event(
             session,
@@ -119,7 +127,9 @@ async def enforce_client_ip_policy(session: AsyncSession, client: Client, source
             details={"source_ip": source_ip, "allowlist_size": len(allowlist)},
         )
         await session.commit()
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="source ip is not allowed for this client")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="source ip is not allowed for this client"
+        )
 
 
 async def record_invalid_api_key_attempt(
@@ -233,12 +243,25 @@ async def maybe_record_request_error_burst(
                 severity="high" if status_code >= 500 else "medium",
                 title="Many request errors for client",
                 client_id=client_id,
-                details={"endpoint": endpoint, "status_code": status_code, "count": total, "backend_name": backend_name},
+                details={
+                    "endpoint": endpoint,
+                    "status_code": status_code,
+                    "count": total,
+                    "backend_name": backend_name,
+                },
             )
 
 
 async def list_security_events(session: AsyncSession) -> list[dict]:
-    rows = (await session.execute(select(SecurityEvent).order_by(desc(SecurityEvent.created_at)).limit(500))).scalars().all()
+    rows = (
+        (
+            await session.execute(
+                select(SecurityEvent).order_by(desc(SecurityEvent.created_at)).limit(500)
+            )
+        )
+        .scalars()
+        .all()
+    )
     return [serialize_security_event(row) for row in rows]
 
 

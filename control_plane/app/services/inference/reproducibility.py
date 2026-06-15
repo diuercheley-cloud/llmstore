@@ -19,7 +19,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _canonical_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+    )
 
 
 def _sha256_payload(payload: Any) -> str:
@@ -146,7 +148,11 @@ def build_runtime_snapshot(
         metadata_json=json.dumps(model_metadata) if model_metadata else None,
     )
     chat_template = request_payload.get("chat_template") if request_payload else None
-    chat_template_hash = hash_prompt(chat_template or prompt_template) if (chat_template or prompt_template) else None
+    chat_template_hash = (
+        hash_prompt(chat_template or prompt_template)
+        if (chat_template or prompt_template)
+        else None
+    )
     runtime_config = sanitize_report_payload(
         {
             "prompt_template": prompt_template,
@@ -155,23 +161,36 @@ def build_runtime_snapshot(
             "top_p": request_payload.get("top_p") if request_payload else None,
             "top_k": request_payload.get("top_k") if request_payload else None,
             "min_p": request_payload.get("min_p") if request_payload else None,
-            "repetition_penalty": request_payload.get("repetition_penalty") if request_payload else request_payload.get("repeat_penalty") if request_payload else None,
+            "repetition_penalty": request_payload.get("repetition_penalty")
+            if request_payload
+            else request_payload.get("repeat_penalty")
+            if request_payload
+            else None,
             "max_tokens": request_payload.get("max_tokens") if request_payload else None,
-            "quantization": model_metadata.get("quantization") or detect_quantization(str(model_metadata.get("model_file") or model_name)),
+            "quantization": model_metadata.get("quantization")
+            or detect_quantization(str(model_metadata.get("model_file") or model_name)),
             "backend_metadata": backend_metadata,
             "architecture": architecture,
         }
     )
     tokenizer_info = {
-        "tokenizer_name": tokenizer_name or model_metadata.get("tokenizer_name") or architecture or model_name,
-        "tokenizer_version": tokenizer_version or model_metadata.get("tokenizer_version") or backend_metadata.get("tokenizer_version"),
+        "tokenizer_name": tokenizer_name
+        or model_metadata.get("tokenizer_name")
+        or architecture
+        or model_name,
+        "tokenizer_version": tokenizer_version
+        or model_metadata.get("tokenizer_version")
+        or backend_metadata.get("tokenizer_version"),
         "template_hash": chat_template_hash,
         "architecture": architecture,
     }
     snapshot = {
         "backend_name": backend_name or provider or "unknown",
         "runtime_engine": runtime_engine or provider or "unknown",
-        "runtime_engine_version": runtime_engine_version or str(backend_metadata.get("runtime_engine_version") or backend_metadata.get("version") or ""),
+        "runtime_engine_version": runtime_engine_version
+        or str(
+            backend_metadata.get("runtime_engine_version") or backend_metadata.get("version") or ""
+        ),
         "model_name": model_name,
         "model_manifest_hash": model_manifest_hash,
         "model_checksum": model_checksum,
@@ -187,8 +206,14 @@ def compare_outputs(
     original_output: str | dict[str, Any] | None,
     replay_output: str | dict[str, Any] | None,
 ) -> dict[str, Any]:
-    original_text = original_output if isinstance(original_output, str) else _extract_response_text(original_output)
-    replay_text = replay_output if isinstance(replay_output, str) else _extract_response_text(replay_output)
+    original_text = (
+        original_output
+        if isinstance(original_output, str)
+        else _extract_response_text(original_output)
+    )
+    replay_text = (
+        replay_output if isinstance(replay_output, str) else _extract_response_text(replay_output)
+    )
     original_hash = hash_response(original_output)
     replay_hash = hash_response(replay_output)
     original_normalized = _normalize_text(original_text)
@@ -229,7 +254,9 @@ def compare_runtime_snapshots(
     original_snapshot: dict[str, Any] | CommercialInferenceRuntimeSnapshot | None,
     replay_snapshot: dict[str, Any] | CommercialInferenceRuntimeSnapshot | None,
 ) -> dict[str, Any]:
-    def _snapshot_dict(value: dict[str, Any] | CommercialInferenceRuntimeSnapshot | None) -> dict[str, Any]:
+    def _snapshot_dict(
+        value: dict[str, Any] | CommercialInferenceRuntimeSnapshot | None,
+    ) -> dict[str, Any]:
         if value is None:
             return {}
         if isinstance(value, dict):
@@ -260,20 +287,27 @@ def compare_runtime_snapshots(
         drifts.append("tokenizer_drift")
     if original_tok.get("template_hash") != replay_tok.get("template_hash"):
         drifts.append("template_drift")
-    if original.get("runtime_engine") != replay.get("runtime_engine") or original.get("runtime_engine_version") != replay.get("runtime_engine_version"):
+    if original.get("runtime_engine") != replay.get("runtime_engine") or original.get(
+        "runtime_engine_version"
+    ) != replay.get("runtime_engine_version"):
         drifts.append("runtime_drift")
     if original.get("model_manifest_hash") != replay.get("model_manifest_hash"):
         drifts.append("manifest_drift")
     if original_cfg.get("quantization") != replay_cfg.get("quantization"):
         drifts.append("quantization_drift")
-    if original.get("snapshot_hash") != replay.get("snapshot_hash") and "runtime_drift" not in drifts:
+    if (
+        original.get("snapshot_hash") != replay.get("snapshot_hash")
+        and "runtime_drift" not in drifts
+    ):
         drifts.append("runtime_config_drift")
     return {
         "matched": not drifts,
         "drifts": drifts,
         "tokenizer_drift": "tokenizer_drift" in drifts,
         "template_drift": "template_drift" in drifts,
-        "runtime_drift": any(item in drifts for item in {"runtime_drift", "runtime_config_drift", "manifest_drift"}),
+        "runtime_drift": any(
+            item in drifts for item in {"runtime_drift", "runtime_config_drift", "manifest_drift"}
+        ),
         "quantization_drift": "quantization_drift" in drifts,
         "original_snapshot_hash": original.get("snapshot_hash"),
         "replay_snapshot_hash": replay.get("snapshot_hash"),
@@ -294,7 +328,10 @@ async def _resolve_registry_entry(
                 CommercialSignedModelRegistryEntry.model_alias == model_alias,
             )
         )
-        .order_by(desc(CommercialSignedModelRegistryEntry.updated_at), desc(CommercialSignedModelRegistryEntry.created_at))
+        .order_by(
+            desc(CommercialSignedModelRegistryEntry.updated_at),
+            desc(CommercialSignedModelRegistryEntry.created_at),
+        )
         .limit(1)
     )
     return result.scalar_one_or_none()
@@ -309,9 +346,22 @@ def determine_seed_capture(
     explicit_seed = payload.get("seed")
     stochastic = any(
         payload.get(key) not in (None, 0, 0.0, 1, 1.0)
-        for key in ("temperature", "top_p", "top_k", "min_p", "repetition_penalty", "repeat_penalty")
+        for key in (
+            "temperature",
+            "top_p",
+            "top_k",
+            "min_p",
+            "repetition_penalty",
+            "repeat_penalty",
+        )
     )
-    backend_supports_seed = provider in {"llama.cpp", "ollama", "vllm", "openai_compatible", "local"}
+    backend_supports_seed = provider in {
+        "llama.cpp",
+        "ollama",
+        "vllm",
+        "openai_compatible",
+        "local",
+    }
     if explicit_seed is not None:
         normalized_seed = _normalize_seed(explicit_seed)
         return {
@@ -362,9 +412,16 @@ async def capture_reproducibility_record(
     sanitized_metadata = sanitize_report_payload(metadata_json or {})
     if metadata_json and isinstance(metadata_json.get("replay_runtime_snapshot"), dict):
         sanitized_metadata["replay_runtime_snapshot"] = metadata_json["replay_runtime_snapshot"]
-    registry_entry = await _resolve_registry_entry(session, model_name=model_name, model_alias=model_alias)
+    registry_entry = await _resolve_registry_entry(
+        session, model_name=model_name, model_alias=model_alias
+    )
     seed_capture = determine_seed_capture(request_payload=request_payload, provider=provider)
-    if request_payload is not None and request_payload.get("seed") is None and seed_capture["seed"] is not None and seed_capture["backend_supports_seed"]:
+    if (
+        request_payload is not None
+        and request_payload.get("seed") is None
+        and seed_capture["seed"] is not None
+        and seed_capture["backend_supports_seed"]
+    ):
         request_payload = dict(request_payload)
         request_payload["seed"] = seed_capture["seed"]
     snapshot = build_runtime_snapshot(
@@ -432,7 +489,9 @@ async def capture_reproducibility_record(
         "request_payload_hash": _sha256_payload(sanitize_report_payload(request_payload or {})),
         "response_payload_hash": _sha256_payload(sanitize_report_payload(response_payload or {})),
         "snapshot_hash": existing_snapshot.snapshot_hash,
-        "metadata": sanitize_report_payload({k: v for k, v in record_metadata.items() if k not in {"prompt_text", "response_text"}}),
+        "metadata": sanitize_report_payload(
+            {k: v for k, v in record_metadata.items() if k not in {"prompt_text", "response_text"}}
+        ),
     }
     record = CommercialInferenceReproducibilityRecord(
         request_id=request_id,
@@ -453,7 +512,11 @@ async def capture_reproducibility_record(
         top_p=request_payload.get("top_p") if request_payload else None,
         top_k=request_payload.get("top_k") if request_payload else None,
         min_p=request_payload.get("min_p") if request_payload else None,
-        repetition_penalty=request_payload.get("repetition_penalty") if request_payload else request_payload.get("repeat_penalty") if request_payload else None,
+        repetition_penalty=request_payload.get("repetition_penalty")
+        if request_payload
+        else request_payload.get("repeat_penalty")
+        if request_payload
+        else None,
         max_tokens=request_payload.get("max_tokens") if request_payload else None,
         runtime_engine=snapshot["runtime_engine"],
         runtime_engine_version=snapshot["runtime_engine_version"],

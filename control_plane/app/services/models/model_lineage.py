@@ -74,7 +74,10 @@ async def create_lineage_entry(
         db,
         action="lineage_entry_created",
         status="success",
-        payload={"lifecycle_record_id": str(lifecycle_record_id), "derivation_method": derivation_method},
+        payload={
+            "lifecycle_record_id": str(lifecycle_record_id),
+            "derivation_method": derivation_method,
+        },
         result={"lineage_id": str(entry.id), "depth": depth},
     )
     return entry
@@ -175,9 +178,14 @@ async def verify_provenance_chain(
     if not dag["nodes"]:
         return {"valid": False, "reason": "no_lineage", "chain_length": 0}
     from app.models.commercial.commercial_model_lifecycle import CommercialModelLifecycleRecord
+
     record = await db.get(CommercialModelLifecycleRecord, lifecycle_record_id)
     if not record:
-        return {"valid": False, "reason": "lifecycle_record_not_found", "chain_length": dag["total_entries"]}
+        return {
+            "valid": False,
+            "reason": "lifecycle_record_not_found",
+            "chain_length": dag["total_entries"],
+        }
     provenance_linked = record.provenance_id is not None
     chain_length = 0
     for node in dag["nodes"]:
@@ -216,17 +224,19 @@ def serialize_lineage_entry(
             return None
         return value if sensitive else value[:12]
 
-    return sanitize_report_payload({
-        "id": str(entry.id),
-        "lifecycle_record_id": str(entry.lifecycle_record_id),
-        "parent_lineage_id": str(entry.parent_lineage_id) if entry.parent_lineage_id else None,
-        "source_type": entry.source_type,
-        "source_ref": entry.source_ref,
-        "source_cluster_id": entry.source_cluster_id,
-        "derivation_method": entry.derivation_method,
-        "artifact_hash": _short(entry.artifact_hash),
-        "predecessor_hash": _short(entry.predecessor_hash),
-        "depth": entry.depth,
-        "provenance_id": str(entry.provenance_id) if entry.provenance_id else None,
-        "created_at": entry.created_at.isoformat(),
-    })
+    return sanitize_report_payload(
+        {
+            "id": str(entry.id),
+            "lifecycle_record_id": str(entry.lifecycle_record_id),
+            "parent_lineage_id": str(entry.parent_lineage_id) if entry.parent_lineage_id else None,
+            "source_type": entry.source_type,
+            "source_ref": entry.source_ref,
+            "source_cluster_id": entry.source_cluster_id,
+            "derivation_method": entry.derivation_method,
+            "artifact_hash": _short(entry.artifact_hash),
+            "predecessor_hash": _short(entry.predecessor_hash),
+            "depth": entry.depth,
+            "provenance_id": str(entry.provenance_id) if entry.provenance_id else None,
+            "created_at": entry.created_at.isoformat(),
+        }
+    )

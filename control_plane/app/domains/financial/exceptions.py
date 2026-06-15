@@ -3,4 +3,3 @@
 
 class FinancialDomainError(Exception):
     """Base exception for financial domain contract issues."""
-

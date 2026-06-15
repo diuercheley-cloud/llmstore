@@ -32,7 +32,14 @@ class TestCommercialDemoPackStructure:
     def test_demo_scenarios_have_required_fields(self):
         f = DEMO_PACK / "demo-scenarios.json"
         data = json.loads(f.read_text())
-        required = ["problema_do_cliente", "como_demonstrar", "endpoints_ou_telas", "valor_comercial", "objecoes_comuns", "respostas_sugeridas"]
+        required = [
+            "problema_do_cliente",
+            "como_demonstrar",
+            "endpoints_ou_telas",
+            "valor_comercial",
+            "objecoes_comuns",
+            "respostas_sugeridas",
+        ]
         for scenario in data["scenarios"]:
             for field in required:
                 assert field in scenario, f"Scenario '{scenario['id']}' missing field '{field}'"
@@ -109,7 +116,12 @@ class TestCommercialDemoPackNoSecrets:
                 content = f.read_text()
                 assert "ghp_" not in content, f"GitHub token pattern found in {f}"
                 assert "-----BEGIN" not in content, f"Private key found in {f}"
-                assert "Bearer " not in content or "Bearer ***" in content or "Bearer {DEMO" in content or "Bearer sk-demo" in content
+                assert (
+                    "Bearer " not in content
+                    or "Bearer ***" in content
+                    or "Bearer {DEMO" in content
+                    or "Bearer sk-demo" in content
+                )
 
     def test_no_real_psp_in_demo_pack(self):
         forbidden = ["stripe", "mercadopago", "pagseguro", "pix_real", "live_key"]
@@ -136,6 +148,7 @@ class TestCommercialDemoPackNoSecrets:
 
     def test_seed_script_requires_admin_token(self):
         import subprocess
+
         env = os.environ.copy()
         if "ADMIN_TOKEN" in env:
             del env["ADMIN_TOKEN"]

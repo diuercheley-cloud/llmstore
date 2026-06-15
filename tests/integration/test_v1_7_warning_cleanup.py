@@ -2,8 +2,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
+
 def test_cleanup_doc_exists():
     assert (ROOT / "docs" / "V1_7_1_WARNING_CLEANUP.md").exists()
+
 
 def test_cleanup_doc_mentions_fixes():
     content = (ROOT / "docs" / "V1_7_1_WARNING_CLEANUP.md").read_text()
@@ -11,6 +13,7 @@ def test_cleanup_doc_mentions_fixes():
     assert "Branch correta" in content
     assert "Release manifest OK" in content
     assert "Chat/Responses/Embeddings 405" in content
+
 
 def test_cleanup_doc_mentions_accepted():
     content = (ROOT / "docs" / "V1_7_1_WARNING_CLEANUP.md").read_text()

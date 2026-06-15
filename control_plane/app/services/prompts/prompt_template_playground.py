@@ -2,7 +2,7 @@
 import logging
 import time
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.models.agents.prompts import (
     PromptPlaygroundRun,
@@ -25,12 +25,10 @@ class PromptTemplatePlaygroundService:
     async def render_only(
         self,
         version_id: uuid.UUID,
-        variables: Dict[str, Any],
-        declared_vars: Optional[List[Dict[str, Any]]] = None,
-    ) -> Dict[str, Any]:
-        stmt = select(PromptTemplateVersion).where(
-            PromptTemplateVersion.id == version_id
-        )
+        variables: dict[str, Any],
+        declared_vars: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        stmt = select(PromptTemplateVersion).where(PromptTemplateVersion.id == version_id)
         res = await self.db.execute(stmt)
         version = res.scalar_one_or_none()
         if not version:
@@ -54,13 +52,11 @@ class PromptTemplatePlaygroundService:
     async def run_playground(
         self,
         version_id: uuid.UUID,
-        variables: Dict[str, Any],
+        variables: dict[str, Any],
         created_by: str,
-        declared_vars: Optional[List[Dict[str, Any]]] = None,
+        declared_vars: list[dict[str, Any]] | None = None,
     ) -> PromptPlaygroundRun:
-        stmt = select(PromptTemplateVersion).where(
-            PromptTemplateVersion.id == version_id
-        )
+        stmt = select(PromptTemplateVersion).where(PromptTemplateVersion.id == version_id)
         res = await self.db.execute(stmt)
         version = res.scalar_one_or_none()
         if not version:

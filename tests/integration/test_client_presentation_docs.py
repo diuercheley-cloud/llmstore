@@ -23,7 +23,6 @@ REQUIRED_TOPICS = [
 
 
 class TestClientPresentationDocsExist:
-
     def test_all_docs_exist(self):
         for doc in DOCS:
             assert os.path.exists(ROOT / doc), f"Documento {doc} não encontrado."
@@ -35,7 +34,6 @@ class TestClientPresentationDocsExist:
 
 
 class TestClientPresentationScript:
-
     def test_has_three_versions(self):
         content = (ROOT / "docs/CLIENT_PRESENTATION_SCRIPT.md").read_text()
         assert "15 Minutos" in content, "Roteiro de 15 minutos ausente"
@@ -76,7 +74,12 @@ class TestClientPresentationScript:
 
     def test_has_security_readiness_demo(self):
         content = (ROOT / "docs/CLIENT_PRESENTATION_SCRIPT.md").read_text()
-        assert "Security" in content or "security" in content or "Readiness" in content or "readiness" in content
+        assert (
+            "Security" in content
+            or "security" in content
+            or "Readiness" in content
+            or "readiness" in content
+        )
 
     def test_has_closing(self):
         content = (ROOT / "docs/CLIENT_PRESENTATION_SCRIPT.md").read_text()
@@ -84,11 +87,14 @@ class TestClientPresentationScript:
 
     def test_has_next_steps(self):
         content = (ROOT / "docs/CLIENT_PRESENTATION_SCRIPT.md").read_text()
-        assert "Próximos Passos" in content or "próximos passos" in content.lower() or "Next Steps" in content
+        assert (
+            "Próximos Passos" in content
+            or "próximos passos" in content.lower()
+            or "Next Steps" in content
+        )
 
 
 class TestClientPresentationDocDisclaimers:
-
     def test_disclaimers_in_all_docs(self):
         for doc in DOCS:
             content = (ROOT / doc).read_text().lower()
@@ -131,32 +137,39 @@ class TestClientPresentationDocDisclaimers:
                     if "não" not in content.split(phrase)[:1]:
                         pass  # allow if negated in broader context
             # Simply check the overall tone: must mention no absolute security
-            assert "segurança absoluta" not in content or "não garantimos" in content, \
+            assert "segurança absoluta" not in content or "não garantimos" in content, (
                 f"{doc} mentions 'segurança absoluta' without disclaiming it"
+            )
 
     def test_all_docs_mention_local_operation(self):
         for doc in DOCS:
             content = (ROOT / doc).read_text().lower()
-            assert any(phrase in content for phrase in [
-                "appliance local",
-                "local appliance",
-                "on-premise",
-                "100% local",
-                "rodando localmente",
-                "dentro da sua infraestrutura",
-                "dentro da sua rede",
-            ]), f"{doc} does not mention local operation"
+            assert any(
+                phrase in content
+                for phrase in [
+                    "appliance local",
+                    "local appliance",
+                    "on-premise",
+                    "100% local",
+                    "rodando localmente",
+                    "dentro da sua infraestrutura",
+                    "dentro da sua rede",
+                ]
+            ), f"{doc} does not mention local operation"
 
     def test_all_docs_mention_fictional_data(self):
         for doc in DOCS:
             content = (ROOT / doc).read_text().lower()
-            assert any(phrase in content for phrase in [
-                "dados fictícios",
-                "dados demo",
-                "fictional",
-                "dados de exemplo",
-                "simulação",
-            ]), f"{doc} does not mention fictional data"
+            assert any(
+                phrase in content
+                for phrase in [
+                    "dados fictícios",
+                    "dados demo",
+                    "fictional",
+                    "dados de exemplo",
+                    "simulação",
+                ]
+            ), f"{doc} does not mention fictional data"
 
     def test_all_docs_mention_main_urls(self):
         for doc in DOCS:
@@ -167,12 +180,12 @@ class TestClientPresentationDocDisclaimers:
 
 
 class TestClientPresentationDocNoSecrets:
-
     def test_no_real_api_keys(self):
         for doc in DOCS:
             content = (ROOT / doc).read_text()
             # Check for patterns that look like real keys
             import re
+
             real_key_pattern = r"sk-[a-zA-Z0-9]{32,}"
             matches = re.findall(real_key_pattern, content)
             for match in matches:

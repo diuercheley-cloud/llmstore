@@ -56,6 +56,7 @@ async def test_no_key_in_health_check_output(monkeypatch):
     monkeypatch.setenv("CLOUD_PROVIDERS_ENABLED", "true")
     monkeypatch.setenv("PERPLEXITY_PROVIDER_ENABLED", "true")
     from app.core.config import get_settings
+
     get_settings.cache_clear()
     provider = PerplexityProvider()
     result = await provider.health_check()
@@ -97,6 +98,7 @@ def test_embeddings_not_supported():
     provider = PerplexityProvider()
     with pytest.raises(NotImplementedError, match="Perplexity does not support embeddings"):
         import anyio
+
         anyio.run(provider.embeddings, {"input": "test"})
 
 

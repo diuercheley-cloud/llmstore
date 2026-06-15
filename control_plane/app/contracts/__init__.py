@@ -3,13 +3,6 @@ from app.contracts.attestation import (
     AttestationContract,
     AttestationReport,
 )
-from app.contracts.base import (
-    BaseContract,
-    ContractError,
-    ContractExecutionError,
-    ContractValidationError,
-)
-from app.contracts.event import EventCapabilities, EventContract, PlatformEvent
 from app.contracts.backend_lifecycle import (
     BackendDesiredState,
     BackendLifecycleCapabilities,
@@ -18,6 +11,13 @@ from app.contracts.backend_lifecycle import (
     DriftRecord,
     LifecycleActionResult,
 )
+from app.contracts.base import (
+    BaseContract,
+    ContractError,
+    ContractExecutionError,
+    ContractValidationError,
+)
+from app.contracts.event import EventCapabilities, EventContract, PlatformEvent
 from app.contracts.model_runtime import (
     ModelInstance,
     ModelRuntimeCapabilities,

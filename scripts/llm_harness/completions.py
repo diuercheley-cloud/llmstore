@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -15,19 +15,19 @@ logger = logging.getLogger(__name__)
 
 class CompletionSuggestion(BaseModel):
     text: str
-    confidence: Optional[float] = None
-    range: Optional[Dict[str, Any]] = None
-    explanation: Optional[str] = None
+    confidence: float | None = None
+    range: dict[str, Any] | None = None
+    explanation: str | None = None
 
 
 class CompletionRequest(BaseModel):
     file_path: str
     cursor_line: int
     cursor_column: int
-    prefix: Optional[str] = None
-    suffix: Optional[str] = None
-    language: Optional[str] = None
-    context_refs: Optional[List[str]] = Field(default_factory=list)
+    prefix: str | None = None
+    suffix: str | None = None
+    language: str | None = None
+    context_refs: list[str] | None = Field(default_factory=list)
 
 
 def _build_completion_prompt(
@@ -70,10 +70,7 @@ def _build_completion_prompt(
     prompt += f"## Language: {request.language or 'unknown'}\n"
     if profile:
         prompt += f"## Comment Style: {profile.comment_style}\n"
-    prompt += (
-        f"## Cursor Position: Line {request.cursor_line}, "
-        f"Column {request.cursor_column}\n\n"
-    )
+    prompt += f"## Cursor Position: Line {request.cursor_line}, Column {request.cursor_column}\n\n"
     prompt += f"## PREFIX:\n{local_prefix}\n\n"
     prompt += f"## SUFFIX:\n{local_suffix}\n\n"
     return prompt
@@ -119,17 +116,17 @@ def _parse_completion_response(
 
 def split_file_at_cursor(
     file_content: str, cursor_line: int, cursor_column: int
-) -> Tuple[str, str]:
+) -> tuple[str, str]:
     lines = file_content.splitlines(keepends=True)
     if cursor_line <= 0 or cursor_line > len(lines):
         return file_content, ""
-        
+
     line_idx = cursor_line - 1
     target_line = lines[line_idx]
     col_idx = min(cursor_column, len(target_line))
-    
+
     prefix = "".join(lines[:line_idx]) + target_line[:col_idx]
-    suffix = target_line[col_idx:] + "".join(lines[line_idx + 1:])
+    suffix = target_line[col_idx:] + "".join(lines[line_idx + 1 :])
     return prefix, suffix
 
 
@@ -137,8 +134,8 @@ async def get_completion_suggestions(
     request: CompletionRequest,
     workspace_root: str,
     provider_name: str,
-    config_overrides: Optional[Dict[str, Any]] = None
-) -> List[CompletionSuggestion]:
+    config_overrides: dict[str, Any] | None = None,
+) -> list[CompletionSuggestion]:
     # 1. Boundary / Safety Checks
     abs_workspace = os.path.abspath(workspace_root)
     if os.path.isabs(request.file_path):
@@ -165,7 +162,7 @@ async def get_completion_suggestions(
     if request.prefix is None or request.suffix is None:
         if not os.path.exists(abs_path):
             raise FileNotFoundError(f"File not found: {request.file_path}")
-        with open(abs_path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(abs_path, encoding="utf-8", errors="ignore") as f:
             content = f.read()
         prefix, suffix = split_file_at_cursor(content, request.cursor_line, request.cursor_column)
         request.prefix = prefix
@@ -177,6 +174,7 @@ async def get_completion_suggestions(
             detect_language_by_filename,
             detect_primary_language_in_workspace,
         )
+
         profile = detect_language_by_filename(request.file_path)
         if not profile:
             profile = detect_primary_language_in_workspace(workspace_root)
@@ -195,11 +193,8 @@ async def get_completion_suggestions(
             CompletionSuggestion(
                 text="    print('hello world')",
                 confidence=0.95,
-                range={
-                    "start_line": request.cursor_line,
-                    "start_column": request.cursor_column
-                },
-                explanation="Autocomplete print statement"
+                range={"start_line": request.cursor_line, "start_column": request.cursor_column},
+                explanation="Autocomplete print statement",
             )
         ]
 
@@ -208,6 +203,7 @@ async def get_completion_suggestions(
     search_term = os.path.basename(request.file_path)
     try:
         from .indexing import get_retrieved_context
+
         retrieved_context = get_retrieved_context(
             search_term, workspace_root=workspace_root, max_tokens=1000
         )
@@ -240,9 +236,7 @@ async def get_completion_suggestions(
         retrieved_context="",
         compact=True,
     )
-    retry_response = await retry_agent.chat_completion(
-        [{"role": "user", "content": retry_prompt}]
-    )
+    retry_response = await retry_agent.chat_completion([{"role": "user", "content": retry_prompt}])
     retry_suggestion, _ = _parse_completion_response(retry_response, request)
     if retry_suggestion.text.strip():
         return [retry_suggestion]

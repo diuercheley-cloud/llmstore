@@ -1,4 +1,3 @@
-
 import pytest
 from app.schemas.routing import EndpointType, RoutingDecision, RoutingStrategy, SmartRouterInput
 from app.services.routing.smart_router import SmartRouter, reset_smart_router
@@ -53,9 +52,7 @@ def test_no_prompt_in_decision():
     inp = _make_input(strategy=RoutingStrategy.local_first)
     dec = sr.route(inp)
     dump = dec.model_dump_json()
-    assert "prompt" not in dump.lower() or "prompt" in [
-        "prompt_estimated_tokens"
-    ]
+    assert "prompt" not in dump.lower() or "prompt" in ["prompt_estimated_tokens"]
 
 
 def test_no_secrets_in_decision():
@@ -97,7 +94,11 @@ def test_insufficient_balance_blocks_cloud():
         wallet_balance_brl=0.0,
     )
     dec = sr.route(inp)
-    assert dec.cloud_used is False or "insufficient balance" in str(dec.warnings or "").lower() or "balance" in str(dec.reason).lower()
+    assert (
+        dec.cloud_used is False
+        or "insufficient balance" in str(dec.warnings or "").lower()
+        or "balance" in str(dec.reason).lower()
+    )
 
 
 def test_simulate_returns_multiple_strategies():

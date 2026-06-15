@@ -268,10 +268,12 @@ class PolicyEngine:
         workspace_root: str | None = None,
     ) -> PolicyDecision:
         from .tracing import Tracer
+
         with Tracer().trace_span(
             "policy_check", attributes={"policy_level": "shell", "command": str(command)}
         ):
             from .plugins import plugin_registry
+
             for name, rule_fn in plugin_registry.list_policy_rules().items():
                 try:
                     res = rule_fn(command)
@@ -334,9 +336,7 @@ class PolicyEngine:
         normalized = analysis.normalized_command
         global_deny = self.shell_policy.get("global_deny", {})
         hard_patterns = list(self.HARD_DENY_PATTERNS)
-        hard_patterns.extend(
-            [(pattern, pattern) for pattern in global_deny.get("patterns", [])]
-        )
+        hard_patterns.extend([(pattern, pattern) for pattern in global_deny.get("patterns", [])])
         for pattern, label in hard_patterns:
             if re.search(pattern, normalized, re.IGNORECASE):
                 return self._build_decision(
@@ -401,9 +401,8 @@ class PolicyEngine:
             explicit_allow = command_allow.get(main_cmd_lower)
 
         allowed_tools_lower = [c.lower() for c in self.allowed_base_commands]
-        default_allowed = (
-            main_cmd in self.allowed_base_commands or
-            (main_cmd_lower in allowed_tools_lower if main_cmd_lower else False)
+        default_allowed = main_cmd in self.allowed_base_commands or (
+            main_cmd_lower in allowed_tools_lower if main_cmd_lower else False
         )
         command_is_allowed = explicit_allow if explicit_allow is not None else default_allowed
 
@@ -436,10 +435,12 @@ class PolicyEngine:
 
     def evaluate_file_path(self, path: str) -> PolicyDecision:
         from .tracing import Tracer
+
         with Tracer().trace_span(
             "policy_check", attributes={"policy_level": "file_path", "path": path}
         ):
             from .plugins import plugin_registry
+
             for name, rule_fn in plugin_registry.list_policy_rules().items():
                 try:
                     res = rule_fn(path)
@@ -467,8 +468,10 @@ class PolicyEngine:
 
     def evaluate_patch(self, diff: str) -> PolicyDecision:
         from .tracing import Tracer
+
         with Tracer().trace_span("policy_check", attributes={"policy_level": "patch"}):
             from .plugins import plugin_registry
+
             for name, rule_fn in plugin_registry.list_policy_rules().items():
                 try:
                     res = rule_fn(diff)
@@ -497,12 +500,10 @@ class PolicyEngine:
         description += f"Allowed tools (shell): {', '.join(self.allowed_base_commands)}\n"
         description += "Global deny: sudo, root deletion, curl|sh, git push, secrets.\n"
         description += (
-            "Shell parser blocks chain operators, command substitution "
-            "and redirection.\n"
+            "Shell parser blocks chain operators, command substitution and redirection.\n"
         )
         description += (
-            "Workspace boundary: commands must stay inside the workspace "
-            "unless denied.\n"
+            "Workspace boundary: commands must stay inside the workspace unless denied.\n"
         )
         description += "Execution Environment: Isolated Sandbox (No Internet).\n"
         description += "Strategy: Prefer 'apply_patch' or 'replace_content' for code changes. "

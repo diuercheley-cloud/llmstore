@@ -14,7 +14,7 @@ import json
 import os
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -58,7 +58,9 @@ def estimate_deepseek_cost_usd(model: str, prompt_tokens: int, completion_tokens
         else:
             return 0.0
     prompt_price, completion_price = pricing[key]
-    return (prompt_tokens / 1_000_000 * prompt_price) + (completion_tokens / 1_000_000 * completion_price)
+    return (prompt_tokens / 1_000_000 * prompt_price) + (
+        completion_tokens / 1_000_000 * completion_price
+    )
 
 
 def get_fx_rate_brl() -> float:
@@ -77,10 +79,12 @@ class DeepSeekRealValidator:
         self.args = args
         self.env = env
         self.dry_run = args.dry_run
-        self.max_cost_brl = args.max_cost_brl or float(env.get("REAL_PROVIDER_MAX_COST_BRL", "2.00"))
+        self.max_cost_brl = args.max_cost_brl or float(
+            env.get("REAL_PROVIDER_MAX_COST_BRL", "2.00")
+        )
         self.model = args.model or (env.get("DEEPSEEK_CHAT_MODEL") or "deepseek-chat")
         self.output_dir = Path(args.output_dir)
-        self.timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        self.timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         self.report: dict[str, Any] = {
             "validator": "deepseek-real-provider",
             "timestamp": self.timestamp,
@@ -104,7 +108,9 @@ class DeepSeekRealValidator:
         return self.env.get("DEEPSEEK_API_KEY") or os.environ.get("DEEPSEEK_API_KEY")
 
     def _get_base_url(self) -> str:
-        return self.env.get("DEEPSEEK_BASE_URL") or os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+        return self.env.get("DEEPSEEK_BASE_URL") or os.environ.get(
+            "DEEPSEEK_BASE_URL", "https://api.deepseek.com"
+        )
 
     def run(self) -> dict[str, Any]:
         api_key = self._get_api_key()
@@ -119,17 +125,27 @@ class DeepSeekRealValidator:
         dpe = self.env.get("DEEPSEEK_PROVIDER_ENABLED", "false")
 
         if rpv not in ("true", "1"):
-            self._check("env.real_provider_validation_enabled", "skip", "REAL_PROVIDER_VALIDATION_ENABLED is not true")
+            self._check(
+                "env.real_provider_validation_enabled",
+                "skip",
+                "REAL_PROVIDER_VALIDATION_ENABLED is not true",
+            )
             self.report["status"] = "DEEPSEEK_REAL_SKIP"
             return self.report
 
         if dpe not in ("true", "1"):
-            self._check("env.deepseek_provider_enabled", "skip", "DEEPSEEK_PROVIDER_ENABLED is not true")
+            self._check(
+                "env.deepseek_provider_enabled", "skip", "DEEPSEEK_PROVIDER_ENABLED is not true"
+            )
             self.report["status"] = "DEEPSEEK_REAL_SKIP"
             return self.report
 
         self._check("env.api_key", "pass", f"key {mask_key(api_key)}, base={base_url}")
-        self._check("env.guards", "pass", "REAL_PROVIDER_VALIDATION_ENABLED=true, DEEPSEEK_PROVIDER_ENABLED=true")
+        self._check(
+            "env.guards",
+            "pass",
+            "REAL_PROVIDER_VALIDATION_ENABLED=true, DEEPSEEK_PROVIDER_ENABLED=true",
+        )
 
         if self.dry_run:
             self._check("dry_run", "pass", "Dry-run mode — no real calls made")
@@ -173,7 +189,13 @@ class DeepSeekRealValidator:
             if resp.is_success:
                 data = resp.json()
                 models = [m["id"] for m in data.get("data", [])[:5]]
-                self._check("health", "pass", f"latency={latency}ms, {len(data.get('data',[]))} models", latency_ms=latency, models=models[:3])
+                self._check(
+                    "health",
+                    "pass",
+                    f"latency={latency}ms, {len(data.get('data', []))} models",
+                    latency_ms=latency,
+                    models=models[:3],
+                )
             else:
                 self._check("health", "fail", f"HTTP {resp.status_code}", latency_ms=latency)
         except Exception as e:
@@ -215,9 +237,14 @@ class DeepSeekRealValidator:
                 response_valid = "OK" in output_text.upper() if output_text else False
                 model_used = data.get("model", self.model)
                 if cost_brl > self.max_cost_brl:
-                    self._check("chat.cost_cap", "fail", f"cost R${cost_brl:.4f} exceeds max R${self.max_cost_brl}")
+                    self._check(
+                        "chat.cost_cap",
+                        "fail",
+                        f"cost R${cost_brl:.4f} exceeds max R${self.max_cost_brl}",
+                    )
                 self._check(
-                    "chat", "pass" if response_valid else "warn",
+                    "chat",
+                    "pass" if response_valid else "warn",
                     f"latency={latency}ms, tokens={prompt_tokens}+{completion_tokens}, "
                     f"cost=R${cost_brl:.6f}, model={model_used}, response_valid={response_valid}",
                     latency_ms=latency,
@@ -240,22 +267,43 @@ class DeepSeekRealValidator:
                     "latency_ms": latency,
                 }
                 if not log_prompts:
-                    self._check("chat.sanitized", "pass", "prompt not logged (REAL_PROVIDER_LOG_PROMPTS=false)")
+                    self._check(
+                        "chat.sanitized",
+                        "pass",
+                        "prompt not logged (REAL_PROVIDER_LOG_PROMPTS=false)",
+                    )
                 store = self.env.get("REAL_PROVIDER_STORE_RESPONSES", "false") in ("true", "1")
                 if store:
                     self._check("chat.stored", "pass", "response stored in output artifact")
                 else:
-                    self._check("chat.stored", "pass", "response not stored (REAL_PROVIDER_STORE_RESPONSES=false)")
+                    self._check(
+                        "chat.stored",
+                        "pass",
+                        "response not stored (REAL_PROVIDER_STORE_RESPONSES=false)",
+                    )
             else:
-                self._check("chat", "fail", f"HTTP {resp.status_code}: {resp.text[:200]}", latency_ms=latency)
+                self._check(
+                    "chat",
+                    "fail",
+                    f"HTTP {resp.status_code}: {resp.text[:200]}",
+                    latency_ms=latency,
+                )
         except Exception as e:
             self._check("chat", "fail", str(e), latency_ms=0)
 
     def _check_responses(self):
-        self._check("responses", "skip", "DeepSeek does not support Responses API — SKIP_UNSUPPORTED_CAPABILITY")
+        self._check(
+            "responses",
+            "skip",
+            "DeepSeek does not support Responses API — SKIP_UNSUPPORTED_CAPABILITY",
+        )
 
     def _check_embeddings(self):
-        self._check("embeddings", "skip", "DeepSeek does not support Embeddings API — SKIP_UNSUPPORTED_CAPABILITY")
+        self._check(
+            "embeddings",
+            "skip",
+            "DeepSeek does not support Embeddings API — SKIP_UNSUPPORTED_CAPABILITY",
+        )
 
     def _check_billing(self):
         billing = self.report.get("billing")
@@ -267,7 +315,9 @@ class DeepSeekRealValidator:
             self._check("billing.cost_cap", "pass", f"R${cost_brl:.6f} <= R${self.max_cost_brl}")
         else:
             self._check("billing.cost_cap", "fail", f"R${cost_brl:.6f} > R${self.max_cost_brl}")
-        self._check("billing.financials", "pass", "provider_cost_brl/customer_price_brl/profit calculated")
+        self._check(
+            "billing.financials", "pass", "provider_cost_brl/customer_price_brl/profit calculated"
+        )
 
     def _check_sanitization(self):
         sanitized_log = sanitize_log(self.report)
@@ -337,7 +387,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--real", action="store_true", help="Make real API calls")
     p.add_argument("--max-cost-brl", type=float, default=None, help="Max cost in BRL")
     p.add_argument("--model", default=None, help="Chat model to use")
-    p.add_argument("--output-dir", default=str(PROJECT_ROOT / "artifacts" / "real-provider-validation" / "deepseek"), help="Output directory")
+    p.add_argument(
+        "--output-dir",
+        default=str(PROJECT_ROOT / "artifacts" / "real-provider-validation" / "deepseek"),
+        help="Output directory",
+    )
     return p.parse_args(argv)
 
 
@@ -356,7 +410,9 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  Report: {report_path}")
     billing = report.get("billing")
     if billing:
-        print(f"  Estimated cost: USD ${billing['cost_usd']:.8f} / BRL R$ {billing['cost_brl']:.8f}")
+        print(
+            f"  Estimated cost: USD ${billing['cost_usd']:.8f} / BRL R$ {billing['cost_brl']:.8f}"
+        )
         print(f"  Latency: {billing['latency_ms']}ms")
     for c in report["checks"]:
         icon = {"pass": "OK", "fail": "FAIL", "skip": "SKIP", "warn": "WARN"}.get(c["status"], "?")

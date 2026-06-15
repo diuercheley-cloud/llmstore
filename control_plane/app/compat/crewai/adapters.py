@@ -1,21 +1,22 @@
 # Owner: platform-operations
-import asyncio
-from typing import List, Dict, Any, Optional
 import uuid
+from typing import Any
+
 
 class Agent:
     """
     CrewAI Agent adapter.
     """
+
     def __init__(
         self,
         role: str,
         goal: str,
         backstory: str,
-        llm: Optional[Any] = None,
-        tools: Optional[List[Any]] = None,
+        llm: Any | None = None,
+        tools: list[Any] | None = None,
         verbose: bool = False,
-        allow_delegation: bool = True
+        allow_delegation: bool = True,
     ):
         self.role = role
         self.goal = goal
@@ -26,16 +27,18 @@ class Agent:
         self.allow_delegation = allow_delegation
         self.id = uuid.uuid4()
 
+
 class Task:
     """
     CrewAI Task adapter.
     """
+
     def __init__(
         self,
         description: str,
         expected_output: str,
-        agent: Optional[Agent] = None,
-        tools: Optional[List[Any]] = None
+        agent: Agent | None = None,
+        tools: list[Any] | None = None,
     ):
         self.description = description
         self.expected_output = expected_output
@@ -43,21 +46,18 @@ class Task:
         self.tools = tools or []
         self.id = uuid.uuid4()
 
+
 class Crew:
     """
     CrewAI Crew adapter.
     """
-    def __init__(
-        self,
-        agents: List[Agent],
-        tasks: List[Task],
-        verbose: int = 0
-    ):
+
+    def __init__(self, agents: list[Agent], tasks: list[Task], verbose: int = 0):
         self.agents = agents
         self.tasks = tasks
         self.verbose = verbose
 
-    def kickoff(self, inputs: Optional[Dict[str, Any]] = None) -> str:
+    def kickoff(self, inputs: dict[str, Any] | None = None) -> str:
         """
         Synchronous kickoff emulating task execution.
         """
@@ -73,7 +73,7 @@ class Crew:
             results.append(result)
         return "\n\n".join(results)
 
-    async def kickoff_async(self, inputs: Optional[Dict[str, Any]] = None) -> str:
+    async def kickoff_async(self, inputs: dict[str, Any] | None = None) -> str:
         """
         Asynchronous kickoff emulating task execution.
         """

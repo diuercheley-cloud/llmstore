@@ -1,7 +1,7 @@
 import hashlib
 import hmac
 import os
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 from app.models.commercial.commercial_runtime_fabric import CommercialRuntimeHealingAction
 from sqlalchemy import select
@@ -14,7 +14,9 @@ class RuntimeHealingService:
         self.secret_key = os.getenv("HEALING_SECRET_KEY", "default-healing-secret")
 
     async def perform_action(self, action_id: str):
-        stmt = select(CommercialRuntimeHealingAction).filter(CommercialRuntimeHealingAction.id == action_id)
+        stmt = select(CommercialRuntimeHealingAction).filter(
+            CommercialRuntimeHealingAction.id == action_id
+        )
         result = await self.db.execute(stmt)
         action = result.scalars().first()
         if not action:
@@ -25,7 +27,9 @@ class RuntimeHealingService:
         await self.db.commit()
 
         try:
-            result_data = await self._dispatch_action(action.action_type, action.target_id, action.parameters)
+            result_data = await self._dispatch_action(
+                action.action_type, action.target_id, action.parameters
+            )
             action.status = "completed"
             action.result = result_data
             action.signed_receipt = self._sign_receipt(action_id, result_data)
@@ -40,11 +44,17 @@ class RuntimeHealingService:
 
     async def _dispatch_action(self, action_type: str, target_id: str, parameters: dict):
         if action_type == "restart_service":
-            return {"success": True, "message": f"Service {parameters.get('service')} restarted on {target_id}"}
+            return {
+                "success": True,
+                "message": f"Service {parameters.get('service')} restarted on {target_id}",
+            }
         elif action_type == "rollback_state":
             return {"success": True, "message": f"State rolled back for {target_id}"}
         elif action_type == "replay_workflow":
-            return {"success": True, "message": f"Workflow {target_id} replayed from step {parameters.get('from_step')}"}
+            return {
+                "success": True,
+                "message": f"Workflow {target_id} replayed from step {parameters.get('from_step')}",
+            }
         elif action_type == "isolate_node":
             return {"success": True, "message": f"Node {target_id} isolated from fabric"}
         elif action_type == "resync_mesh":

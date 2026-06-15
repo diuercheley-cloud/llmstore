@@ -30,12 +30,10 @@ async def test_openrouter_provider_with_reasoning_content(monkeypatch):
                 "message": {
                     "role": "assistant",
                     "content": (
-                        '{"type":"final","payload":'
-                        '{"message":"The word strawberry has 3 r\'s."}}'
+                        '{"type":"final","payload":{"message":"The word strawberry has 3 r\'s."}}'
                     ),
                     "reasoning_content": (
-                        "Let me think about this... "
-                        "The word 'strawberry' has 3 r's."
+                        "Let me think about this... The word 'strawberry' has 3 r's."
                     ),
                 }
             }
@@ -207,22 +205,24 @@ async def test_openrouter_provider_streaming_with_reasoning(monkeypatch):
     class FakeStreamResponse:
         def raise_for_status(self):
             pass
+
         async def aiter_lines(self):
             for line in [
                 'data: {"choices":[{"delta":{"reasoning_content":"Let me think..."}}]}',
-                '',
+                "",
                 'data: {"choices":[{"delta":{"reasoning_content":" The answer is 3."}}]}',
-                '',
+                "",
                 'data: {"choices":[{"delta":{"content":"The word strawberry has 3 r\'s."}}]}',
-                '',
-                'data: [DONE]',
-                '',
+                "",
+                "data: [DONE]",
+                "",
             ]:
                 yield line
 
     class FakeStreamContext:
         async def __aenter__(self):
             return FakeStreamResponse()
+
         async def __aexit__(self, *args):
             pass
 
@@ -265,8 +265,7 @@ async def test_openrouter_provider_reasoning_only_response(monkeypatch):
                     "role": "assistant",
                     "content": "",
                     "reasoning_content": (
-                        '{"type":"final","payload":'
-                        '{"message":"The word strawberry has 3 r\'s."}}'
+                        '{"type":"final","payload":{"message":"The word strawberry has 3 r\'s."}}'
                     ),
                 }
             }
@@ -323,6 +322,7 @@ async def test_openrouter_provider_temperature_zero(monkeypatch):
     )
 
     sent_payloads = []
+
     async def capture_request(method, url, **kwargs):
         sent_payloads.append(kwargs.get("json", {}))
         mock_resp = MagicMock()

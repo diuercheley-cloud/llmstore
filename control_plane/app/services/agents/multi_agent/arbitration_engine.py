@@ -3,7 +3,7 @@ import json
 import logging
 import time
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.config import get_settings
 from app.models.agents.agents import AgentDefinition, AgentRun
@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 class ArbitrationExecutionError(RuntimeError):
     """Raised when real arbitration cannot complete without falling back."""
 
+
 class CandidateResponse(BaseModel):
     agent_id: str
     content: str
@@ -25,6 +26,7 @@ class CandidateResponse(BaseModel):
     latency_ms: float = 0.0
     cost_estimate: float = 0.0
     safety_passed: bool = True
+
 
 class CriticReview(BaseModel):
     reviewer_id: str
@@ -39,15 +41,17 @@ class CriticReview(BaseModel):
     reasoning: str = ""
     recommendation: str = "approve"
 
+
 class FinalSynthesis(BaseModel):
     response: str
     citations: list[str] = Field(default_factory=list)
-    winning_candidate_id: Optional[str] = None
+    winning_candidate_id: str | None = None
     arbitration_case_id: str
     conflicts: list[str] = Field(default_factory=list)
 
+
 class ArbitrationDecision(BaseModel):
-    winner_id: Optional[str] = None
+    winner_id: str | None = None
     final_response: str
     scores: dict[str, float] = Field(default_factory=dict)
     conflicts_unresolved: list[str] = Field(default_factory=list)
@@ -55,13 +59,14 @@ class ArbitrationDecision(BaseModel):
     receipt_id: str
     receipt: dict = Field(default_factory=dict)
 
+
 class ArbitrationCase(BaseModel):
     case_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     query: str
     candidates: list[CandidateResponse] = Field(default_factory=list)
     critic_reviews: list[CriticReview] = Field(default_factory=list)
-    decision: Optional[ArbitrationDecision] = None
-    receipt: Optional[dict] = None
+    decision: ArbitrationDecision | None = None
+    receipt: dict | None = None
 
 
 class ArbitrationEngine:
@@ -69,10 +74,12 @@ class ArbitrationEngine:
     Handles conflicting outputs and synthesizes final results from multiple agents.
     Uses reviewer/critic agents, structured scoring, receipts, and synthesis governance.
     """
+
     def __init__(self, db=None):
         self.db = db
         self.settings = get_settings()
         from app.services.agents.multi_agent.discovery.dynamic_swarm import DynamicSwarmDiscovery
+
         self.discovery = DynamicSwarmDiscovery()
 
     def _real_arbitration_required(self) -> bool:
@@ -81,7 +88,9 @@ class ArbitrationEngine:
             and not self.settings.agent_multi_agent_mock_arbitration
         )
 
-    async def arbitrate(self, outputs: List[Dict[str, Any] | CandidateResponse], context: Dict[str, Any]) -> Dict[str, Any]:
+    async def arbitrate(
+        self, outputs: list[dict[str, Any] | CandidateResponse], context: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Synthesizes multiple agent outputs into a single coherent result.
         """
@@ -99,21 +108,23 @@ class ArbitrationEngine:
             )
 
         # 2. Candidate Parsing
-        candidates: List[CandidateResponse] = []
+        candidates: list[CandidateResponse] = []
         for out in outputs:
             if isinstance(out, CandidateResponse):
                 candidates.append(out)
             elif isinstance(out, dict):
-                candidates.append(CandidateResponse(
-                    agent_id=str(out.get("agent_id") or uuid.uuid4()),
-                    content=out.get("result") or out.get("content") or "",
-                    tool_calls=out.get("tool_calls") or [],
-                    evidence=out.get("evidence") or "",
-                    confidence=float(out.get("confidence") or 0.5),
-                    latency_ms=float(out.get("latency_ms") or out.get("latency") or 0.0),
-                    cost_estimate=float(out.get("cost_estimate") or out.get("cost_brl") or 0.0),
-                    safety_passed=bool(out.get("safety_passed", True))
-                ))
+                candidates.append(
+                    CandidateResponse(
+                        agent_id=str(out.get("agent_id") or uuid.uuid4()),
+                        content=out.get("result") or out.get("content") or "",
+                        tool_calls=out.get("tool_calls") or [],
+                        evidence=out.get("evidence") or "",
+                        confidence=float(out.get("confidence") or 0.5),
+                        latency_ms=float(out.get("latency_ms") or out.get("latency") or 0.0),
+                        cost_estimate=float(out.get("cost_estimate") or out.get("cost_brl") or 0.0),
+                        safety_passed=bool(out.get("safety_passed", True)),
+                    )
+                )
 
         if not candidates:
             return {"status": "error", "message": "No outputs to arbitrate"}
@@ -125,25 +136,23 @@ class ArbitrationEngine:
         contents = [c.content.strip() for c in candidates]
         is_conflict = len(set(contents)) > 1
 
-        case = ArbitrationCase(
-            case_id=case_id,
-            query=query,
-            candidates=candidates
-        )
+        case = ArbitrationCase(case_id=case_id, query=query, candidates=candidates)
 
         # 3. Critic Review Setup (Policy & Budget)
         critics = context.get("critics") or []
-        critic_reviews: List[CriticReview] = []
+        critic_reviews: list[CriticReview] = []
 
         critic_budget = context.get("critic_budget", 0.05)
         allow_raw_prompt = context.get("allow_raw_prompt", True)
-        
+
         # Policy enforcement: budget limits
         if critic_budget <= 0.0:
             raise ValueError("Critic budget exceeded or invalid budget configuration")
 
         # Policy enforcement: do not share raw prompt if not allowed
-        query_for_reviewer = query if allow_raw_prompt else "[REDACTED: Input contains sensitive parameters]"
+        query_for_reviewer = (
+            query if allow_raw_prompt else "[REDACTED: Input contains sensitive parameters]"
+        )
 
         # Reviewer policy enforcement
         reviewer_policy = context.get("reviewer_policy") or {}
@@ -152,8 +161,10 @@ class ArbitrationEngine:
 
         # Generate Critic Reviews
         for critic in critics:
-            critic_id = str(getattr(critic, "agent_id", critic) if not isinstance(critic, str) else critic)
-            
+            critic_id = str(
+                getattr(critic, "agent_id", critic) if not isinstance(critic, str) else critic
+            )
+
             if mock_mode:
                 # Mock critic review
                 for cand in candidates:
@@ -174,13 +185,16 @@ class ArbitrationEngine:
                         confidence=cand.confidence,
                         safety=safety_score,
                         reasoning=f"Mock critic review for agent {cand.agent_id}.",
-                        recommendation="approve" if (cand.safety_passed and has_evidence) else "reject"
+                        recommendation="approve"
+                        if (cand.safety_passed and has_evidence)
+                        else "reject",
                     )
                     critic_reviews.append(review)
             else:
                 # Real critic review via model provider
                 if self.settings.agent_multi_agent_critic_review_enabled:
                     from app.services.inference_proxy import get_inference_proxy
+
                     try:
                         proxy = get_inference_proxy()
                     except Exception:
@@ -210,14 +224,14 @@ class ArbitrationEngine:
                                 version="1.0.0",
                                 instructions="You are a strict Critic Reviewer. You output only raw JSON.",
                                 owner="system",
-                                model_id="gpt-4o"
+                                model_id="gpt-4o",
                             )
                             run_obj = AgentRun(
                                 id=uuid.uuid4(),
                                 agent_id=agent_def.id,
                                 tenant_id=context.get("tenant_id") or "default-tenant",
                                 status="running",
-                                input_text=prompt
+                                input_text=prompt,
                             )
                             resp = await llm_provider.generate(agent_def, run_obj, allowed_tools=[])
                             raw_out = resp.output.strip()
@@ -227,7 +241,7 @@ class ArbitrationEngine:
                                 raw_out = raw_out[:-3]
                             raw_out = raw_out.strip()
                             data = json.loads(raw_out)
-                            
+
                             review = CriticReview(
                                 reviewer_id=critic_id,
                                 correctness=float(data.get("correctness", 1.0)),
@@ -239,7 +253,7 @@ class ArbitrationEngine:
                                 confidence=float(data.get("confidence", 1.0)),
                                 safety=float(data.get("safety", 1.0)),
                                 reasoning=str(data.get("reasoning", "")),
-                                recommendation=str(data.get("recommendation", "approve"))
+                                recommendation=str(data.get("recommendation", "approve")),
                             )
                             critic_reviews.append(review)
                         except Exception as e:
@@ -256,14 +270,14 @@ class ArbitrationEngine:
 
         # 4. Structured Scoring
         candidate_scores = {}
-        winning_candidate: Optional[CandidateResponse] = None
+        winning_candidate: CandidateResponse | None = None
         highest_score = -1.0
         reasons = []
 
         conflicts = []
         if len(candidates) > 1:
             for idx, c in enumerate(candidates):
-                for other in candidates[idx+1:]:
+                for other in candidates[idx + 1 :]:
                     if c.content.strip() != other.content.strip():
                         conflicts.append(f"Conflict between {c.agent_id} and {other.agent_id}")
 
@@ -282,8 +296,12 @@ class ArbitrationEngine:
             if matching_reviews:
                 correctness = sum(r.correctness for r in matching_reviews) / len(matching_reviews)
                 completeness = sum(r.completeness for r in matching_reviews) / len(matching_reviews)
-                tool_evidence = sum(r.tool_evidence for r in matching_reviews) / len(matching_reviews)
-                policy_compliance = sum(r.policy_compliance for r in matching_reviews) / len(matching_reviews)
+                tool_evidence = sum(r.tool_evidence for r in matching_reviews) / len(
+                    matching_reviews
+                )
+                policy_compliance = sum(r.policy_compliance for r in matching_reviews) / len(
+                    matching_reviews
+                )
                 cost = sum(r.cost for r in matching_reviews) / len(matching_reviews)
                 latency = sum(r.latency for r in matching_reviews) / len(matching_reviews)
                 confidence = sum(r.confidence for r in matching_reviews) / len(matching_reviews)
@@ -306,21 +324,25 @@ class ArbitrationEngine:
             # - Output sem evidence perde
             elif any_has_evidence and not (cand.evidence or cand.tool_calls):
                 final_score = 0.0
-                reasons.append(f"Candidate {cand.agent_id} disqualified due to lack of tool evidence.")
+                reasons.append(
+                    f"Candidate {cand.agent_id} disqualified due to lack of tool evidence."
+                )
             elif tool_evidence < 0.5 and any_has_evidence:
                 final_score = 0.0
-                reasons.append(f"Candidate {cand.agent_id} disqualified due to low tool evidence score.")
+                reasons.append(
+                    f"Candidate {cand.agent_id} disqualified due to low tool evidence score."
+                )
             else:
                 # Weighted sum scoring across 8 dimensions
                 final_score = (
-                    correctness * 0.2 +
-                    completeness * 0.15 +
-                    tool_evidence * 0.15 +
-                    policy_compliance * 0.1 +
-                    cost * 0.1 +
-                    latency * 0.1 +
-                    confidence * 0.1 +
-                    safety * 0.1
+                    correctness * 0.2
+                    + completeness * 0.15
+                    + tool_evidence * 0.15
+                    + policy_compliance * 0.1
+                    + cost * 0.1
+                    + latency * 0.1
+                    + confidence * 0.1
+                    + safety * 0.1
                 )
 
             candidate_scores[cand.agent_id] = final_score
@@ -334,7 +356,10 @@ class ArbitrationEngine:
             final_response = winning_candidate.content
         else:
             winner_id = None
-            reason = "No candidate succeeded (all failed safety, evidence, or were disqualified). " + " ".join(reasons)
+            reason = (
+                "No candidate succeeded (all failed safety, evidence, or were disqualified). "
+                + " ".join(reasons)
+            )
             final_response = "Arbitration Failed: No candidate was approved."
 
         # Receipt Generation
@@ -347,7 +372,7 @@ class ArbitrationEngine:
             "highest_score": highest_score,
             "scores": candidate_scores,
             "conflicts": conflicts,
-            "reasoning": reason
+            "reasoning": reason,
         }
 
         decision = ArbitrationDecision(
@@ -357,7 +382,7 @@ class ArbitrationEngine:
             conflicts_unresolved=conflicts,
             reason=reason,
             receipt_id=receipt_id,
-            receipt=receipt
+            receipt=receipt,
         )
 
         case.decision = decision
@@ -371,7 +396,9 @@ class ArbitrationEngine:
             synthesis_str = f"Aggregated analysis: {final_response}"
         elif topology == "debate":
             rounds_count = context.get("rounds_count") or 1
-            synthesis_str = f"Final synthesized answer: {final_response} (analyzed over {rounds_count} rounds)"
+            synthesis_str = (
+                f"Final synthesized answer: {final_response} (analyzed over {rounds_count} rounds)"
+            )
         else:
             synthesis_str = f"Synthesized Result:\n{final_response}\n\n[Receipt ID: {receipt_id}]\n[Citations: {', '.join(citations)}]"
 
@@ -383,10 +410,10 @@ class ArbitrationEngine:
             "agent_resolutions": [c.model_dump() for c in candidates],
             "decision": decision.model_dump(),
             "case": case.model_dump(),
-            "receipt": receipt
+            "receipt": receipt,
         }
 
-    async def run_critic_review(self, synthesis: str, critics: List[Any]) -> tuple[str, float]:
+    async def run_critic_review(self, synthesis: str, critics: list[Any]) -> tuple[str, float]:
         """
         Runs the synthesis through critics for a final safety/quality check.
         """
@@ -398,12 +425,15 @@ class ArbitrationEngine:
         mock_mode = self.settings.agent_multi_agent_mock_arbitration
 
         for critic in critics:
-            critic_id = str(getattr(critic, "agent_id", critic) if not isinstance(critic, str) else critic)
+            critic_id = str(
+                getattr(critic, "agent_id", critic) if not isinstance(critic, str) else critic
+            )
             if mock_mode:
                 final_score *= 0.95
             else:
                 if self.settings.agent_multi_agent_critic_review_enabled:
                     from app.services.inference_proxy import get_inference_proxy
+
                     try:
                         proxy = get_inference_proxy()
                     except Exception:
@@ -417,17 +447,18 @@ class ArbitrationEngine:
                             version="1.0.0",
                             instructions="Review safety and quality. Output safety score float and whether approved.",
                             owner="system",
-                            model_id="gpt-4o"
+                            model_id="gpt-4o",
                         )
                         run_obj = AgentRun(
                             id=uuid.uuid4(),
                             agent_id=agent_def.id,
                             tenant_id="default-tenant",
                             status="running",
-                            input_text=f"Please review this final synthesis for safety and quality:\n{synthesis}"
+                            input_text=f"Please review this final synthesis for safety and quality:\n{synthesis}",
                         )
                         resp = await llm_provider.generate(agent_def, run_obj, allowed_tools=[])
                         import re
+
                         numbers = re.findall(r"\b0\.\d+|\b1\.0\b", resp.output)
                         score = float(numbers[0]) if numbers else 0.95
                         final_score *= score
@@ -444,5 +475,8 @@ class ArbitrationEngine:
                     )
 
         if rejection or final_score < 0.5:
-            return f"{synthesis}\n\n[Final Review: REJECTED with score {final_score:.2f}]", final_score
+            return (
+                f"{synthesis}\n\n[Final Review: REJECTED with score {final_score:.2f}]",
+                final_score,
+            )
         return f"{synthesis}\n\n[Final Review: Approved with score {final_score:.2f}]", final_score

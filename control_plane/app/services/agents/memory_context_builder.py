@@ -4,9 +4,10 @@ Status: beta
 
 Builds a "Relevant Memory" context block for reinjection into the LLM prompt.
 """
+
 import logging
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.config import get_settings
 from app.services.agents.memory_retriever import MemoryRetrievalResult, MemoryRetriever
@@ -30,12 +31,12 @@ class MemoryContextBuilder:
         tenant_id: str,
         agent_id: uuid.UUID,
         query: str,
-        user_id: Optional[str] = None,
+        user_id: str | None = None,
         memory_type: str = "long_term",
         max_tokens: int = 2048,
         top_k: int = 5,
         score_threshold: float = 0.0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         if not self.settings.agent_memory_context_injection_enabled:
             return {"context_block": "", "memory_ids": [], "total_tokens": 0}
 
@@ -53,14 +54,14 @@ class MemoryContextBuilder:
 
     def _build_block(
         self,
-        memories: List[MemoryRetrievalResult],
+        memories: list[MemoryRetrievalResult],
         max_tokens: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         if not memories:
             return {"context_block": "", "memory_ids": [], "total_tokens": 0}
 
-        lines: List[str] = []
-        memory_ids: List[str] = []
+        lines: list[str] = []
+        memory_ids: list[str] = []
         total_tokens = 0
 
         for mem in memories:

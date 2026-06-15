@@ -81,7 +81,11 @@ async def create_pipeline(
     return _serialize_pipeline(pipeline)
 
 
-@router.post("/pipelines/{pipeline_id}/run", response_model=PipelineRunResponse, operation_id="agent_cicd_run_pipeline")
+@router.post(
+    "/pipelines/{pipeline_id}/run",
+    response_model=PipelineRunResponse,
+    operation_id="agent_cicd_run_pipeline",
+)
 async def run_pipeline(
     pipeline_id: uuid.UUID,
     db: AsyncSession = Depends(get_db_session),

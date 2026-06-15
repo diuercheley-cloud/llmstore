@@ -8,5 +8,7 @@ def verify_recovery_replay(payload: dict, expected_hash: str) -> dict:
         payload["recovery_strategy"],
         payload["dry_run"],
     )
-    return {"verification_status": "passed" if actual_hash == expected_hash else "failed", "replay_safe": actual_hash == expected_hash}
-
+    return {
+        "verification_status": "passed" if actual_hash == expected_hash else "failed",
+        "replay_safe": actual_hash == expected_hash,
+    }

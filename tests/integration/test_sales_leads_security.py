@@ -13,7 +13,7 @@ async def test_sales_endpoints_no_auth(admin_client: AsyncClient):
         ("POST", "/admin/sales/leads/00000000-0000-0000-0000-000000000000/notes"),
         ("POST", "/admin/sales/leads/00000000-0000-0000-0000-000000000000/advance-stage"),
     ]
-    
+
     for method, url in endpoints:
         if method == "GET":
             response = await admin_client.get(url)
@@ -23,8 +23,9 @@ async def test_sales_endpoints_no_auth(admin_client: AsyncClient):
             response = await admin_client.patch(url, json={})
         elif method == "DELETE":
             response = await admin_client.delete(url)
-        
+
         assert response.status_code == 401, f"Endpoint {method} {url} should require auth"
+
 
 @pytest.mark.asyncio
 async def test_sales_endpoints_invalid_token(admin_client: AsyncClient):

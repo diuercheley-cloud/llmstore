@@ -11,10 +11,12 @@ def test_canonical_json():
     data = {"b": 2, "a": 1}
     assert canonical_json(data) == '{"a": 1, "b": 2}'
 
+
 def test_sha256_hex():
     res = sha256_hex("test")
     assert len(res) == 64
     assert res == sha256_hex("test")
+
 
 def test_hashes_are_deterministic():
     payload = {"foo": "bar"}

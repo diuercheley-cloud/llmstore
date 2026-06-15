@@ -1,7 +1,6 @@
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -41,15 +40,15 @@ class ChunkingConfig(BaseModel):
 
 class ParseResult(BaseModel):
     text: str
-    pages: List[int]
+    pages: list[int]
     metadata: dict
 
 
 class ChunkResult(BaseModel):
     content: str
     chunk_index: int
-    page_number: Optional[int] = None
-    sheet_name: Optional[str] = None
+    page_number: int | None = None
+    sheet_name: str | None = None
     metadata: dict = {}
 
 
@@ -60,52 +59,52 @@ class EnterpriseDocumentResponse(BaseModel):
     content_type: str
     file_size_bytes: int
     status: str
-    page_count: Optional[int] = None
-    chunk_count: Optional[int] = None
-    error_message: Optional[str] = None
-    collection_id: Optional[uuid.UUID] = None
-    tags: Optional[List[str]] = None
-    retention_until: Optional[datetime] = None
+    page_count: int | None = None
+    chunk_count: int | None = None
+    error_message: str | None = None
+    collection_id: uuid.UUID | None = None
+    tags: list[str] | None = None
+    retention_until: datetime | None = None
     created_at: datetime
-    processed_at: Optional[datetime] = None
+    processed_at: datetime | None = None
 
 
 class EnterpriseDocumentListResponse(BaseModel):
-    data: List[EnterpriseDocumentResponse]
+    data: list[EnterpriseDocumentResponse]
     total: int
 
 
 class CollectionCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
-    description: Optional[str] = None
-    tags: Optional[List[str]] = None
+    description: str | None = None
+    tags: list[str] | None = None
 
 
 class CollectionResponse(BaseModel):
     id: uuid.UUID
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     document_count: int = 0
-    tags: Optional[List[str]] = None
+    tags: list[str] | None = None
     created_at: datetime
 
 
 class CollectionListResponse(BaseModel):
-    data: List[CollectionResponse]
+    data: list[CollectionResponse]
 
 
 class EnterpriseQueryRequest(BaseModel):
     question: str = Field(..., min_length=1)
-    collection_ids: Optional[List[uuid.UUID]] = None
-    document_ids: Optional[List[uuid.UUID]] = None
+    collection_ids: list[uuid.UUID] | None = None
+    document_ids: list[uuid.UUID] | None = None
     model: str = "default"
     top_k: int = Field(default=5, ge=1, le=50)
     score_threshold: float = Field(default=0.0, ge=0.0, le=1.0)
     max_tokens: int = 700
     temperature: float = 0.2
     rerank: bool = False
-    user_identity: Optional[str] = None
-    abac_attributes: Optional[dict] = None
+    user_identity: str | None = None
+    abac_attributes: dict | None = None
 
 
 class EnterpriseSource(BaseModel):
@@ -119,7 +118,7 @@ class EnterpriseSource(BaseModel):
 
 class EnterpriseQueryResponse(BaseModel):
     answer: str
-    sources: List[EnterpriseSource]
+    sources: list[EnterpriseSource]
     usage: dict
 
 
@@ -133,10 +132,10 @@ class EmbeddingRecord(BaseModel):
 class RAGCollection(BaseModel):
     id: uuid.UUID
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     client_id: uuid.UUID
     document_count: int = 0
-    tags: Optional[List[str]] = None
+    tags: list[str] | None = None
     created_at: datetime
 
 
@@ -147,12 +146,12 @@ class AdminOverview(BaseModel):
     total_storage_bytes: int
     total_clients_with_rag: int
     documents_by_status: dict
-    clients: List[dict]
+    clients: list[dict]
 
 
 class ParserStatus(BaseModel):
     extension: str
     supported: bool
     available: bool
-    dependency: Optional[str] = None
-    remediation: Optional[str] = None
+    dependency: str | None = None
+    remediation: str | None = None

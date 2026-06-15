@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class TestComputeDeterministicHash:
-
     def test_deterministic_same_input(self):
         fields = {"client_id": "c1", "signal_type": "latency_spike", "value": 99.5}
         h1 = compute_deterministic_hash(fields=fields)
@@ -36,7 +35,6 @@ class TestComputeDeterministicHash:
 
 
 class TestFailureSignalModel:
-
     async def test_create_failure_signal(self, session: AsyncSession):
         now = utc_now()
         signal = FailureSignal(
@@ -104,7 +102,6 @@ class TestFailureSignalModel:
 
 
 class TestFailureForecastModel:
-
     async def test_create_forecast(self, session: AsyncSession):
         forecast = FailureForecast(
             client_id="client-1",
@@ -175,7 +172,6 @@ class TestFailureForecastModel:
 
 
 class TestFailureRiskAssessmentModel:
-
     async def test_create_risk_assessment(self, session: AsyncSession):
         assessment = FailureRiskAssessment(
             client_id="client-1",
@@ -188,9 +184,7 @@ class TestFailureRiskAssessmentModel:
         await session.commit()
 
         result = await session.execute(
-            select(FailureRiskAssessment).where(
-                FailureRiskAssessment.client_id == "client-1"
-            )
+            select(FailureRiskAssessment).where(FailureRiskAssessment.client_id == "client-1")
         )
         saved = result.scalars().one()
         assert saved.risk_level == "high"
@@ -205,9 +199,7 @@ class TestFailureRiskAssessmentModel:
         await session.commit()
 
         result = await session.execute(
-            select(FailureRiskAssessment).where(
-                FailureRiskAssessment.client_id == "client-2"
-            )
+            select(FailureRiskAssessment).where(FailureRiskAssessment.client_id == "client-2")
         )
         saved = result.scalars().one()
         assert saved.risk_level == "low"

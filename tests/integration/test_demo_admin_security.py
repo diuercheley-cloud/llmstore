@@ -9,12 +9,12 @@ async def test_demo_admin_security_unauthorized(admin_client: AsyncClient):
     response = await admin_client.get("/admin/demo/summary")
     assert response.status_code in (401, 403)
 
+
 @pytest.mark.asyncio
-async def test_demo_admin_security_no_api_keys(admin_client: AsyncClient, admin_token_headers: dict[str, str]):
-    response = await admin_client.get(
-        "/admin/demo/summary",
-        headers=admin_token_headers
-    )
+async def test_demo_admin_security_no_api_keys(
+    admin_client: AsyncClient, admin_token_headers: dict[str, str]
+):
+    response = await admin_client.get("/admin/demo/summary", headers=admin_token_headers)
     assert response.status_code == 200
     data = response.text
     # Check that there are no exposed secrets looking like api keys (length 32+)

@@ -20,14 +20,19 @@ def _sanitize_payload(payload: dict[str, Any]) -> dict[str, Any]:
     sanitized: dict[str, Any] = {}
     for key, value in payload.items():
         lowered = key.lower()
-        if any(marker in lowered for marker in ("secret", "token", "password", "credential", "key", "payload")):
+        if any(
+            marker in lowered
+            for marker in ("secret", "token", "password", "credential", "key", "payload")
+        ):
             sanitized[key] = "redacted"
         else:
             sanitized[key] = value
     return sanitized
 
 
-def build_attestation_audit_event(event_type: str, client_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+def build_attestation_audit_event(
+    event_type: str, client_id: str, payload: dict[str, Any]
+) -> dict[str, Any]:
     if event_type not in EVENT_TYPES:
         raise ValueError("unsupported audit event type")
     sanitized = _sanitize_payload(payload)

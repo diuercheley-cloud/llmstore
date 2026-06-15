@@ -138,15 +138,11 @@ class SearchPolicyService:
             if self.settings.agent_web_search_allowlist_enabled:
                 allowed = False
                 for allowed_domain in DEFAULT_ALLOWLIST:
-                    if domain == allowed_domain or domain.endswith(
-                        "." + allowed_domain
-                    ):
+                    if domain == allowed_domain or domain.endswith("." + allowed_domain):
                         allowed = True
                         break
                 if not allowed:
-                    logger.info(
-                        f"Filtering result url {url} because it is not in the allowlist."
-                    )
+                    logger.info(f"Filtering result url {url} because it is not in the allowlist.")
                     continue
 
             # Sanitization of prompt injection in title or snippet
@@ -163,9 +159,7 @@ class SearchPolicyService:
             if sanitized:
                 # Sanitize content
                 r["title"] = "[Redacted: Prompt Injection Attempt]"
-                r["snippet"] = (
-                    "[Content redacted by safety engine to prevent prompt injection]"
-                )
+                r["snippet"] = "[Content redacted by safety engine to prevent prompt injection]"
                 await self.log_policy_event(
                     db,
                     tenant_id,

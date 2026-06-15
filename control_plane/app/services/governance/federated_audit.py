@@ -2,7 +2,7 @@ import hashlib
 import json
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -33,15 +33,17 @@ class FederatedAuditService:
         self,
         db: AsyncSession,
         peer_cluster_id: str,
-        since: Optional[datetime] = None,
-        event_types: Optional[List[str]] = None,
+        since: datetime | None = None,
+        event_types: list[str] | None = None,
         limit: int = 100,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         peer = await self._get_peer(db, peer_cluster_id)
         if peer.status == "disabled":
             raise ValueError(f"Peer {peer_cluster_id} is disabled")
 
-        stmt = select(CommercialFederatedAuditTrail).order_by(desc(CommercialFederatedAuditTrail.received_at))
+        stmt = select(CommercialFederatedAuditTrail).order_by(
+            desc(CommercialFederatedAuditTrail.received_at)
+        )
 
         if since:
             stmt = stmt.where(CommercialFederatedAuditTrail.received_at >= since)
@@ -54,22 +56,24 @@ class FederatedAuditService:
 
         exported = []
         for ev in events:
-            exported.append({
-                "source_event_id": ev.source_event_id,
-                "event_type": ev.event_type,
-                "event_hash": ev.event_hash,
-                "event_payload": ev.event_payload_json,
-                "received_at": ev.received_at.isoformat(),
-            })
+            exported.append(
+                {
+                    "source_event_id": ev.source_event_id,
+                    "event_type": ev.event_type,
+                    "event_hash": ev.event_hash,
+                    "event_payload": ev.event_payload_json,
+                    "received_at": ev.received_at.isoformat(),
+                }
+            )
         return exported
 
     async def ingest_audit_events(
         self,
         db: AsyncSession,
-        events: List[Dict[str, Any]],
+        events: list[dict[str, Any]],
         source_cluster_id: str,
-        peer_token: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        peer_token: str | None = None,
+    ) -> dict[str, Any]:
         if self.settings.commercial_governance_federation_require_token:
             expected_token = self.settings.commercial_governance_federation_shared_token
             if not expected_token:
@@ -116,8 +120,9 @@ class FederatedAuditService:
         await db.flush()
 
         peer = await db.execute(
-            select(CommercialGovernanceFederationPeer)
-            .where(CommercialGovernanceFederationPeer.peer_cluster_id == source_cluster_id)
+            select(CommercialGovernanceFederationPeer).where(
+                CommercialGovernanceFederationPeer.peer_cluster_id == source_cluster_id
+            )
         )
         peer_record = peer.scalar_one_or_none()
         if peer_record:
@@ -134,14 +139,15 @@ class FederatedAuditService:
         self,
         db: AsyncSession,
         dedupe_key: str,
-    ) -> Optional[CommercialFederatedAuditTrail]:
+    ) -> CommercialFederatedAuditTrail | None:
         result = await db.execute(
-            select(CommercialFederatedAuditTrail)
-            .where(CommercialFederatedAuditTrail.dedupe_key == dedupe_key)
+            select(CommercialFederatedAuditTrail).where(
+                CommercialFederatedAuditTrail.dedupe_key == dedupe_key
+            )
         )
         return result.scalar_one_or_none()
 
-    def validate_audit_event_hash(self, event: Dict[str, Any], expected_hash: str) -> bool:
+    def validate_audit_event_hash(self, event: dict[str, Any], expected_hash: str) -> bool:
         payload = event.get("event_payload", {})
         computed = self._compute_event_hash(payload)
         return computed == expected_hash
@@ -150,24 +156,30 @@ class FederatedAuditService:
         self,
         db: AsyncSession,
         limit: int = 100,
-    ) -> Dict[str, Any]:
-        stmt = select(CommercialFederatedAuditTrail).order_by(desc(CommercialFederatedAuditTrail.received_at)).limit(limit)
+    ) -> dict[str, Any]:
+        stmt = (
+            select(CommercialFederatedAuditTrail)
+            .order_by(desc(CommercialFederatedAuditTrail.received_at))
+            .limit(limit)
+        )
         result = await db.execute(stmt)
         events = result.scalars().all()
 
-        type_counts: Dict[str, int] = {}
-        source_counts: Dict[str, int] = {}
+        type_counts: dict[str, int] = {}
+        source_counts: dict[str, int] = {}
         recent_events = []
 
         for ev in events:
             type_counts[ev.event_type] = type_counts.get(ev.event_type, 0) + 1
             source_counts[ev.source_cluster_id] = source_counts.get(ev.source_cluster_id, 0) + 1
-            recent_events.append({
-                "id": str(ev.id),
-                "source_cluster_id": ev.source_cluster_id,
-                "event_type": ev.event_type,
-                "received_at": ev.received_at.isoformat(),
-            })
+            recent_events.append(
+                {
+                    "id": str(ev.id),
+                    "source_cluster_id": ev.source_cluster_id,
+                    "event_type": ev.event_type,
+                    "received_at": ev.received_at.isoformat(),
+                }
+            )
 
         return {
             "total_events": len(events),
@@ -177,14 +189,17 @@ class FederatedAuditService:
         }
 
     @staticmethod
-    def _compute_event_hash(payload: Dict[str, Any]) -> str:
+    def _compute_event_hash(payload: dict[str, Any]) -> str:
         raw = json.dumps(payload, sort_keys=True, default=str).encode("utf-8")
         return hashlib.sha256(raw).hexdigest()
 
-    async def _get_peer(self, db: AsyncSession, peer_cluster_id: str) -> CommercialGovernanceFederationPeer:
+    async def _get_peer(
+        self, db: AsyncSession, peer_cluster_id: str
+    ) -> CommercialGovernanceFederationPeer:
         result = await db.execute(
-            select(CommercialGovernanceFederationPeer)
-            .where(CommercialGovernanceFederationPeer.peer_cluster_id == peer_cluster_id)
+            select(CommercialGovernanceFederationPeer).where(
+                CommercialGovernanceFederationPeer.peer_cluster_id == peer_cluster_id
+            )
         )
         peer = result.scalar_one_or_none()
         if not peer:

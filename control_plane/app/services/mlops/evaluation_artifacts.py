@@ -1,6 +1,5 @@
 import re
 import uuid
-from typing import Optional
 
 from app.core.time import utc_now
 from app.models.core.mlops import MLEvalArtifact, MLExperimentRun
@@ -14,9 +13,9 @@ def detect_sensitive_data(content: str) -> bool:
     if not content:
         return False
     patterns = [
-        r'(?i)(api[-_ ]?key|secret|password|private[-_ ]?key|auth_token)\s*[:=]',
-        r'sk-[a-zA-Z0-9]{32,}',
-        r'Bearer\s+[a-zA-Z0-9_\-\.]+'
+        r"(?i)(api[-_ ]?key|secret|password|private[-_ ]?key|auth_token)\s*[:=]",
+        r"sk-[a-zA-Z0-9]{32,}",
+        r"Bearer\s+[a-zA-Z0-9_\-\.]+",
     ]
     for p in patterns:
         if re.search(p, content):
@@ -33,9 +32,9 @@ class EvaluationArtifacts:
         run_id: uuid.UUID,
         name: str,
         path: str,
-        content: Optional[str] = None,
-        redaction_policy: Optional[str] = None,
-        admin_user_id: Optional[uuid.UUID] = None,
+        content: str | None = None,
+        redaction_policy: str | None = None,
+        admin_user_id: uuid.UUID | None = None,
     ) -> MLEvalArtifact:
         # Verify run exists
         result = await self.session.execute(
@@ -65,7 +64,7 @@ class EvaluationArtifacts:
                 )
                 raise HTTPException(
                     status_code=400,
-                    detail="Sensitive data detected in artifact but no redaction policy was provided. Blocked."
+                    detail="Sensitive data detected in artifact but no redaction policy was provided. Blocked.",
                 )
             else:
                 is_redacted = True

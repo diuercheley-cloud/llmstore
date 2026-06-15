@@ -38,7 +38,9 @@ class TestCreateFailureSignal:
         assert data["receipt"]["receipt_type"] == "failure_signal_recorded"
         assert data["receipt"]["advisory_only"] is True
 
-    async def test_advisory_only_in_receipt(self, admin_client: AsyncClient, admin_token_headers: dict):
+    async def test_advisory_only_in_receipt(
+        self, admin_client: AsyncClient, admin_token_headers: dict
+    ):
         r = await admin_client.post(
             "/admin/operations/failure-signals",
             json=SIGNAL_PAYLOAD,
@@ -47,7 +49,9 @@ class TestCreateFailureSignal:
         assert r.status_code == 200
         assert r.json()["receipt"]["advisory_only"] is True
 
-    async def test_rejects_missing_client_id(self, admin_client: AsyncClient, admin_token_headers: dict):
+    async def test_rejects_missing_client_id(
+        self, admin_client: AsyncClient, admin_token_headers: dict
+    ):
         r = await admin_client.post(
             "/admin/operations/failure-signals",
             json={"signal_type": "cpu"},
@@ -55,7 +59,9 @@ class TestCreateFailureSignal:
         )
         assert r.status_code == 422
 
-    async def test_sanitizes_sensitive_payload(self, admin_client: AsyncClient, admin_token_headers: dict):
+    async def test_sanitizes_sensitive_payload(
+        self, admin_client: AsyncClient, admin_token_headers: dict
+    ):
         r = await admin_client.post(
             "/admin/operations/failure-signals",
             json={**SIGNAL_PAYLOAD, "payload_json": {"api_key": "sk-123", "cpu": 95}},
@@ -70,8 +76,9 @@ class TestCreateFailureSignal:
 
 
 class TestListFailureSignals:
-
-    async def test_lists_signals_by_client(self, admin_client: AsyncClient, admin_token_headers: dict):
+    async def test_lists_signals_by_client(
+        self, admin_client: AsyncClient, admin_token_headers: dict
+    ):
         await admin_client.post(
             "/admin/operations/failure-signals",
             json=SIGNAL_PAYLOAD,
@@ -128,7 +135,6 @@ class TestListFailureSignals:
 
 
 class TestRunForecast:
-
     async def test_runs_forecast(self, admin_client: AsyncClient, admin_token_headers: dict):
         await admin_client.post(
             "/admin/operations/failure-signals",
@@ -148,7 +154,9 @@ class TestRunForecast:
         assert data["forecast"]["risk_score"] >= 0
         assert data["receipt"]["receipt_type"] == "failure_forecast_created"
 
-    async def test_forecast_contains_required_fields(self, admin_client: AsyncClient, admin_token_headers: dict):
+    async def test_forecast_contains_required_fields(
+        self, admin_client: AsyncClient, admin_token_headers: dict
+    ):
         await admin_client.post(
             "/admin/operations/failure-signals",
             json=SIGNAL_PAYLOAD,
@@ -187,7 +195,9 @@ class TestRunForecast:
         assert r1.json()["forecast"]["risk_score"] == r2.json()["forecast"]["risk_score"]
         assert r1.json()["forecast"]["input_hash"] == r2.json()["forecast"]["input_hash"]
 
-    async def test_zero_risk_without_signals(self, admin_client: AsyncClient, admin_token_headers: dict):
+    async def test_zero_risk_without_signals(
+        self, admin_client: AsyncClient, admin_token_headers: dict
+    ):
         r = await admin_client.post(
             "/admin/operations/failure-forecasts/run",
             params={"client_id": "no-signals"},
@@ -214,7 +224,6 @@ class TestRunForecast:
 
 
 class TestListForecasts:
-
     async def test_lists_forecasts(self, admin_client: AsyncClient, admin_token_headers: dict):
         await admin_client.post(
             "/admin/operations/failure-signals",
@@ -250,7 +259,6 @@ class TestListForecasts:
 
 
 class TestCreateRiskAssessment:
-
     async def test_creates_assessment(self, admin_client: AsyncClient, admin_token_headers: dict):
         await admin_client.post(
             "/admin/operations/failure-signals",
@@ -283,7 +291,9 @@ class TestCreateRiskAssessment:
         assert data["assessment"]["dry_run"] is True
         assert data["receipt"]["receipt_type"] == "failure_risk_assessment_created"
 
-    async def test_404_for_missing_forecast(self, admin_client: AsyncClient, admin_token_headers: dict):
+    async def test_404_for_missing_forecast(
+        self, admin_client: AsyncClient, admin_token_headers: dict
+    ):
         r = await admin_client.post(
             "/admin/operations/failure-risk-assessments",
             json={"client_id": "x", "forecast_id": "nonexistent"},
@@ -309,14 +319,20 @@ class TestCreateRiskAssessment:
         )
         r = await admin_client.post(
             "/admin/operations/failure-risk-assessments",
-            json={"client_id": "test-client", "forecast_id": flist.json()[0]["id"], "dry_run": False},
+            json={
+                "client_id": "test-client",
+                "forecast_id": flist.json()[0]["id"],
+                "dry_run": False,
+            },
             headers=admin_token_headers,
         )
         assert r.status_code == 200
         assert r.json()["assessment"]["dry_run"] is False
         assert r.json()["assessment"]["advisory_only"] is True
 
-    async def test_rejects_cross_tenant_forecast_reference(self, admin_client: AsyncClient, admin_token_headers: dict):
+    async def test_rejects_cross_tenant_forecast_reference(
+        self, admin_client: AsyncClient, admin_token_headers: dict
+    ):
         await admin_client.post(
             "/admin/operations/failure-signals",
             json={**SIGNAL_PAYLOAD, "client_id": "client-a"},
@@ -346,7 +362,6 @@ class TestCreateRiskAssessment:
 
 
 class TestListRiskAssessments:
-
     async def test_lists_assessments(self, admin_client: AsyncClient, admin_token_headers: dict):
         await admin_client.post(
             "/admin/operations/failure-signals",
@@ -393,7 +408,6 @@ class TestListRiskAssessments:
 
 
 class TestAuth:
-
     async def test_rejects_no_token(self, admin_client: AsyncClient):
         r = await admin_client.post(
             "/admin/operations/failure-signals",

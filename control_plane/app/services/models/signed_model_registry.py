@@ -9,13 +9,13 @@ from uuid import UUID
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.core.admin_action_log import AdminActionLog
-from app.models.core.client import Client
 from app.models.commercial.commercial_model_supply_chain import (
     CommercialModelProvenanceAttestation,
     CommercialModelRevocationRecord,
     CommercialSignedModelRegistryEntry,
 )
+from app.models.core.admin_action_log import AdminActionLog
+from app.models.core.client import Client
 from app.services.routing.commercial_report_export import sanitize_report_payload
 from fastapi import HTTPException
 from sqlalchemy import desc, or_, select
@@ -27,7 +27,9 @@ BLOCKED_STATES = {"untrusted", "quarantined", "revoked"}
 
 
 def _canonical_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+    )
 
 
 def _sign_secret() -> str:
@@ -146,7 +148,9 @@ async def register_model_manifest(
     trust_state: str | None = None,
 ) -> CommercialSignedModelRegistryEntry:
     settings = get_settings()
-    sanitized_scope = sanitize_report_payload(tenant_scope_json) if tenant_scope_json is not None else None
+    sanitized_scope = (
+        sanitize_report_payload(tenant_scope_json) if tenant_scope_json is not None else None
+    )
     sanitized_path = _sanitize_path_like(model_file_path)
     model_format = _sanitize_text(model_format, max_length=32) or "other"
     is_local_artifact = model_format in LOCAL_MODEL_FORMATS
@@ -197,8 +201,16 @@ async def register_model_manifest(
         db,
         action="model_registered",
         status="success",
-        payload={"model_name": entry.model_name, "model_alias": entry.model_alias, "model_format": entry.model_format},
-        result={"registry_entry_id": str(entry.id), "trust_state": entry.trust_state, "manifest_hash": entry.manifest_hash},
+        payload={
+            "model_name": entry.model_name,
+            "model_alias": entry.model_alias,
+            "model_format": entry.model_format,
+        },
+        result={
+            "registry_entry_id": str(entry.id),
+            "trust_state": entry.trust_state,
+            "manifest_hash": entry.manifest_hash,
+        },
     )
     return entry
 
@@ -229,9 +241,18 @@ async def verify_model_checksum(
             action="checksum_mismatch",
             status="failure",
             payload={"registry_entry_id": str(entry.id), "model_name": entry.model_name},
-            result={"expected": entry.checksum_sha256, "actual": actual, "trust_state": entry.trust_state},
+            result={
+                "expected": entry.checksum_sha256,
+                "actual": actual,
+                "trust_state": entry.trust_state,
+            },
         )
-        return {"verified": False, "reason": "checksum_mismatch", "expected": entry.checksum_sha256, "actual": actual}
+        return {
+            "verified": False,
+            "reason": "checksum_mismatch",
+            "expected": entry.checksum_sha256,
+            "actual": actual,
+        }
 
     await _log_audit(
         db,
@@ -328,7 +349,10 @@ async def revoke_model(
         db,
         action="model_revoked",
         status="success",
-        payload={"registry_entry_id": str(entry.id) if entry else None, "model_name": resolved_name},
+        payload={
+            "registry_entry_id": str(entry.id) if entry else None,
+            "model_name": resolved_name,
+        },
         result={"revocation_type": revocation_type},
     )
     return record
@@ -346,7 +370,10 @@ async def _latest_entry_for_model(
                 CommercialSignedModelRegistryEntry.model_alias == model_name,
             )
         )
-        .order_by(desc(CommercialSignedModelRegistryEntry.updated_at), desc(CommercialSignedModelRegistryEntry.created_at))
+        .order_by(
+            desc(CommercialSignedModelRegistryEntry.updated_at),
+            desc(CommercialSignedModelRegistryEntry.created_at),
+        )
     )
     return result.scalars().first()
 
@@ -422,7 +449,10 @@ async def enforce_model_trust_or_warn(
         trust["allowed"] = True
         return trust
     if mode == "report_only":
-        return trust | {"allowed": True, "warning": None if trust["trust_state"] == "trusted" else trust["reason"]}
+        return trust | {
+            "allowed": True,
+            "warning": None if trust["trust_state"] == "trusted" else trust["reason"],
+        }
     if trust["trust_state"] != "trusted":
         raise HTTPException(status_code=403, detail={"error": "model_not_trusted", **trust})
     return trust

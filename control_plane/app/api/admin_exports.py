@@ -3,7 +3,6 @@ import uuid
 from datetime import date
 
 from app.core.config import get_settings
-from app.services.runtime_dependencies import get_db_session
 from app.services.auth import require_admin
 from app.services.export_reporting import (
     build_monthly_report,
@@ -15,6 +14,7 @@ from app.services.export_reporting import (
     export_usage,
     render_export_response,
 )
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,7 +28,12 @@ def _export_params(
     client_id: uuid.UUID | None = Query(default=None),
     format: str = Query(default="json", pattern="^(csv|json)$"),
 ):
-    return {"start_date": start_date, "end_date": end_date, "client_id": client_id, "format": format}
+    return {
+        "start_date": start_date,
+        "end_date": end_date,
+        "client_id": client_id,
+        "format": format,
+    }
 
 
 @router.get("/export/clients")
@@ -36,7 +41,12 @@ async def export_clients_endpoint(
     params: dict = Depends(_export_params),
     session: AsyncSession = Depends(get_db_session),
 ):
-    rows = await export_clients(session, start_date=params["start_date"], end_date=params["end_date"], client_id=params["client_id"])
+    rows = await export_clients(
+        session,
+        start_date=params["start_date"],
+        end_date=params["end_date"],
+        client_id=params["client_id"],
+    )
     return render_export_response("clients", rows, params["format"])
 
 
@@ -45,7 +55,12 @@ async def export_usage_endpoint(
     params: dict = Depends(_export_params),
     session: AsyncSession = Depends(get_db_session),
 ):
-    rows = await export_usage(session, start_date=params["start_date"], end_date=params["end_date"], client_id=params["client_id"])
+    rows = await export_usage(
+        session,
+        start_date=params["start_date"],
+        end_date=params["end_date"],
+        client_id=params["client_id"],
+    )
     return render_export_response("usage", rows, params["format"])
 
 
@@ -54,7 +69,12 @@ async def export_invoices_endpoint(
     params: dict = Depends(_export_params),
     session: AsyncSession = Depends(get_db_session),
 ):
-    rows = await export_invoices(session, start_date=params["start_date"], end_date=params["end_date"], client_id=params["client_id"])
+    rows = await export_invoices(
+        session,
+        start_date=params["start_date"],
+        end_date=params["end_date"],
+        client_id=params["client_id"],
+    )
     return render_export_response("invoices", rows, params["format"])
 
 
@@ -63,7 +83,12 @@ async def export_payments_endpoint(
     params: dict = Depends(_export_params),
     session: AsyncSession = Depends(get_db_session),
 ):
-    rows = await export_payments(session, start_date=params["start_date"], end_date=params["end_date"], client_id=params["client_id"])
+    rows = await export_payments(
+        session,
+        start_date=params["start_date"],
+        end_date=params["end_date"],
+        client_id=params["client_id"],
+    )
     return render_export_response("payments", rows, params["format"])
 
 
@@ -72,7 +97,12 @@ async def export_security_events_endpoint(
     params: dict = Depends(_export_params),
     session: AsyncSession = Depends(get_db_session),
 ):
-    rows = await export_security_events(session, start_date=params["start_date"], end_date=params["end_date"], client_id=params["client_id"])
+    rows = await export_security_events(
+        session,
+        start_date=params["start_date"],
+        end_date=params["end_date"],
+        client_id=params["client_id"],
+    )
     return render_export_response("security-events", rows, params["format"])
 
 
@@ -81,7 +111,12 @@ async def export_request_logs_endpoint(
     params: dict = Depends(_export_params),
     session: AsyncSession = Depends(get_db_session),
 ):
-    rows = await export_request_logs(session, start_date=params["start_date"], end_date=params["end_date"], client_id=params["client_id"])
+    rows = await export_request_logs(
+        session,
+        start_date=params["start_date"],
+        end_date=params["end_date"],
+        client_id=params["client_id"],
+    )
     return render_export_response("request-logs", rows, params["format"])
 
 

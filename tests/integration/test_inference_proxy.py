@@ -23,7 +23,13 @@ async def test_json_forward_400_does_not_open_circuit_breaker():
     try:
         proxy._client_for_backend = lambda backend, backend_url: client
         with pytest.raises(HTTPException) as exc:
-            await proxy._json_forward("/v1/chat/completions", {"model": "gemma", "messages": [{"role": "user", "content": "x"}]}, backend="llama.cpp", backend_url="http://backend", backend_name="gemma-local")
+            await proxy._json_forward(
+                "/v1/chat/completions",
+                {"model": "gemma", "messages": [{"role": "user", "content": "x"}]},
+                backend="llama.cpp",
+                backend_url="http://backend",
+                backend_name="gemma-local",
+            )
 
         assert exc.value.status_code == 400
         assert proxy.circuit_breaker.failures == 0
@@ -62,10 +68,16 @@ async def test_stream_forward_400_does_not_open_circuit_breaker(monkeypatch):
 @pytest.mark.asyncio
 async def test_stream_forward_returns_backend_error_for_openrouter_404(monkeypatch):
     async def handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(404, json={"error": {"message": "No endpoints found that support tool use."}}, request=request)
+        return httpx.Response(
+            404,
+            json={"error": {"message": "No endpoints found that support tool use."}},
+            request=request,
+        )
 
     proxy = InferenceProxy(DummyQueueManager(), CircuitBreaker())
-    client = httpx.AsyncClient(transport=httpx.MockTransport(handler), base_url="https://openrouter.ai")
+    client = httpx.AsyncClient(
+        transport=httpx.MockTransport(handler), base_url="https://openrouter.ai"
+    )
     monkeypatch.setattr(httpx, "AsyncClient", lambda *args, **kwargs: client)
 
     try:
@@ -80,7 +92,10 @@ async def test_stream_forward_returns_backend_error_for_openrouter_404(monkeypat
 
         assert exc.value.status_code == 404
         assert exc.value.detail["backend_status_code"] == 404
-        assert exc.value.detail["backend_response"]["error"]["message"] == "No endpoints found that support tool use."
+        assert (
+            exc.value.detail["backend_response"]["error"]["message"]
+            == "No endpoints found that support tool use."
+        )
     finally:
         await client.aclose()
 
@@ -88,9 +103,18 @@ async def test_stream_forward_returns_backend_error_for_openrouter_404(monkeypat
 def test_normalize_openrouter_endpoint_handles_root_and_api_v1_base_urls():
     proxy = InferenceProxy(DummyQueueManager(), CircuitBreaker())
 
-    assert proxy._normalize_openrouter_endpoint("https://openrouter.ai", "/v1/chat/completions") == "/api/v1/chat/completions"
-    assert proxy._normalize_openrouter_endpoint("https://openrouter.ai/api/v1", "/v1/chat/completions") == "/chat/completions"
-    assert proxy._normalize_openrouter_endpoint("https://openrouter.ai/api", "/v1/chat/completions") == "/v1/chat/completions"
+    assert (
+        proxy._normalize_openrouter_endpoint("https://openrouter.ai", "/v1/chat/completions")
+        == "/api/v1/chat/completions"
+    )
+    assert (
+        proxy._normalize_openrouter_endpoint("https://openrouter.ai/api/v1", "/v1/chat/completions")
+        == "/chat/completions"
+    )
+    assert (
+        proxy._normalize_openrouter_endpoint("https://openrouter.ai/api", "/v1/chat/completions")
+        == "/v1/chat/completions"
+    )
 
 
 @pytest.mark.asyncio
@@ -129,6 +153,7 @@ async def test_prepare_chat_payload_uses_gemma_template_and_disables_reasoning()
 @pytest.mark.asyncio
 async def test_prepare_chat_payload_trims_openai_compatible_context():
     import app.services.context_manager
+
     old_val = app.services.context_manager.settings.inference_max_context_tokens
     app.services.context_manager.settings.inference_max_context_tokens = 2048
     try:

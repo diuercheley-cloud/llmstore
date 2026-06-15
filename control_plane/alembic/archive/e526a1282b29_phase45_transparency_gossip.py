@@ -4,11 +4,12 @@ Revision ID: e526a1282b29
 Revises: 4dae4ba9d504
 Create Date: 2026-05-15 12:57:45.829920
 """
+
 import sqlalchemy as sa
 from alembic import op
 
-revision = 'e526a1282b29'
-down_revision = '4dae4ba9d504'
+revision = "e526a1282b29"
+down_revision = "4dae4ba9d504"
 branch_labels = None
 depends_on = None
 
@@ -45,7 +46,9 @@ def upgrade() -> None:
         sa.Column("timeline_hash", sa.String(length=255), nullable=True),
         sa.Column("checkpoint_hash", sa.String(length=255), nullable=True),
         sa.Column("gossip_type", sa.String(length=50), nullable=False),
-        sa.Column("verification_status", sa.String(length=50), server_default="unknown", nullable=False),
+        sa.Column(
+            "verification_status", sa.String(length=50), server_default="unknown", nullable=False
+        ),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -98,10 +101,22 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_table("commercial_transparency_split_view_alerts")
-    op.drop_index("ix_commercial_consistency_checkpoints_root_hash", table_name="commercial_consistency_checkpoints")
+    op.drop_index(
+        "ix_commercial_consistency_checkpoints_root_hash",
+        table_name="commercial_consistency_checkpoints",
+    )
     op.drop_table("commercial_consistency_checkpoints")
-    op.drop_index("ix_commercial_transparency_gossip_records_target_peer_id", table_name="commercial_transparency_gossip_records")
-    op.drop_index("ix_commercial_transparency_gossip_records_source_peer_id", table_name="commercial_transparency_gossip_records")
+    op.drop_index(
+        "ix_commercial_transparency_gossip_records_target_peer_id",
+        table_name="commercial_transparency_gossip_records",
+    )
+    op.drop_index(
+        "ix_commercial_transparency_gossip_records_source_peer_id",
+        table_name="commercial_transparency_gossip_records",
+    )
     op.drop_table("commercial_transparency_gossip_records")
-    op.drop_index("ix_commercial_transparency_gossip_peers_peer_id", table_name="commercial_transparency_gossip_peers")
+    op.drop_index(
+        "ix_commercial_transparency_gossip_peers_peer_id",
+        table_name="commercial_transparency_gossip_peers",
+    )
     op.drop_table("commercial_transparency_gossip_peers")

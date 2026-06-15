@@ -10,17 +10,18 @@ def mock_benchmarks(tmp_path):
     model_dir = bench_dir / "test-model"
     run_dir = model_dir / "20260509_120000"
     run_dir.mkdir(parents=True)
-    
+
     benchmark_data = {
         "model_requested": "test-model",
         "tokens_per_second": 25.0,
-        "recommendation": "safe_for_basic"
+        "recommendation": "safe_for_basic",
     }
-    
+
     with open(run_dir / "benchmark.json", "w") as f:
         json.dump(benchmark_data, f)
-        
+
     return bench_dir
+
 
 @pytest.mark.asyncio
 async def test_list_benchmarks_empty(admin_client, admin_token_headers):
@@ -31,7 +32,10 @@ async def test_list_benchmarks_empty(admin_client, admin_token_headers):
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
+
 @pytest.mark.asyncio
 async def test_get_specific_benchmark_not_found(admin_client, admin_token_headers):
-    response = await admin_client.get("/admin/benchmarks/non-existent-model", headers=admin_token_headers)
+    response = await admin_client.get(
+        "/admin/benchmarks/non-existent-model", headers=admin_token_headers
+    )
     assert response.status_code == 404

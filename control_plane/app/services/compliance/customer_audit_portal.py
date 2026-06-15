@@ -8,14 +8,13 @@ import json
 import re
 import uuid
 from dataclasses import dataclass
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
 from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.billing.billing_invoice import BillingInvoice
-from app.models.core.client import Client
 from app.models.commercial.commercial_audit_portal import (
     CommercialPortalAuditAccessLog,
     CommercialPortalSavedReport,
@@ -33,8 +32,11 @@ from app.models.commercial.commercial_compliance import (
     CommercialOperationalReview,
 )
 from app.models.commercial.commercial_financial_audit_event import CommercialFinancialAuditEvent
-from app.models.commercial.commercial_financial_reconciliation import CommercialFinancialReconciliation
+from app.models.commercial.commercial_financial_reconciliation import (
+    CommercialFinancialReconciliation,
+)
 from app.models.commercial.commercial_qos_billing_record import CommercialQoSBillingRecord
+from app.models.core.client import Client
 from app.services.routing.commercial_report_export import (
     SECRET_VALUE_PATTERNS,
     sanitize_report_payload,
@@ -88,10 +90,10 @@ def _to_utc_datetime(value: date | datetime | None, *, end_of_day: bool = False)
         return None
     if isinstance(value, datetime):
         if value.tzinfo is None:
-            return value.replace(tzinfo=timezone.utc)
-        return value.astimezone(timezone.utc)
+            return value.replace(tzinfo=UTC)
+        return value.astimezone(UTC)
     clock = time.max if end_of_day else time.min
-    return datetime.combine(value, clock, tzinfo=timezone.utc)
+    return datetime.combine(value, clock, tzinfo=UTC)
 
 
 def _sanitize_email(value: str | None) -> str | None:
@@ -145,11 +147,18 @@ def _mask_ip(ip_address: str | None) -> str | None:
 
 
 def _hash_payload(payload: Any) -> str:
-    body = json.dumps(sanitize_report_payload(payload), sort_keys=True, ensure_ascii=True, default=str)
+    body = json.dumps(
+        sanitize_report_payload(payload), sort_keys=True, ensure_ascii=True, default=str
+    )
     return hashlib.sha256(body.encode("utf-8")).hexdigest()
 
 
-def _infer_actor(client: Client, actor_id: str | None = None, actor_email: str | None = None, actor_name: str | None = None) -> PortalActor:
+def _infer_actor(
+    client: Client,
+    actor_id: str | None = None,
+    actor_email: str | None = None,
+    actor_name: str | None = None,
+) -> PortalActor:
     parsed_actor_id: uuid.UUID | None = None
     if actor_id:
         try:
@@ -243,7 +252,9 @@ def _serialize_approval_chain(item: CommercialApprovalChain) -> dict[str, Any]:
             "required_approver_count": item.required_approver_count,
             "approvals_json": item.approvals_json or [],
             "rejections_json": item.rejections_json or [],
-            "evidence_package_id": str(item.evidence_package_id) if item.evidence_package_id else None,
+            "evidence_package_id": str(item.evidence_package_id)
+            if item.evidence_package_id
+            else None,
             "control_policy": _serialize_policy(item.policy),
             "created_at": item.created_at.isoformat() if item.created_at else None,
             "decided_at": item.decided_at.isoformat() if item.decided_at else None,
@@ -277,7 +288,9 @@ def _serialize_attestation(item: CommercialControlAttestation) -> dict[str, Any]
             "status": item.status,
             "attested_by": _sanitize_text(item.attested_by),
             "notes": _sanitize_text(item.notes, limit=1000),
-            "evidence_package_id": str(item.evidence_package_id) if item.evidence_package_id else None,
+            "evidence_package_id": str(item.evidence_package_id)
+            if item.evidence_package_id
+            else None,
             "period_start": item.attestation_period_start.isoformat(),
             "period_end": item.attestation_period_end.isoformat(),
             "attested_at": item.attested_at.isoformat() if item.attested_at else None,
@@ -340,7 +353,9 @@ def _serialize_access_log(item: CommercialPortalAuditAccessLog) -> dict[str, Any
     }
 
 
-def _serialize_operational_control(item: CommercialOperationalControl, linked_exceptions: list[dict[str, Any]]) -> dict[str, Any]:
+def _serialize_operational_control(
+    item: CommercialOperationalControl, linked_exceptions: list[dict[str, Any]]
+) -> dict[str, Any]:
     return sanitize_report_payload(
         {
             "id": str(item.id),
@@ -353,8 +368,12 @@ def _serialize_operational_control(item: CommercialOperationalControl, linked_ex
             "effectiveness_score": item.effectiveness_score,
             "effectiveness_status": item.effectiveness_status,
             "evidence_sla_days": item.evidence_sla_days,
-            "last_reviewed_at": item.last_reviewed_at.isoformat() if item.last_reviewed_at else None,
-            "next_review_due_at": item.next_review_due_at.isoformat() if item.next_review_due_at else None,
+            "last_reviewed_at": item.last_reviewed_at.isoformat()
+            if item.last_reviewed_at
+            else None,
+            "next_review_due_at": item.next_review_due_at.isoformat()
+            if item.next_review_due_at
+            else None,
             "enabled": item.enabled,
             "linked_exceptions": linked_exceptions,
             "metadata_json": item.metadata_json or {},
@@ -391,7 +410,9 @@ def _serialize_operational_review(item: CommercialOperationalReview) -> dict[str
             "status": item.status,
             "findings": _sanitize_text(item.findings, limit=1000),
             "recommendations": _sanitize_text(item.recommendations, limit=1000),
-            "evidence_package_id": str(item.evidence_package_id) if item.evidence_package_id else None,
+            "evidence_package_id": str(item.evidence_package_id)
+            if item.evidence_package_id
+            else None,
             "created_at": item.created_at.isoformat() if item.created_at else None,
             "completed_at": item.completed_at.isoformat() if item.completed_at else None,
         }
@@ -406,7 +427,10 @@ async def _visible_operational_exception_links(
     rows = (
         await db.execute(
             select(CommercialOperationalExceptionLink, CommercialControlException)
-            .join(CommercialControlException, CommercialOperationalExceptionLink.exception_id == CommercialControlException.id)
+            .join(
+                CommercialControlException,
+                CommercialOperationalExceptionLink.exception_id == CommercialControlException.id,
+            )
             .where(CommercialControlException.client_id == client_id)
             .order_by(desc(CommercialOperationalExceptionLink.created_at))
         )
@@ -436,7 +460,12 @@ async def list_customer_operational_controls(
         )
     if not grouped_links:
         return []
-    stmt = select(CommercialOperationalControl).where(CommercialOperationalControl.id.in_(list(grouped_links.keys()))).order_by(CommercialOperationalControl.control_code.asc()).limit(limit)
+    stmt = (
+        select(CommercialOperationalControl)
+        .where(CommercialOperationalControl.id.in_(list(grouped_links.keys())))
+        .order_by(CommercialOperationalControl.control_code.asc())
+        .limit(limit)
+    )
     if control_category:
         stmt = stmt.where(CommercialOperationalControl.category == control_category)
     items = (await db.execute(stmt)).scalars().all()
@@ -503,12 +532,17 @@ async def list_customer_approval_chains(
     stmt = (
         select(CommercialApprovalChain)
         .options(selectinload(CommercialApprovalChain.policy))
-        .join(CommercialControlPolicy, CommercialApprovalChain.control_policy_id == CommercialControlPolicy.id)
+        .join(
+            CommercialControlPolicy,
+            CommercialApprovalChain.control_policy_id == CommercialControlPolicy.id,
+        )
         .where(CommercialApprovalChain.client_id == client_id)
         .order_by(desc(CommercialApprovalChain.created_at))
         .limit(limit)
     )
-    for clause in _build_time_filters(CommercialApprovalChain.created_at, period_start=period_start, period_end=period_end):
+    for clause in _build_time_filters(
+        CommercialApprovalChain.created_at, period_start=period_start, period_end=period_end
+    ):
         stmt = stmt.where(clause)
     if status:
         stmt = stmt.where(CommercialApprovalChain.status == status)
@@ -536,7 +570,9 @@ async def list_customer_evidence_packages(
         .order_by(desc(CommercialEvidencePackage.created_at))
         .limit(limit)
     )
-    for clause in _build_time_filters(CommercialEvidencePackage.created_at, period_start=period_start, period_end=period_end):
+    for clause in _build_time_filters(
+        CommercialEvidencePackage.created_at, period_start=period_start, period_end=period_end
+    ):
         stmt = stmt.where(clause)
     if actor:
         stmt = stmt.where(CommercialEvidencePackage.summary.contains(actor))
@@ -560,7 +596,10 @@ async def list_customer_attestations(
     stmt = (
         select(CommercialControlAttestation)
         .options(selectinload(CommercialControlAttestation.policy))
-        .join(CommercialControlPolicy, CommercialControlAttestation.control_policy_id == CommercialControlPolicy.id)
+        .join(
+            CommercialControlPolicy,
+            CommercialControlAttestation.control_policy_id == CommercialControlPolicy.id,
+        )
         .where(CommercialControlAttestation.client_id == client_id)
         .order_by(desc(CommercialControlAttestation.created_at))
         .limit(limit)
@@ -597,12 +636,18 @@ async def list_customer_exceptions(
     stmt = (
         select(CommercialControlException)
         .options(selectinload(CommercialControlException.policy))
-        .join(CommercialControlPolicy, CommercialControlException.control_policy_id == CommercialControlPolicy.id, isouter=True)
+        .join(
+            CommercialControlPolicy,
+            CommercialControlException.control_policy_id == CommercialControlPolicy.id,
+            isouter=True,
+        )
         .where(CommercialControlException.client_id == client_id)
         .order_by(desc(CommercialControlException.created_at))
         .limit(limit)
     )
-    for clause in _build_time_filters(CommercialControlException.created_at, period_start=period_start, period_end=period_end):
+    for clause in _build_time_filters(
+        CommercialControlException.created_at, period_start=period_start, period_end=period_end
+    ):
         stmt = stmt.where(clause)
     if status:
         stmt = stmt.where(CommercialControlException.status == status)
@@ -648,7 +693,9 @@ async def list_customer_access_logs(
         .order_by(desc(CommercialPortalAuditAccessLog.created_at))
         .limit(limit)
     )
-    for clause in _build_time_filters(CommercialPortalAuditAccessLog.created_at, period_start=period_start, period_end=period_end):
+    for clause in _build_time_filters(
+        CommercialPortalAuditAccessLog.created_at, period_start=period_start, period_end=period_end
+    ):
         stmt = stmt.where(clause)
     if actor:
         stmt = stmt.where(CommercialPortalAuditAccessLog.actor_email == actor)
@@ -665,32 +712,47 @@ async def _list_financial_events(
     period_start: date,
     period_end: date,
 ) -> dict[str, Any]:
-    audit_start, audit_end = _to_utc_datetime(period_start), _to_utc_datetime(period_end, end_of_day=True)
+    audit_start, audit_end = (
+        _to_utc_datetime(period_start),
+        _to_utc_datetime(period_end, end_of_day=True),
+    )
     audit_stmt = (
         select(CommercialFinancialAuditEvent)
         .where(CommercialFinancialAuditEvent.client_id == client_id)
-        .where(CommercialFinancialAuditEvent.created_at >= audit_start, CommercialFinancialAuditEvent.created_at <= audit_end)
+        .where(
+            CommercialFinancialAuditEvent.created_at >= audit_start,
+            CommercialFinancialAuditEvent.created_at <= audit_end,
+        )
         .order_by(desc(CommercialFinancialAuditEvent.created_at))
         .limit(100)
     )
     recon_stmt = (
         select(CommercialFinancialReconciliation)
         .where(CommercialFinancialReconciliation.client_id == client_id)
-        .where(CommercialFinancialReconciliation.created_at >= audit_start, CommercialFinancialReconciliation.created_at <= audit_end)
+        .where(
+            CommercialFinancialReconciliation.created_at >= audit_start,
+            CommercialFinancialReconciliation.created_at <= audit_end,
+        )
         .order_by(desc(CommercialFinancialReconciliation.created_at))
         .limit(100)
     )
     dispute_stmt = (
         select(CommercialBillingDispute)
         .where(CommercialBillingDispute.client_id == client_id)
-        .where(CommercialBillingDispute.created_at >= audit_start, CommercialBillingDispute.created_at <= audit_end)
+        .where(
+            CommercialBillingDispute.created_at >= audit_start,
+            CommercialBillingDispute.created_at <= audit_end,
+        )
         .order_by(desc(CommercialBillingDispute.created_at))
         .limit(100)
     )
     qos_stmt = (
         select(CommercialQoSBillingRecord)
         .where(CommercialQoSBillingRecord.client_id == client_id)
-        .where(CommercialQoSBillingRecord.created_at >= audit_start, CommercialQoSBillingRecord.created_at <= audit_end)
+        .where(
+            CommercialQoSBillingRecord.created_at >= audit_start,
+            CommercialQoSBillingRecord.created_at <= audit_end,
+        )
         .order_by(desc(CommercialQoSBillingRecord.created_at))
         .limit(100)
     )
@@ -806,7 +868,9 @@ def _report_payload_by_type(
 
 
 def _flatten_report_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = [{"section": "watermark", "id": "", "status": "", "summary": EXPORT_WATERMARK}]
+    rows: list[dict[str, Any]] = [
+        {"section": "watermark", "id": "", "status": "", "summary": EXPORT_WATERMARK}
+    ]
     for section_name, items in payload.items():
         if isinstance(items, dict):
             for child_name, child_items in items.items():
@@ -817,7 +881,12 @@ def _flatten_report_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
                                 "section": f"{section_name}.{child_name}",
                                 "id": item.get("id", ""),
                                 "status": item.get("status", ""),
-                                "summary": json.dumps(sanitize_report_payload(item), ensure_ascii=True, sort_keys=True, default=str),
+                                "summary": json.dumps(
+                                    sanitize_report_payload(item),
+                                    ensure_ascii=True,
+                                    sort_keys=True,
+                                    default=str,
+                                ),
                             }
                         )
         elif isinstance(items, list):
@@ -827,7 +896,12 @@ def _flatten_report_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
                         "section": section_name,
                         "id": item.get("id", ""),
                         "status": item.get("status", ""),
-                        "summary": json.dumps(sanitize_report_payload(item), ensure_ascii=True, sort_keys=True, default=str),
+                        "summary": json.dumps(
+                            sanitize_report_payload(item),
+                            ensure_ascii=True,
+                            sort_keys=True,
+                            default=str,
+                        ),
                     }
                 )
     return rows
@@ -840,10 +914,14 @@ def export_customer_report(report: dict[str, Any], export_format: str) -> bytes:
             "export_watermark": EXPORT_WATERMARK,
             **(sanitized if isinstance(sanitized, dict) else {"report": sanitized}),
         }
-        return json.dumps(payload, ensure_ascii=True, indent=2, sort_keys=True, default=str).encode("utf-8")
+        return json.dumps(payload, ensure_ascii=True, indent=2, sort_keys=True, default=str).encode(
+            "utf-8"
+        )
 
     if export_format == "csv":
-        rows = _flatten_report_rows(sanitized if isinstance(sanitized, dict) else {"report": sanitized})
+        rows = _flatten_report_rows(
+            sanitized if isinstance(sanitized, dict) else {"report": sanitized}
+        )
         output = io.StringIO()
         writer = csv.DictWriter(output, fieldnames=["section", "id", "status", "summary"])
         writer.writeheader()
@@ -872,7 +950,7 @@ def export_customer_report(report: dict[str, Any], export_format: str) -> bytes:
   </head>
   <body>
     <div class="watermark">{html.escape(EXPORT_WATERMARK)}</div>
-    {''.join(html_sections)}
+    {"".join(html_sections)}
   </body>
 </html>"""
         if export_format == "html":
@@ -1013,10 +1091,13 @@ async def generate_customer_audit_report(
         period_end=period_end,
         filters_json=filters,
         export_format=export_format,
-        generated_by=actor.actor_email or actor.actor_name or (str(actor.actor_id) if actor.actor_id else None),
+        generated_by=actor.actor_email
+        or actor.actor_name
+        or (str(actor.actor_id) if actor.actor_id else None),
         immutable_hash=immutable_hash,
         created_at=utc_now(),
-        expires_at=utc_now() + timedelta(days=get_settings().commercial_enterprise_audit_log_retention_days),
+        expires_at=utc_now()
+        + timedelta(days=get_settings().commercial_enterprise_audit_log_retention_days),
     )
     db.add(report)
     await db.flush()

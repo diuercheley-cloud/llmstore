@@ -8,30 +8,34 @@ async def test_runtime_fabric_status(admin_client: AsyncClient, admin_token_head
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
+
 @pytest.mark.asyncio
 async def test_runtime_fabric_heartbeat(admin_client: AsyncClient, admin_token_headers: dict):
-    payload = {
-        "node_id": "test-node-1",
-        "status": "healthy",
-        "metrics": {"cpu": 10, "mem": 20}
-    }
-    response = await admin_client.post("/admin/runtime/fabric/heartbeat", json=payload, headers=admin_token_headers)
+    payload = {"node_id": "test-node-1", "status": "healthy", "metrics": {"cpu": 10, "mem": 20}}
+    response = await admin_client.post(
+        "/admin/runtime/fabric/heartbeat", json=payload, headers=admin_token_headers
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["node_id"] == "test-node-1"
     assert data["status"] == "healthy"
 
+
 @pytest.mark.asyncio
-async def test_runtime_drift_report_and_repair(admin_client: AsyncClient, admin_token_headers: dict):
+async def test_runtime_drift_report_and_repair(
+    admin_client: AsyncClient, admin_token_headers: dict
+):
     # 1. Report drift
     drift_payload = {
         "workflow_id": "test-wf-1",
         "step_index": 5,
         "expected_hash": "abc",
         "actual_hash": "def",
-        "drift_details": {"error": "mismatch"}
+        "drift_details": {"error": "mismatch"},
     }
-    response = await admin_client.post("/admin/runtime/drift/report", json=drift_payload, headers=admin_token_headers)
+    response = await admin_client.post(
+        "/admin/runtime/drift/report", json=drift_payload, headers=admin_token_headers
+    )
     assert response.status_code == 200
     drift_id = response.json()["id"]
 
@@ -42,10 +46,13 @@ async def test_runtime_drift_report_and_repair(admin_client: AsyncClient, admin_
     assert any(d["id"] == drift_id for d in drifts)
 
     # 3. Trigger replay repair
-    response = await admin_client.post(f"/admin/runtime/replay-repair/{drift_id}", headers=admin_token_headers)
+    response = await admin_client.post(
+        f"/admin/runtime/replay-repair/{drift_id}", headers=admin_token_headers
+    )
     assert response.status_code == 200
     plan = response.json()
     assert plan["status"] == "completed"
+
 
 @pytest.mark.asyncio
 async def test_runtime_portal_status(admin_client: AsyncClient):

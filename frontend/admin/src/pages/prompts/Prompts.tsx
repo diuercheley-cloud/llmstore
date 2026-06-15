@@ -34,7 +34,7 @@ export default function PromptsPage() {
   }
 
   useEffect(() => {
-    fetchPrompts()
+    void Promise.resolve().then(() => fetchPrompts())
   }, [])
 
   const handleCreate = async (e: React.FormEvent) => {

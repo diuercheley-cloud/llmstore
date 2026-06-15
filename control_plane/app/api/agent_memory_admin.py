@@ -1,6 +1,6 @@
 # Owner: agent-platform
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.api.deps import get_db_session, require_admin
 from app.models.agents.agents import AgentMemoryAccessEvent, AgentMemoryItem
@@ -14,12 +14,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/agents/memory", tags=["agent-memory"])
 
+
 @router.get("/policies")
 async def list_policies(
     tenant_id: str,
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     service = MemoryPolicyService(db)
     policies = await service.list_policies(tenant_id)
     return [
@@ -34,22 +35,24 @@ async def list_policies(
         for p in policies
     ]
 
+
 @router.post("/policies")
 async def create_policy(
     data: dict = Body(...),
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     service = MemoryPolicyService(db)
     policy = await service.create_policy(data)
     return {"id": str(policy.id), "status": "created"}
+
 
 @router.get("/consents")
 async def list_consents(
     tenant_id: str,
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     service = MemoryConsentService(db)
     consents = await service.list_consents(tenant_id)
     return [
@@ -65,18 +68,20 @@ async def list_consents(
         for c in consents
     ]
 
+
 @router.post("/consents")
 async def create_consent(
     tenant_id: str = Body(...),
     user_id: str = Body(...),
     memory_type: str = Body(...),
-    agent_id: Optional[uuid.UUID] = Body(None),
+    agent_id: uuid.UUID | None = Body(None),
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     service = MemoryConsentService(db)
     consent = await service.create_consent(tenant_id, user_id, memory_type, agent_id)
     return {"id": str(consent.id), "status": "created"}
+
 
 @router.post("/search")
 async def search_memory(
@@ -86,7 +91,7 @@ async def search_memory(
     limit: int = Body(10),
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     service = AgentMemoryService(db)
     items = await service.search_memory(tenant_id, agent_id, query, limit)
     return [
@@ -101,50 +106,51 @@ async def search_memory(
         for item in items
     ]
 
+
 @router.post("/export")
 async def export_memory(
     tenant_id: str = Body(...),
-    agent_id: Optional[uuid.UUID] = Body(None),
-    memory_type: Optional[str] = Body(None),
+    agent_id: uuid.UUID | None = Body(None),
+    memory_type: str | None = Body(None),
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     service = AgentMemoryService(db)
     return await service.export_memory(tenant_id, agent_id, memory_type)
+
 
 @router.post("/delete-request")
 async def create_delete_request(
     tenant_id: str = Body(...),
-    agent_id: Optional[uuid.UUID] = Body(None),
-    memory_type: Optional[str] = Body(None),
+    agent_id: uuid.UUID | None = Body(None),
+    memory_type: str | None = Body(None),
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     service = MemoryRetentionService(db)
     req = await service.create_delete_request(tenant_id, agent_id, memory_type)
     return {"id": str(req.id), "status": "pending"}
+
 
 @router.post("/retention/run")
 async def run_retention(
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     service = MemoryRetentionService(db)
     ret_res = await service.run_retention()
     del_res = await service.process_delete_requests()
-    return {
-        "retention": ret_res,
-        "delete_requests": del_res
-    }
+    return {"retention": ret_res, "delete_requests": del_res}
+
 
 @router.get("/access-events")
 async def get_access_events(
     tenant_id: str,
-    agent_id: Optional[uuid.UUID] = None,
+    agent_id: uuid.UUID | None = None,
     limit: int = Query(100),
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     stmt = select(AgentMemoryAccessEvent).where(AgentMemoryAccessEvent.tenant_id == tenant_id)
     if agent_id:
         stmt = stmt.where(AgentMemoryAccessEvent.agent_id == agent_id)
@@ -163,17 +169,18 @@ async def get_access_events(
         for e in events
     ]
 
+
 @router.get("/items")
 async def list_memory_items(
     tenant_id: str,
-    agent_id: Optional[uuid.UUID] = None,
+    agent_id: uuid.UUID | None = None,
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     stmt = select(AgentMemoryItem).where(AgentMemoryItem.tenant_id == tenant_id)
     if agent_id:
         stmt = stmt.where(AgentMemoryItem.agent_id == agent_id)
-    
+
     res = await db.execute(stmt)
     items = res.scalars().all()
     return [
@@ -187,13 +194,14 @@ async def list_memory_items(
         for item in items
     ]
 
+
 @router.delete("/items/{item_id}")
 async def delete_memory_item(
     item_id: uuid.UUID,
     tenant_id: str,
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     service = AgentMemoryService(db)
     await service.delete_memory_item(tenant_id, item_id)
     return {"status": "deleted"}

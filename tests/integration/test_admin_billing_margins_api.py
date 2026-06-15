@@ -75,7 +75,11 @@ async def test_simulate_pricing_requires_auth(client):
 
 @pytest.mark.asyncio
 async def test_simulate_pricing(client):
-    resp = await _post("/admin/billing/pricing/simulate", {"provider": "local", "prompt_tokens": 100, "completion_tokens": 50}, client)
+    resp = await _post(
+        "/admin/billing/pricing/simulate",
+        {"provider": "local", "prompt_tokens": 100, "completion_tokens": 50},
+        client,
+    )
     assert resp.status_code == 200
     data = resp.json()
     assert "provider" in data
@@ -86,8 +90,28 @@ async def test_simulate_pricing(client):
 
 @pytest.mark.asyncio
 async def test_simulate_pricing_with_cache(client):
-    no_cache = await _post("/admin/billing/pricing/simulate", {"provider": "local", "prompt_tokens": 100, "completion_tokens": 50, "cache_hit": False, "plan_code": "basic"}, client)
-    cached = await _post("/admin/billing/pricing/simulate", {"provider": "local", "prompt_tokens": 100, "completion_tokens": 50, "cache_hit": True, "plan_code": "basic"}, client)
+    no_cache = await _post(
+        "/admin/billing/pricing/simulate",
+        {
+            "provider": "local",
+            "prompt_tokens": 100,
+            "completion_tokens": 50,
+            "cache_hit": False,
+            "plan_code": "basic",
+        },
+        client,
+    )
+    cached = await _post(
+        "/admin/billing/pricing/simulate",
+        {
+            "provider": "local",
+            "prompt_tokens": 100,
+            "completion_tokens": 50,
+            "cache_hit": True,
+            "plan_code": "basic",
+        },
+        client,
+    )
     assert no_cache.status_code == 200
     assert cached.status_code == 200
     assert cached.json()["customer_price_brl"] <= no_cache.json()["customer_price_brl"]
@@ -96,13 +120,18 @@ async def test_simulate_pricing_with_cache(client):
 @pytest.mark.asyncio
 async def test_simulate_all_providers(client):
     for provider in ["local", "lmstudio", "mock", "openai", "anthropic", "deepseek"]:
-        resp = await _post("/admin/billing/pricing/simulate", {"provider": provider, "prompt_tokens": 100, "completion_tokens": 50}, client)
+        resp = await _post(
+            "/admin/billing/pricing/simulate",
+            {"provider": provider, "prompt_tokens": 100, "completion_tokens": 50},
+            client,
+        )
         assert resp.status_code == 200
 
 
 @pytest.mark.asyncio
 async def test_margins_summary_response_format():
     from app.services.billing.pricing_engine import calculate_financials
+
     result = calculate_financials("local", 1000, 500, plan_code="basic")
     assert "gross_profit_brl" in result
     assert "margin_percent" in result

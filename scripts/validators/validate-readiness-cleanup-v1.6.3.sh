@@ -1,0 +1,1 @@
+../archive/legacy/validate-readiness-cleanup-v1.6.3.sh

@@ -2,7 +2,6 @@
 import logging
 import uuid
 from datetime import timedelta
-from typing import Dict, Optional
 
 from app.core.time import utc_now
 from app.models.agents.agent_sessions import (
@@ -40,9 +39,7 @@ class SessionHistoryPolicyService:
         res = await self.db.execute(stmt)
         return res.scalar() or 0
 
-    async def build_summary_context(
-        self, session_id: uuid.UUID
-    ) -> str:
+    async def build_summary_context(self, session_id: uuid.UUID) -> str:
         from sqlalchemy import desc
 
         stmt = (
@@ -66,7 +63,7 @@ class SessionHistoryPolicyService:
         self,
         session_id: uuid.UUID,
         summary_text: str,
-        model_used: Optional[str] = None,
+        model_used: str | None = None,
     ) -> AgentSessionSummary:
         msg_count = await self.get_message_count(session_id)
         summary = AgentSessionSummary(
@@ -79,9 +76,7 @@ class SessionHistoryPolicyService:
         await self.db.flush()
         return summary
 
-    async def get_latest_summary(
-        self, session_id: uuid.UUID
-    ) -> Optional[AgentSessionSummary]:
+    async def get_latest_summary(self, session_id: uuid.UUID) -> AgentSessionSummary | None:
         from sqlalchemy import desc
 
         stmt = (
@@ -100,7 +95,7 @@ class SessionHistoryPolicyService:
 
     async def apply_session_retention(
         self, session: AgentSession, dry_run: bool = False
-    ) -> Dict[str, int]:
+    ) -> dict[str, int]:
         retention_days = await self.get_retention_days(session)
         cutoff = utc_now() - timedelta(days=retention_days)
         result = {"messages_deleted": 0, "summaries_deleted": 0, "retained_summaries": 0}
@@ -152,10 +147,8 @@ class SessionHistoryPolicyService:
 
     async def apply_retention_policies(
         self, db: AsyncSession, dry_run: bool = False
-    ) -> Dict[str, int]:
-        stmt = select(AgentSession).where(
-            AgentSession.status.in_(["active", "archived"])
-        )
+    ) -> dict[str, int]:
+        stmt = select(AgentSession).where(AgentSession.status.in_(["active", "archived"]))
         res = await db.execute(stmt)
         sessions = list(res.scalars().all())
 

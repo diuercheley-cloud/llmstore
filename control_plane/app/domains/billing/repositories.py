@@ -1,10 +1,12 @@
-from typing import List, Optional
 from decimal import Decimal
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models.billing.billing_plan import BillingPlan
 from app.models.core.client import Client
-from .contracts import BillingRepository, BillingPlanData
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from .contracts import BillingPlanData
+
 
 class SqlAlchemyBillingRepository:
     def __init__(self, db: AsyncSession):
@@ -37,28 +39,29 @@ class SqlAlchemyBillingRepository:
             tts_max_files=plan.tts_max_files,
             embeddings_enabled=plan.embeddings_enabled,
             price_brl=Decimal(str(plan.price_brl)),
-            is_active=plan.is_active
+            is_active=plan.is_active,
         )
 
-    async def get_plan_by_code(self, code: str) -> Optional[BillingPlanData]:
+    async def get_plan_by_code(self, code: str) -> BillingPlanData | None:
         result = await self.db.execute(select(BillingPlan).where(BillingPlan.code == code))
         plan = result.scalar_one_or_none()
         if not plan:
             return None
         return self._map_plan(plan)
 
-    async def list_plans(self) -> List[BillingPlanData]:
+    async def list_plans(self) -> list[BillingPlanData]:
         result = await self.db.execute(select(BillingPlan))
         plans = result.scalars().all()
         return [self._map_plan(p) for p in plans]
 
-    async def get_client_effective_plan(self, client_id: str) -> Optional[BillingPlanData]:
+    async def get_client_effective_plan(self, client_id: str) -> BillingPlanData | None:
         from uuid import UUID
+
         try:
             client_uuid = UUID(client_id) if isinstance(client_id, str) else client_id
         except ValueError:
             return None
-            
+
         result = await self.db.execute(
             select(BillingPlan).join(Client).where(Client.id == client_uuid)
         )

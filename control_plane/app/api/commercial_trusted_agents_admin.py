@@ -4,7 +4,6 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from app.services.runtime_dependencies import get_db_session
 from app.models.commercial.commercial_agents import (
     CommercialAgentAction,
     CommercialAgentExecution,
@@ -18,6 +17,7 @@ from app.services.agents.execution_receipts import canonical_json, sha256_hex
 from app.services.agents.tool_policy_engine import ToolPolicyEngine
 from app.services.agents.trusted_agent_runtime import trusted_agent_runtime
 from app.services.auth import require_admin
+from app.services.runtime_dependencies import get_db_session
 from app.utils.crypto_signer import sign_payload
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
@@ -73,7 +73,9 @@ async def get_runtime_status(db: AsyncSession = Depends(get_db_session)) -> dict
 
 
 @router.post("/admin/agents/runtime/plans")
-async def create_runtime_plan(payload: ExecutionPlanPayload, db: AsyncSession = Depends(get_db_session)) -> dict[str, Any]:
+async def create_runtime_plan(
+    payload: ExecutionPlanPayload, db: AsyncSession = Depends(get_db_session)
+) -> dict[str, Any]:
     execution = await trusted_agent_runtime.create_execution(
         db,
         agent_id=payload.agent_id,
@@ -96,7 +98,9 @@ async def create_runtime_plan(payload: ExecutionPlanPayload, db: AsyncSession = 
 
 
 @router.post("/admin/agents/runtime/execute/{execution_id}")
-async def execute_runtime_plan(execution_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)) -> dict[str, Any]:
+async def execute_runtime_plan(
+    execution_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)
+) -> dict[str, Any]:
     execution = await trusted_agent_runtime.execute_plan(db, execution_id=execution_id)
     await db.commit()
     await db.refresh(execution)
@@ -114,7 +118,11 @@ async def list_runtime_executions(
     tenant_id: str | None = None,
     db: AsyncSession = Depends(get_db_session),
 ) -> list[dict[str, Any]]:
-    stmt = select(CommercialAgentExecution).order_by(desc(CommercialAgentExecution.started_at)).limit(100)
+    stmt = (
+        select(CommercialAgentExecution)
+        .order_by(desc(CommercialAgentExecution.started_at))
+        .limit(100)
+    )
     if tenant_id:
         stmt = stmt.where(CommercialAgentExecution.tenant_id == tenant_id)
     rows = (await db.execute(stmt)).scalars().all()
@@ -160,7 +168,9 @@ async def list_trusted_tools(
 
 
 @router.post("/admin/agents/tools")
-async def register_trusted_tool(payload: ToolRegistryPayload, db: AsyncSession = Depends(get_db_session)) -> dict[str, Any]:
+async def register_trusted_tool(
+    payload: ToolRegistryPayload, db: AsyncSession = Depends(get_db_session)
+) -> dict[str, Any]:
     payload_data = payload.model_dump(by_alias=True)
     row = CommercialToolRegistry(
         **payload_data,
@@ -183,7 +193,9 @@ async def list_tool_approvals(
     status: str | None = Query(default=None),
     db: AsyncSession = Depends(get_db_session),
 ) -> list[dict[str, Any]]:
-    stmt = select(CommercialToolApproval).order_by(desc(CommercialToolApproval.created_at)).limit(100)
+    stmt = (
+        select(CommercialToolApproval).order_by(desc(CommercialToolApproval.created_at)).limit(100)
+    )
     if status:
         stmt = stmt.where(CommercialToolApproval.status == status)
     rows = (await db.execute(stmt)).scalars().all()
@@ -223,7 +235,9 @@ async def decide_tool_approval(
 
 
 @router.post("/admin/agents/replay/verify/{execution_id}")
-async def verify_replay(execution_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)) -> dict[str, Any]:
+async def verify_replay(
+    execution_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)
+) -> dict[str, Any]:
     replay = await verify_execution_replay(db, execution_id=execution_id, verified_by="admin")
     await db.commit()
     return {
@@ -236,10 +250,16 @@ async def verify_replay(execution_id: uuid.UUID, db: AsyncSession = Depends(get_
 @router.get("/admin/agents/replay/records")
 async def list_replay_records(db: AsyncSession = Depends(get_db_session)) -> list[dict[str, Any]]:
     rows = (
-        await db.execute(
-            select(CommercialAgentReplayRecord).order_by(desc(CommercialAgentReplayRecord.created_at)).limit(100)
+        (
+            await db.execute(
+                select(CommercialAgentReplayRecord)
+                .order_by(desc(CommercialAgentReplayRecord.created_at))
+                .limit(100)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return [
         {
             "id": str(row.id),
@@ -262,17 +282,23 @@ async def list_policy_violations(
 
 
 @router.get("/admin/agents/runtime/actions/{execution_id}")
-async def list_execution_actions(execution_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)) -> list[dict[str, Any]]:
+async def list_execution_actions(
+    execution_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)
+) -> list[dict[str, Any]]:
     execution = await db.get(CommercialAgentExecution, execution_id)
     if execution is None:
         raise HTTPException(status_code=404, detail="execution_not_found")
     rows = (
-        await db.execute(
-            select(CommercialAgentAction)
-            .where(CommercialAgentAction.execution_id == execution_id)
-            .order_by(CommercialAgentAction.action_index.asc())
+        (
+            await db.execute(
+                select(CommercialAgentAction)
+                .where(CommercialAgentAction.execution_id == execution_id)
+                .order_by(CommercialAgentAction.action_index.asc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return [
         {
             "id": str(row.id),
@@ -287,7 +313,17 @@ async def list_execution_actions(execution_id: uuid.UUID, db: AsyncSession = Dep
 
 @router.get("/admin/agents/runtime/profiles")
 async def list_runtime_profiles(db: AsyncSession = Depends(get_db_session)) -> list[dict[str, Any]]:
-    rows = (await db.execute(select(CommercialAgentProfile).order_by(desc(CommercialAgentProfile.created_at)).limit(100))).scalars().all()
+    rows = (
+        (
+            await db.execute(
+                select(CommercialAgentProfile)
+                .order_by(desc(CommercialAgentProfile.created_at))
+                .limit(100)
+            )
+        )
+        .scalars()
+        .all()
+    )
     return [
         {
             "id": str(row.id),

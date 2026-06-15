@@ -20,35 +20,128 @@ def _uuid_type():
 
 
 def upgrade() -> None:
-    op.add_column("commercial_agent_profiles", sa.Column("allowed_tenants_json", sa.JSON(), nullable=True))
-    op.add_column("commercial_agent_profiles", sa.Column("agent_permissions_json", sa.JSON(), nullable=True))
-    op.add_column("commercial_agent_profiles", sa.Column("max_actions_per_minute", sa.Integer(), nullable=True))
-    op.add_column("commercial_agent_profiles", sa.Column("max_actions_per_day", sa.Integer(), nullable=True))
+    op.add_column(
+        "commercial_agent_profiles", sa.Column("allowed_tenants_json", sa.JSON(), nullable=True)
+    )
+    op.add_column(
+        "commercial_agent_profiles", sa.Column("agent_permissions_json", sa.JSON(), nullable=True)
+    )
+    op.add_column(
+        "commercial_agent_profiles",
+        sa.Column("max_actions_per_minute", sa.Integer(), nullable=True),
+    )
+    op.add_column(
+        "commercial_agent_profiles", sa.Column("max_actions_per_day", sa.Integer(), nullable=True)
+    )
 
-    op.add_column("commercial_agent_executions", sa.Column("tenant_id", sa.String(length=64), nullable=True))
-    op.add_column("commercial_agent_executions", sa.Column("plan_hash", sa.String(length=128), nullable=True))
-    op.add_column("commercial_agent_executions", sa.Column("execution_graph_hash", sa.String(length=128), nullable=True))
-    op.add_column("commercial_agent_executions", sa.Column("runtime_snapshot_hash", sa.String(length=128), nullable=True))
-    op.add_column("commercial_agent_executions", sa.Column("audit_chain_hash", sa.String(length=128), nullable=True))
-    op.add_column("commercial_agent_executions", sa.Column("policy_decision", sa.String(length=32), nullable=True))
-    op.add_column("commercial_agent_executions", sa.Column("replay_status", sa.String(length=32), nullable=True))
-    op.add_column("commercial_agent_executions", sa.Column("runtime_mode", sa.String(length=32), nullable=True))
+    op.add_column(
+        "commercial_agent_executions", sa.Column("tenant_id", sa.String(length=64), nullable=True)
+    )
+    op.add_column(
+        "commercial_agent_executions", sa.Column("plan_hash", sa.String(length=128), nullable=True)
+    )
+    op.add_column(
+        "commercial_agent_executions",
+        sa.Column("execution_graph_hash", sa.String(length=128), nullable=True),
+    )
+    op.add_column(
+        "commercial_agent_executions",
+        sa.Column("runtime_snapshot_hash", sa.String(length=128), nullable=True),
+    )
+    op.add_column(
+        "commercial_agent_executions",
+        sa.Column("audit_chain_hash", sa.String(length=128), nullable=True),
+    )
+    op.add_column(
+        "commercial_agent_executions",
+        sa.Column("policy_decision", sa.String(length=32), nullable=True),
+    )
+    op.add_column(
+        "commercial_agent_executions",
+        sa.Column("replay_status", sa.String(length=32), nullable=True),
+    )
+    op.add_column(
+        "commercial_agent_executions",
+        sa.Column("runtime_mode", sa.String(length=32), nullable=True),
+    )
     op.add_column("commercial_agent_executions", sa.Column("dry_run", sa.Boolean(), nullable=True))
-    op.add_column("commercial_agent_executions", sa.Column("approval_required", sa.Boolean(), nullable=True))
-    op.add_column("commercial_agent_executions", sa.Column("approval_status", sa.String(length=32), nullable=True))
-    op.add_column("commercial_agent_executions", sa.Column("confidential_payload_mode", sa.String(length=32), nullable=True))
-    op.add_column("commercial_agent_executions", sa.Column("quota_key", sa.String(length=128), nullable=True))
-    op.add_column("commercial_agent_executions", sa.Column("metadata_json", sa.JSON(), nullable=True))
-    op.create_index(op.f("ix_commercial_agent_executions_tenant_id"), "commercial_agent_executions", ["tenant_id"], unique=False)
-    op.create_index(op.f("ix_commercial_agent_executions_agent_id"), "commercial_agent_executions", ["agent_id"], unique=False)
-    op.create_index(op.f("ix_commercial_agent_executions_status"), "commercial_agent_executions", ["status"], unique=False)
-    op.create_index(op.f("ix_commercial_agent_executions_plan_hash"), "commercial_agent_executions", ["plan_hash"], unique=False)
-    op.create_index(op.f("ix_commercial_agent_executions_execution_graph_hash"), "commercial_agent_executions", ["execution_graph_hash"], unique=False)
-    op.create_index(op.f("ix_commercial_agent_executions_runtime_snapshot_hash"), "commercial_agent_executions", ["runtime_snapshot_hash"], unique=False)
-    op.create_index(op.f("ix_commercial_agent_executions_audit_chain_hash"), "commercial_agent_executions", ["audit_chain_hash"], unique=False)
-    op.create_index(op.f("ix_commercial_agent_executions_policy_decision"), "commercial_agent_executions", ["policy_decision"], unique=False)
-    op.create_index(op.f("ix_commercial_agent_executions_replay_status"), "commercial_agent_executions", ["replay_status"], unique=False)
-    op.create_index(op.f("ix_commercial_agent_executions_approval_status"), "commercial_agent_executions", ["approval_status"], unique=False)
+    op.add_column(
+        "commercial_agent_executions", sa.Column("approval_required", sa.Boolean(), nullable=True)
+    )
+    op.add_column(
+        "commercial_agent_executions",
+        sa.Column("approval_status", sa.String(length=32), nullable=True),
+    )
+    op.add_column(
+        "commercial_agent_executions",
+        sa.Column("confidential_payload_mode", sa.String(length=32), nullable=True),
+    )
+    op.add_column(
+        "commercial_agent_executions", sa.Column("quota_key", sa.String(length=128), nullable=True)
+    )
+    op.add_column(
+        "commercial_agent_executions", sa.Column("metadata_json", sa.JSON(), nullable=True)
+    )
+    op.create_index(
+        op.f("ix_commercial_agent_executions_tenant_id"),
+        "commercial_agent_executions",
+        ["tenant_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_agent_executions_agent_id"),
+        "commercial_agent_executions",
+        ["agent_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_agent_executions_status"),
+        "commercial_agent_executions",
+        ["status"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_agent_executions_plan_hash"),
+        "commercial_agent_executions",
+        ["plan_hash"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_agent_executions_execution_graph_hash"),
+        "commercial_agent_executions",
+        ["execution_graph_hash"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_agent_executions_runtime_snapshot_hash"),
+        "commercial_agent_executions",
+        ["runtime_snapshot_hash"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_agent_executions_audit_chain_hash"),
+        "commercial_agent_executions",
+        ["audit_chain_hash"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_agent_executions_policy_decision"),
+        "commercial_agent_executions",
+        ["policy_decision"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_agent_executions_replay_status"),
+        "commercial_agent_executions",
+        ["replay_status"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_agent_executions_approval_status"),
+        "commercial_agent_executions",
+        ["approval_status"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_agent_actions",
@@ -77,15 +170,60 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["execution_id"], ["commercial_agent_executions.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_commercial_agent_actions_execution_id"), "commercial_agent_actions", ["execution_id"], unique=False)
-    op.create_index(op.f("ix_commercial_agent_actions_tenant_id"), "commercial_agent_actions", ["tenant_id"], unique=False)
-    op.create_index(op.f("ix_commercial_agent_actions_tool_name"), "commercial_agent_actions", ["tool_name"], unique=False)
-    op.create_index(op.f("ix_commercial_agent_actions_status"), "commercial_agent_actions", ["status"], unique=False)
-    op.create_index(op.f("ix_commercial_agent_actions_action_hash"), "commercial_agent_actions", ["action_hash"], unique=False)
-    op.create_index(op.f("ix_commercial_agent_actions_previous_action_hash"), "commercial_agent_actions", ["previous_action_hash"], unique=False)
-    op.create_index(op.f("ix_commercial_agent_actions_graph_node_hash"), "commercial_agent_actions", ["graph_node_hash"], unique=False)
-    op.create_index(op.f("ix_commercial_agent_actions_receipt_hash"), "commercial_agent_actions", ["receipt_hash"], unique=False)
-    op.create_index(op.f("ix_commercial_agent_actions_approval_status"), "commercial_agent_actions", ["approval_status"], unique=False)
+    op.create_index(
+        op.f("ix_commercial_agent_actions_execution_id"),
+        "commercial_agent_actions",
+        ["execution_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_agent_actions_tenant_id"),
+        "commercial_agent_actions",
+        ["tenant_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_agent_actions_tool_name"),
+        "commercial_agent_actions",
+        ["tool_name"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_agent_actions_status"),
+        "commercial_agent_actions",
+        ["status"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_agent_actions_action_hash"),
+        "commercial_agent_actions",
+        ["action_hash"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_agent_actions_previous_action_hash"),
+        "commercial_agent_actions",
+        ["previous_action_hash"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_agent_actions_graph_node_hash"),
+        "commercial_agent_actions",
+        ["graph_node_hash"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_agent_actions_receipt_hash"),
+        "commercial_agent_actions",
+        ["receipt_hash"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_agent_actions_approval_status"),
+        "commercial_agent_actions",
+        ["approval_status"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_tool_registry",
@@ -110,9 +248,24 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_commercial_tool_registry_tool_name"), "commercial_tool_registry", ["tool_name"], unique=False)
-    op.create_index(op.f("ix_commercial_tool_registry_tenant_id"), "commercial_tool_registry", ["tenant_id"], unique=False)
-    op.create_index(op.f("ix_commercial_tool_registry_trust_status"), "commercial_tool_registry", ["trust_status"], unique=False)
+    op.create_index(
+        op.f("ix_commercial_tool_registry_tool_name"),
+        "commercial_tool_registry",
+        ["tool_name"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_tool_registry_tenant_id"),
+        "commercial_tool_registry",
+        ["tenant_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_tool_registry_trust_status"),
+        "commercial_tool_registry",
+        ["trust_status"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_tool_approvals",
@@ -133,11 +286,36 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["execution_id"], ["commercial_agent_executions.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_commercial_tool_approvals_action_id"), "commercial_tool_approvals", ["action_id"], unique=False)
-    op.create_index(op.f("ix_commercial_tool_approvals_execution_id"), "commercial_tool_approvals", ["execution_id"], unique=False)
-    op.create_index(op.f("ix_commercial_tool_approvals_tenant_id"), "commercial_tool_approvals", ["tenant_id"], unique=False)
-    op.create_index(op.f("ix_commercial_tool_approvals_status"), "commercial_tool_approvals", ["status"], unique=False)
-    op.create_index(op.f("ix_commercial_tool_approvals_approval_chain_hash"), "commercial_tool_approvals", ["approval_chain_hash"], unique=False)
+    op.create_index(
+        op.f("ix_commercial_tool_approvals_action_id"),
+        "commercial_tool_approvals",
+        ["action_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_tool_approvals_execution_id"),
+        "commercial_tool_approvals",
+        ["execution_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_tool_approvals_tenant_id"),
+        "commercial_tool_approvals",
+        ["tenant_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_tool_approvals_status"),
+        "commercial_tool_approvals",
+        ["status"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_tool_approvals_approval_chain_hash"),
+        "commercial_tool_approvals",
+        ["approval_chain_hash"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_agent_replay_records",
@@ -159,10 +337,30 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["execution_id"], ["commercial_agent_executions.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_commercial_agent_replay_records_execution_id"), "commercial_agent_replay_records", ["execution_id"], unique=False)
-    op.create_index(op.f("ix_commercial_agent_replay_records_tenant_id"), "commercial_agent_replay_records", ["tenant_id"], unique=False)
-    op.create_index(op.f("ix_commercial_agent_replay_records_replay_hash"), "commercial_agent_replay_records", ["replay_hash"], unique=False)
-    op.create_index(op.f("ix_commercial_agent_replay_records_verification_result"), "commercial_agent_replay_records", ["verification_result"], unique=False)
+    op.create_index(
+        op.f("ix_commercial_agent_replay_records_execution_id"),
+        "commercial_agent_replay_records",
+        ["execution_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_agent_replay_records_tenant_id"),
+        "commercial_agent_replay_records",
+        ["tenant_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_agent_replay_records_replay_hash"),
+        "commercial_agent_replay_records",
+        ["replay_hash"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_agent_replay_records_verification_result"),
+        "commercial_agent_replay_records",
+        ["verification_result"],
+        unique=False,
+    )
 
 
 def downgrade() -> None:
@@ -171,16 +369,42 @@ def downgrade() -> None:
     op.drop_table("commercial_tool_registry")
     op.drop_table("commercial_agent_actions")
 
-    op.drop_index(op.f("ix_commercial_agent_executions_approval_status"), table_name="commercial_agent_executions")
-    op.drop_index(op.f("ix_commercial_agent_executions_replay_status"), table_name="commercial_agent_executions")
-    op.drop_index(op.f("ix_commercial_agent_executions_policy_decision"), table_name="commercial_agent_executions")
-    op.drop_index(op.f("ix_commercial_agent_executions_audit_chain_hash"), table_name="commercial_agent_executions")
-    op.drop_index(op.f("ix_commercial_agent_executions_runtime_snapshot_hash"), table_name="commercial_agent_executions")
-    op.drop_index(op.f("ix_commercial_agent_executions_execution_graph_hash"), table_name="commercial_agent_executions")
-    op.drop_index(op.f("ix_commercial_agent_executions_plan_hash"), table_name="commercial_agent_executions")
-    op.drop_index(op.f("ix_commercial_agent_executions_status"), table_name="commercial_agent_executions")
-    op.drop_index(op.f("ix_commercial_agent_executions_agent_id"), table_name="commercial_agent_executions")
-    op.drop_index(op.f("ix_commercial_agent_executions_tenant_id"), table_name="commercial_agent_executions")
+    op.drop_index(
+        op.f("ix_commercial_agent_executions_approval_status"),
+        table_name="commercial_agent_executions",
+    )
+    op.drop_index(
+        op.f("ix_commercial_agent_executions_replay_status"),
+        table_name="commercial_agent_executions",
+    )
+    op.drop_index(
+        op.f("ix_commercial_agent_executions_policy_decision"),
+        table_name="commercial_agent_executions",
+    )
+    op.drop_index(
+        op.f("ix_commercial_agent_executions_audit_chain_hash"),
+        table_name="commercial_agent_executions",
+    )
+    op.drop_index(
+        op.f("ix_commercial_agent_executions_runtime_snapshot_hash"),
+        table_name="commercial_agent_executions",
+    )
+    op.drop_index(
+        op.f("ix_commercial_agent_executions_execution_graph_hash"),
+        table_name="commercial_agent_executions",
+    )
+    op.drop_index(
+        op.f("ix_commercial_agent_executions_plan_hash"), table_name="commercial_agent_executions"
+    )
+    op.drop_index(
+        op.f("ix_commercial_agent_executions_status"), table_name="commercial_agent_executions"
+    )
+    op.drop_index(
+        op.f("ix_commercial_agent_executions_agent_id"), table_name="commercial_agent_executions"
+    )
+    op.drop_index(
+        op.f("ix_commercial_agent_executions_tenant_id"), table_name="commercial_agent_executions"
+    )
 
     op.drop_column("commercial_agent_executions", "metadata_json")
     op.drop_column("commercial_agent_executions", "quota_key")

@@ -1,7 +1,7 @@
 import difflib
 import os
 import re
-from typing import Any, Optional
+from typing import Any
 
 from ..models import PatchResult
 from ..patcher import Patcher
@@ -15,7 +15,7 @@ async def perform_inline_edit(
     policy_engine: Any,
     workspace: Any,
     dry_run: bool = False,
-    context_bundle: Optional[ContextBundle] = None
+    context_bundle: ContextBundle | None = None,
 ) -> dict[str, Any]:
     # 1. Evaluate file path policy
     policy_decision = policy_engine.evaluate_file_path(request.file_path)
@@ -31,11 +31,11 @@ async def perform_inline_edit(
     if not os.path.exists(full_path) or not os.path.isfile(full_path):
         raise FileNotFoundError(f"Target file not found: {request.file_path}")
 
-    with open(full_path, "r", errors="ignore") as f:
+    with open(full_path, errors="ignore") as f:
         target_file_content = f.read()
 
     original_lines = target_file_content.splitlines(keepends=True)
-    
+
     # Validate range
     start_line = max(1, request.start_line)
     end_line = min(len(original_lines), request.end_line)
@@ -65,7 +65,7 @@ async def perform_inline_edit(
     )
     if rules:
         system_prompt += f"\n\n## Custom AI Rules:\n{rules}"
-    
+
     system_prompt += f"\n\n{policy_engine.describe_for_agent()}"
 
     # Highlight target block in entire file context
@@ -93,11 +93,11 @@ async def perform_inline_edit(
 
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt}
+        {"role": "user", "content": user_prompt},
     ]
 
     response = await provider.chat_completion(messages)
-    
+
     content = ""
     if response and "choices" in response and response["choices"]:
         msg = response["choices"][0].get("message", {})
@@ -120,7 +120,7 @@ async def perform_inline_edit(
     if original_lines:
         if original_lines[0].endswith("\r\n"):
             line_ending = "\r\n"
-    
+
     replacement_text = content
     replacement_chunks = replacement_text.splitlines()
     if (
@@ -138,13 +138,15 @@ async def perform_inline_edit(
     modified_lines = original_lines[:start_idx] + replacement_lines + original_lines[end_idx:]
 
     # 5. Generate patch unified diff
-    diff_list = list(difflib.unified_diff(
-        original_lines,
-        modified_lines,
-        fromfile=f"a/{request.file_path}",
-        tofile=f"b/{request.file_path}",
-        lineterm="\n"
-    ))
+    diff_list = list(
+        difflib.unified_diff(
+            original_lines,
+            modified_lines,
+            fromfile=f"a/{request.file_path}",
+            tofile=f"b/{request.file_path}",
+            lineterm="\n",
+        )
+    )
     diff_text = "".join(diff_list)
 
     if not diff_text:
@@ -152,10 +154,8 @@ async def perform_inline_edit(
             "success": True,
             "diff": "",
             "patch_result": PatchResult(
-                success=True,
-                mode="check" if dry_run else "apply",
-                changed_files=[]
-            )
+                success=True, mode="check" if dry_run else "apply", changed_files=[]
+            ),
         }
 
     # 6. Evaluate patch policy
@@ -169,8 +169,4 @@ async def perform_inline_edit(
     patcher = Patcher(workspace, policy_engine)
     patch_result = patcher.apply_patch(diff_text, dry_run=dry_run)
 
-    return {
-        "success": patch_result.success,
-        "diff": diff_text,
-        "patch_result": patch_result
-    }
+    return {"success": patch_result.success, "diff": diff_text, "patch_result": patch_result}

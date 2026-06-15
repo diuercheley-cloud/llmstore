@@ -1,12 +1,12 @@
 # Owner: platform-operations
 import os
-import uuid
+from pathlib import Path
+
 import pytest
 import pytest_asyncio
-from pathlib import Path
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 
 # Force a local writable database file in the workspace
@@ -26,12 +26,15 @@ SessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSe
 app.db.session.engine = engine
 app.db.session.SessionLocal = SessionLocal
 
+
 async def override_get_db():
     async with SessionLocal() as session:
         yield session
 
+
 main_app.dependency_overrides[get_db] = override_get_db
 main_app.dependency_overrides[get_db_session] = override_get_db
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():
@@ -41,7 +44,7 @@ async def setup_db():
             TEST_DB_FILE.unlink()
         except Exception:
             pass
-            
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
@@ -53,27 +56,34 @@ async def setup_db():
         except Exception:
             pass
 
+
 @pytest_asyncio.fixture
 async def test_session():
     async with SessionLocal() as session:
         yield session
 
-from app.compat.langgraph.adapters import StateGraph, CompiledStateGraph
-from app.compat.langgraph.importers import import_langgraph_from_source
-from app.compat.langgraph.converters import convert_langgraph_to_workflow
-
-from app.compat.crewai.adapters import Agent as CrewAgent, Task as CrewTask, Crew
-from app.compat.crewai.importers import import_crew_from_source
-from app.compat.crewai.converters import convert_crew_to_workflow
 
 from app.compat.autogen.adapters import ConversableAgent, UserProxyAgent
+from app.compat.autogen.converters import (
+    convert_autogen_agent_to_agent_definition,
+    convert_autogen_chat_to_session,
+)
 from app.compat.autogen.importers import import_autogen_agent_from_source
-from app.compat.autogen.converters import convert_autogen_agent_to_agent_definition, convert_autogen_chat_to_session
-
+from app.compat.crewai.adapters import Agent as CrewAgent
+from app.compat.crewai.adapters import Crew
+from app.compat.crewai.adapters import Task as CrewTask
+from app.compat.crewai.converters import convert_crew_to_workflow
+from app.compat.crewai.importers import import_crew_from_source
+from app.compat.langgraph.adapters import CompiledStateGraph, StateGraph
+from app.compat.langgraph.converters import convert_langgraph_to_workflow
+from app.compat.langgraph.importers import import_langgraph_from_source
 from app.compat.report import CompatibilityAnalyzer
-from app.models.agents.agent_workflows import AgentWorkflowDefinition, AgentWorkflowNode, AgentWorkflowEdge
+from app.models.agents.agent_workflows import (
+    AgentWorkflowEdge,
+    AgentWorkflowNode,
+)
 from app.models.agents.agents import AgentDefinition
-from app.models.agents.agent_sessions import AgentSession
+
 
 @pytest.mark.asyncio
 async def test_langgraph_compat(test_session: AsyncSession):
@@ -81,7 +91,7 @@ async def test_langgraph_compat(test_session: AsyncSession):
     def node_a(state):
         state["a"] = 1
         return state
-        
+
     def node_b(state):
         state["b"] = 2
         return state
@@ -92,14 +102,14 @@ async def test_langgraph_compat(test_session: AsyncSession):
     builder.add_edge("node_a", "node_b")
     builder.set_entry_point("node_a")
     builder.set_finish_point("node_b")
-    
+
     graph = builder.compile()
     assert isinstance(graph, CompiledStateGraph)
-    
+
     result = await graph.invoke({"input": "test"})
     assert result["a"] == 1
     assert result["input"] == "test"
-    
+
     # 2. Test Converter
     tenant_id = "tenant-lg"
     wf_def = await convert_langgraph_to_workflow(
@@ -107,12 +117,12 @@ async def test_langgraph_compat(test_session: AsyncSession):
         tenant_id=tenant_id,
         name="LangGraph Workflow",
         version="1.0.0",
-        graph=graph
+        graph=graph,
     )
-    
+
     assert wf_def.name == "LangGraph Workflow"
     assert wf_def.tenant_id == tenant_id
-    
+
     # Check nodes in DB
     nodes_res = await test_session.execute(
         select(AgentWorkflowNode).where(AgentWorkflowNode.workflow_definition_id == wf_def.id)
@@ -122,7 +132,7 @@ async def test_langgraph_compat(test_session: AsyncSession):
     node_keys = {n.node_key for n in nodes}
     assert "node_a" in node_keys
     assert "node_b" in node_keys
-    
+
     # Check edges in DB
     edges_res = await test_session.execute(
         select(AgentWorkflowEdge).where(AgentWorkflowEdge.workflow_definition_id == wf_def.id)
@@ -147,41 +157,31 @@ graph = builder.compile()
 @pytest.mark.asyncio
 async def test_crewai_compat(test_session: AsyncSession):
     # 1. Test Adapter Execution
-    agent = CrewAgent(
-        role="Researcher",
-        goal="Find info",
-        backstory="A detailed researcher"
-    )
+    agent = CrewAgent(role="Researcher", goal="Find info", backstory="A detailed researcher")
     task = CrewTask(
-        description="Search for compat layers",
-        expected_output="a report list",
-        agent=agent
+        description="Search for compat layers", expected_output="a report list", agent=agent
     )
     crew = Crew(agents=[agent], tasks=[task])
     output = crew.kickoff(inputs={"topic": "compat"})
-    
+
     assert "Simulated output matching target" in output
     assert "Find info" in agent.goal
-    
+
     # 2. Test Converter
     tenant_id = "tenant-crew"
     wf_def = await convert_crew_to_workflow(
-        db=test_session,
-        tenant_id=tenant_id,
-        name="Crew Workflow",
-        version="1.1.0",
-        crew=crew
+        db=test_session, tenant_id=tenant_id, name="Crew Workflow", version="1.1.0", crew=crew
     )
-    
+
     assert wf_def.name == "Crew Workflow"
-    
+
     nodes_res = await test_session.execute(
         select(AgentWorkflowNode).where(AgentWorkflowNode.workflow_definition_id == wf_def.id)
     )
     nodes = nodes_res.scalars().all()
     assert len(nodes) == 1
     assert "Search for compat layers" in nodes[0].config["description"]
-    
+
     # Check generated AgentDefinition
     agents_res = await test_session.execute(
         select(AgentDefinition).where(AgentDefinition.tenant_id == tenant_id)
@@ -206,42 +206,34 @@ crew = Crew(agents=[researcher], tasks=[task])
 @pytest.mark.asyncio
 async def test_autogen_compat(test_session: AsyncSession):
     # 1. Test Adapter Message Exchange
-    assistant = ConversableAgent(
-        name="assistant",
-        system_message="Assist user."
-    )
-    user = UserProxyAgent(
-        name="user_proxy",
-        human_input_mode="NEVER"
-    )
-    
+    assistant = ConversableAgent(name="assistant", system_message="Assist user.")
+    user = UserProxyAgent(name="user_proxy", human_input_mode="NEVER")
+
     user.initiate_chat(assistant, message="Hello, assistant!", max_turns=1)
-    
+
     # Check history
     assert "assistant" in user.chat_history
     assert len(user.chat_history["assistant"]) >= 1
     assert user.chat_history["assistant"][0]["content"] == "Hello, assistant!"
-    
+
     # 2. Test Converter
     tenant_id = "tenant-ag"
     agent_def = await convert_autogen_agent_to_agent_definition(
-        db=test_session,
-        tenant_id=tenant_id,
-        agent=assistant
+        db=test_session, tenant_id=tenant_id, agent=assistant
     )
-    
+
     assert agent_def.name == "assistant"
     assert agent_def.instructions == "Assist user."
-    
+
     # Convert chat history to session
     sess = await convert_autogen_chat_to_session(
         db=test_session,
         tenant_id=tenant_id,
         agent_id=agent_def.id,
         agent=user,
-        recipient_name="assistant"
+        recipient_name="assistant",
     )
-    
+
     assert sess.tenant_id == tenant_id
     assert sess.session_metadata["recipient_name"] == "assistant"
 
@@ -261,7 +253,7 @@ def test_compatibility_analyzer():
     assert report.score < 100.0
     assert report.status == "partially_compatible"
     assert len(report.remediation_steps) >= 2
-    
+
     # CrewAI Analysis
     source_crew = "Agent()\nTask()\nCrew()\nProcess.hierarchical"
     report = CompatibilityAnalyzer.analyze_source_code("crewai", source_crew)
@@ -275,15 +267,14 @@ async def test_compat_api_endpoints(async_client: AsyncClient):
     # Test Analyze Endpoint
     source = "StateGraph(dict)\nbuilder.compile()"
     resp = await async_client.post(
-        "/admin/compat/analyze",
-        json={"framework": "langgraph", "source_code": source}
+        "/admin/compat/analyze", json={"framework": "langgraph", "source_code": source}
     )
     assert resp.status_code == 200
     data = resp.json()
     assert data["framework"] == "langgraph"
     assert data["compatibility_score"] == 100.0
     assert data["status"] == "fully_compatible"
-    
+
     # Test Migrate Endpoint (LangGraph)
     migrate_source = """
 builder = StateGraph(state_schema=dict)
@@ -299,8 +290,8 @@ graph = builder.compile()
             "tenant_id": "tenant-api-test",
             "name": "API Workflow",
             "version": "1.0",
-            "description": "Test via endpoint"
-        }
+            "description": "Test via endpoint",
+        },
     )
     if resp.status_code != 200:
         print("API Response Error:", resp.json())

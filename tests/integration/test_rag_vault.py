@@ -6,12 +6,12 @@ import pytest_asyncio
 from app.api.rag_enterprise import admin_router
 from app.db.base import Base
 from app.db.session import get_db_session
-from app.models.core.client import Client
 from app.models.commercial.commercial_rag_vault_vault import (
     CommercialRAGChunk,
     CommercialRAGDocument,
     CommercialRAGVault,
 )
+from app.models.core.client import Client
 from app.models.rag.rag_document_chunk import RAGDocumentChunk
 from app.services.rag_enterprise.ingestion import ingest_document
 from fastapi import FastAPI
@@ -46,7 +46,9 @@ async def test_restricted_payload_not_stored_as_plaintext(
 ):
     from app.services.rag_enterprise.schemas import ParseResult
 
-    monkeypatch.setattr("app.services.rag_enterprise.ingestion.settings.commercial_rag_vault_enabled", True)
+    monkeypatch.setattr(
+        "app.services.rag_enterprise.ingestion.settings.commercial_rag_vault_enabled", True
+    )
     client = Client(name="tenant")
     session.add(client)
     await session.commit()
@@ -107,7 +109,9 @@ async def test_admin_vault_and_legal_hold_endpoints(session: AsyncSession):
 
     app.dependency_overrides[get_db_session] = override_get_db_session
     headers = {"X-Admin-Token": "test-admin-token"}
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         vault_resp = await client.post(
             "/admin/rag/vaults",
             json={

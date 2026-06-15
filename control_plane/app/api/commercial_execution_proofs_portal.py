@@ -9,8 +9,8 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from app.services.runtime_dependencies import get_db
 from app.models.commercial.commercial_merkle_timelines import CommercialExecutionProof
+from app.services.runtime_dependencies import get_db
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,7 +26,12 @@ async def list_portal_proofs(
 ) -> dict[str, Any]:
     """List execution proofs accessible to the current tenant."""
     # Tenant isolation stub: in production, filter by tenant_id from auth context
-    stmt = select(CommercialExecutionProof).order_by(CommercialExecutionProof.created_at.desc()).limit(limit).offset(offset)
+    stmt = (
+        select(CommercialExecutionProof)
+        .order_by(CommercialExecutionProof.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
     rows = (await db.execute(stmt)).scalars().all()
     return {
         "items": [
@@ -51,9 +56,11 @@ async def get_portal_proof(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Retrieve a specific execution proof (tenant-safe, no sensitive data)."""
-    proof = (await db.execute(
-        select(CommercialExecutionProof).where(CommercialExecutionProof.id == proof_id)
-    )).scalar_one_or_none()
+    proof = (
+        await db.execute(
+            select(CommercialExecutionProof).where(CommercialExecutionProof.id == proof_id)
+        )
+    ).scalar_one_or_none()
     if not proof:
         raise HTTPException(status_code=404, detail="Proof not found")
 
@@ -77,9 +84,11 @@ async def verify_portal_proof(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Verify an execution proof from the portal."""
-    proof = (await db.execute(
-        select(CommercialExecutionProof).where(CommercialExecutionProof.id == proof_id)
-    )).scalar_one_or_none()
+    proof = (
+        await db.execute(
+            select(CommercialExecutionProof).where(CommercialExecutionProof.id == proof_id)
+        )
+    ).scalar_one_or_none()
     if not proof:
         raise HTTPException(status_code=404, detail="Proof not found")
 

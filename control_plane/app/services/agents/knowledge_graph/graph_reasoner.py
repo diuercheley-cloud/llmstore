@@ -5,6 +5,7 @@ GraphReasoner — thin wrapper around GraphRetriever for agent-facing reasoning.
 Provides synchronous-looking find_path() for agent code that already has
 an active event loop.  Use GraphRetriever directly for pure async code.
 """
+
 from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncSession

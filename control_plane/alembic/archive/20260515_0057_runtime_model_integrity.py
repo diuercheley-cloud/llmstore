@@ -34,15 +34,47 @@ def upgrade() -> None:
         sa.Column("cluster_id", sa.String(length=255), nullable=True),
         sa.Column("metadata_json", sa.JSON(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["registry_entry_id"], ["commercial_signed_model_registry_entries.id"]),
+        sa.ForeignKeyConstraint(
+            ["registry_entry_id"], ["commercial_signed_model_registry_entries.id"]
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_commercial_model_integrity_scans_registry_entry_id"), "commercial_model_integrity_scans", ["registry_entry_id"], unique=False)
-    op.create_index(op.f("ix_commercial_model_integrity_scans_model_name"), "commercial_model_integrity_scans", ["model_name"], unique=False)
-    op.create_index(op.f("ix_commercial_model_integrity_scans_scan_type"), "commercial_model_integrity_scans", ["scan_type"], unique=False)
-    op.create_index(op.f("ix_commercial_model_integrity_scans_integrity_status"), "commercial_model_integrity_scans", ["integrity_status"], unique=False)
-    op.create_index(op.f("ix_commercial_model_integrity_scans_node_id"), "commercial_model_integrity_scans", ["node_id"], unique=False)
-    op.create_index(op.f("ix_commercial_model_integrity_scans_cluster_id"), "commercial_model_integrity_scans", ["cluster_id"], unique=False)
+    op.create_index(
+        op.f("ix_commercial_model_integrity_scans_registry_entry_id"),
+        "commercial_model_integrity_scans",
+        ["registry_entry_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_model_integrity_scans_model_name"),
+        "commercial_model_integrity_scans",
+        ["model_name"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_model_integrity_scans_scan_type"),
+        "commercial_model_integrity_scans",
+        ["scan_type"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_model_integrity_scans_integrity_status"),
+        "commercial_model_integrity_scans",
+        ["integrity_status"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_model_integrity_scans_node_id"),
+        "commercial_model_integrity_scans",
+        ["node_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_model_integrity_scans_cluster_id"),
+        "commercial_model_integrity_scans",
+        ["cluster_id"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_runtime_model_attestations",
@@ -59,16 +91,53 @@ def upgrade() -> None:
         sa.Column("attested_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("node_id", sa.String(length=255), nullable=True),
         sa.Column("cluster_id", sa.String(length=255), nullable=True),
-        sa.ForeignKeyConstraint(["registry_entry_id"], ["commercial_signed_model_registry_entries.id"]),
+        sa.ForeignKeyConstraint(
+            ["registry_entry_id"], ["commercial_signed_model_registry_entries.id"]
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_commercial_runtime_model_attestations_registry_entry_id"), "commercial_runtime_model_attestations", ["registry_entry_id"], unique=False)
-    op.create_index(op.f("ix_commercial_runtime_model_attestations_model_name"), "commercial_runtime_model_attestations", ["model_name"], unique=False)
-    op.create_index(op.f("ix_commercial_runtime_model_attestations_backend_name"), "commercial_runtime_model_attestations", ["backend_name"], unique=False)
-    op.create_index(op.f("ix_commercial_runtime_model_attestations_model_alias"), "commercial_runtime_model_attestations", ["model_alias"], unique=False)
-    op.create_index(op.f("ix_commercial_runtime_model_attestations_attestation_status"), "commercial_runtime_model_attestations", ["attestation_status"], unique=False)
-    op.create_index(op.f("ix_commercial_runtime_model_attestations_node_id"), "commercial_runtime_model_attestations", ["node_id"], unique=False)
-    op.create_index(op.f("ix_commercial_runtime_model_attestations_cluster_id"), "commercial_runtime_model_attestations", ["cluster_id"], unique=False)
+    op.create_index(
+        op.f("ix_commercial_runtime_model_attestations_registry_entry_id"),
+        "commercial_runtime_model_attestations",
+        ["registry_entry_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_runtime_model_attestations_model_name"),
+        "commercial_runtime_model_attestations",
+        ["model_name"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_runtime_model_attestations_backend_name"),
+        "commercial_runtime_model_attestations",
+        ["backend_name"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_runtime_model_attestations_model_alias"),
+        "commercial_runtime_model_attestations",
+        ["model_alias"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_runtime_model_attestations_attestation_status"),
+        "commercial_runtime_model_attestations",
+        ["attestation_status"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_runtime_model_attestations_node_id"),
+        "commercial_runtime_model_attestations",
+        ["node_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_runtime_model_attestations_cluster_id"),
+        "commercial_runtime_model_attestations",
+        ["cluster_id"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_model_integrity_events",
@@ -82,41 +151,138 @@ def upgrade() -> None:
         sa.Column("cluster_id", sa.String(length=255), nullable=True),
         sa.Column("immutable_hash", sa.String(length=128), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["registry_entry_id"], ["commercial_signed_model_registry_entries.id"]),
+        sa.ForeignKeyConstraint(
+            ["registry_entry_id"], ["commercial_signed_model_registry_entries.id"]
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_commercial_model_integrity_events_model_name"), "commercial_model_integrity_events", ["model_name"], unique=False)
-    op.create_index(op.f("ix_commercial_model_integrity_events_event_type"), "commercial_model_integrity_events", ["event_type"], unique=False)
-    op.create_index(op.f("ix_commercial_model_integrity_events_severity"), "commercial_model_integrity_events", ["severity"], unique=False)
-    op.create_index(op.f("ix_commercial_model_integrity_events_registry_entry_id"), "commercial_model_integrity_events", ["registry_entry_id"], unique=False)
-    op.create_index(op.f("ix_commercial_model_integrity_events_node_id"), "commercial_model_integrity_events", ["node_id"], unique=False)
-    op.create_index(op.f("ix_commercial_model_integrity_events_cluster_id"), "commercial_model_integrity_events", ["cluster_id"], unique=False)
-    op.create_index(op.f("ix_commercial_model_integrity_events_immutable_hash"), "commercial_model_integrity_events", ["immutable_hash"], unique=False)
+    op.create_index(
+        op.f("ix_commercial_model_integrity_events_model_name"),
+        "commercial_model_integrity_events",
+        ["model_name"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_model_integrity_events_event_type"),
+        "commercial_model_integrity_events",
+        ["event_type"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_model_integrity_events_severity"),
+        "commercial_model_integrity_events",
+        ["severity"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_model_integrity_events_registry_entry_id"),
+        "commercial_model_integrity_events",
+        ["registry_entry_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_model_integrity_events_node_id"),
+        "commercial_model_integrity_events",
+        ["node_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_model_integrity_events_cluster_id"),
+        "commercial_model_integrity_events",
+        ["cluster_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_model_integrity_events_immutable_hash"),
+        "commercial_model_integrity_events",
+        ["immutable_hash"],
+        unique=False,
+    )
 
 
 def downgrade() -> None:
-    op.drop_index(op.f("ix_commercial_model_integrity_events_immutable_hash"), table_name="commercial_model_integrity_events")
-    op.drop_index(op.f("ix_commercial_model_integrity_events_cluster_id"), table_name="commercial_model_integrity_events")
-    op.drop_index(op.f("ix_commercial_model_integrity_events_node_id"), table_name="commercial_model_integrity_events")
-    op.drop_index(op.f("ix_commercial_model_integrity_events_registry_entry_id"), table_name="commercial_model_integrity_events")
-    op.drop_index(op.f("ix_commercial_model_integrity_events_severity"), table_name="commercial_model_integrity_events")
-    op.drop_index(op.f("ix_commercial_model_integrity_events_event_type"), table_name="commercial_model_integrity_events")
-    op.drop_index(op.f("ix_commercial_model_integrity_events_model_name"), table_name="commercial_model_integrity_events")
+    op.drop_index(
+        op.f("ix_commercial_model_integrity_events_immutable_hash"),
+        table_name="commercial_model_integrity_events",
+    )
+    op.drop_index(
+        op.f("ix_commercial_model_integrity_events_cluster_id"),
+        table_name="commercial_model_integrity_events",
+    )
+    op.drop_index(
+        op.f("ix_commercial_model_integrity_events_node_id"),
+        table_name="commercial_model_integrity_events",
+    )
+    op.drop_index(
+        op.f("ix_commercial_model_integrity_events_registry_entry_id"),
+        table_name="commercial_model_integrity_events",
+    )
+    op.drop_index(
+        op.f("ix_commercial_model_integrity_events_severity"),
+        table_name="commercial_model_integrity_events",
+    )
+    op.drop_index(
+        op.f("ix_commercial_model_integrity_events_event_type"),
+        table_name="commercial_model_integrity_events",
+    )
+    op.drop_index(
+        op.f("ix_commercial_model_integrity_events_model_name"),
+        table_name="commercial_model_integrity_events",
+    )
     op.drop_table("commercial_model_integrity_events")
 
-    op.drop_index(op.f("ix_commercial_runtime_model_attestations_cluster_id"), table_name="commercial_runtime_model_attestations")
-    op.drop_index(op.f("ix_commercial_runtime_model_attestations_node_id"), table_name="commercial_runtime_model_attestations")
-    op.drop_index(op.f("ix_commercial_runtime_model_attestations_attestation_status"), table_name="commercial_runtime_model_attestations")
-    op.drop_index(op.f("ix_commercial_runtime_model_attestations_model_alias"), table_name="commercial_runtime_model_attestations")
-    op.drop_index(op.f("ix_commercial_runtime_model_attestations_backend_name"), table_name="commercial_runtime_model_attestations")
-    op.drop_index(op.f("ix_commercial_runtime_model_attestations_model_name"), table_name="commercial_runtime_model_attestations")
-    op.drop_index(op.f("ix_commercial_runtime_model_attestations_registry_entry_id"), table_name="commercial_runtime_model_attestations")
+    op.drop_index(
+        op.f("ix_commercial_runtime_model_attestations_cluster_id"),
+        table_name="commercial_runtime_model_attestations",
+    )
+    op.drop_index(
+        op.f("ix_commercial_runtime_model_attestations_node_id"),
+        table_name="commercial_runtime_model_attestations",
+    )
+    op.drop_index(
+        op.f("ix_commercial_runtime_model_attestations_attestation_status"),
+        table_name="commercial_runtime_model_attestations",
+    )
+    op.drop_index(
+        op.f("ix_commercial_runtime_model_attestations_model_alias"),
+        table_name="commercial_runtime_model_attestations",
+    )
+    op.drop_index(
+        op.f("ix_commercial_runtime_model_attestations_backend_name"),
+        table_name="commercial_runtime_model_attestations",
+    )
+    op.drop_index(
+        op.f("ix_commercial_runtime_model_attestations_model_name"),
+        table_name="commercial_runtime_model_attestations",
+    )
+    op.drop_index(
+        op.f("ix_commercial_runtime_model_attestations_registry_entry_id"),
+        table_name="commercial_runtime_model_attestations",
+    )
     op.drop_table("commercial_runtime_model_attestations")
 
-    op.drop_index(op.f("ix_commercial_model_integrity_scans_cluster_id"), table_name="commercial_model_integrity_scans")
-    op.drop_index(op.f("ix_commercial_model_integrity_scans_node_id"), table_name="commercial_model_integrity_scans")
-    op.drop_index(op.f("ix_commercial_model_integrity_scans_integrity_status"), table_name="commercial_model_integrity_scans")
-    op.drop_index(op.f("ix_commercial_model_integrity_scans_scan_type"), table_name="commercial_model_integrity_scans")
-    op.drop_index(op.f("ix_commercial_model_integrity_scans_model_name"), table_name="commercial_model_integrity_scans")
-    op.drop_index(op.f("ix_commercial_model_integrity_scans_registry_entry_id"), table_name="commercial_model_integrity_scans")
+    op.drop_index(
+        op.f("ix_commercial_model_integrity_scans_cluster_id"),
+        table_name="commercial_model_integrity_scans",
+    )
+    op.drop_index(
+        op.f("ix_commercial_model_integrity_scans_node_id"),
+        table_name="commercial_model_integrity_scans",
+    )
+    op.drop_index(
+        op.f("ix_commercial_model_integrity_scans_integrity_status"),
+        table_name="commercial_model_integrity_scans",
+    )
+    op.drop_index(
+        op.f("ix_commercial_model_integrity_scans_scan_type"),
+        table_name="commercial_model_integrity_scans",
+    )
+    op.drop_index(
+        op.f("ix_commercial_model_integrity_scans_model_name"),
+        table_name="commercial_model_integrity_scans",
+    )
+    op.drop_index(
+        op.f("ix_commercial_model_integrity_scans_registry_entry_id"),
+        table_name="commercial_model_integrity_scans",
+    )
     op.drop_table("commercial_model_integrity_scans")

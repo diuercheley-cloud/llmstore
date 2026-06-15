@@ -14,7 +14,9 @@ class GeminiProvider(ProviderAdapter):
     def __init__(self):
         settings = get_settings()
         self._api_key = settings.gemini_api_key
-        self._base_url = settings.gemini_base_url or "https://generativelanguage.googleapis.com/v1beta"
+        self._base_url = (
+            settings.gemini_base_url or "https://generativelanguage.googleapis.com/v1beta"
+        )
         self._timeout = settings.provider_timeout_seconds
         configured = is_real_api_key_configured(self._api_key)
         enabled = (
@@ -37,11 +39,21 @@ class GeminiProvider(ProviderAdapter):
         if not self.enabled:
             return {"provider_id": "gemini", "healthy": None, "latency_ms": 0, "error": "disabled"}
         if not self.configured:
-            return {"provider_id": "gemini", "healthy": None, "latency_ms": 0, "error": "not configured"}
+            return {
+                "provider_id": "gemini",
+                "healthy": None,
+                "latency_ms": 0,
+                "error": "not configured",
+            }
         try:
             async with await self._client() as client:
                 resp = await client.get(f"/models?key={self._api_key}")
-                return {"provider_id": "gemini", "healthy": resp.is_success, "latency_ms": 0, "error": None}
+                return {
+                    "provider_id": "gemini",
+                    "healthy": resp.is_success,
+                    "latency_ms": 0,
+                    "error": None,
+                }
         except Exception as e:
             return {"provider_id": "gemini", "healthy": False, "latency_ms": 0, "error": str(e)}
 
@@ -53,7 +65,11 @@ class GeminiProvider(ProviderAdapter):
                 resp = await client.get(f"/models?key={self._api_key}")
                 if resp.is_success:
                     data = resp.json()
-                    return [m["name"] for m in data.get("models", []) if "generateContent" in m.get("supportedGenerationMethods", [])]
+                    return [
+                        m["name"]
+                        for m in data.get("models", [])
+                        if "generateContent" in m.get("supportedGenerationMethods", [])
+                    ]
         except Exception:
             logger.warning("gemini list_models failed")
         return []
@@ -81,10 +97,14 @@ class GeminiProvider(ProviderAdapter):
         if payload.get("max_tokens") is not None:
             body["generationConfig"]["maxOutputTokens"] = payload["max_tokens"]
         if payload.get("stop"):
-            body["generationConfig"]["stopSequences"] = payload["stop"] if isinstance(payload["stop"], list) else [payload["stop"]]
+            body["generationConfig"]["stopSequences"] = (
+                payload["stop"] if isinstance(payload["stop"], list) else [payload["stop"]]
+            )
 
         async with await self._client() as client:
-            resp = await client.post(f"/models/{model}:generateContent?key={self._api_key}", json=body)
+            resp = await client.post(
+                f"/models/{model}:generateContent?key={self._api_key}", json=body
+            )
             resp.raise_for_status()
             raw = resp.json()
             return self._to_openai_format(raw, model)
@@ -108,7 +128,13 @@ class GeminiProvider(ProviderAdapter):
             raw = resp.json()
             return {
                 "object": "list",
-                "data": [{"object": "embedding", "embedding": raw.get("embedding", {}).get("values", []), "index": 0}],
+                "data": [
+                    {
+                        "object": "embedding",
+                        "embedding": raw.get("embedding", {}).get("values", []),
+                        "index": 0,
+                    }
+                ],
                 "model": model,
             }
 
@@ -141,7 +167,11 @@ class GeminiProvider(ProviderAdapter):
     def _to_openai_format(gemini_response: dict, model: str) -> dict:
         candidates = gemini_response.get("candidates", [])
         if not candidates:
-            return {"choices": [{"message": {"role": "assistant", "content": ""}, "finish_reason": "stop"}]}
+            return {
+                "choices": [
+                    {"message": {"role": "assistant", "content": ""}, "finish_reason": "stop"}
+                ]
+            }
 
         candidate = candidates[0]
         content = candidate.get("content", {})
@@ -160,15 +190,21 @@ class GeminiProvider(ProviderAdapter):
         return {
             "id": gemini_response.get("id", ""),
             "object": "chat.completion",
-            "choices": [{
-                "index": 0,
-                "message": {"role": "assistant", "content": text},
-                "finish_reason": reason_map.get(finish_reason, "stop"),
-            }],
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": text},
+                    "finish_reason": reason_map.get(finish_reason, "stop"),
+                }
+            ],
             "model": model,
             "usage": {
-                "prompt_tokens": gemini_response.get("usageMetadata", {}).get("promptTokenCount", 0),
-                "completion_tokens": gemini_response.get("usageMetadata", {}).get("candidatesTokenCount", 0),
+                "prompt_tokens": gemini_response.get("usageMetadata", {}).get(
+                    "promptTokenCount", 0
+                ),
+                "completion_tokens": gemini_response.get("usageMetadata", {}).get(
+                    "candidatesTokenCount", 0
+                ),
                 "total_tokens": gemini_response.get("usageMetadata", {}).get("totalTokenCount", 0),
             },
         }

@@ -2,7 +2,7 @@
 import logging
 import re
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.models.agents.agent_sessions import AgentSessionSummary
 from app.services.agents.sessions.conversation_thread_service import (
@@ -48,8 +48,8 @@ class SessionContextBuilder:
         include_summary: bool = True,
         redact_secrets: bool = True,
         redact_pii: bool = True,
-        max_tokens_estimate: Optional[int] = None,
-    ) -> Dict[str, Any]:
+        max_tokens_estimate: int | None = None,
+    ) -> dict[str, Any]:
         history = await self.thread_service.build_conversation_history(
             session_id=session_id,
             max_messages=max_messages,
@@ -98,8 +98,8 @@ class SessionContextBuilder:
         session_id: uuid.UUID,
         max_messages: int = 50,
         include_summary: bool = True,
-        system_prompt: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        system_prompt: str | None = None,
+    ) -> list[dict[str, Any]]:
         context = await self.build_context(
             session_id=session_id,
             max_messages=max_messages,
@@ -108,28 +108,29 @@ class SessionContextBuilder:
             redact_pii=True,
         )
 
-        messages: List[Dict[str, Any]] = []
+        messages: list[dict[str, Any]] = []
 
         if include_summary and context.get("summary"):
-            messages.append({
-                "role": "system",
-                "content": f"Previous conversation summary: {context['summary']}",
-            })
+            messages.append(
+                {
+                    "role": "system",
+                    "content": f"Previous conversation summary: {context['summary']}",
+                }
+            )
 
         for entry in context["history"]:
-            messages.append({
-                "role": entry["role"],
-                "content": entry["content"],
-            })
+            messages.append(
+                {
+                    "role": entry["role"],
+                    "content": entry["content"],
+                }
+            )
 
         return messages
 
-    def _truncate_to_token_budget(
-        self, context: Dict[str, Any], max_tokens: int
-    ) -> Dict[str, Any]:
+    def _truncate_to_token_budget(self, context: dict[str, Any], max_tokens: int) -> dict[str, Any]:
         rough_tokens = sum(
-            len(str(entry.get("content", ""))) // 4
-            for entry in context.get("history", [])
+            len(str(entry.get("content", ""))) // 4 for entry in context.get("history", [])
         )
         if rough_tokens <= max_tokens:
             return context

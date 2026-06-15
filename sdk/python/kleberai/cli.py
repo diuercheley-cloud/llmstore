@@ -30,10 +30,14 @@ def main():
 
     # scaffold (from template)
     scaffold_p = sub.add_parser("scaffold", help="Scaffold a new agent from a template")
-    scaffold_p.add_argument("template", help="Template name (use 'list-templates' to see available)")
+    scaffold_p.add_argument(
+        "template", help="Template name (use 'list-templates' to see available)"
+    )
     scaffold_p.add_argument("--name", "-n", default=None, help="Agent name")
     scaffold_p.add_argument("--output", "-o", default=".", help="Output directory")
-    scaffold_p.add_argument("--force", "-f", action="store_true", help="Overwrite existing directory")
+    scaffold_p.add_argument(
+        "--force", "-f", action="store_true", help="Overwrite existing directory"
+    )
 
     sub.add_parser("list-templates", help="List available agent scaffolding templates")
 
@@ -44,21 +48,29 @@ def main():
     sub.add_parser("models", help="List models")
 
     # studio flows
-    studio_p = sub.add_parser("studio-flows", help="List studio flows")
+    sub.add_parser("studio-flows", help="List studio flows")
 
     # backup
     backup_p = sub.add_parser("backup", help="Backup agent configurations")
     backup_p.add_argument("agent_ids", nargs="+", help="Agent IDs to backup")
-    backup_p.add_argument("--type", default="full", choices=["full", "config-only"], help="Backup type")
-    backup_p.add_argument("--include-memory", action="store_true", default=True, help="Include agent memory")
-    backup_p.add_argument("--include-runs", action="store_true", default=True, help="Include run history")
+    backup_p.add_argument(
+        "--type", default="full", choices=["full", "config-only"], help="Backup type"
+    )
+    backup_p.add_argument(
+        "--include-memory", action="store_true", default=True, help="Include agent memory"
+    )
+    backup_p.add_argument(
+        "--include-runs", action="store_true", default=True, help="Include run history"
+    )
 
     backup_list_p = sub.add_parser("backup-list", help="List available backups")
     backup_list_p.add_argument("--agent-id", default=None, help="Filter by agent ID")
 
     restore_p = sub.add_parser("restore", help="Restore agent from backup")
     restore_p.add_argument("backup_id", help="Backup ID")
-    restore_p.add_argument("--agent-ids", nargs="*", help="Specific agents to restore (default: all)")
+    restore_p.add_argument(
+        "--agent-ids", nargs="*", help="Specific agents to restore (default: all)"
+    )
 
     # eval subcommands
     eval_p = sub.add_parser("eval", help="Run agent evaluations")
@@ -98,6 +110,7 @@ def main():
 
     elif args.command == "scaffold":
         from kleberai.scaffold import scaffold as _scaffold
+
         values = {}
         if args.name:
             values["name"] = args.name
@@ -106,6 +119,7 @@ def main():
 
     elif args.command == "list-templates":
         from kleberai.scaffold import list_templates as _list_templates
+
         templates = _list_templates()
         for t in templates:
             status = "✓" if t["exists"] else "✗"

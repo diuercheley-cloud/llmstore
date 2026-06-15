@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import httpx
 from app.core.config import get_settings
@@ -8,6 +8,7 @@ from .base import VectorStoreBase
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
+
 
 class MilvusStore(VectorStoreBase):
     """
@@ -33,33 +34,29 @@ class MilvusStore(VectorStoreBase):
         self,
         collection_name: str,
         id: str,
-        vector: List[float],
-        metadata: Optional[Dict[str, Any]] = None,
-        namespace: Optional[str] = None,
+        vector: list[float],
+        metadata: dict[str, Any] | None = None,
+        namespace: str | None = None,
     ) -> None:
         data = {
             "collectionName": collection_name,
-            "data": [{
-                "id": id,
-                "vector": vector,
-                **(metadata or {})
-            }]
+            "data": [{"id": id, "vector": vector, **(metadata or {})}],
         }
         await self._request("POST", "/entities/upsert", data)
 
     async def search(
         self,
         collection_name: str,
-        vector: List[float],
+        vector: list[float],
         limit: int = 5,
-        filters: Optional[Dict[str, Any]] = None,
-        namespace: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        filters: dict[str, Any] | None = None,
+        namespace: str | None = None,
+    ) -> list[dict[str, Any]]:
         query = {
             "collectionName": collection_name,
             "vector": vector,
             "limit": limit,
-            "outputFields": ["*"]
+            "outputFields": ["*"],
         }
         if filters:
             # Simple Milvus filter (Boolean expression)
@@ -74,36 +71,28 @@ class MilvusStore(VectorStoreBase):
         res = await self._request("POST", "/entities/search", query)
         hits = []
         for hit in res.get("data", []):
-            hits.append({
-                "id": hit.get("id"),
-                "metadata": hit,
-                "score": hit.get("distance", 0.0)
-            })
+            hits.append({"id": hit.get("id"), "metadata": hit, "score": hit.get("distance", 0.0)})
         return hits
 
     async def delete(
         self,
         collection_name: str,
-        ids: List[str],
-        namespace: Optional[str] = None,
+        ids: list[str],
+        namespace: str | None = None,
     ) -> None:
         filter_str = f"id in {ids}"
-        await self._request("POST", "/entities/delete", {
-            "collectionName": collection_name,
-            "filter": filter_str
-        })
+        await self._request(
+            "POST", "/entities/delete", {"collectionName": collection_name, "filter": filter_str}
+        )
 
     async def collection_create(
         self,
         collection_name: str,
         dimension: int,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         # Simplified Milvus collection creation
-        body = {
-            "collectionName": collection_name,
-            "dimension": dimension
-        }
+        body = {"collectionName": collection_name, "dimension": dimension}
         await self._request("POST", "/collections/create", body)
 
     async def collection_delete(
@@ -112,7 +101,7 @@ class MilvusStore(VectorStoreBase):
     ) -> None:
         await self._request("POST", "/collections/drop", {"collectionName": collection_name})
 
-    async def healthcheck(self) -> Dict[str, Any]:
+    async def healthcheck(self) -> dict[str, Any]:
         if not settings.milvus_enabled:
             return {"status": "disabled", "provider": "milvus"}
         try:

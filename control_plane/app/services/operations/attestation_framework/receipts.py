@@ -6,7 +6,13 @@ from app.services.operations.attestation_framework.hash_utils import sha256_hex
 from app.utils.crypto_signer import sign_payload
 
 
-def _receipt_payload(receipt_type: str, client_id: str, subject_id: str, payload_hash: str, deterministic_version: str) -> dict[str, Any]:
+def _receipt_payload(
+    receipt_type: str,
+    client_id: str,
+    subject_id: str,
+    payload_hash: str,
+    deterministic_version: str,
+) -> dict[str, Any]:
     generated_at = utc_now()
     immutable_hash = sha256_hex(
         {

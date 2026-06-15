@@ -1,4 +1,3 @@
-from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from app.contracts.backend_lifecycle import (
@@ -18,16 +17,24 @@ class ProviderUnavailableError(Exception):
 
 
 class BaseLifecycleProvider(BackendLifecycleContract):
-    async def get_observed_state(self, backend_id: UUID, desired: BackendDesiredState) -> BackendObservedState:
+    async def get_observed_state(
+        self, backend_id: UUID, desired: BackendDesiredState
+    ) -> BackendObservedState:
         raise NotImplementedError
 
-    async def start_backend(self, backend_id: UUID, desired: BackendDesiredState) -> LifecycleActionResult:
+    async def start_backend(
+        self, backend_id: UUID, desired: BackendDesiredState
+    ) -> LifecycleActionResult:
         raise ProviderUnavailableError(self.__class__.__name__, "start not supported")
 
-    async def stop_backend(self, backend_id: UUID, desired: BackendDesiredState) -> LifecycleActionResult:
+    async def stop_backend(
+        self, backend_id: UUID, desired: BackendDesiredState
+    ) -> LifecycleActionResult:
         raise ProviderUnavailableError(self.__class__.__name__, "stop not supported")
 
-    async def restart_backend(self, backend_id: UUID, desired: BackendDesiredState) -> LifecycleActionResult:
+    async def restart_backend(
+        self, backend_id: UUID, desired: BackendDesiredState
+    ) -> LifecycleActionResult:
         raise ProviderUnavailableError(self.__class__.__name__, "restart not supported")
 
     def capabilities(self) -> BackendLifecycleCapabilities:

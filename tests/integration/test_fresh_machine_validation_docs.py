@@ -40,9 +40,7 @@ def test_document_mentions_no_auto_download():
 
 def test_document_mentions_psp_pix():
     content = DOC.read_text(encoding="utf-8")
-    assert "PSP" in content or "PIX" in content, (
-        "Document does not mention PSP/PIX out of scope"
-    )
+    assert "PSP" in content or "PIX" in content, "Document does not mention PSP/PIX out of scope"
 
 
 def test_document_mentions_wsl2_linux():
@@ -78,7 +76,9 @@ def test_script_help_works():
     assert SCRIPT.exists()
     result = subprocess.run(
         ["bash", str(SCRIPT), "--help"],
-        capture_output=True, text=True, timeout=30,
+        capture_output=True,
+        text=True,
+        timeout=30,
     )
     assert result.returncode == 0
     assert "Usage:" in result.stdout
@@ -92,6 +92,8 @@ def test_validate_script_works():
 def test_validate_script_run(tmp_path):
     result = subprocess.run(
         ["bash", str(VALIDATE_SCRIPT)],
-        capture_output=True, text=True, timeout=60,
+        capture_output=True,
+        text=True,
+        timeout=60,
     )
     assert result.returncode == 0, f"validate script failed:\n{result.stdout}\n{result.stderr}"

@@ -8,16 +8,14 @@ def test_dr_test_local_help():
     """
     root_dir = Path(__file__).resolve().parents[2]
     dr_script = root_dir / "scripts" / "dr-test-local.sh"
-    
+
     result = subprocess.run(
-        [str(dr_script), "--help"],
-        capture_output=True,
-        text=True,
-        cwd=str(root_dir)
+        [str(dr_script), "--help"], capture_output=True, text=True, cwd=str(root_dir)
     )
-    
+
     assert result.returncode == 0
     assert "Uso: ./scripts/dev/dr-test-local.sh" in result.stdout
+
 
 def test_dr_test_local_report_path_config():
     """
@@ -25,6 +23,6 @@ def test_dr_test_local_report_path_config():
     """
     root_dir = Path(__file__).resolve().parents[2]
     dr_script = root_dir / "scripts" / "dr-test-local.sh"
-    
+
     content = dr_script.read_text()
     assert 'REPORT_ROOT="${ROOT_DIR}/artifacts/dr-tests"' in content

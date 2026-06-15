@@ -1,5 +1,5 @@
 import ssl
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from app.core.config import get_settings
@@ -167,7 +167,12 @@ async def test_auth_failure_logged(session, monkeypatch):
 
     service = CommercialReportExportService(session)
     schedule = await service.create_schedule(
-        {"name": "Auth Failure", "frequency": "weekly", "day_of_week": 1, "recipients_json": ["ops@example.com"]},
+        {
+            "name": "Auth Failure",
+            "frequency": "weekly",
+            "day_of_week": 1,
+            "recipients_json": ["ops@example.com"],
+        },
         actor="admin@example.com",
     )
     with pytest.raises(HTTPException) as exc:
@@ -194,7 +199,12 @@ async def test_tls_failure_logged(session, monkeypatch):
 
     service = CommercialReportExportService(session)
     schedule = await service.create_schedule(
-        {"name": "TLS Failure", "frequency": "weekly", "day_of_week": 1, "recipients_json": ["ops@example.com"]},
+        {
+            "name": "TLS Failure",
+            "frequency": "weekly",
+            "day_of_week": 1,
+            "recipients_json": ["ops@example.com"],
+        },
         actor="admin@example.com",
     )
     with pytest.raises(HTTPException) as exc:
@@ -215,7 +225,12 @@ async def test_allowlist_reject_creates_blocked_log(session, monkeypatch):
 
     service = CommercialReportExportService(session)
     schedule = await service.create_schedule(
-        {"name": "Allowlist Reject", "frequency": "weekly", "day_of_week": 1, "recipients_json": ["blocked@example.com"]},
+        {
+            "name": "Allowlist Reject",
+            "frequency": "weekly",
+            "day_of_week": 1,
+            "recipients_json": ["blocked@example.com"],
+        },
         actor="admin@example.com",
     )
     result = await service.run_schedule_now(schedule.id)
@@ -260,9 +275,15 @@ async def test_secret_scanner_blocks_and_logs(session, monkeypatch):
 
     service = CommercialReportExportService(session)
     schedule = await service.create_schedule(
-        {"name": "Secret Block", "frequency": "weekly", "day_of_week": 1, "recipients_json": ["ops@example.com"]},
+        {
+            "name": "Secret Block",
+            "frequency": "weekly",
+            "day_of_week": 1,
+            "recipients_json": ["ops@example.com"],
+        },
         actor="admin@example.com",
     )
+
     async def fake_report(**kwargs):
         return {"safe": "ok", "leak": "Bearer sk-secret-123456789"}
 
@@ -285,9 +306,10 @@ async def test_retry_backoff_works(monkeypatch):
     def flaky_send():
         attempts["count"] += 1
         if attempts["count"] == 1:
-            raise __import__("app.services.routing.commercial_report_email", fromlist=["CommercialReportEmailError"]).CommercialReportEmailError(
-                "smtp_failure: temporary"
-            )
+            raise __import__(
+                "app.services.routing.commercial_report_email",
+                fromlist=["CommercialReportEmailError"],
+            ).CommercialReportEmailError("smtp_failure: temporary")
         return {"status": "sent"}
 
     monkeypatch.setattr("app.services.routing.commercial_report_email.asyncio.sleep", fake_sleep)
@@ -314,10 +336,15 @@ async def test_scheduler_uses_smtp_when_opted_in(session, monkeypatch):
 
     service = CommercialReportExportService(session)
     schedule = await service.create_schedule(
-        {"name": "Scheduler SMTP", "frequency": "weekly", "day_of_week": 1, "recipients_json": ["ops@example.com"]},
+        {
+            "name": "Scheduler SMTP",
+            "frequency": "weekly",
+            "day_of_week": 1,
+            "recipients_json": ["ops@example.com"],
+        },
         actor="admin@example.com",
     )
-    schedule.next_run_at = datetime.now(timezone.utc) - timedelta(minutes=1)
+    schedule.next_run_at = datetime.now(UTC) - timedelta(minutes=1)
     await session.commit()
 
     results = await service.run_due_schedules_once()
@@ -335,7 +362,9 @@ def test_payload_sanitized_for_email_service():
 
 @pytest.mark.asyncio
 async def test_delivery_endpoint_and_send_test_require_admin_auth(admin_client):
-    send_resp = await admin_client.post("/admin/routing/executive-dashboard/report-schedules/00000000-0000-0000-0000-000000000000/send-test-email")
+    send_resp = await admin_client.post(
+        "/admin/routing/executive-dashboard/report-schedules/00000000-0000-0000-0000-000000000000/send-test-email"
+    )
     list_resp = await admin_client.get("/admin/routing/executive-dashboard/report-deliveries")
     assert send_resp.status_code in (401, 403)
     assert list_resp.status_code in (401, 403)

@@ -1,7 +1,7 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.models.agents.agent_deployments import AgentApiDeployment, AgentApiSlaEvent
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,7 +15,7 @@ class DeploymentSlaService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_sla_config(self, deployment: AgentApiDeployment) -> Dict[str, Any]:
+    async def get_sla_config(self, deployment: AgentApiDeployment) -> dict[str, Any]:
         return {
             "timeout_seconds": deployment.timeout_seconds,
             "max_concurrency": deployment.max_concurrency,
@@ -28,12 +28,12 @@ class DeploymentSlaService:
     async def update_sla(
         self,
         deployment: AgentApiDeployment,
-        timeout_seconds: Optional[int] = None,
-        max_concurrency: Optional[int] = None,
-        retry_max_attempts: Optional[int] = None,
-        retry_backoff_ms: Optional[int] = None,
-        rate_limit_per_minute: Optional[int] = None,
-        rate_limit_per_day: Optional[int] = None,
+        timeout_seconds: int | None = None,
+        max_concurrency: int | None = None,
+        retry_max_attempts: int | None = None,
+        retry_backoff_ms: int | None = None,
+        rate_limit_per_minute: int | None = None,
+        rate_limit_per_day: int | None = None,
     ) -> AgentApiDeployment:
         if timeout_seconds is not None:
             deployment.timeout_seconds = max(1, min(300, timeout_seconds))
@@ -57,6 +57,7 @@ class DeploymentSlaService:
         limit: int = 50,
     ) -> list[AgentApiSlaEvent]:
         from sqlalchemy import select
+
         stmt = (
             select(AgentApiSlaEvent)
             .where(AgentApiSlaEvent.deployment_id == deployment_id)
@@ -66,15 +67,13 @@ class DeploymentSlaService:
         res = await self.db.execute(stmt)
         return list(res.scalars().all())
 
-    async def get_sla_summary(self, deployment_id: uuid.UUID) -> Dict[str, Any]:
+    async def get_sla_summary(self, deployment_id: uuid.UUID) -> dict[str, Any]:
         """Get SLA health summary for a deployment."""
         from app.models.agents.agent_deployments import AgentApiUsageEvent
         from sqlalchemy import func, select
 
         # Total invocations
-        total_stmt = select(func.count()).where(
-            AgentApiUsageEvent.deployment_id == deployment_id
-        )
+        total_stmt = select(func.count()).where(AgentApiUsageEvent.deployment_id == deployment_id)
         total = (await self.db.execute(total_stmt)).scalar() or 0
 
         # Failed invocations
@@ -92,9 +91,7 @@ class DeploymentSlaService:
         avg_latency = (await self.db.execute(avg_stmt)).scalar()
 
         # SLA events count
-        events_stmt = select(func.count()).where(
-            AgentApiSlaEvent.deployment_id == deployment_id
-        )
+        events_stmt = select(func.count()).where(AgentApiSlaEvent.deployment_id == deployment_id)
         events_count = (await self.db.execute(events_stmt)).scalar() or 0
 
         return {

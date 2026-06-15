@@ -1,8 +1,8 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
-from app.models.core.client import Client
 from app.models.billing.request_financial import RequestFinancial
+from app.models.core.client import Client
 from app.services.commercial_guardrails import clear_commercial_guardrail_runtime_events
 from httpx import AsyncClient
 
@@ -46,7 +46,7 @@ async def _seed_financials(admin_client: AsyncClient, suffix: str = "base") -> t
         session.add_all([client_a, client_b])
         await session.flush()
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         session.add_all(
             [
                 RequestFinancial(
@@ -90,13 +90,16 @@ async def _seed_financials(admin_client: AsyncClient, suffix: str = "base") -> t
 @pytest.mark.asyncio
 async def test_commercial_guardrails_requires_admin_auth(admin_client: AsyncClient):
     overview = await admin_client.get("/admin/commercial-guardrails/overview")
-    simulate = await admin_client.post("/admin/commercial-guardrails/simulate", json={
-        "client_id": "00000000-0000-0000-0000-000000000001",
-        "provider": "openai",
-        "model": "gpt-4o-mini",
-        "estimated_cost_brl": 1.0,
-        "estimated_revenue_brl": 2.0,
-    })
+    simulate = await admin_client.post(
+        "/admin/commercial-guardrails/simulate",
+        json={
+            "client_id": "00000000-0000-0000-0000-000000000001",
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "estimated_cost_brl": 1.0,
+            "estimated_revenue_brl": 2.0,
+        },
+    )
     runtime = await admin_client.get("/admin/commercial-guardrails/runtime-status")
     assert overview.status_code == 401
     assert simulate.status_code == 401
@@ -104,8 +107,12 @@ async def test_commercial_guardrails_requires_admin_auth(admin_client: AsyncClie
 
 
 @pytest.mark.asyncio
-async def test_commercial_guardrails_overview_empty(admin_client: AsyncClient, admin_token_headers: dict):
-    response = await admin_client.get("/admin/commercial-guardrails/overview", headers=admin_token_headers)
+async def test_commercial_guardrails_overview_empty(
+    admin_client: AsyncClient, admin_token_headers: dict
+):
+    response = await admin_client.get(
+        "/admin/commercial-guardrails/overview", headers=admin_token_headers
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["mode"] == "disabled"
@@ -114,14 +121,18 @@ async def test_commercial_guardrails_overview_empty(admin_client: AsyncClient, a
     assert data["clients"] == []
     assert data["would_block"] == []
 
-    runtime = await admin_client.get("/admin/commercial-guardrails/runtime-status", headers=admin_token_headers)
+    runtime = await admin_client.get(
+        "/admin/commercial-guardrails/runtime-status", headers=admin_token_headers
+    )
     assert runtime.status_code == 200
     assert runtime.json()["enforcement_mode"] == "disabled"
     assert runtime.json()["blocked_cloud_requests_today"] == 0
 
 
 @pytest.mark.asyncio
-async def test_commercial_guardrails_overview_populated_and_flags(monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient, admin_token_headers: dict):
+async def test_commercial_guardrails_overview_populated_and_flags(
+    monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient, admin_token_headers: dict
+):
     _apply_guardrail_env(
         monkeypatch,
         COMMERCIAL_GUARDRAILS_ENABLED="true",
@@ -132,7 +143,9 @@ async def test_commercial_guardrails_overview_populated_and_flags(monkeypatch: p
     )
     client_a_id, client_b_id = await _seed_financials(admin_client, "populated")
 
-    response = await admin_client.get("/admin/commercial-guardrails/overview", headers=admin_token_headers)
+    response = await admin_client.get(
+        "/admin/commercial-guardrails/overview", headers=admin_token_headers
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["mode"] == "report_only"
@@ -140,13 +153,21 @@ async def test_commercial_guardrails_overview_populated_and_flags(monkeypatch: p
     assert "openai" in data["providers_over_block_threshold"]
     assert client_b_id in data["clients_with_negative_margin"]
     assert client_b_id in data["clients_over_block_threshold"]
-    assert any(item["type"] == "provider_daily_cost" and item["provider"] == "openai" for item in data["would_block"])
-    assert any(item["type"] == "negative_margin" and item["client_id"] == client_b_id for item in data["would_block"])
+    assert any(
+        item["type"] == "provider_daily_cost" and item["provider"] == "openai"
+        for item in data["would_block"]
+    )
+    assert any(
+        item["type"] == "negative_margin" and item["client_id"] == client_b_id
+        for item in data["would_block"]
+    )
     assert any(client["client_id"] == client_a_id for client in data["clients"])
 
 
 @pytest.mark.asyncio
-async def test_commercial_guardrails_simulate_positive_margin(monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient, admin_token_headers: dict):
+async def test_commercial_guardrails_simulate_positive_margin(
+    monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient, admin_token_headers: dict
+):
     _apply_guardrail_env(monkeypatch, COMMERCIAL_GUARDRAILS_ENABLED="true")
     client_a_id, _ = await _seed_financials(admin_client, "simulate-positive")
 
@@ -171,7 +192,9 @@ async def test_commercial_guardrails_simulate_positive_margin(monkeypatch: pytes
 
 
 @pytest.mark.asyncio
-async def test_commercial_guardrails_simulate_negative_margin(monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient, admin_token_headers: dict):
+async def test_commercial_guardrails_simulate_negative_margin(
+    monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient, admin_token_headers: dict
+):
     _apply_guardrail_env(monkeypatch, COMMERCIAL_GUARDRAILS_ENABLED="true")
     client_a_id, _ = await _seed_financials(admin_client, "simulate-negative")
 
@@ -194,7 +217,9 @@ async def test_commercial_guardrails_simulate_negative_margin(monkeypatch: pytes
 
 
 @pytest.mark.asyncio
-async def test_commercial_guardrails_simulate_above_daily_limit(monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient, admin_token_headers: dict):
+async def test_commercial_guardrails_simulate_above_daily_limit(
+    monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient, admin_token_headers: dict
+):
     _apply_guardrail_env(
         monkeypatch,
         COMMERCIAL_GUARDRAILS_ENABLED="true",
@@ -222,11 +247,15 @@ async def test_commercial_guardrails_simulate_above_daily_limit(monkeypatch: pyt
 
 
 @pytest.mark.asyncio
-async def test_commercial_guardrails_payload_is_sanitized(monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient, admin_token_headers: dict):
+async def test_commercial_guardrails_payload_is_sanitized(
+    monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient, admin_token_headers: dict
+):
     _apply_guardrail_env(monkeypatch, COMMERCIAL_GUARDRAILS_ENABLED="true")
     client_a_id, _ = await _seed_financials(admin_client, "sanitize")
 
-    overview = await admin_client.get("/admin/commercial-guardrails/overview", headers=admin_token_headers)
+    overview = await admin_client.get(
+        "/admin/commercial-guardrails/overview", headers=admin_token_headers
+    )
     simulate = await admin_client.post(
         "/admin/commercial-guardrails/simulate",
         headers=admin_token_headers,
@@ -247,7 +276,9 @@ async def test_commercial_guardrails_payload_is_sanitized(monkeypatch: pytest.Mo
 
 
 @pytest.mark.asyncio
-async def test_commercial_guardrails_default_report_mode_does_not_block(monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient, admin_token_headers: dict):
+async def test_commercial_guardrails_default_report_mode_does_not_block(
+    monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient, admin_token_headers: dict
+):
     _apply_guardrail_env(
         monkeypatch,
         COMMERCIAL_GUARDRAILS_ENABLED="true",
@@ -256,7 +287,9 @@ async def test_commercial_guardrails_default_report_mode_does_not_block(monkeypa
     )
     _, client_b_id = await _seed_financials(admin_client, "report-mode")
 
-    overview = await admin_client.get("/admin/commercial-guardrails/overview", headers=admin_token_headers)
+    overview = await admin_client.get(
+        "/admin/commercial-guardrails/overview", headers=admin_token_headers
+    )
     simulate = await admin_client.post(
         "/admin/commercial-guardrails/simulate",
         headers=admin_token_headers,

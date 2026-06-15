@@ -86,7 +86,7 @@ REQUIRED_PATTERNS = {
     ],
     "control_plane/app/main.py": [
         "operations_reproducible_builds_admin_router",
-        "app.include_router(operations_reproducible_builds_admin_router, tags=[\"operations-reproducible-builds\"])",
+        'app.include_router(operations_reproducible_builds_admin_router, tags=["operations-reproducible-builds"])',
     ],
     "control_plane/app/static/admin/index.html": [
         "Reproducible Build &amp; Artifact Verification Framework",

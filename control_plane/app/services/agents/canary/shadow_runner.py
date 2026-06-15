@@ -1,7 +1,6 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import Optional
 
 from app.core.config import get_settings
 from app.models.agents.agent_canary import AgentCanaryAssignment, AgentShadowRun
@@ -10,12 +9,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class ShadowRunner:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.settings = get_settings()
 
-    async def launch_shadow(self, primary_run_id: uuid.UUID, assignment: AgentCanaryAssignment) -> Optional[uuid.UUID]:
+    async def launch_shadow(
+        self, primary_run_id: uuid.UUID, assignment: AgentCanaryAssignment
+    ) -> uuid.UUID | None:
         """
         Launches a parallel shadow run for an existing primary run.
         """
@@ -32,7 +34,7 @@ class ShadowRunner:
             tenant_id=primary_run.tenant_id,
             user_id=primary_run.user_id,
             status="queued",
-            input_text=primary_run.input_text
+            input_text=primary_run.input_text,
         )
         self.db.add(shadow_run)
         await self.db.flush()
@@ -42,7 +44,7 @@ class ShadowRunner:
             assignment_id=assignment.id,
             primary_run_id=primary_run_id,
             shadow_run_id=shadow_run.id,
-            status="running"
+            status="running",
         )
         self.db.add(record)
         await self.db.commit()

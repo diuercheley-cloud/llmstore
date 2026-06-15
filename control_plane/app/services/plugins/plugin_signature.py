@@ -16,9 +16,7 @@ class PluginSignatureService:
 
     async def record_signature(self, plugin_entry_id: uuid.UUID, signer: str, signature: str):
         sig = PluginSignature(
-            plugin_entry_id=plugin_entry_id,
-            signer_identity=signer,
-            signature_data=signature
+            plugin_entry_id=plugin_entry_id, signer_identity=signer, signature_data=signature
         )
         self.db.add(sig)
         await self.db.commit()

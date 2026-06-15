@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, UTC
-
-from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
-from sqlalchemy.dialects.postgresql import UUID
+from datetime import UTC, datetime
 
 from app.db.base import Base
+from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import UUID
 
 
 class CommercialWorkflowDefinition(Base):
@@ -29,15 +28,21 @@ class CommercialWorkflowDefinition(Base):
     enforce_reproducibility = Column(Boolean, default=True)
     metadata_json = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
-    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
+    updated_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
+    )
 
 
 class CommercialWorkflowExecution(Base):
     __tablename__ = "commercial_workflow_executions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    definition_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_definitions.id"), nullable=False)
-    replay_of_execution_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_executions.id"), nullable=True)
+    definition_id = Column(
+        UUID(as_uuid=True), ForeignKey("commercial_workflow_definitions.id"), nullable=False
+    )
+    replay_of_execution_id = Column(
+        UUID(as_uuid=True), ForeignKey("commercial_workflow_executions.id"), nullable=True
+    )
     session_id = Column(String(128), nullable=True, index=True)
     request_id = Column(String(128), nullable=True, index=True)
     tenant_id = Column(String(64), nullable=True, index=True)
@@ -69,8 +74,18 @@ class CommercialWorkflowStage(Base):
     __tablename__ = "commercial_workflow_stages"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    execution_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_executions.id"), nullable=False, index=True)
-    definition_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_definitions.id"), nullable=False, index=True)
+    execution_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("commercial_workflow_executions.id"),
+        nullable=False,
+        index=True,
+    )
+    definition_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("commercial_workflow_definitions.id"),
+        nullable=False,
+        index=True,
+    )
     tenant_id = Column(String(64), nullable=True, index=True)
     stage_key = Column(String(128), nullable=False, index=True)
     stage_name = Column(String(128), nullable=True)
@@ -106,8 +121,15 @@ class CommercialWorkflowCheckpoint(Base):
     __tablename__ = "commercial_workflow_checkpoints"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    execution_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_executions.id"), nullable=False, index=True)
-    stage_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_stages.id"), nullable=True, index=True)
+    execution_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("commercial_workflow_executions.id"),
+        nullable=False,
+        index=True,
+    )
+    stage_id = Column(
+        UUID(as_uuid=True), ForeignKey("commercial_workflow_stages.id"), nullable=True, index=True
+    )
     step_index = Column(Integer, nullable=False)
     stage_key = Column(String(128), nullable=True, index=True)
     step_input_hash = Column(String(128), nullable=True)
@@ -127,7 +149,12 @@ class CommercialWorkflowReceipt(Base):
     __tablename__ = "commercial_workflow_receipts"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    execution_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_executions.id"), nullable=False, index=True)
+    execution_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("commercial_workflow_executions.id"),
+        nullable=False,
+        index=True,
+    )
     tenant_id = Column(String(64), nullable=True, index=True)
     receipt_hash = Column(String(64), nullable=False, index=True)
     previous_receipt_hash = Column(String(64), nullable=True)
@@ -148,8 +175,12 @@ class CommercialWorkflowReplay(Base):
     __tablename__ = "commercial_workflow_replays"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    original_execution_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_executions.id"), nullable=False)
-    replay_execution_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_executions.id"), nullable=True)
+    original_execution_id = Column(
+        UUID(as_uuid=True), ForeignKey("commercial_workflow_executions.id"), nullable=False
+    )
+    replay_execution_id = Column(
+        UUID(as_uuid=True), ForeignKey("commercial_workflow_executions.id"), nullable=True
+    )
     status = Column(String(32), default="pending")
     mismatched_step_index = Column(Integer, nullable=True)
     replay_report = Column(JSON, nullable=True)
@@ -160,7 +191,9 @@ class CommercialWorkflowDeterminismReport(Base):
     __tablename__ = "commercial_workflow_determinism_reports"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    execution_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_executions.id"), nullable=False)
+    execution_id = Column(
+        UUID(as_uuid=True), ForeignKey("commercial_workflow_executions.id"), nullable=False
+    )
     determinism_score = Column(Float, default=1.0)
     drift_detected = Column(Boolean, default=False)
     drift_summary = Column(Text, nullable=True)
@@ -172,16 +205,27 @@ class CommercialWorkflowPolicyBinding(Base):
     __tablename__ = "commercial_workflow_policy_bindings"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    execution_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_executions.id"), nullable=False, index=True)
-    stage_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_stages.id"), nullable=False, index=True)
+    execution_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("commercial_workflow_executions.id"),
+        nullable=False,
+        index=True,
+    )
+    stage_id = Column(
+        UUID(as_uuid=True), ForeignKey("commercial_workflow_stages.id"), nullable=False, index=True
+    )
     tenant_id = Column(String(64), nullable=True, index=True)
-    bundle_id = Column(UUID(as_uuid=True), ForeignKey("commercial_policy_bundles.id"), nullable=True, index=True)
+    bundle_id = Column(
+        UUID(as_uuid=True), ForeignKey("commercial_policy_bundles.id"), nullable=True, index=True
+    )
     bundle_ref = Column(String(128), nullable=True, index=True)
     binding_status = Column(String(32), default="pending", index=True)
     enforcement_mode = Column(String(32), default="enforce", nullable=False)
     runtime_policy_hash = Column(String(64), nullable=True, index=True)
     snapshot_hash = Column(String(64), nullable=True, index=True)
-    rollback_from_binding_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_policy_bindings.id"), nullable=True)
+    rollback_from_binding_id = Column(
+        UUID(as_uuid=True), ForeignKey("commercial_workflow_policy_bindings.id"), nullable=True
+    )
     immutable_hash = Column(String(64), nullable=True)
     metadata_json = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
@@ -191,9 +235,21 @@ class CommercialWorkflowPolicySnapshot(Base):
     __tablename__ = "commercial_workflow_policy_snapshots"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    execution_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_executions.id"), nullable=False, index=True)
-    stage_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_stages.id"), nullable=False, index=True)
-    binding_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_policy_bindings.id"), nullable=False, index=True)
+    execution_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("commercial_workflow_executions.id"),
+        nullable=False,
+        index=True,
+    )
+    stage_id = Column(
+        UUID(as_uuid=True), ForeignKey("commercial_workflow_stages.id"), nullable=False, index=True
+    )
+    binding_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("commercial_workflow_policy_bindings.id"),
+        nullable=False,
+        index=True,
+    )
     tenant_id = Column(String(64), nullable=True, index=True)
     snapshot_type = Column(String(32), default="runtime", nullable=False)
     policy_hash = Column(String(64), nullable=False, index=True)
@@ -212,10 +268,22 @@ class CommercialWorkflowApproval(Base):
     __tablename__ = "commercial_workflow_approvals"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    execution_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_executions.id"), nullable=False, index=True)
-    stage_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_stages.id"), nullable=False, index=True)
+    execution_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("commercial_workflow_executions.id"),
+        nullable=False,
+        index=True,
+    )
+    stage_id = Column(
+        UUID(as_uuid=True), ForeignKey("commercial_workflow_stages.id"), nullable=False, index=True
+    )
     tenant_id = Column(String(64), nullable=True, index=True)
-    snapshot_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_policy_snapshots.id"), nullable=True, index=True)
+    snapshot_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("commercial_workflow_policy_snapshots.id"),
+        nullable=True,
+        index=True,
+    )
     chain_id = Column(String(64), nullable=False, index=True)
     event_type = Column(String(32), nullable=False, index=True)
     status = Column(String(32), nullable=False, default="pending", index=True)
@@ -240,9 +308,21 @@ class CommercialWorkflowGovernanceEvent(Base):
     __tablename__ = "commercial_workflow_governance_events"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    execution_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_executions.id"), nullable=False, index=True)
-    stage_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_stages.id"), nullable=True, index=True)
-    replay_session_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_replay_sessions.id"), nullable=True, index=True)
+    execution_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("commercial_workflow_executions.id"),
+        nullable=False,
+        index=True,
+    )
+    stage_id = Column(
+        UUID(as_uuid=True), ForeignKey("commercial_workflow_stages.id"), nullable=True, index=True
+    )
+    replay_session_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("commercial_workflow_replay_sessions.id"),
+        nullable=True,
+        index=True,
+    )
     tenant_id = Column(String(64), nullable=True, index=True)
     event_type = Column(String(64), nullable=False, index=True)
     actor_id = Column(String(255), nullable=True)
@@ -261,8 +341,18 @@ class CommercialWorkflowReplaySession(Base):
     __tablename__ = "commercial_workflow_replay_sessions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    original_execution_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_executions.id"), nullable=False, index=True)
-    replay_execution_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_executions.id"), nullable=True, index=True)
+    original_execution_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("commercial_workflow_executions.id"),
+        nullable=False,
+        index=True,
+    )
+    replay_execution_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("commercial_workflow_executions.id"),
+        nullable=True,
+        index=True,
+    )
     tenant_id = Column(String(64), nullable=True, index=True)
     session_status = Column(String(32), default="pending", nullable=False, index=True)
     requested_by = Column(String(255), nullable=True)

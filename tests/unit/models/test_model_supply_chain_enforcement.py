@@ -28,7 +28,9 @@ def _build_runtime_model() -> ModelRegistry:
         is_active=True,
         status="healthy",
     )
-    model.backend_routes = [ModelBackendRoute(priority=1, weight=100, state="healthy", inference_backend=backend)]
+    model.backend_routes = [
+        ModelBackendRoute(priority=1, weight=100, state="healthy", inference_backend=backend)
+    ]
     return model
 
 
@@ -45,7 +47,9 @@ async def test_pending_blocked_in_enforce(monkeypatch, session, settings):
     await register_model_manifest(session, model_name="supply-model", model_format="api")
 
     with pytest.raises(HTTPException) as exc:
-        await resolve_requested_model(session, client=Client(name="tenant"), requested_model="default")
+        await resolve_requested_model(
+            session, client=Client(name="tenant"), requested_model="default"
+        )
 
     assert exc.value.status_code == 403
     assert exc.value.detail["error"] == "model_not_trusted"
@@ -64,7 +68,9 @@ async def test_trusted_allowed_in_enforce(monkeypatch, session, settings):
     entry = await register_model_manifest(session, model_name="supply-model", model_format="api")
     await approve_model(session, entry.id, approved_by="ops")
 
-    selected, requested = await resolve_requested_model(session, client=Client(name="tenant"), requested_model="default")
+    selected, requested = await resolve_requested_model(
+        session, client=Client(name="tenant"), requested_model="default"
+    )
 
     assert selected.model_alias == "supply-model"
     assert requested == "default"
@@ -82,7 +88,9 @@ async def test_report_only_does_not_block(monkeypatch, session, settings):
     monkeypatch.setattr("app.services.model_policy.list_active_registry_models", fake_models)
     await register_model_manifest(session, model_name="supply-model", model_format="api")
 
-    selected, _ = await resolve_requested_model(session, client=Client(name="tenant"), requested_model="default")
+    selected, _ = await resolve_requested_model(
+        session, client=Client(name="tenant"), requested_model="default"
+    )
 
     assert selected.model_alias == "supply-model"
 

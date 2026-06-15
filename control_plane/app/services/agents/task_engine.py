@@ -2,8 +2,9 @@
 import asyncio
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable, Dict, Optional
+from typing import Any
 
 from app.contracts.agents.task_execution_contract import (
     ApprovalWaitTaskContractV1,
@@ -18,7 +19,13 @@ from app.contracts.agents.task_execution_contract import (
 from app.contracts.base import ContractValidationError
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.agents.agents import AgentPlan, AgentTask, AgentTaskAttempt, AgentTaskDependency, AgentTool
+from app.models.agents.agents import (
+    AgentPlan,
+    AgentTask,
+    AgentTaskAttempt,
+    AgentTaskDependency,
+    AgentTool,
+)
 from app.services.agents import agent_state
 from app.services.agents.agent_budget import AgentBudgetService
 from app.services.agents.agent_handoffs import AgentHandoffService
@@ -35,7 +42,7 @@ from sqlalchemy.future import select
 
 
 class TaskExecutionError(RuntimeError):
-    def __init__(self, code: str, message: Optional[str] = None, *, retryable: bool = False):
+    def __init__(self, code: str, message: str | None = None, *, retryable: bool = False):
         super().__init__(message or code)
         self.code = code
         self.retryable = retryable
@@ -53,13 +60,13 @@ class TaskExecutionContext:
 
 @dataclass
 class TaskExecutionResult:
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
     task_status: str = "completed"
-    run_status: Optional[str] = None
-    plan_status: Optional[str] = None
-    event_type: Optional[str] = None
-    event_payload: Optional[Dict[str, Any]] = None
-    receipt_type: Optional[str] = None
+    run_status: str | None = None
+    plan_status: str | None = None
+    event_type: str | None = None
+    event_payload: dict[str, Any] | None = None
+    receipt_type: str | None = None
 
 
 class TaskEngine:
@@ -67,12 +74,12 @@ class TaskEngine:
         self,
         db: AsyncSession,
         *,
-        llm_provider: Optional[AgentLLMProvider] = None,
-        memory_service: Optional[AgentMemoryService] = None,
-        handoff_service: Optional[AgentHandoffService] = None,
-        signal_manager: Optional[WorkflowSignalManager] = None,
-        receipt_service: Optional[AgentReceiptsService] = None,
-        tool_executor: Callable[..., Awaitable[Dict[str, Any]]] = execute_tool,
+        llm_provider: AgentLLMProvider | None = None,
+        memory_service: AgentMemoryService | None = None,
+        handoff_service: AgentHandoffService | None = None,
+        signal_manager: WorkflowSignalManager | None = None,
+        receipt_service: AgentReceiptsService | None = None,
+        tool_executor: Callable[..., Awaitable[dict[str, Any]]] = execute_tool,
     ):
         self.db = db
         self.settings = get_settings()
@@ -84,7 +91,9 @@ class TaskEngine:
         self.budgets = AgentBudgetService()
         self._llm_provider = llm_provider
         self._tool_executor = tool_executor
-        self._handlers: dict[str, Callable[[TaskExecutionContext], Awaitable[TaskExecutionResult]]] = {
+        self._handlers: dict[
+            str, Callable[[TaskExecutionContext], Awaitable[TaskExecutionResult]]
+        ] = {
             "model_reasoning": self._handle_model_reasoning,
             "tool_call": self._handle_tool_call,
             "memory_read": self._handle_memory_read,
@@ -129,7 +138,9 @@ class TaskEngine:
         while True:
             next_tasks = await self._get_ready_tasks(plan_id)
             if not next_tasks:
-                res_all = await self.db.execute(select(AgentTask).where(AgentTask.plan_id == plan_id))
+                res_all = await self.db.execute(
+                    select(AgentTask).where(AgentTask.plan_id == plan_id)
+                )
                 all_tasks = res_all.scalars().all()
                 if all(t.status == "completed" or t.status == "skipped" for t in all_tasks):
                     plan.status = "completed"
@@ -212,11 +223,7 @@ class TaskEngine:
                     checkpoint_id=checkpoint.id,
                     error=error,
                 )
-                if (
-                    error.retryable
-                    and retries_enabled
-                    and ctx.task.attempt_count < max_attempts
-                ):
+                if error.retryable and retries_enabled and ctx.task.attempt_count < max_attempts:
                     ctx.task.status = "pending"
                     await self.db.commit()
                     continue
@@ -236,7 +243,7 @@ class TaskEngine:
             task.status = "skipped"
             await self.db.commit()
 
-    async def _load_context(self, task_id: uuid.UUID) -> Optional[TaskExecutionContext]:
+    async def _load_context(self, task_id: uuid.UUID) -> TaskExecutionContext | None:
         res = await self.db.execute(select(AgentTask).where(AgentTask.id == task_id))
         task = res.scalar_one_or_none()
         if not task:
@@ -287,12 +294,14 @@ class TaskEngine:
         await self.db.refresh(ctx.run)
         return attempt
 
-    async def _evaluate_policy(self, ctx: TaskExecutionContext) -> Dict[str, Any]:
+    async def _evaluate_policy(self, ctx: TaskExecutionContext) -> dict[str, Any]:
         from app.services.agents.agent_policy_engine import AgentPolicyEngine, PolicyRequest
 
         policy_req = PolicyRequest(
             action_type=ctx.task.task_type,
-            subject=ctx.task.input_data.get("tool_name") or ctx.task.input_data.get("memory_type") or "task_engine",
+            subject=ctx.task.input_data.get("tool_name")
+            or ctx.task.input_data.get("memory_type")
+            or "task_engine",
             tenant_id=ctx.run.tenant_id,
             agent_id=ctx.run.agent_id,
             run_id=ctx.run.id,
@@ -304,7 +313,9 @@ class TaskEngine:
         return {
             "decision": decision.result,
             "reason": getattr(decision, "reason", None),
-            "policy_id": str(getattr(decision, "id", "")) if getattr(decision, "id", None) else None,
+            "policy_id": str(getattr(decision, "id", ""))
+            if getattr(decision, "id", None)
+            else None,
         }
 
     async def _validate_budget(self, ctx: TaskExecutionContext) -> None:
@@ -369,7 +380,7 @@ class TaskEngine:
         step_number: int,
         *,
         checkpoint_id: uuid.UUID,
-        policy_result: Dict[str, Any],
+        policy_result: dict[str, Any],
         result: TaskExecutionResult,
         latency_ms: int,
     ) -> None:
@@ -424,7 +435,9 @@ class TaskEngine:
                 ctx.run.output_hash = output_hash
                 ctx.run.failure_reason = None
         if result.event_type:
-            await agent_state.log_run_event(self.db, ctx.run.id, result.event_type, result.event_payload)
+            await agent_state.log_run_event(
+                self.db, ctx.run.id, result.event_type, result.event_payload
+            )
 
         await agent_state.log_run_step(
             self.db,
@@ -514,7 +527,11 @@ class TaskEngine:
             self.db,
             ctx.run.id,
             "task_failed",
-            {"task_id": str(ctx.task.id), "error_code": error.code, "failure_reason": error.message},
+            {
+                "task_id": str(ctx.task.id),
+                "error_code": error.code,
+                "failure_reason": error.message,
+            },
         )
 
         if ctx.task.compensation_action_id:
@@ -531,7 +548,9 @@ class TaskEngine:
             input_override=data.prompt,
         )
         usage = response.usage if hasattr(response, "usage") else response.get("usage", {})
-        cost_brl = response.cost_brl if hasattr(response, "cost_brl") else response.get("cost_brl", 0.0)
+        cost_brl = (
+            response.cost_brl if hasattr(response, "cost_brl") else response.get("cost_brl", 0.0)
+        )
         ctx.run.total_tokens += usage.get("prompt_tokens", 0) + usage.get("completion_tokens", 0)
         ctx.run.estimated_cost_brl += float(cost_brl or 0.0)
         payload = response.to_dict() if hasattr(response, "to_dict") else dict(response)
@@ -636,7 +655,9 @@ class TaskEngine:
             data.parameters,
         )
         if not required and not data.reason:
-            raise TaskExecutionError("approval_not_required", "Approval wait requested but no approval is required.")
+            raise TaskExecutionError(
+                "approval_not_required", "Approval wait requested but no approval is required."
+            )
 
         request = await create_approval_request(
             self.db,
@@ -679,9 +700,15 @@ class TaskEngine:
 
     async def _handle_workflow_signal(self, ctx: TaskExecutionContext) -> TaskExecutionResult:
         data = WorkflowSignalTaskContractV1.validate_input(ctx.task.input_data)
-        signal = await self.signals.send_signal(data.workflow_run_id, data.signal_name, data.payload)
+        signal = await self.signals.send_signal(
+            data.workflow_run_id, data.signal_name, data.payload
+        )
         return TaskExecutionResult(
-            payload={"status": "success", "signal_id": str(signal.id), "signal_name": signal.signal_name},
+            payload={
+                "status": "success",
+                "signal_id": str(signal.id),
+                "signal_name": signal.signal_name,
+            },
             event_type="task_workflow_signal_sent",
             event_payload={"task_id": str(ctx.task.id), "signal_id": str(signal.id)},
         )

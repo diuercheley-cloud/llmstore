@@ -1,0 +1,1 @@
+validators/validate_platform_architecture.py

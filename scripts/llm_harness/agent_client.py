@@ -143,6 +143,7 @@ class AgentClient:
         if hasattr(self._provider_inst, "_sanitize_log_headers"):
             return self._provider_inst._sanitize_log_headers(headers)
         from .sanitizer import Sanitizer
+
         return Sanitizer.sanitize_data(headers)
 
     def set_cache_context(self, repo_snapshot_hash: str, policy_hash: str) -> None:

@@ -1,22 +1,30 @@
-import json
 import hashlib
-from typing import List, Optional, Dict, Any
+import json
+
+from app.models.agents.immutable_audit import ImmutableAuditLog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agents.immutable_audit import ImmutableAuditLog
-from .contracts import AuditRepository, AuditEntryData
-from app.core.time import utc_now
+
+from .contracts import AuditEntryData
+
 
 class SqlAlchemyAuditRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    def _compute_record_hash(self, action: str, actor: str, payload_str: str, timestamp_str: str, previous_hash: Optional[str]) -> str:
+    def _compute_record_hash(
+        self,
+        action: str,
+        actor: str,
+        payload_str: str,
+        timestamp_str: str,
+        previous_hash: str | None,
+    ) -> str:
         prev = previous_hash or ""
         raw_data = f"{action}|{actor}|{payload_str}|{timestamp_str}|{prev}"
         return hashlib.sha256(raw_data.encode("utf-8")).hexdigest()
 
-    async def record_event(self, entry: AuditEntryData, signature: Optional[str] = None) -> str:
+    async def record_event(self, entry: AuditEntryData, signature: str | None = None) -> str:
         # 1. Fetch last entry for previous hash
         stmt = select(ImmutableAuditLog).order_by(ImmutableAuditLog.id.desc()).limit(1)
         res = await self.db.execute(stmt)
@@ -41,13 +49,13 @@ class SqlAlchemyAuditRepository:
             previous_hash=previous_hash,
             hash=record_hash,
             signature=signature or f"unsigned:{record_hash}",
-            created_at=entry.timestamp
+            created_at=entry.timestamp,
         )
         self.db.add(log)
         await self.db.flush()
         return record_hash
 
-    async def list_events(self, limit: int = 100) -> List[AuditEntryData]:
+    async def list_events(self, limit: int = 100) -> list[AuditEntryData]:
         result = await self.db.execute(
             select(ImmutableAuditLog).order_by(ImmutableAuditLog.created_at.desc()).limit(limit)
         )
@@ -59,16 +67,17 @@ class SqlAlchemyAuditRepository:
                 action=l.action,
                 actor=l.actor,
                 payload=json.loads(l.payload),
-                tenant_id=l.tenant_id
-            ) for l in logs
+                tenant_id=l.tenant_id,
+            )
+            for l in logs
         ]
 
-    async def get_event_by_id(self, event_id: str) -> Optional[AuditEntryData]:
+    async def get_event_by_id(self, event_id: str) -> AuditEntryData | None:
         try:
             eid = int(event_id)
         except ValueError:
             return None
-            
+
         result = await self.db.execute(select(ImmutableAuditLog).where(ImmutableAuditLog.id == eid))
         l = result.scalar_one_or_none()
         if not l:
@@ -79,10 +88,10 @@ class SqlAlchemyAuditRepository:
             action=l.action,
             actor=l.actor,
             payload=json.loads(l.payload),
-            tenant_id=l.tenant_id
+            tenant_id=l.tenant_id,
         )
 
-    async def get_last_hash(self) -> Optional[str]:
+    async def get_last_hash(self) -> str | None:
         stmt = select(ImmutableAuditLog).order_by(ImmutableAuditLog.id.desc()).limit(1)
         res = await self.db.execute(stmt)
         last_entry = res.scalar_one_or_none()

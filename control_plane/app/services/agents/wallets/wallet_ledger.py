@@ -1,7 +1,6 @@
 # Owner: agent-platform
 import hashlib
 import uuid
-from typing import List
 
 from app.models.agents.agent_wallet import AgentWallet, AgentWalletLedgerEntry
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,12 +12,12 @@ class WalletLedger:
         self.db = db
 
     async def record_transaction(
-        self, 
-        wallet_id: uuid.UUID, 
-        entry_type: str, 
-        amount: float, 
+        self,
+        wallet_id: uuid.UUID,
+        entry_type: str,
+        amount: float,
         description: str,
-        run_id: uuid.UUID = None
+        run_id: uuid.UUID = None,
     ) -> AgentWalletLedgerEntry:
         """
         Records an immutable ledger entry and updates the wallet balance.
@@ -48,14 +47,18 @@ class WalletLedger:
             amount=amount,
             description=description,
             run_id=run_id,
-            transaction_hash=tx_hash
+            transaction_hash=tx_hash,
         )
         self.db.add(entry)
         await self.db.commit()
         await self.db.refresh(entry)
         return entry
 
-    async def list_entries(self, wallet_id: uuid.UUID) -> List[AgentWalletLedgerEntry]:
-        stmt = select(AgentWalletLedgerEntry).where(AgentWalletLedgerEntry.wallet_id == wallet_id).order_by(AgentWalletLedgerEntry.created_at.desc())
+    async def list_entries(self, wallet_id: uuid.UUID) -> list[AgentWalletLedgerEntry]:
+        stmt = (
+            select(AgentWalletLedgerEntry)
+            .where(AgentWalletLedgerEntry.wallet_id == wallet_id)
+            .order_by(AgentWalletLedgerEntry.created_at.desc())
+        )
         res = await self.db.execute(stmt)
         return list(res.scalars().all())

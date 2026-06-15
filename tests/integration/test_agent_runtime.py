@@ -4,21 +4,18 @@ from datetime import timedelta
 import pytest
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.agents.agents import (
-    AgentRun,
-    AgentRunReceipt,
-)
 from app.services.agents import agent_runtime, agent_state
 from app.services.agents.agent_executor import AgentExecutor, MockLLMProvider
 from app.services.agents.agent_runtime import ReplayDisabledError, RuntimeDisabledError
 from app.services.agents.tool_registry import create_tool
 from httpx import AsyncClient
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio
-async def test_create_and_activate_agent(admin_client: AsyncClient, admin_token_headers, monkeypatch):
+async def test_create_and_activate_agent(
+    admin_client: AsyncClient, admin_token_headers, monkeypatch
+):
     # Enable runtime via feature flags
     monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_PLANE_ENABLED", "true")
@@ -52,20 +49,26 @@ async def test_create_and_activate_agent(admin_client: AsyncClient, admin_token_
         "description": "Updated description",
         "risk_level": "low",
     }
-    resp = await admin_client.patch(f"/admin/agents/{agent_id}", json=patch_payload, headers=admin_token_headers)
+    resp = await admin_client.patch(
+        f"/admin/agents/{agent_id}", json=patch_payload, headers=admin_token_headers
+    )
     assert resp.status_code == 200
     data = resp.json()
     assert data["description"] == "Updated description"
     assert data["risk_level"] == "low"
 
     # 3. Activate the agent
-    resp = await admin_client.post(f"/admin/agents/{agent_id}/activate", headers=admin_token_headers)
+    resp = await admin_client.post(
+        f"/admin/agents/{agent_id}/activate", headers=admin_token_headers
+    )
     assert resp.status_code == 200
     data = resp.json()
     assert data["status"] == "active"
 
     # 4. Deprecate the agent
-    resp = await admin_client.post(f"/admin/agents/{agent_id}/deprecate", headers=admin_token_headers)
+    resp = await admin_client.post(
+        f"/admin/agents/{agent_id}/deprecate", headers=admin_token_headers
+    )
     assert resp.status_code == 200
     data = resp.json()
     assert data["status"] == "deprecated"
@@ -82,15 +85,18 @@ async def test_execute_agent_mock_success(session: AsyncSession, monkeypatch):
     get_settings.cache_clear()
 
     # Register calculator tool
-    await create_tool(session, {
-        "name": "calculator",
-        "category": "retrieval",
-        "risk_level": "low",
-        "input_schema_json": {"type": "object"},
-        "output_schema_json": {"type": "object"},
-        "timeout_seconds": 30,
-        "enabled": True
-    })
+    await create_tool(
+        session,
+        {
+            "name": "calculator",
+            "category": "retrieval",
+            "risk_level": "low",
+            "input_schema_json": {"type": "object"},
+            "output_schema_json": {"type": "object"},
+            "timeout_seconds": 30,
+            "enabled": True,
+        },
+    )
 
     # Create agent definition
     agent_def = await agent_state.create_agent_definition(
@@ -106,7 +112,7 @@ async def test_execute_agent_mock_success(session: AsyncSession, monkeypatch):
             "allowed_tools": ["calculator"],
             "max_steps": 10,
             "max_runtime_seconds": 300,
-        }
+        },
     )
 
     # Pre-define LLM response sequence
@@ -118,8 +124,13 @@ async def test_execute_agent_mock_success(session: AsyncSession, monkeypatch):
 
     # Tool runner mock
     tool_calls = []
+
     async def mock_tool_runner(name, tool_input):
-        clean_input = {k: v for k, v in tool_input.items() if k not in ("db", "tenant_id", "agent_id", "run_id")}
+        clean_input = {
+            k: v
+            for k, v in tool_input.items()
+            if k not in ("db", "tenant_id", "agent_id", "run_id")
+        }
         tool_calls.append((name, clean_input))
         if name == "calculator":
             return {"result": 4}
@@ -144,7 +155,9 @@ async def test_execute_agent_mock_success(session: AsyncSession, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_execute_agent_runtime_disabled(admin_client: AsyncClient, admin_token_headers, monkeypatch, session):
+async def test_execute_agent_runtime_disabled(
+    admin_client: AsyncClient, admin_token_headers, monkeypatch, session
+):
     # Disable runtime via feature flags
     monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "false")
     get_settings.cache_clear()
@@ -155,7 +168,9 @@ async def test_execute_agent_runtime_disabled(admin_client: AsyncClient, admin_t
         "input_text": "hello",
     }
     dummy_uuid = uuid.uuid4()
-    resp = await admin_client.post(f"/agents/{dummy_uuid}/runs", json=payload, headers=admin_token_headers)
+    resp = await admin_client.post(
+        f"/agents/{dummy_uuid}/runs", json=payload, headers=admin_token_headers
+    )
     assert resp.status_code == 400
     assert "Agent runtime is disabled" in resp.json()["detail"]
 
@@ -170,24 +185,31 @@ async def test_execute_agent_runtime_disabled(admin_client: AsyncClient, admin_t
 
 
 @pytest.mark.asyncio
-async def test_execute_agent_execution_disabled_fails_without_simulation_override(session: AsyncSession, monkeypatch):
+async def test_execute_agent_execution_disabled_fails_without_simulation_override(
+    session: AsyncSession, monkeypatch
+):
     monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_PLANE_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_ENABLED", "false")  # execution disabled
-    monkeypatch.setenv("AGENT_EXECUTOR_MOCK_MODE", "false") # Must be false to trigger real execution check
+    monkeypatch.setenv(
+        "AGENT_EXECUTOR_MOCK_MODE", "false"
+    )  # Must be false to trigger real execution check
     monkeypatch.setenv("AGENT_ALLOW_MOCK_LLM_IN_PRODUCTION", "true")
     get_settings.cache_clear()
 
     # Register calculator tool
-    await create_tool(session, {
-        "name": "calculator",
-        "category": "retrieval",
-        "risk_level": "low",
-        "input_schema_json": {"type": "object"},
-        "output_schema_json": {"type": "object"},
-        "timeout_seconds": 30,
-        "enabled": True
-    })
+    await create_tool(
+        session,
+        {
+            "name": "calculator",
+            "category": "retrieval",
+            "risk_level": "low",
+            "input_schema_json": {"type": "object"},
+            "output_schema_json": {"type": "object"},
+            "timeout_seconds": 30,
+            "enabled": True,
+        },
+    )
 
     agent_def = await agent_state.create_agent_definition(
         session,
@@ -200,7 +222,7 @@ async def test_execute_agent_execution_disabled_fails_without_simulation_overrid
             "tenant_id": "tenant-abc",
             "status": "active",
             "allowed_tools": ["calculator"],
-        }
+        },
     )
 
     llm_responses = [
@@ -232,15 +254,18 @@ async def test_pause_resume_cancel_run(session: AsyncSession, monkeypatch):
     get_settings.cache_clear()
 
     # Register tool
-    await create_tool(session, {
-        "name": "calculator",
-        "category": "retrieval",
-        "risk_level": "low",
-        "input_schema_json": {"type": "object"},
-        "output_schema_json": {"type": "object"},
-        "timeout_seconds": 30,
-        "enabled": True
-    })
+    await create_tool(
+        session,
+        {
+            "name": "calculator",
+            "category": "retrieval",
+            "risk_level": "low",
+            "input_schema_json": {"type": "object"},
+            "output_schema_json": {"type": "object"},
+            "timeout_seconds": 30,
+            "enabled": True,
+        },
+    )
 
     agent_def = await agent_state.create_agent_definition(
         session,
@@ -253,7 +278,7 @@ async def test_pause_resume_cancel_run(session: AsyncSession, monkeypatch):
             "tenant_id": "tenant-abc",
             "status": "active",
             "allowed_tools": ["calculator"],
-        }
+        },
     )
 
     llm_responses = [
@@ -298,7 +323,7 @@ async def test_pause_resume_cancel_run(session: AsyncSession, monkeypatch):
         {"type": "tool_call", "tool_name": "calculator", "tool_input": {"expression": "2+2"}},
     ]
     mock_llm_cancel = MockLLMProvider(responses=llm_responses_cancel)
-    
+
     async def mock_tool_runner_cancel(name, tool_input):
         r_id = tool_input.get("run_id")
         await agent_runtime.cancel_run(session, r_id)
@@ -335,7 +360,7 @@ async def test_replay_run(session: AsyncSession, monkeypatch):
             "owner": "tester",
             "tenant_id": "tenant-abc",
             "status": "active",
-        }
+        },
     )
 
     llm_responses = [
@@ -374,15 +399,18 @@ async def test_max_steps_limit(session: AsyncSession, monkeypatch):
     get_settings.cache_clear()
 
     # Register tool
-    await create_tool(session, {
-        "name": "calculator",
-        "category": "retrieval",
-        "risk_level": "low",
-        "input_schema_json": {"type": "object"},
-        "output_schema_json": {"type": "object"},
-        "timeout_seconds": 30,
-        "enabled": True
-    })
+    await create_tool(
+        session,
+        {
+            "name": "calculator",
+            "category": "retrieval",
+            "risk_level": "low",
+            "input_schema_json": {"type": "object"},
+            "output_schema_json": {"type": "object"},
+            "timeout_seconds": 30,
+            "enabled": True,
+        },
+    )
 
     agent_def = await agent_state.create_agent_definition(
         session,
@@ -395,8 +423,8 @@ async def test_max_steps_limit(session: AsyncSession, monkeypatch):
             "tenant_id": "tenant-abc",
             "status": "active",
             "max_steps": 2,
-            "allowed_tools": ["calculator"]
-        }
+            "allowed_tools": ["calculator"],
+        },
     )
 
     llm_responses = [
@@ -427,15 +455,18 @@ async def test_max_runtime_seconds_limit(session: AsyncSession, monkeypatch):
     get_settings.cache_clear()
 
     # Register tool
-    await create_tool(session, {
-        "name": "calculator",
-        "category": "retrieval",
-        "risk_level": "low",
-        "input_schema_json": {"type": "object"},
-        "output_schema_json": {"type": "object"},
-        "timeout_seconds": 30,
-        "enabled": True
-    })
+    await create_tool(
+        session,
+        {
+            "name": "calculator",
+            "category": "retrieval",
+            "risk_level": "low",
+            "input_schema_json": {"type": "object"},
+            "output_schema_json": {"type": "object"},
+            "timeout_seconds": 30,
+            "enabled": True,
+        },
+    )
 
     agent_def = await agent_state.create_agent_definition(
         session,
@@ -448,8 +479,8 @@ async def test_max_runtime_seconds_limit(session: AsyncSession, monkeypatch):
             "tenant_id": "tenant-abc",
             "status": "active",
             "max_runtime_seconds": 1,
-            "allowed_tools": ["calculator"]
-        }
+            "allowed_tools": ["calculator"],
+        },
     )
 
     run = await agent_state.create_agent_run(
@@ -458,7 +489,7 @@ async def test_max_runtime_seconds_limit(session: AsyncSession, monkeypatch):
         tenant_id="tenant-abc",
         input_text="timeout test",
     )
-    
+
     run.started_at = utc_now() - timedelta(seconds=5)
     await session.commit()
 
@@ -489,7 +520,7 @@ async def test_prompt_logs_masking(session: AsyncSession, monkeypatch):
             "owner": "tester",
             "tenant_id": "tenant-abc",
             "status": "active",
-        }
+        },
     )
 
     llm_responses = [
@@ -511,10 +542,10 @@ async def test_prompt_logs_masking(session: AsyncSession, monkeypatch):
     steps = await agent_state.get_run_steps(session, run.id)
     assert len(steps) == 1
     step = steps[0]
-    
+
     expected_input_hash = agent_state.compute_sha256({"input_hash": run.input_hash})
     assert step.input_hash == expected_input_hash
-    
+
     # Make sure they don't contain the raw prompt texts anywhere in step columns
     for col in ["input_hash", "output_hash", "error"]:
         val = getattr(step, col, None)

@@ -41,7 +41,9 @@ def upgrade() -> None:
     )
     op.create_index(op.f("ix_admin_users_username"), "admin_users", ["username"], unique=True)
     op.create_index(op.f("ix_admin_users_email"), "admin_users", ["email"], unique=True)
-    op.create_index(op.f("ix_admin_users_token_prefix"), "admin_users", ["token_prefix"], unique=False)
+    op.create_index(
+        op.f("ix_admin_users_token_prefix"), "admin_users", ["token_prefix"], unique=False
+    )
     op.create_index(op.f("ix_admin_users_is_active"), "admin_users", ["is_active"], unique=False)
 
     op.create_table(
@@ -78,8 +80,12 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("user_id", "role_id", name="uq_admin_user_roles_user_role"),
     )
-    op.create_index(op.f("ix_admin_user_roles_user_id"), "admin_user_roles", ["user_id"], unique=False)
-    op.create_index(op.f("ix_admin_user_roles_role_id"), "admin_user_roles", ["role_id"], unique=False)
+    op.create_index(
+        op.f("ix_admin_user_roles_user_id"), "admin_user_roles", ["user_id"], unique=False
+    )
+    op.create_index(
+        op.f("ix_admin_user_roles_role_id"), "admin_user_roles", ["role_id"], unique=False
+    )
 
     op.create_table(
         "admin_role_permissions",
@@ -90,10 +96,22 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["permission_id"], ["admin_permissions.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["role_id"], ["admin_roles.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("role_id", "permission_id", name="uq_admin_role_permissions_role_permission"),
+        sa.UniqueConstraint(
+            "role_id", "permission_id", name="uq_admin_role_permissions_role_permission"
+        ),
     )
-    op.create_index(op.f("ix_admin_role_permissions_role_id"), "admin_role_permissions", ["role_id"], unique=False)
-    op.create_index(op.f("ix_admin_role_permissions_permission_id"), "admin_role_permissions", ["permission_id"], unique=False)
+    op.create_index(
+        op.f("ix_admin_role_permissions_role_id"),
+        "admin_role_permissions",
+        ["role_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_admin_role_permissions_permission_id"),
+        "admin_role_permissions",
+        ["permission_id"],
+        unique=False,
+    )
 
     op.create_table(
         "admin_audit_events",
@@ -113,10 +131,21 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["admin_user_id"], ["admin_users.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_admin_audit_events_admin_user_id"), "admin_audit_events", ["admin_user_id"], unique=False)
-    op.create_index(op.f("ix_admin_audit_events_event_type"), "admin_audit_events", ["event_type"], unique=False)
-    op.create_index(op.f("ix_admin_audit_events_status"), "admin_audit_events", ["status"], unique=False)
-    op.create_index(op.f("ix_admin_audit_events_created_at"), "admin_audit_events", ["created_at"], unique=False)
+    op.create_index(
+        op.f("ix_admin_audit_events_admin_user_id"),
+        "admin_audit_events",
+        ["admin_user_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_admin_audit_events_event_type"), "admin_audit_events", ["event_type"], unique=False
+    )
+    op.create_index(
+        op.f("ix_admin_audit_events_status"), "admin_audit_events", ["status"], unique=False
+    )
+    op.create_index(
+        op.f("ix_admin_audit_events_created_at"), "admin_audit_events", ["created_at"], unique=False
+    )
 
 
 def downgrade() -> None:
@@ -126,7 +155,9 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_admin_audit_events_admin_user_id"), table_name="admin_audit_events")
     op.drop_table("admin_audit_events")
 
-    op.drop_index(op.f("ix_admin_role_permissions_permission_id"), table_name="admin_role_permissions")
+    op.drop_index(
+        op.f("ix_admin_role_permissions_permission_id"), table_name="admin_role_permissions"
+    )
     op.drop_index(op.f("ix_admin_role_permissions_role_id"), table_name="admin_role_permissions")
     op.drop_table("admin_role_permissions")
 

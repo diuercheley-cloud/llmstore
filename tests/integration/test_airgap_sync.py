@@ -25,7 +25,9 @@ async def test_create_export_verify_import_airgap_package(session: AsyncSession,
         target_cluster_id="cluster-b",
         package_version="37.0",
         classification="sovereign_restricted",
-        chain_of_custody_json={"events": [{"actor": "ops", "action": "sealed", "timestamp": "2026-05-15T00:00:00Z"}]},
+        chain_of_custody_json={
+            "events": [{"actor": "ops", "action": "sealed", "timestamp": "2026-05-15T00:00:00Z"}]
+        },
     )
     exported = await export_airgap_package(
         session,
@@ -40,7 +42,14 @@ async def test_create_export_verify_import_airgap_package(session: AsyncSession,
 
     manifest = exported["files"]["manifest.json"]
     expected_hash = hashlib.sha256(
-        __import__("json").dumps({k: v for k, v in manifest.items() if k != "manifest_hash"}, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+        __import__("json")
+        .dumps(
+            {k: v for k, v in manifest.items() if k != "manifest_hash"},
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=True,
+        )
+        .encode("utf-8")
     ).hexdigest()
     assert manifest["manifest_hash"] == expected_hash
 
@@ -61,7 +70,11 @@ async def test_import_invalid_signature_rejected(session: AsyncSession, settings
         payload={"entry": "ok"},
         source_cluster_id="cluster-a",
         package_version="37.0",
-        chain_of_custody_json={"events": [{"actor": "custodian", "action": "handoff", "timestamp": "2026-05-15T00:00:00Z"}]},
+        chain_of_custody_json={
+            "events": [
+                {"actor": "custodian", "action": "handoff", "timestamp": "2026-05-15T00:00:00Z"}
+            ]
+        },
     )
     exported = await export_airgap_package(session, package.id, payload={"entry": "ok"})
     exported["files"]["signature.txt"] = "tampered"
@@ -107,7 +120,9 @@ async def test_sovereign_restricted_blocks_online_federation_and_allows_encrypte
     session.add(bundle)
     await session.flush()
 
-    with pytest.raises(ValueError, match="Sovereign restricted bundles cannot be exported via online federation"):
+    with pytest.raises(
+        ValueError, match="Sovereign restricted bundles cannot be exported via online federation"
+    ):
         await service.export_policy_bundle_for_peer(session, bundle.id, "peer-a")
 
     package = await create_airgap_package(
@@ -118,7 +133,9 @@ async def test_sovereign_restricted_blocks_online_federation_and_allows_encrypte
         target_cluster_id="cluster-b",
         package_version="37.0",
         classification="sovereign_restricted",
-        chain_of_custody_json={"events": [{"actor": "ops", "action": "sealed", "timestamp": "2026-05-15T00:00:00Z"}]},
+        chain_of_custody_json={
+            "events": [{"actor": "ops", "action": "sealed", "timestamp": "2026-05-15T00:00:00Z"}]
+        },
     )
     exported = await export_airgap_package(
         session,

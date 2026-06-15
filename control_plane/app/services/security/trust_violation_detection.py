@@ -6,7 +6,10 @@ from typing import Any
 
 from app.models.commercial.commercial_operations_center import CommercialCryptographicTrustSnapshot
 from app.models.commercial.commercial_trust_violation import CommercialTrustViolation
-from app.models.commercial.commercial_workflows import CommercialWorkflowExecution, CommercialWorkflowStage
+from app.models.commercial.commercial_workflows import (
+    CommercialWorkflowExecution,
+    CommercialWorkflowStage,
+)
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,7 +20,9 @@ from .trust_graph import TrustGraphService
 
 def _sha256(payload: Any) -> str:
     if not isinstance(payload, str):
-        payload = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+        payload = json.dumps(
+            payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+        )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
@@ -32,7 +37,9 @@ class TrustViolationDetectionService:
         except SQLAlchemyError:
             return []
 
-    async def _scan_graph(self, db: AsyncSession, *, tenant_id: str | None = None) -> list[dict[str, Any]]:
+    async def _scan_graph(
+        self, db: AsyncSession, *, tenant_id: str | None = None
+    ) -> list[dict[str, Any]]:
         issues = await self.trust_graph_service.verify_graph_integrity(db, tenant_id=tenant_id)
         graph = await self.trust_graph_service.get_full_graph(db, tenant_id=tenant_id)
         node_map = {node["id"]: node for node in graph["nodes"]}
@@ -42,8 +49,12 @@ class TrustViolationDetectionService:
             target = node_map.get(edge["target"])
             if source is None or target is None:
                 continue
-            source_tenant = (source["metadata"] or {}).get("tenant_id") or (source["metadata"] or {}).get("client_id")
-            target_tenant = (target["metadata"] or {}).get("tenant_id") or (target["metadata"] or {}).get("client_id")
+            source_tenant = (source["metadata"] or {}).get("tenant_id") or (
+                source["metadata"] or {}
+            ).get("client_id")
+            target_tenant = (target["metadata"] or {}).get("tenant_id") or (
+                target["metadata"] or {}
+            ).get("client_id")
             if source_tenant and target_tenant and str(source_tenant) != str(target_tenant):
                 if edge["type"] not in {"federation_mapping", "sovereign_isolation"}:
                     issues.append(
@@ -58,13 +69,18 @@ class TrustViolationDetectionService:
 
         workflow_rows = await self._safe_scalars(
             db,
-            select(CommercialWorkflowExecution).order_by(CommercialWorkflowExecution.started_at.asc()),
+            select(CommercialWorkflowExecution).order_by(
+                CommercialWorkflowExecution.started_at.asc()
+            ),
         )
         execution_ids = {str(row.id) for row in workflow_rows}
         for row in workflow_rows:
             if tenant_id is not None and row.tenant_id not in {None, tenant_id}:
                 continue
-            if row.replay_of_execution_id is not None and str(row.replay_of_execution_id) not in execution_ids:
+            if (
+                row.replay_of_execution_id is not None
+                and str(row.replay_of_execution_id) not in execution_ids
+            ):
                 issues.append(
                     {
                         "type": "replay_lineage_break",
@@ -119,7 +135,9 @@ class TrustViolationDetectionService:
                         "actual": snapshot.immutable_hash,
                     }
                 )
-            linked_hash = (snapshot.snapshot_data or {}).get("snapshot", {}).get("previous_snapshot_hash")
+            linked_hash = (
+                (snapshot.snapshot_data or {}).get("snapshot", {}).get("previous_snapshot_hash")
+            )
             if previous_hash is not None and linked_hash != previous_hash:
                 issues.append(
                     {
@@ -146,7 +164,11 @@ class TrustViolationDetectionService:
         for issue in issues:
             violation_type = issue["type"]
             severity = "critical"
-            if violation_type in {"tenant_isolation_violation", "snapshot_chain_break", "replay_lineage_break"}:
+            if violation_type in {
+                "tenant_isolation_violation",
+                "snapshot_chain_break",
+                "replay_lineage_break",
+            }:
                 severity = "high"
             elif violation_type in {"dependency_integrity_failure", "edge_reference_missing"}:
                 severity = "medium"

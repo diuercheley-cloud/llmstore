@@ -71,7 +71,9 @@ async def test_create_topup_mock(topup_app):
     async with session_local() as session:
         _client_obj, api_key = await _create_client_with_key(session, "topup-mock")
 
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         resp = await client.post(
             "/portal/wallet/topups",
             headers={"Authorization": f"Bearer {api_key}"},
@@ -94,7 +96,9 @@ async def test_confirm_mock_webhook_credits_wallet_once(topup_app):
     async with session_local() as session:
         _client_obj, api_key = await _create_client_with_key(session, "topup-credit")
 
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         topup = await client.post(
             "/portal/wallet/topups",
             headers={"Authorization": f"Bearer {api_key}"},
@@ -131,7 +135,9 @@ async def test_webhook_invalid_signature_rejected(topup_app):
     async with session_local() as session:
         _client_obj, api_key = await _create_client_with_key(session, "topup-signature")
 
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         topup = await client.post(
             "/portal/wallet/topups",
             headers={"Authorization": f"Bearer {api_key}"},
@@ -143,7 +149,9 @@ async def test_webhook_invalid_signature_rejected(topup_app):
             "amount_brl": "25.00",
             "status": "paid",
         }
-        resp = await client.post("/payments/webhooks/mock", json=body, headers={"X-Payment-Signature": "invalid"})
+        resp = await client.post(
+            "/payments/webhooks/mock", json=body, headers={"X-Payment-Signature": "invalid"}
+        )
 
     assert resp.status_code == 401
     assert resp.json()["detail"]["code"] == "invalid_payment_signature"
@@ -157,7 +165,9 @@ async def test_webhook_valid_signature_is_accepted(topup_app):
     async with session_local() as session:
         _client_obj, api_key = await _create_client_with_key(session, "topup-valid-signature")
 
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         topup = await client.post(
             "/portal/wallet/topups",
             headers={"Authorization": f"Bearer {api_key}"},
@@ -190,7 +200,9 @@ async def test_client_cannot_see_other_client_topups(topup_app):
         _client_a, key_a = await _create_client_with_key(session, "topup-client-a")
         _client_b, key_b = await _create_client_with_key(session, "topup-client-b")
 
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         own = await client.post(
             "/portal/wallet/topups",
             headers={"Authorization": f"Bearer {key_a}"},
@@ -201,7 +213,9 @@ async def test_client_cannot_see_other_client_topups(topup_app):
             headers={"Authorization": f"Bearer {key_b}"},
             json={"amount_brl": "22.00", "idempotency_key": "topup-client-b-1"},
         )
-        listed = await client.get("/portal/wallet/topups", headers={"Authorization": f"Bearer {key_a}"})
+        listed = await client.get(
+            "/portal/wallet/topups", headers={"Authorization": f"Bearer {key_a}"}
+        )
 
     assert own.status_code == 201
     assert other.status_code == 201
@@ -219,7 +233,9 @@ async def test_disabled_payment_provider_returns_clear_error(topup_app):
     async with session_local() as session:
         _client_obj, api_key = await _create_client_with_key(session, "topup-disabled")
 
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         resp = await client.post(
             "/portal/wallet/topups",
             headers={"Authorization": f"Bearer {api_key}"},
@@ -227,7 +243,12 @@ async def test_disabled_payment_provider_returns_clear_error(topup_app):
         )
         webhook = await client.post(
             "/payments/webhooks/mock",
-            json={"external_id": "mock_topup_disabled", "idempotency_key": "disabled-1", "amount_brl": "15.00", "status": "paid"},
+            json={
+                "external_id": "mock_topup_disabled",
+                "idempotency_key": "disabled-1",
+                "amount_brl": "15.00",
+                "status": "paid",
+            },
         )
 
     assert resp.status_code == 503

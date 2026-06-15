@@ -1,11 +1,11 @@
-import os
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
 
 from scripts.llm_harness.completions import (
     CompletionRequest,
-    split_file_at_cursor,
     get_completion_suggestions,
+    split_file_at_cursor,
 )
 
 
@@ -38,9 +38,7 @@ async def test_completions_fake_provider(tmp_path):
 
     # Use fake provider
     suggestions = await get_completion_suggestions(
-        request=request,
-        workspace_root=str(ws_path),
-        provider_name="fake"
+        request=request, workspace_root=str(ws_path), provider_name="fake"
     )
 
     assert len(suggestions) == 1
@@ -68,9 +66,7 @@ async def test_completions_file_outside_repository(tmp_path):
 
     with pytest.raises(PermissionError, match="outside the workspace repository"):
         await get_completion_suggestions(
-            request=request,
-            workspace_root=str(ws_path),
-            provider_name="fake"
+            request=request, workspace_root=str(ws_path), provider_name="fake"
         )
 
 
@@ -94,21 +90,13 @@ async def test_completions_prompt_and_secrets_redaction(mock_create_agent, tmp_p
     mock_agent = MagicMock()
     mock_agent.chat_completion = AsyncMock(
         return_value={
-            "choices": [
-                {
-                    "message": {
-                        "content": '{"text": "return True", "confidence": 0.9}'
-                    }
-                }
-            ]
+            "choices": [{"message": {"content": '{"text": "return True", "confidence": 0.9}'}}]
         }
     )
     mock_create_agent.return_value = mock_agent
 
     suggestions = await get_completion_suggestions(
-        request=request,
-        workspace_root=str(ws_path),
-        provider_name="openai-compatible"
+        request=request, workspace_root=str(ws_path), provider_name="openai-compatible"
     )
 
     assert len(suggestions) == 1
@@ -119,7 +107,7 @@ async def test_completions_prompt_and_secrets_redaction(mock_create_agent, tmp_p
     mock_create_agent.assert_called_once()
     args, kwargs = mock_agent.chat_completion.call_args
     prompt_content = args[0][0]["content"]
-    
+
     assert "PREFIX" in prompt_content
     assert "SUFFIX" in prompt_content
     assert "AKIA1234567890123456" not in prompt_content
@@ -189,9 +177,7 @@ async def test_completions_retry_on_empty_or_truncated_response(
         return_value={
             "choices": [
                 {
-                    "message": {
-                        "content": '{"text":"42","confidence":0.9}'
-                    },
+                    "message": {"content": '{"text":"42","confidence":0.9}'},
                     "finish_reason": "stop",
                 }
             ]

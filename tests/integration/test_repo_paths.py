@@ -25,7 +25,7 @@ def _is_dynamic_source(line):
     if m and m.group(1) not in _RESOLVABLE_VARS:
         return True
     if re.search(r'source\s+["\']?\$\{', line):
-        after = re.split(r'\s+', line, maxsplit=1)[1].strip('"').strip("'")
+        after = re.split(r"\s+", line, maxsplit=1)[1].strip('"').strip("'")
         if after.startswith("${") and after.endswith("}"):
             var = after[2:-1]
             if var not in _RESOLVABLE_VARS:
@@ -62,17 +62,20 @@ def test_all_source_targets_exist():
             if not m:
                 continue
             raw = m.group(1)
+            resolved = None
             if raw.startswith("/"):
                 resolved = Path(raw)
             elif "${ROOT_DIR}" in raw:
                 resolved = ROOT_DIR / raw.replace("${ROOT_DIR}/", "")
             elif "${SCRIPT_DIR}" in raw:
-                resolved = ROOT_DIR / "scripts" / raw.replace("${SCRIPT_DIR}/", "")
+                tail = raw.replace("${SCRIPT_DIR}/", "")
+                resolved = (sh.resolve().parent / tail).resolve()
             elif "${PROJECT_ROOT}" in raw:
                 resolved = ROOT_DIR / raw.replace("${PROJECT_ROOT}/", "")
             else:
                 resolved = sh.parent / raw
-            resolved = resolved.resolve()
+            if resolved is not None:
+                resolved = resolved.resolve()
             # Skip runtime-generated paths (virtualenv, .local, etc.)
             if not resolved.exists():
                 if ".venv" in str(resolved) or ".local" in str(resolved):
@@ -82,10 +85,7 @@ def test_all_source_targets_exist():
 
 def test_all_bash_n_pass():
     for sh in _shell_scripts():
-        result = subprocess.run(
-            ["bash", "-n", str(sh)],
-            capture_output=True, text=True
-        )
+        result = subprocess.run(["bash", "-n", str(sh)], capture_output=True, text=True)
         assert result.returncode == 0, f"bash -n failed on {sh}:\n{result.stderr}"
 
 
@@ -94,7 +94,6 @@ def test_py_compile_scripts():
         if py.name == "__init__.py":
             continue
         result = subprocess.run(
-            ["python3", "-m", "py_compile", str(py)],
-            capture_output=True, text=True
+            ["python3", "-m", "py_compile", str(py)], capture_output=True, text=True
         )
         assert result.returncode == 0, f"py_compile failed on {py}:\n{result.stderr}"

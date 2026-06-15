@@ -5,7 +5,6 @@ import uuid
 from typing import Any
 
 from app.core.config import get_settings
-from app.services.runtime_dependencies import get_db_session
 from app.models.commercial.commercial_inference_reproducibility import (
     CommercialInferenceReplayEvent,
     CommercialInferenceReproducibilityRecord,
@@ -14,6 +13,7 @@ from app.models.commercial.commercial_inference_reproducibility import (
 from app.services.auth import require_admin
 from app.services.inference.replay_verification import verify_replay
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import desc, func, select
@@ -75,7 +75,10 @@ def _serialize_record(item: CommercialInferenceReproducibilityRecord) -> dict[st
                 ("REPLAYABLE", item.replay_supported),
                 ("DRIFT", item.replay_status == "drift_detected"),
                 ("EXACT_MATCH", item.replay_similarity == 1.0 and item.replay_status == "replayed"),
-                ("PARTIAL_MATCH", item.replay_status == "replayed" and (item.replay_similarity or 0) < 1.0),
+                (
+                    "PARTIAL_MATCH",
+                    item.replay_status == "replayed" and (item.replay_similarity or 0) < 1.0,
+                ),
                 ("FAILED", item.replay_status == "failed"),
             ]
             if active
@@ -125,7 +128,11 @@ async def list_reproducibility_records(
     replay_status: str | None = None,
     db: AsyncSession = Depends(get_db_session),
 ):
-    stmt = select(CommercialInferenceReproducibilityRecord).order_by(desc(CommercialInferenceReproducibilityRecord.created_at)).limit(limit)
+    stmt = (
+        select(CommercialInferenceReproducibilityRecord)
+        .order_by(desc(CommercialInferenceReproducibilityRecord.created_at))
+        .limit(limit)
+    )
     if client_id:
         stmt = stmt.where(CommercialInferenceReproducibilityRecord.client_id == client_id)
     if replay_status:
@@ -136,7 +143,9 @@ async def list_reproducibility_records(
 
 @router.get("/admin/inference/reproducibility/status")
 async def reproducibility_status(db: AsyncSession = Depends(get_db_session)):
-    total = (await db.execute(select(func.count(CommercialInferenceReproducibilityRecord.id)))).scalar() or 0
+    total = (
+        await db.execute(select(func.count(CommercialInferenceReproducibilityRecord.id)))
+    ).scalar() or 0
     replayable = (
         await db.execute(
             select(func.count(CommercialInferenceReproducibilityRecord.id)).where(
@@ -172,13 +181,23 @@ async def reproducibility_status(db: AsyncSession = Depends(get_db_session)):
             )
         )
     ).scalar() or 0
-    snapshots = (await db.execute(select(func.count(CommercialInferenceRuntimeSnapshot.id)))).scalar() or 0
-    total_events = successes + partials + failed + (
-        (await db.execute(
-            select(func.count(CommercialInferenceReplayEvent.id)).where(
-                CommercialInferenceReplayEvent.replay_result == "drift"
-            )
-        )).scalar() or 0
+    snapshots = (
+        await db.execute(select(func.count(CommercialInferenceRuntimeSnapshot.id)))
+    ).scalar() or 0
+    total_events = (
+        successes
+        + partials
+        + failed
+        + (
+            (
+                await db.execute(
+                    select(func.count(CommercialInferenceReplayEvent.id)).where(
+                        CommercialInferenceReplayEvent.replay_result == "drift"
+                    )
+                )
+            ).scalar()
+            or 0
+        )
     )
     return {
         "enabled": get_settings().commercial_reproducibility_enabled,
@@ -193,7 +212,9 @@ async def reproducibility_status(db: AsyncSession = Depends(get_db_session)):
         "rates": {
             "replay_success_rate": round((successes / total_events) if total_events else 0.0, 4),
             "reproducibility_coverage": round((replayable / total) if total else 0.0, 4),
-            "deterministic_replay_support_percent": round(((replayable / total) * 100.0) if total else 0.0, 2),
+            "deterministic_replay_support_percent": round(
+                ((replayable / total) * 100.0) if total else 0.0, 2
+            ),
         },
         "badges": [
             "REPLAYABLE",
@@ -208,7 +229,9 @@ async def reproducibility_status(db: AsyncSession = Depends(get_db_session)):
 
 
 @router.get("/admin/inference/reproducibility/{record_id}")
-async def get_reproducibility_record(record_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
+async def get_reproducibility_record(
+    record_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)
+):
     item = await db.get(CommercialInferenceReproducibilityRecord, record_id)
     if item is None:
         raise HTTPException(status_code=404, detail="reproducibility record not found")
@@ -224,7 +247,9 @@ async def replay_record(
     item = await db.get(CommercialInferenceReproducibilityRecord, record_id)
     if item is None:
         raise HTTPException(status_code=404, detail="reproducibility record not found")
-    replay_type = (payload.replay_type if payload else None) or get_settings().commercial_replay_default_mode
+    replay_type = (
+        payload.replay_type if payload else None
+    ) or get_settings().commercial_replay_default_mode
     if replay_type == "cross_backend" and not get_settings().commercial_replay_allow_cross_backend:
         raise HTTPException(status_code=403, detail="cross-backend replay is disabled")
     result = await verify_replay(db, record=item, replay_type=replay_type)
@@ -238,12 +263,16 @@ async def list_replay_events(
     db: AsyncSession = Depends(get_db_session),
 ):
     rows = (
-        await db.execute(
-            select(CommercialInferenceReplayEvent)
-            .order_by(desc(CommercialInferenceReplayEvent.created_at))
-            .limit(limit)
+        (
+            await db.execute(
+                select(CommercialInferenceReplayEvent)
+                .order_by(desc(CommercialInferenceReplayEvent.created_at))
+                .limit(limit)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {"items": [_serialize_event(item) for item in rows]}
 
 
@@ -253,11 +282,14 @@ async def list_runtime_snapshots(
     db: AsyncSession = Depends(get_db_session),
 ):
     rows = (
-        await db.execute(
-            select(CommercialInferenceRuntimeSnapshot)
-            .order_by(desc(CommercialInferenceRuntimeSnapshot.created_at))
-            .limit(limit)
+        (
+            await db.execute(
+                select(CommercialInferenceRuntimeSnapshot)
+                .order_by(desc(CommercialInferenceRuntimeSnapshot.created_at))
+                .limit(limit)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {"items": [_serialize_snapshot(item) for item in rows]}
-

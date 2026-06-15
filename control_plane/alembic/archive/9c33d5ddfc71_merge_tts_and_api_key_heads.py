@@ -5,10 +5,8 @@ Revises: 9eb5fc4a28bd, 20260509_0019
 Create Date: 2026-05-09 14:44:34.967577
 """
 
-
-
-revision = '9c33d5ddfc71'
-down_revision = ('9eb5fc4a28bd', '20260509_0019')
+revision = "9c33d5ddfc71"
+down_revision = ("9eb5fc4a28bd", "20260509_0019")
 branch_labels = None
 depends_on = None
 
@@ -19,4 +17,3 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     pass
-

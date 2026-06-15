@@ -1,7 +1,6 @@
 # Owner: agent-platform
 import random
 import uuid
-from typing import Optional
 
 from app.core.config import get_settings
 from app.models.agents.agent_canary import AgentCanaryAssignment
@@ -14,14 +13,16 @@ class CanaryRouter:
         self.db = db
         self.settings = get_settings()
 
-    async def get_assignment(self, base_agent_id: uuid.UUID, tenant_id: str) -> Optional[AgentCanaryAssignment]:
+    async def get_assignment(
+        self, base_agent_id: uuid.UUID, tenant_id: str
+    ) -> AgentCanaryAssignment | None:
         """
         Retrieves an active canary assignment for the given agent and tenant.
         """
         stmt = select(AgentCanaryAssignment).where(
             AgentCanaryAssignment.base_agent_id == base_agent_id,
             AgentCanaryAssignment.tenant_id == tenant_id,
-            AgentCanaryAssignment.status == "active"
+            AgentCanaryAssignment.status == "active",
         )
         res = await self.db.execute(stmt)
         return res.scalar_one_or_none()
@@ -32,8 +33,8 @@ class CanaryRouter:
         """
         if not self.settings.agent_canary_agents_enabled:
             return False
-            
+
         if assignment.is_shadow:
-            return True # Shadow runs usually run for 100% of sampled traffic
-            
+            return True  # Shadow runs usually run for 100% of sampled traffic
+
         return random.random() * 100 < assignment.traffic_percentage

@@ -1,13 +1,12 @@
 import hashlib
 import json
 import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
-from app.models.core.deterministic_execution import ExecutionRun, ExecutionStep, ToolCallRecord
 from app.core.time import utc_now
-from sqlalchemy.ext.asyncio import AsyncSession
+from app.models.core.deterministic_execution import ExecutionRun, ExecutionStep, ToolCallRecord
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -17,13 +16,13 @@ class DeterministicExecutionService:
         self.session = session
 
     async def start_run(
-        self, 
-        agent_id: str, 
-        tenant_id: str, 
-        seed: Optional[int] = None,
+        self,
+        agent_id: str,
+        tenant_id: str,
+        seed: int | None = None,
         temperature: float = 0.0,
         top_p: float = 1.0,
-        workflow_id: Optional[str] = None
+        workflow_id: str | None = None,
     ) -> ExecutionRun:
         run = ExecutionRun(
             agent_id=agent_id,
@@ -32,7 +31,7 @@ class DeterministicExecutionService:
             seed=seed,
             temperature=temperature,
             top_p=top_p,
-            status="started"
+            status="started",
         )
         self.session.add(run)
         await self.session.flush()
@@ -44,15 +43,15 @@ class DeterministicExecutionService:
         step_number: int,
         model_name: str,
         provider: str,
-        prompt_template: Optional[str] = None,
-        prompt_rendered: Optional[str] = None,
-        response_text: Optional[str] = None,
-        policy_decisions: Optional[Dict[str, Any]] = None,
-        routing_decisions: Optional[Dict[str, Any]] = None
+        prompt_template: str | None = None,
+        prompt_rendered: str | None = None,
+        response_text: str | None = None,
+        policy_decisions: dict[str, Any] | None = None,
+        routing_decisions: dict[str, Any] | None = None,
     ) -> ExecutionStep:
         prompt_hash = self._compute_hash(prompt_rendered) if prompt_rendered else None
         response_hash = self._compute_hash(response_text) if response_text else None
-        
+
         step = ExecutionStep(
             run_id=run_id,
             step_number=step_number,
@@ -64,7 +63,7 @@ class DeterministicExecutionService:
             response_text=response_text,
             response_hash=response_hash,
             policy_decisions=policy_decisions,
-            routing_decisions=routing_decisions
+            routing_decisions=routing_decisions,
         )
         self.session.add(step)
         await self.session.flush()
@@ -74,26 +73,26 @@ class DeterministicExecutionService:
         self,
         step_id: str,
         tool_name: str,
-        tool_input: Dict[str, Any],
-        tool_output: Optional[Dict[str, Any]] = None,
-        is_redacted: bool = False
+        tool_input: dict[str, Any],
+        tool_output: dict[str, Any] | None = None,
+        is_redacted: bool = False,
     ) -> ToolCallRecord:
         record = ToolCallRecord(
             step_id=step_id,
             tool_name=tool_name,
             tool_input=tool_input,
             tool_output=tool_output,
-            is_redacted=is_redacted
+            is_redacted=is_redacted,
         )
         self.session.add(record)
         await self.session.flush()
         return record
 
-    async def generate_manifest(self, run_id: str) -> Dict[str, Any]:
+    async def generate_manifest(self, run_id: str) -> dict[str, Any]:
         stmt = select(ExecutionRun).where(ExecutionRun.id == run_id)
         result = await self.session.execute(stmt)
         run = result.scalar_one_or_none()
-        
+
         if not run:
             return {}
 
@@ -102,12 +101,8 @@ class DeterministicExecutionService:
             "run_id": str(run.id),
             "agent_id": str(run.agent_id),
             "tenant_id": run.tenant_id,
-            "config": {
-                "seed": run.seed,
-                "temperature": run.temperature,
-                "top_p": run.top_p
-            },
-            "steps": []
+            "config": {"seed": run.seed, "temperature": run.temperature, "top_p": run.top_p},
+            "steps": [],
         }
 
         # Load steps and tool calls
@@ -119,30 +114,32 @@ class DeterministicExecutionService:
                 "provider": step.provider,
                 "prompt_hash": step.prompt_hash,
                 "response_hash": step.response_hash,
-                "tool_calls": []
+                "tool_calls": [],
             }
             for tc in step.tool_calls:
-                step_data["tool_calls"].append({
-                    "tool": tc.tool_name,
-                    "input_hash": self._compute_hash(json.dumps(tc.tool_input)),
-                    "output_redacted": tc.is_redacted
-                })
+                step_data["tool_calls"].append(
+                    {
+                        "tool": tc.tool_name,
+                        "input_hash": self._compute_hash(json.dumps(tc.tool_input)),
+                        "output_redacted": tc.is_redacted,
+                    }
+                )
             manifest["steps"].append(step_data)
 
         manifest_json = json.dumps(manifest, sort_keys=True)
         manifest["manifest_hash"] = hashlib.sha256(manifest_json.encode()).hexdigest()
-        
+
         run.manifest_hash = manifest["manifest_hash"]
         run.completed_at = utc_now()
         run.status = "completed"
         await self.session.flush()
-        
+
         return manifest
 
     def _compute_hash(self, text: str) -> str:
         return hashlib.sha256(text.encode()).hexdigest()
 
-    async def replay_dry_run(self, run_id: str) -> Dict[str, Any]:
+    async def replay_dry_run(self, run_id: str) -> dict[str, Any]:
         """
         Simulates replay by comparing hashes of a new hypothetical run with the recorded manifest.
         """
@@ -152,5 +149,5 @@ class DeterministicExecutionService:
             "replay_type": "dry-run",
             "manifest": manifest,
             "status": "ready_for_replay",
-            "warnings": ["Side effects are blocked in dry-run mode"]
+            "warnings": ["Side effects are blocked in dry-run mode"],
         }

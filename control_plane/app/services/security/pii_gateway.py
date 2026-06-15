@@ -1,14 +1,16 @@
 import logging
 import re
-from typing import Any, Dict, List, Union
+from typing import Any, Union
 
 logger = logging.getLogger(__name__)
+
 
 class PIIGateway:
     """
     Centralized PII Anonymization Gateway.
     Protects sensitive data by intercepting prompts and responses.
     """
+
     def __init__(self):
         # Patterns for common PII (simplified for demo, expandable)
         self.patterns = {
@@ -16,20 +18,20 @@ class PIIGateway:
             "cpf": r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b",
             "credit_card": r"\b(?:\d{4}[ -]?){3}\d{4}\b",
             "db_url": r"[a-zA-Z0-9+]+://[a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+@[a-zA-Z0-9.-]+/[a-zA-Z0-9_-]+",
-            "api_key": r"(?:sk-|AIza|fake-secret-key-)[a-zA-Z0-9_-]{10,}"
+            "api_key": r"(?:sk-|AIza|fake-secret-key-)[a-zA-Z0-9_-]{10,}",
         }
 
     def redact_text(self, text: str) -> str:
         if not text:
             return text
-        
+
         redacted = text
         for pii_type, pattern in self.patterns.items():
             redacted = re.sub(pattern, f"[{pii_type.upper()}_REDACTED]", redacted)
-        
+
         return redacted
 
-    def redact_payload(self, data: Union[Dict, List, Any]) -> Any:
+    def redact_payload(self, data: Union[dict, list, Any]) -> Any:
         if isinstance(data, dict):
             return {k: self.redact_payload(v) for k, v in data.items()}
         elif isinstance(data, list):
@@ -37,5 +39,6 @@ class PIIGateway:
         elif isinstance(data, str):
             return self.redact_text(data)
         return data
+
 
 pii_gateway = PIIGateway()

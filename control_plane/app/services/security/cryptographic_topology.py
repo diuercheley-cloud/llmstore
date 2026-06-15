@@ -5,7 +5,9 @@ from typing import Any
 
 from app.models.commercial.commercial_model_supply_chain import CommercialModelIntegrityScan
 from app.models.commercial.commercial_runtime_fabric import CommercialRuntimeFabricEvent
-from app.models.commercial.commercial_sovereign_governance import CommercialHardwareAttestationRecord
+from app.models.commercial.commercial_sovereign_governance import (
+    CommercialHardwareAttestationRecord,
+)
 from app.models.commercial.commercial_workflows import CommercialWorkflowExecution
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -107,18 +109,20 @@ class CryptographicTopologyService:
         graph = await self.trust_graph_service.get_full_graph(db, tenant_id=tenant_id)
         federation_nodes = [node for node in graph["nodes"] if node["type"] == "federation"]
         federation_edges = [
-            edge
-            for edge in graph["edges"]
-            if edge["type"] in {"federation_mapping", "audit_event"}
+            edge for edge in graph["edges"] if edge["type"] in {"federation_mapping", "audit_event"}
         ]
-        trust_levels = Counter((node["metadata"] or {}).get("trust_level", "unknown") for node in federation_nodes)
+        trust_levels = Counter(
+            (node["metadata"] or {}).get("trust_level", "unknown") for node in federation_nodes
+        )
         return {
             "nodes": federation_nodes,
             "edges": federation_edges,
             "consistency": {
                 "peer_count": len(federation_nodes),
                 "trust_levels": dict(trust_levels),
-                "mapping_count": len([edge for edge in federation_edges if edge["type"] == "federation_mapping"]),
+                "mapping_count": len(
+                    [edge for edge in federation_edges if edge["type"] == "federation_mapping"]
+                ),
             },
         }
 
@@ -130,15 +134,21 @@ class CryptographicTopologyService:
     ) -> list[dict[str, Any]]:
         runtime_events = await self._safe_scalars(
             db,
-            select(CommercialRuntimeFabricEvent).order_by(CommercialRuntimeFabricEvent.created_at.desc()).limit(limit),
+            select(CommercialRuntimeFabricEvent)
+            .order_by(CommercialRuntimeFabricEvent.created_at.desc())
+            .limit(limit),
         )
         integrity_scans = await self._safe_scalars(
             db,
-            select(CommercialModelIntegrityScan).order_by(CommercialModelIntegrityScan.created_at.desc()).limit(limit),
+            select(CommercialModelIntegrityScan)
+            .order_by(CommercialModelIntegrityScan.created_at.desc())
+            .limit(limit),
         )
         hardware = await self._safe_scalars(
             db,
-            select(CommercialHardwareAttestationRecord).order_by(CommercialHardwareAttestationRecord.created_at.desc()).limit(limit),
+            select(CommercialHardwareAttestationRecord)
+            .order_by(CommercialHardwareAttestationRecord.created_at.desc())
+            .limit(limit),
         )
 
         timeline: list[dict[str, Any]] = []
@@ -182,7 +192,11 @@ class CryptographicTopologyService:
         tenant_id: str | None = None,
     ) -> dict[str, Any]:
         graph = await self.trust_graph_service.get_full_graph(db, tenant_id=tenant_id)
-        nodes = [node for node in graph["nodes"] if node["type"] in {"sovereign", "confidential", "runtime"}]
+        nodes = [
+            node
+            for node in graph["nodes"]
+            if node["type"] in {"sovereign", "confidential", "runtime"}
+        ]
         node_ids = {node["id"] for node in nodes}
         edges = [
             edge
@@ -201,7 +215,9 @@ class CryptographicTopologyService:
         *,
         tenant_id: str | None = None,
     ) -> list[dict[str, Any]]:
-        query = select(CommercialWorkflowExecution).order_by(CommercialWorkflowExecution.started_at.desc())
+        query = select(CommercialWorkflowExecution).order_by(
+            CommercialWorkflowExecution.started_at.desc()
+        )
         rows = await self._safe_scalars(db, query)
         lineage: list[dict[str, Any]] = []
         for row in rows:
@@ -210,7 +226,9 @@ class CryptographicTopologyService:
             lineage.append(
                 {
                     "execution_id": str(row.id),
-                    "replay_of_execution_id": str(row.replay_of_execution_id) if row.replay_of_execution_id else None,
+                    "replay_of_execution_id": str(row.replay_of_execution_id)
+                    if row.replay_of_execution_id
+                    else None,
                     "replay_status": row.replay_status,
                     "status": row.status,
                     "tenant_id": row.tenant_id,

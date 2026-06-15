@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Dict, List
+from typing import Any
 
 from app.models.core.multimodal import MultimodalRequest, MultimodalUsageEvent
 from sqlalchemy import select
@@ -22,7 +22,7 @@ class MultimodalUsageService:
             "vision": 0.02,
             "image-generation": 0.05,
             "speech-to-text": 0.006,
-            "audio-streaming": 0.01
+            "audio-streaming": 0.01,
         }
         return rates.get(feature, 0.0) * unit_count
 
@@ -35,7 +35,7 @@ class MultimodalUsageService:
         input_asset_id: uuid.UUID = None,
         output_asset_id: uuid.UUID = None,
         error_message: str = None,
-        metadata_json: dict = None
+        metadata_json: dict = None,
     ) -> MultimodalRequest:
         req = MultimodalRequest(
             id=uuid.uuid4(),
@@ -45,7 +45,7 @@ class MultimodalUsageService:
             input_asset_id=input_asset_id,
             output_asset_id=output_asset_id,
             error_message=error_message,
-            metadata_json=metadata_json or {}
+            metadata_json=metadata_json or {},
         )
         db.add(req)
         await db.commit()
@@ -58,7 +58,7 @@ class MultimodalUsageService:
         client_id: uuid.UUID,
         request_id: uuid.UUID,
         feature: str,
-        unit_count: int
+        unit_count: int,
     ) -> MultimodalUsageEvent:
         cost = self.calculate_cost(feature, unit_count)
         usage = MultimodalUsageEvent(
@@ -67,27 +67,29 @@ class MultimodalUsageService:
             request_id=request_id,
             feature=feature,
             unit_count=unit_count,
-            estimated_cost=cost
+            estimated_cost=cost,
         )
         db.add(usage)
         await db.commit()
         await db.refresh(usage)
         return usage
 
-    async def get_usage_summary(self, db: AsyncSession) -> List[Dict[str, Any]]:
+    async def get_usage_summary(self, db: AsyncSession) -> list[dict[str, Any]]:
         stmt = select(MultimodalUsageEvent).order_by(MultimodalUsageEvent.created_at.desc())
         res = await db.execute(stmt)
         events = res.scalars().all()
-        
+
         summary = []
         for e in events:
-            summary.append({
-                "id": str(e.id),
-                "client_id": str(e.client_id),
-                "request_id": str(e.request_id) if e.request_id else None,
-                "feature": e.feature,
-                "unit_count": e.unit_count,
-                "estimated_cost": e.estimated_cost,
-                "created_at": e.created_at.isoformat()
-            })
+            summary.append(
+                {
+                    "id": str(e.id),
+                    "client_id": str(e.client_id),
+                    "request_id": str(e.request_id) if e.request_id else None,
+                    "feature": e.feature,
+                    "unit_count": e.unit_count,
+                    "estimated_cost": e.estimated_cost,
+                    "created_at": e.created_at.isoformat(),
+                }
+            )
         return summary

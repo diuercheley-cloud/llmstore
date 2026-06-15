@@ -58,7 +58,8 @@ class HealthCheck:
 
         try:
             proc = await asyncio.create_subprocess_exec(
-                "docker", "info",
+                "docker",
+                "info",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
@@ -95,7 +96,7 @@ class HealthCheck:
         try:
             stat = os.statvfs(path)
             free_bytes = stat.f_bavail * stat.f_frsize
-            free_gb = free_bytes / (1024 ** 3)
+            free_gb = free_bytes / (1024**3)
             status = "healthy" if free_gb >= 1.0 else "degraded"
             return {
                 "status": status,

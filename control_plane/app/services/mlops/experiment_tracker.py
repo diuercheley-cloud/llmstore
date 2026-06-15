@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -17,8 +17,8 @@ class ExperimentTracker:
     async def create_experiment(
         self,
         name: str,
-        description: Optional[str] = None,
-        admin_user_id: Optional[uuid.UUID] = None,
+        description: str | None = None,
+        admin_user_id: uuid.UUID | None = None,
     ) -> MLExperiment:
         experiment = MLExperiment(
             id=uuid.uuid4(),
@@ -43,11 +43,11 @@ class ExperimentTracker:
     async def log_run(
         self,
         experiment_id: uuid.UUID,
-        training_job_id: Optional[uuid.UUID] = None,
-        metrics: Optional[Dict[str, Any]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        artifacts: Optional[Dict[str, Any]] = None,
-        admin_user_id: Optional[uuid.UUID] = None,
+        training_job_id: uuid.UUID | None = None,
+        metrics: dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
+        artifacts: dict[str, Any] | None = None,
+        admin_user_id: uuid.UUID | None = None,
     ) -> MLExperimentRun:
         # Check experiment exists
         result = await self.session.execute(
@@ -63,10 +63,13 @@ class ExperimentTracker:
         # We will also enforce this for params here as general hardening
         all_params = params or {}
         for k, v in all_params.items():
-            if any(term in k.lower() for term in ["api_key", "secret", "token", "password", "private_key"]):
+            if any(
+                term in k.lower()
+                for term in ["api_key", "secret", "token", "password", "private_key"]
+            ):
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Sensitive parameter '{k}' cannot be logged directly to experiment runs."
+                    detail=f"Sensitive parameter '{k}' cannot be logged directly to experiment runs.",
                 )
 
         run = MLExperimentRun(
@@ -83,10 +86,7 @@ class ExperimentTracker:
 
         # External Integrations disabled by default
         settings = get_settings()
-        integration_details = {
-            "mlflow_triggered": False,
-            "wandb_triggered": False
-        }
+        integration_details = {"mlflow_triggered": False, "wandb_triggered": False}
         if settings.mlflow_integration_enabled:
             # Code to integrate with MLflow API would go here
             integration_details["mlflow_triggered"] = True
@@ -109,6 +109,6 @@ class ExperimentTracker:
         )
         return run
 
-    async def list_experiments(self) -> List[MLExperiment]:
+    async def list_experiments(self) -> list[MLExperiment]:
         result = await self.session.execute(select(MLExperiment))
         return list(result.scalars().all())

@@ -6,7 +6,6 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CANONICAL_FILES = [
     "README.md",
@@ -50,13 +49,13 @@ def main() -> int:
             if not target or target.startswith(("http://", "https://", "mailto:", "#")):
                 continue
             if target.startswith("file://"):
-                errors.append(f"{doc.relative_to(REPO_ROOT)}: forbidden absolute file link {target}")
+                errors.append(
+                    f"{doc.relative_to(REPO_ROOT)}: forbidden absolute file link {target}"
+                )
                 continue
             resolved = resolve_target(doc, target)
             if not resolved.exists():
-                errors.append(
-                    f"{doc.relative_to(REPO_ROOT)}: broken link {target}"
-                )
+                errors.append(f"{doc.relative_to(REPO_ROOT)}: broken link {target}")
 
     if errors:
         print("Link check failed:")

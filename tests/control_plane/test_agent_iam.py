@@ -28,10 +28,12 @@ async def setup_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
+
 @pytest_asyncio.fixture
 async def db_session():
     async with SessionLocal() as session:
         yield session
+
 
 @pytest_asyncio.fixture
 async def sample_agent(db_session):
@@ -42,11 +44,12 @@ async def sample_agent(db_session):
         instructions="Analyze logs.",
         model_id="gpt-4",
         owner="security-team",
-        tenant_id="tenant-a"
+        tenant_id="tenant-a",
     )
     db_session.add(agent)
     await db_session.commit()
     return agent
+
 
 @pytest.mark.asyncio
 async def test_service_principal_creation_and_rotation(db_session, sample_agent):
@@ -54,9 +57,7 @@ async def test_service_principal_creation_and_rotation(db_session, sample_agent)
 
     # 1. Create SP
     sp, raw_secret = await sp_service.create_service_principal(
-        tenant_id="tenant-a",
-        agent_id=sample_agent.id,
-        description="SP for logs agent"
+        tenant_id="tenant-a", agent_id=sample_agent.id, description="SP for logs agent"
     )
     await db_session.commit()
 
@@ -90,6 +91,7 @@ async def test_service_principal_creation_and_rotation(db_session, sample_agent)
     # Authenticate with old secret fails
     assert await sp_service.authenticate(sp.client_id, raw_secret) is None
 
+
 @pytest.mark.asyncio
 async def test_token_grant_and_exchange(db_session, sample_agent):
     exchange_service = TokenExchangeService(db_session)
@@ -100,7 +102,7 @@ async def test_token_grant_and_exchange(db_session, sample_agent):
         agent_id=sample_agent.id,
         user_id="user-123",
         connector_id="github",
-        scopes=["github:read", "github:write"]
+        scopes=["github:read", "github:write"],
     )
     await db_session.commit()
 
@@ -113,7 +115,7 @@ async def test_token_grant_and_exchange(db_session, sample_agent):
         agent_id=sample_agent.id,
         user_id="user-123",
         connector_id="github",
-        requested_scopes=["github:read"]
+        requested_scopes=["github:read"],
     )
     await db_session.commit()
 
@@ -128,8 +130,9 @@ async def test_token_grant_and_exchange(db_session, sample_agent):
             agent_id=sample_agent.id,
             user_id="user-123",
             connector_id="github",
-            requested_scopes=["github:admin"]
+            requested_scopes=["github:admin"],
         )
+
 
 @pytest.mark.asyncio
 async def test_scope_matching():
@@ -137,7 +140,7 @@ async def test_scope_matching():
     token = AgentDelegatedToken(
         tenant_id="tenant-a",
         agent_id=uuid.UUID("11111111-1111-1111-1111-111111111111"),
-        scopes=[{"connector": "slack", "action": "post_message"}]
+        scopes=[{"connector": "slack", "action": "post_message"}],
     )
 
     manager = AgentScopeManager()
@@ -156,6 +159,7 @@ async def test_scope_matching():
     other_agent = uuid.uuid4()
     assert manager.match_scope(token, "tenant-a", other_agent, "slack", "post_message") is False
 
+
 @pytest.mark.asyncio
 async def test_tenant_isolation_cross_tenant_grant_blocks(db_session, sample_agent):
     exchange_service = TokenExchangeService(db_session)
@@ -166,7 +170,7 @@ async def test_tenant_isolation_cross_tenant_grant_blocks(db_session, sample_age
         agent_id=sample_agent.id,
         user_id="user-123",
         connector_id="slack",
-        scopes=["slack:read"]
+        scopes=["slack:read"],
     )
     await db_session.commit()
 
@@ -177,8 +181,9 @@ async def test_tenant_isolation_cross_tenant_grant_blocks(db_session, sample_age
             agent_id=sample_agent.id,
             user_id="user-123",
             connector_id="slack",
-            requested_scopes=["slack:read"]
+            requested_scopes=["slack:read"],
         )
+
 
 @pytest.mark.asyncio
 async def test_token_expiration_and_revocation(db_session, sample_agent):
@@ -189,7 +194,7 @@ async def test_token_expiration_and_revocation(db_session, sample_agent):
         tenant_id="tenant-a",
         agent_id=sample_agent.id,
         scopes=[{"connector": "github", "action": "read"}],
-        expires_in_seconds=3600
+        expires_in_seconds=3600,
     )
     await db_session.commit()
 
@@ -202,7 +207,7 @@ async def test_token_expiration_and_revocation(db_session, sample_agent):
         tenant_id="tenant-a",
         agent_id=sample_agent.id,
         scopes=[{"connector": "github", "action": "read"}],
-        expires_in_seconds=-10
+        expires_in_seconds=-10,
     )
     await db_session.commit()
 
@@ -213,6 +218,7 @@ async def test_token_expiration_and_revocation(db_session, sample_agent):
     await db_session.commit()
 
     assert await token_service.verify_token(raw_token) is None
+
 
 @pytest.mark.asyncio
 async def test_credential_broker_write_restrictions(db_session, sample_agent):
@@ -226,25 +232,28 @@ async def test_credential_broker_write_restrictions(db_session, sample_agent):
         agent_id=sample_agent.id,
         user_id="user-123",
         connector_id="slack",
-        scopes=["post_message", "search_messages"]
+        scopes=["post_message", "search_messages"],
     )
     token, raw_token = await exchange_service.exchange_grant_for_token(
         tenant_id="tenant-a",
         agent_id=sample_agent.id,
         user_id="user-123",
         connector_id="slack",
-        requested_scopes=["post_message", "search_messages"]
+        requested_scopes=["post_message", "search_messages"],
     )
     await db_session.commit()
 
     # 1. Read action (search_messages) works without identity
-    assert await broker.validate_access(
-        tenant_id="tenant-a",
-        agent_id=sample_agent.id,
-        connector_name="slack",
-        action="search_messages",
-        token_string=raw_token
-    ) is True
+    assert (
+        await broker.validate_access(
+            tenant_id="tenant-a",
+            agent_id=sample_agent.id,
+            connector_name="slack",
+            action="search_messages",
+            token_string=raw_token,
+        )
+        is True
+    )
 
     # 2. Write action (post_message) fails because agent has no identity binding
     with pytest.raises(PermissionError) as exc:
@@ -253,7 +262,7 @@ async def test_credential_broker_write_restrictions(db_session, sample_agent):
             agent_id=sample_agent.id,
             connector_name="slack",
             action="post_message",
-            token_string=raw_token
+            token_string=raw_token,
         )
     assert "does not have a bound identity" in str(exc.value)
 
@@ -262,18 +271,22 @@ async def test_credential_broker_write_restrictions(db_session, sample_agent):
         tenant_id="tenant-a",
         agent_id=sample_agent.id,
         identity_provider="sovereign",
-        external_id="did:key:z6MkuS"
+        external_id="did:key:z6MkuS",
     )
     await db_session.commit()
 
     # 3. Write action succeeds now that agent has bound identity
-    assert await broker.validate_access(
-        tenant_id="tenant-a",
-        agent_id=sample_agent.id,
-        connector_name="slack",
-        action="post_message",
-        token_string=raw_token
-    ) is True
+    assert (
+        await broker.validate_access(
+            tenant_id="tenant-a",
+            agent_id=sample_agent.id,
+            connector_name="slack",
+            action="post_message",
+            token_string=raw_token,
+        )
+        is True
+    )
+
 
 @pytest.mark.asyncio
 async def test_production_service_principal_enforcement(db_session, sample_agent):
@@ -284,9 +297,7 @@ async def test_production_service_principal_enforcement(db_session, sample_agent
 
     # Bind identity
     await identity_service.bind_identity(
-        tenant_id="tenant-a",
-        agent_id=sample_agent.id,
-        identity_provider="sovereign"
+        tenant_id="tenant-a", agent_id=sample_agent.id, identity_provider="sovereign"
     )
 
     # Create grant and token
@@ -295,14 +306,14 @@ async def test_production_service_principal_enforcement(db_session, sample_agent
         agent_id=sample_agent.id,
         user_id="user-123",
         connector_id="slack",
-        scopes=["post_message"]
+        scopes=["post_message"],
     )
     token, raw_token = await exchange_service.exchange_grant_for_token(
         tenant_id="tenant-a",
         agent_id=sample_agent.id,
         user_id="user-123",
         connector_id="slack",
-        requested_scopes=["post_message"]
+        requested_scopes=["post_message"],
     )
     await db_session.commit()
 
@@ -315,7 +326,7 @@ async def test_production_service_principal_enforcement(db_session, sample_agent
                 agent_id=sample_agent.id,
                 connector_name="slack",
                 action="post_message",
-                token_string=raw_token
+                token_string=raw_token,
             )
         assert "requires agent" in str(exc.value)
 
@@ -324,17 +335,22 @@ async def test_production_service_principal_enforcement(db_session, sample_agent
         await db_session.commit()
 
         # 3. Succeeds in prod now that SP exists
-        assert await broker.validate_access(
-            tenant_id="tenant-a",
-            agent_id=sample_agent.id,
-            connector_name="slack",
-            action="post_message",
-            token_string=raw_token
-        ) is True
+        assert (
+            await broker.validate_access(
+                tenant_id="tenant-a",
+                agent_id=sample_agent.id,
+                connector_name="slack",
+                action="post_message",
+                token_string=raw_token,
+            )
+            is True
+        )
+
 
 @pytest.mark.asyncio
 async def test_redaction_in_audit_logs(db_session, sample_agent):
     from app.services.agents.iam.iam_audit import IAMAuditService
+
     audit = IAMAuditService(db_session)
 
     await audit.log_event(
@@ -344,13 +360,15 @@ async def test_redaction_in_audit_logs(db_session, sample_agent):
         details={
             "token": "agt_secrettokenvalue12345",
             "api_key": "sk-local-secretkey12345",
-            "connector": "slack"
-        }
+            "connector": "slack",
+        },
     )
     await db_session.commit()
 
     # Query audit events
-    stmt = select(AgentCredentialAuditEvent).where(AgentCredentialAuditEvent.event_type == "test_leakage")
+    stmt = select(AgentCredentialAuditEvent).where(
+        AgentCredentialAuditEvent.event_type == "test_leakage"
+    )
     res = await db_session.execute(stmt)
     event = res.scalar_one()
 
@@ -360,14 +378,15 @@ async def test_redaction_in_audit_logs(db_session, sample_agent):
     assert "[REDACTED]" in event.details["api_key"]
     assert event.details["connector"] == "slack"
 
+
 @pytest.mark.asyncio
 async def test_manual_dev_test_token_support():
     token_service = DelegatedTokenService(None)
-    
+
     # Verify mock generation format: manual_test_token_{tenant}_{agent_id}_{connector}_{action}
     agent_id = uuid.uuid4()
     raw_manual_token = f"manual_test_token_tenant-a_{agent_id}_slack_post_message"
-    
+
     verified = await token_service.verify_token(raw_manual_token)
     assert verified is not None
     assert verified.tenant_id == "tenant-a"

@@ -22,7 +22,7 @@ echo "PASSED: All 5 model classes present"
 
 # 2. Check migration file exists
 echo "--- Checking Migration ---"
-MIGRATION_FILE="control_plane/alembic/versions/20260515_phase58_hardware_attestation_runtime.py"
+MIGRATION_FILE="control_plane/alembic/archive/20260515_phase58_hardware_attestation_runtime.py"
 if [ ! -f "$MIGRATION_FILE" ]; then
     echo "FAILED: Migration file $MIGRATION_FILE not found"
     exit 1

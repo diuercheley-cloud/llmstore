@@ -1,41 +1,39 @@
 from app.api.abuse_admin import router as abuse_admin_router
 from app.api.admin import router as admin_router
-from app.api.admin_clients import router as admin_clients_router
-from app.api.admin_config import router as admin_config_router
-from app.api.admin_models import router as admin_models_router
-from app.api.admin_backends import router as admin_backends_router
-from app.api.admin_billing import router as admin_billing_router
-from app.api.admin_api_keys import router as admin_api_keys_router
-from app.api.admin_usage import router as admin_usage_router
-from app.api.admin_exports import router as admin_exports_router
-from app.api.admin_mlops import router as admin_mlops_router
-from app.api.admin_benchmarks import router as admin_benchmarks_router
-from app.api.admin_cache import router as admin_cache_router
-from app.api.admin_tests import router as admin_tests_router
-from app.api.admin_inference import router as admin_inference_router
-from app.api.admin_executions import router as admin_executions_router
-from app.api.admin_evaluation import router as admin_evaluation_router
-from app.api.admin_costs import router as admin_costs_router
-from app.api.admin_federation_mesh import router as admin_federation_mesh_router
-from app.api.admin_backup import router as admin_backup_router
-from app.api.admin_compliance_evidence import router as admin_compliance_evidence_router
-from app.api.admin_marketplace import router as admin_marketplace_router
-from app.api.admin_performance import router as admin_performance_v2_router
-from app.api.admin_model_provenance import router as admin_model_provenance_router
 from app.api.admin_agent_memory import router as admin_agent_memory_router
-from app.api.admin_metrics import router as admin_metrics_router
-from app.api.admin_observability import router as admin_observability_router
-from app.api.admin_model_experiments import router as admin_model_experiments_router
-from app.api.admin_models_runtime import router as admin_models_runtime_router
-from app.api.admin_onboarding import router as admin_onboarding_router
 from app.api.admin_agent_protocols import router as admin_agent_protocols_router
+from app.api.admin_api_keys import router as admin_api_keys_router
+from app.api.admin_backends import router as admin_backends_router
+from app.api.admin_backup import router as admin_backup_router
+from app.api.admin_benchmarks import router as admin_benchmarks_router
+from app.api.admin_billing import router as admin_billing_router
+from app.api.admin_cache import router as admin_cache_router
+from app.api.admin_clients import router as admin_clients_router
+from app.api.admin_compliance_evidence import router as admin_compliance_evidence_router
+from app.api.admin_config import router as admin_config_router
+from app.api.admin_costs import router as admin_costs_router
+from app.api.admin_evaluation import router as admin_evaluation_router
+from app.api.admin_executions import router as admin_executions_router
+from app.api.admin_exports import router as admin_exports_router
+from app.api.admin_federation_mesh import router as admin_federation_mesh_router
+from app.api.admin_inference import router as admin_inference_router
+from app.api.admin_marketplace import router as admin_marketplace_router
+from app.api.admin_metrics import router as admin_metrics_router
+from app.api.admin_mlops import router as admin_mlops_router
+from app.api.admin_model_experiments import router as admin_model_experiments_router
+from app.api.admin_model_provenance import router as admin_model_provenance_router
+from app.api.admin_models import router as admin_models_router
+from app.api.admin_models_runtime import router as admin_models_runtime_router
+from app.api.admin_observability import router as admin_observability_router
+from app.api.admin_onboarding import router as admin_onboarding_router
+from app.api.admin_performance import router as admin_performance_v2_router
 from app.api.admin_policies import router as admin_policies_router
 from app.api.admin_rbac import router as admin_rbac_router
 from app.api.admin_sandbox import router as admin_sandbox_router
+from app.api.admin_tests import router as admin_tests_router
+from app.api.admin_usage import router as admin_usage_router
 from app.api.admin_vectorstores import router as admin_vectorstores_router
 from app.api.auth import router as auth_router
-from app.api.billing_admin import router as billing_admin_router
-from app.api.billing_reconciliation_admin import router as billing_reconciliation_admin_router
 from app.api.chaos_admin import router as chaos_admin_router
 from app.api.client import router as client_router
 from app.api.collab_chat import router as collab_chat_router
@@ -110,8 +108,8 @@ from app.api.enterprise_onboarding_admin import router as enterprise_onboarding_
 from app.api.feature_flags_admin import router as feature_flags_admin_router
 from app.api.financial_admin import router as financial_admin_router
 from app.api.governance_policy_engine_admin import router as governance_policy_engine_admin_router
-from app.api.hybrid_admin import router as hybrid_admin_router
 from app.api.harness import router as harness_router
+from app.api.hybrid_admin import router as hybrid_admin_router
 from app.api.mobile_v1 import router as mobile_v1_router
 from app.api.multi_cluster_admin import router as multi_cluster_admin_router
 from app.api.observability_admin import router as observability_admin_router
@@ -237,7 +235,10 @@ COMMERCIAL_ROUTERS = [
     {"router": commercial_confidential_runtime_admin_router, "kwargs": {}},
     {"router": commercial_cryptographic_receipts_admin_router, "kwargs": {}},
     {"router": commercial_distributed_analytics_admin_router, "kwargs": {}},
-    {"router": commercial_encryption_admin_router, "kwargs": {"prefix": "/admin/security/encryption", "tags": ["commercial_encryption"]}},
+    {
+        "router": commercial_encryption_admin_router,
+        "kwargs": {"prefix": "/admin/security/encryption", "tags": ["commercial_encryption"]},
+    },
     {"router": commercial_execution_proofs_admin_router, "kwargs": {}},
     {"router": commercial_federation_admin_router, "kwargs": {}},
     {"router": commercial_governance_federation_admin_router, "kwargs": {}},
@@ -247,8 +248,14 @@ COMMERCIAL_ROUTERS = [
     {"router": commercial_infra_admin_router, "kwargs": {}},
     {"router": commercial_mesh_admin_router, "kwargs": {}},
     {"router": commercial_model_lifecycle_admin_router, "kwargs": {}},
-    {"router": commercial_model_supply_chain_admin_router, "kwargs": {"prefix": "/admin/models", "tags": ["commercial_model_supply_chain"]}},
-    {"router": commercial_ops_center_router, "kwargs": {"prefix": "/admin/ops-center", "tags": ["commercial_ops_center"]}},
+    {
+        "router": commercial_model_supply_chain_admin_router,
+        "kwargs": {"prefix": "/admin/models", "tags": ["commercial_model_supply_chain"]},
+    },
+    {
+        "router": commercial_ops_center_router,
+        "kwargs": {"prefix": "/admin/ops-center", "tags": ["commercial_ops_center"]},
+    },
     {"router": commercial_ops_center_admin_router, "kwargs": {}},
     {"router": commercial_policy_governance_admin_router, "kwargs": {}},
     {"router": commercial_rag_admin_router, "kwargs": {}},
@@ -266,18 +273,60 @@ COMMERCIAL_ROUTERS = [
 
 OPERATIONS_ROUTERS = [
     {"router": operations_admin_router, "kwargs": {}},
-    {"router": operations_adapter_promotion_admin_router, "kwargs": {"prefix": "/admin/operations/adapter-promotion", "tags": ["operations-adapter-promotion"]}},
-    {"router": operations_adapter_registry_admin_router, "kwargs": {"prefix": "/admin/operations/adapter-registry", "tags": ["operations-adapter-registry"]}},
-    {"router": operations_adapter_sandbox_admin_router, "kwargs": {"prefix": "/admin/operations/adapter-sandbox", "tags": ["operations-adapter-sandbox"]}},
-    {"router": operations_attestation_admin_router, "kwargs": {"prefix": "/admin/operations", "tags": ["operations-attestation"]}},
-    {"router": operations_compatibility_admin_router, "kwargs": {"tags": ["operations-compatibility"]}},
+    {
+        "router": operations_adapter_promotion_admin_router,
+        "kwargs": {
+            "prefix": "/admin/operations/adapter-promotion",
+            "tags": ["operations-adapter-promotion"],
+        },
+    },
+    {
+        "router": operations_adapter_registry_admin_router,
+        "kwargs": {
+            "prefix": "/admin/operations/adapter-registry",
+            "tags": ["operations-adapter-registry"],
+        },
+    },
+    {
+        "router": operations_adapter_sandbox_admin_router,
+        "kwargs": {
+            "prefix": "/admin/operations/adapter-sandbox",
+            "tags": ["operations-adapter-sandbox"],
+        },
+    },
+    {
+        "router": operations_attestation_admin_router,
+        "kwargs": {"prefix": "/admin/operations", "tags": ["operations-attestation"]},
+    },
+    {
+        "router": operations_compatibility_admin_router,
+        "kwargs": {"tags": ["operations-compatibility"]},
+    },
     {"router": operations_correlation_admin_router, "kwargs": {}},
-    {"router": operations_federation_sync_admin_router, "kwargs": {"tags": ["operations-federation-sync"]}},
-    {"router": operations_plugin_runtime_admin_router, "kwargs": {"tags": ["operations-plugin-runtime"]}},
-    {"router": operations_plugin_supply_chain_admin_router, "kwargs": {"tags": ["operations-plugin-supply-chain"]}},
+    {
+        "router": operations_federation_sync_admin_router,
+        "kwargs": {"tags": ["operations-federation-sync"]},
+    },
+    {
+        "router": operations_plugin_runtime_admin_router,
+        "kwargs": {"tags": ["operations-plugin-runtime"]},
+    },
+    {
+        "router": operations_plugin_supply_chain_admin_router,
+        "kwargs": {"tags": ["operations-plugin-supply-chain"]},
+    },
     {"router": operations_remediation_admin_router, "kwargs": {}},
-    {"router": operations_remediation_execution_admin_router, "kwargs": {"prefix": "/admin/operations/remediation-executions", "tags": ["operations-remediation-execution"]}},
-    {"router": operations_reproducible_builds_admin_router, "kwargs": {"tags": ["operations-reproducible-builds"]}},
+    {
+        "router": operations_remediation_execution_admin_router,
+        "kwargs": {
+            "prefix": "/admin/operations/remediation-executions",
+            "tags": ["operations-remediation-execution"],
+        },
+    },
+    {
+        "router": operations_reproducible_builds_admin_router,
+        "kwargs": {"tags": ["operations-reproducible-builds"]},
+    },
     {"router": operations_ux_admin_router, "kwargs": {}},
 ]
 
@@ -346,8 +395,9 @@ for router_list in [
         key = (module, router_name)
         if key not in _seen_keys:
             _seen_keys.add(key)
-            ROUTER_MANIFEST.append({
-                "module": module,
-                "router_name": router_name,
-            })
-
+            ROUTER_MANIFEST.append(
+                {
+                    "module": module,
+                    "router_name": router_name,
+                }
+            )

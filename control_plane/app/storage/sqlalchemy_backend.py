@@ -28,11 +28,15 @@ class SQLAlchemyDocumentStore(DocumentStore):
 
     async def list_rag_documents(self, client_id: UUID) -> list[RAGDocument]:
         result = await self._session.execute(
-            select(RAGDocument).where(RAGDocument.client_id == client_id).order_by(RAGDocument.created_at.desc())
+            select(RAGDocument)
+            .where(RAGDocument.client_id == client_id)
+            .order_by(RAGDocument.created_at.desc())
         )
         return list(result.scalars().all())
 
-    async def get_rag_document(self, document_id: UUID, *, client_id: UUID | None = None) -> RAGDocument | None:
+    async def get_rag_document(
+        self, document_id: UUID, *, client_id: UUID | None = None
+    ) -> RAGDocument | None:
         stmt = select(RAGDocument).where(RAGDocument.id == document_id)
         if client_id is not None:
             stmt = stmt.where(RAGDocument.client_id == client_id)
@@ -62,7 +66,9 @@ class SQLAlchemyDocumentStore(DocumentStore):
         document_id: UUID,
         chunk_records: Sequence[RAGChunkRecord],
     ) -> list[RAGDocumentChunk]:
-        await self._session.execute(delete(RAGDocumentChunk).where(RAGDocumentChunk.document_id == document_id))
+        await self._session.execute(
+            delete(RAGDocumentChunk).where(RAGDocumentChunk.document_id == document_id)
+        )
         chunks: list[RAGDocumentChunk] = []
         for record in chunk_records:
             chunk = RAGDocumentChunk(
@@ -91,15 +97,21 @@ class SQLAlchemyDocumentStore(DocumentStore):
         )
         return list(result.scalars().all())
 
-    async def get_rag_documents_by_ids(self, document_ids: Sequence[UUID]) -> dict[UUID, RAGDocument]:
+    async def get_rag_documents_by_ids(
+        self, document_ids: Sequence[UUID]
+    ) -> dict[UUID, RAGDocument]:
         if not document_ids:
             return {}
-        result = await self._session.execute(select(RAGDocument).where(RAGDocument.id.in_(list(document_ids))))
+        result = await self._session.execute(
+            select(RAGDocument).where(RAGDocument.id.in_(list(document_ids)))
+        )
         documents = result.scalars().all()
         return {document.id: document for document in documents}
 
     async def delete_rag_document(self, document: RAGDocument) -> None:
-        await self._session.execute(delete(RAGDocumentChunk).where(RAGDocumentChunk.document_id == document.id))
+        await self._session.execute(
+            delete(RAGDocumentChunk).where(RAGDocumentChunk.document_id == document.id)
+        )
         await self._session.delete(document)
 
     async def summarize_rag_usage_events(self, client_id: UUID, *, since) -> dict[str, int]:
@@ -112,8 +124,7 @@ class SQLAlchemyDocumentStore(DocumentStore):
             .group_by(RagUsageEvent.event_type)
         )
         return {
-            row["event_type"]: int(row["total_quantity"] or 0)
-            for row in result.mappings().all()
+            row["event_type"]: int(row["total_quantity"] or 0) for row in result.mappings().all()
         }
 
     async def add_rag_usage_event(
@@ -152,7 +163,9 @@ class VectorStoreAdapter(VectorStore):
         metadata: dict[str, Any] | None = None,
         namespace: str | None = None,
     ) -> None:
-        await self._store.upsert(collection_name, id, vector, metadata=metadata, namespace=namespace)
+        await self._store.upsert(
+            collection_name, id, vector, metadata=metadata, namespace=namespace
+        )
 
     async def search(
         self,
@@ -162,9 +175,13 @@ class VectorStoreAdapter(VectorStore):
         filters: dict[str, Any] | None = None,
         namespace: str | None = None,
     ) -> list[dict[str, Any]]:
-        return await self._store.search(collection_name, vector, limit=limit, filters=filters, namespace=namespace)
+        return await self._store.search(
+            collection_name, vector, limit=limit, filters=filters, namespace=namespace
+        )
 
-    async def delete(self, collection_name: str, ids: list[str], namespace: str | None = None) -> None:
+    async def delete(
+        self, collection_name: str, ids: list[str], namespace: str | None = None
+    ) -> None:
         await self._store.delete(collection_name, ids, namespace=namespace)
 
     async def collection_create(
@@ -186,10 +203,13 @@ class SQLAlchemyAuditStore(AuditStore):
     def __init__(self, session: AsyncSession):
         self._session = session
 
-    async def record_admin_event(self, record: AdminAuditRecord, *, auto_commit: bool = True) -> None:
+    async def record_admin_event(
+        self, record: AdminAuditRecord, *, auto_commit: bool = True
+    ) -> None:
         admin_user_id = record.admin_user_id
         if isinstance(admin_user_id, str):
             import uuid
+
             try:
                 admin_user_id = uuid.UUID(admin_user_id)
             except ValueError:

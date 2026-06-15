@@ -1,7 +1,7 @@
 import logging
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Dict, List
+from datetime import UTC, datetime
+from typing import Any
 
 from app.models.agents.agent_environments import AgentEnvironmentVersion
 from app.models.agents.agents import AgentDefinition, AgentRegistryEntry
@@ -14,11 +14,8 @@ logger = logging.getLogger("agent_environments")
 class AgentEnvironmentsService:
     @classmethod
     async def get_environments(
-        cls,
-        db: AsyncSession,
-        tenant_id: str,
-        agent_id: str
-    ) -> List[Dict[str, Any]]:
+        cls, db: AsyncSession, tenant_id: str, agent_id: str
+    ) -> list[dict[str, Any]]:
         """Returns the version mapping across all environments (dev, staging, production) for an agent."""
         try:
             agent_uuid = uuid.UUID(agent_id)
@@ -33,7 +30,7 @@ class AgentEnvironmentsService:
         reg = res_reg.scalar_one_or_none()
         if not reg:
             return []
-        
+
         # Verify tenant if agent registry contains allowed_tenants
         if reg.allowed_tenants:
             if tenant_id not in reg.allowed_tenants:
@@ -41,7 +38,7 @@ class AgentEnvironmentsService:
 
         stmt = select(AgentEnvironmentVersion).where(
             AgentEnvironmentVersion.tenant_id == tenant_id,
-            AgentEnvironmentVersion.agent_id == reg.id
+            AgentEnvironmentVersion.agent_id == reg.id,
         )
         res = await db.execute(stmt)
         versions = res.scalars().all()
@@ -54,22 +51,18 @@ class AgentEnvironmentsService:
             stmt_def = select(AgentDefinition).where(AgentDefinition.id == ev.version_id)
             res_def = await db.execute(stmt_def)
             adef = res_def.scalar_one_or_none()
-            
+
             mapping[ev.environment] = {
                 "version_id": str(ev.version_id),
                 "name": adef.name if adef else "Unknown",
                 "version_tag": adef.version if adef else "1.0",
                 "deployed_at": ev.deployed_at.isoformat(),
-                "previous_version_id": str(ev.previous_version_id) if ev.previous_version_id else None
+                "previous_version_id": str(ev.previous_version_id)
+                if ev.previous_version_id
+                else None,
             }
 
-        return [
-            {
-                "environment": env,
-                "deployed_version": mapping[env]
-            }
-            for env in envs
-        ]
+        return [{"environment": env, "deployed_version": mapping[env]} for env in envs]
 
     @classmethod
     async def deploy_to_environment(
@@ -78,7 +71,7 @@ class AgentEnvironmentsService:
         tenant_id: str,
         agent_id: uuid.UUID,
         version_id: uuid.UUID,
-        environment: str
+        environment: str,
     ) -> AgentEnvironmentVersion:
         """Deploys a specific agent version to the environment, capturing rollback points."""
         env_lower = environment.lower().strip()
@@ -87,7 +80,7 @@ class AgentEnvironmentsService:
         stmt = select(AgentEnvironmentVersion).where(
             AgentEnvironmentVersion.tenant_id == tenant_id,
             AgentEnvironmentVersion.agent_id == agent_id,
-            AgentEnvironmentVersion.environment == env_lower
+            AgentEnvironmentVersion.environment == env_lower,
         )
         res = await db.execute(stmt)
         record = res.scalar_one_or_none()
@@ -97,7 +90,7 @@ class AgentEnvironmentsService:
             if record.version_id != version_id:
                 record.previous_version_id = record.version_id
                 record.version_id = version_id
-                record.deployed_at = datetime.now(timezone.utc)
+                record.deployed_at = datetime.now(UTC)
         else:
             record = AgentEnvironmentVersion(
                 tenant_id=tenant_id,
@@ -105,7 +98,7 @@ class AgentEnvironmentsService:
                 environment=env_lower,
                 version_id=version_id,
                 previous_version_id=None,
-                deployed_at=datetime.now(timezone.utc)
+                deployed_at=datetime.now(UTC),
             )
             db.add(record)
 
@@ -114,12 +107,8 @@ class AgentEnvironmentsService:
 
     @classmethod
     async def rollback_environment(
-        cls,
-        db: AsyncSession,
-        tenant_id: str,
-        agent_id: str,
-        environment: str
-    ) -> Dict[str, Any]:
+        cls, db: AsyncSession, tenant_id: str, agent_id: str, environment: str
+    ) -> dict[str, Any]:
         """Rolls back the environment to the previous deployed version."""
         try:
             agent_uuid = uuid.UUID(agent_id)
@@ -140,13 +129,16 @@ class AgentEnvironmentsService:
         stmt = select(AgentEnvironmentVersion).where(
             AgentEnvironmentVersion.tenant_id == tenant_id,
             AgentEnvironmentVersion.agent_id == reg.id,
-            AgentEnvironmentVersion.environment == env_lower
+            AgentEnvironmentVersion.environment == env_lower,
         )
         res = await db.execute(stmt)
         record = res.scalar_one_or_none()
 
         if not record:
-            return {"status": "error", "message": f"No deployment history found in {environment} for this agent."}
+            return {
+                "status": "error",
+                "message": f"No deployment history found in {environment} for this agent.",
+            }
 
         if not record.previous_version_id:
             return {"status": "error", "message": "No rollback point exists for this environment."}
@@ -155,7 +147,7 @@ class AgentEnvironmentsService:
         current_active = record.version_id
         record.version_id = record.previous_version_id
         record.previous_version_id = current_active
-        record.deployed_at = datetime.now(timezone.utc)
+        record.deployed_at = datetime.now(UTC)
 
         await db.commit()
 
@@ -168,5 +160,5 @@ class AgentEnvironmentsService:
             "status": "success",
             "message": f"Rolled back {environment} environment successfully.",
             "restored_version_id": str(record.version_id),
-            "restored_version_tag": adef.version if adef else "1.0"
+            "restored_version_tag": adef.version if adef else "1.0",
         }

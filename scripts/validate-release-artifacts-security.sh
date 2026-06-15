@@ -1,0 +1,1 @@
+validators/validate-release-artifacts-security.sh

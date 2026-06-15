@@ -1,7 +1,7 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.models.agents.agent_deployments import AgentApiDeployment
 from app.services.agent_deployments.agent_api_deployment import (
@@ -25,8 +25,8 @@ class AgentEndpointRegistry:
         self.deployment_svc = AgentApiDeploymentService(db)
 
     async def resolve_deployment(
-        self, slug: str, tenant_id: Optional[str] = None
-    ) -> Optional[AgentApiDeployment]:
+        self, slug: str, tenant_id: str | None = None
+    ) -> AgentApiDeployment | None:
         """Resolve a slug to an active deployment."""
         if tenant_id:
             return await self.deployment_svc.get_deployment_by_slug(slug, tenant_id)
@@ -38,29 +38,37 @@ class AgentEndpointRegistry:
         deployment: AgentApiDeployment,
         input_text: str,
         tenant_id: str,
-        client_ip: Optional[str] = None,
-        endpoint_key_id: Optional[uuid.UUID] = None,
-    ) -> Dict[str, Any]:
+        client_ip: str | None = None,
+        endpoint_key_id: uuid.UUID | None = None,
+    ) -> dict[str, Any]:
         """Invoke agent asynchronously via deployment."""
         # Rate limit check
         if not deployment_router.check_rate_limit(deployment):
-            await self._log_sla_event(deployment, "rate_limit_exceeded", "warning", {
-                "rate_limit_per_minute": deployment.rate_limit_per_minute,
-            })
+            await self._log_sla_event(
+                deployment,
+                "rate_limit_exceeded",
+                "warning",
+                {
+                    "rate_limit_per_minute": deployment.rate_limit_per_minute,
+                },
+            )
             return {"error": "Rate limit exceeded", "retry_after_seconds": 60}
 
         # Concurrency check
         if not deployment_router.acquire_concurrency(deployment):
-            await self._log_sla_event(deployment, "concurrency_exceeded", "warning", {
-                "max_concurrency": deployment.max_concurrency,
-                "current": deployment_router.get_concurrent_count(str(deployment.id)),
-            })
+            await self._log_sla_event(
+                deployment,
+                "concurrency_exceeded",
+                "warning",
+                {
+                    "max_concurrency": deployment.max_concurrency,
+                    "current": deployment_router.get_concurrent_count(str(deployment.id)),
+                },
+            )
             return {"error": "Max concurrency exceeded", "retry_after_seconds": 5}
 
         try:
-            run = await agent_runtime.start_run(
-                self.db, deployment.agent_id, tenant_id, input_text
-            )
+            run = await agent_runtime.start_run(self.db, deployment.agent_id, tenant_id, input_text)
             return {"run_id": str(run.id), "status": run.status, "deployment_slug": deployment.slug}
         except Exception as e:
             logger.exception(f"Deployment invoke failed: {deployment.slug}")
@@ -73,10 +81,10 @@ class AgentEndpointRegistry:
         deployment: AgentApiDeployment,
         input_text: str,
         tenant_id: str,
-        timeout_seconds: Optional[int] = None,
-        client_ip: Optional[str] = None,
-        endpoint_key_id: Optional[uuid.UUID] = None,
-    ) -> Dict[str, Any]:
+        timeout_seconds: int | None = None,
+        client_ip: str | None = None,
+        endpoint_key_id: uuid.UUID | None = None,
+    ) -> dict[str, Any]:
         """Invoke agent synchronously via deployment (with timeout)."""
         import asyncio
 
@@ -91,12 +99,11 @@ class AgentEndpointRegistry:
             return {"error": "Max concurrency exceeded", "retry_after_seconds": 5}
 
         try:
-            run = await agent_runtime.start_run(
-                self.db, deployment.agent_id, tenant_id, input_text
-            )
+            run = await agent_runtime.start_run(self.db, deployment.agent_id, tenant_id, input_text)
 
             # Poll for completion with timeout
             import time
+
             start = time.time()
             while time.time() - start < effective_timeout:
                 await self.db.refresh(run)
@@ -106,10 +113,15 @@ class AgentEndpointRegistry:
 
             if run.status == "running" or run.status == "queued":
                 # Timeout
-                await self._log_sla_event(deployment, "timeout", "warning", {
-                    "timeout_seconds": effective_timeout,
-                    "run_id": str(run.id),
-                })
+                await self._log_sla_event(
+                    deployment,
+                    "timeout",
+                    "warning",
+                    {
+                        "timeout_seconds": effective_timeout,
+                        "run_id": str(run.id),
+                    },
+                )
                 return {
                     "error": "Timeout exceeded",
                     "run_id": str(run.id),
@@ -135,9 +147,10 @@ class AgentEndpointRegistry:
         deployment: AgentApiDeployment,
         event_type: str,
         severity: str,
-        details: Optional[Dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ):
         from app.models.agents.agent_deployments import AgentApiSlaEvent
+
         event = AgentApiSlaEvent(
             deployment_id=deployment.id,
             tenant_id=deployment.tenant_id,

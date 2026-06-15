@@ -7,8 +7,8 @@ Demonstrates:
   3. Convert to native AgentTeam
 """
 
+from scripts.llm_harness.compat.crewai import CrewAIConverter, CrewAIImporter
 from scripts.llm_harness.compat.report import CompatibilityAnalyzer
-from scripts.llm_harness.compat.crewai import CrewAIImporter, CrewAIConverter, Agent, Task, Crew
 
 # --- 1. Simulate an existing CrewAI setup ---
 source_code = """

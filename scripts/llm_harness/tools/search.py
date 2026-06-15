@@ -6,6 +6,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+
 class SearchTools:
     def __init__(self, workspace, policy_engine=None):
         self.workspace = workspace
@@ -68,11 +69,7 @@ class SearchTools:
                         match = True
 
                     if match:
-                        results.append({
-                            "path": rel_path,
-                            "line": i,
-                            "content": line.strip()
-                        })
+                        results.append({"path": rel_path, "line": i, "content": line.strip()})
         except Exception:
             pass
         return results
@@ -100,12 +97,14 @@ class SearchTools:
                     for node in ast.walk(tree):
                         if isinstance(node, ast.FunctionDef | ast.ClassDef | ast.AsyncFunctionDef):
                             if node.name == symbol_name:
-                                results.append({
-                                    "path": rel_path,
-                                    "line": node.lineno,
-                                    "type": type(node).__name__,
-                                    "name": node.name
-                                })
+                                results.append(
+                                    {
+                                        "path": rel_path,
+                                        "line": node.lineno,
+                                        "type": type(node).__name__,
+                                        "name": node.name,
+                                    }
+                                )
                 except Exception:
                     pass
         return results

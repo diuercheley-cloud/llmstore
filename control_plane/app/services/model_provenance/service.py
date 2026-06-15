@@ -2,7 +2,7 @@ import hashlib
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.models.core.model_provenance import ModelProvenanceRecord
 from sqlalchemy import select
@@ -19,10 +19,10 @@ class ModelProvenanceService:
         self,
         model_id: str,
         source: str,
-        license: Optional[str] = None,
-        weights_hash: Optional[str] = None,
-        tokenizer_hash: Optional[str] = None,
-        config_hash: Optional[str] = None,
+        license: str | None = None,
+        weights_hash: str | None = None,
+        tokenizer_hash: str | None = None,
+        config_hash: str | None = None,
     ) -> ModelProvenanceRecord:
         record = ModelProvenanceRecord(
             model_id=model_id,
@@ -31,7 +31,7 @@ class ModelProvenanceService:
             weights_hash=weights_hash,
             tokenizer_hash=tokenizer_hash,
             config_hash=config_hash,
-            signature_status="unverified"
+            signature_status="unverified",
         )
         self.db.add(record)
         await self.db.flush()
@@ -39,6 +39,7 @@ class ModelProvenanceService:
 
     async def verify_provenance(self, record_id: str) -> ModelProvenanceRecord:
         import uuid
+
         stmt = select(ModelProvenanceRecord).where(ModelProvenanceRecord.id == uuid.UUID(record_id))
         res = await self.db.execute(stmt)
         record = res.scalar_one_or_none()
@@ -59,11 +60,11 @@ class ModelProvenanceService:
 
 class OutputWatermarker(ABC):
     @abstractmethod
-    async def apply_watermark(self, text: str, model_id: str, run_id: str) -> Dict[str, Any]:
+    async def apply_watermark(self, text: str, model_id: str, run_id: str) -> dict[str, Any]:
         pass
 
     @abstractmethod
-    async def verify_watermark(self, text: str) -> Dict[str, Any]:
+    async def verify_watermark(self, text: str) -> dict[str, Any]:
         pass
 
 
@@ -72,30 +73,31 @@ class StandardOutputWatermarker(OutputWatermarker):
     Initial implementation of watermarking.
     Supports metadata-based watermarking and placeholder for invisible steganography.
     """
-    async def apply_watermark(self, text: str, model_id: str, run_id: str) -> Dict[str, Any]:
+
+    async def apply_watermark(self, text: str, model_id: str, run_id: str) -> dict[str, Any]:
         # 1. Generate unique watermark ID
         watermark_id = f"wm-{hashlib.sha256(f'{run_id}{model_id}'.encode()).hexdigest()[:12]}"
-        
+
         # 2. Deterministic verification hash
         verification_hash = hashlib.sha256(f"{text}{watermark_id}".encode()).hexdigest()
 
-        # In a real implementation, we would inject invisible characters or 
+        # In a real implementation, we would inject invisible characters or
         # modify token probabilities here if feature flag is ON.
-        
+
         return {
             "watermark_id": watermark_id,
             "run_id": run_id,
             "model_id": model_id,
             "verification_hash": verification_hash,
             "method": "metadata_audit",
-            "applied_at": datetime.now().isoformat()
+            "applied_at": datetime.now().isoformat(),
         }
 
-    async def verify_watermark(self, text: str) -> Dict[str, Any]:
+    async def verify_watermark(self, text: str) -> dict[str, Any]:
         # Heuristic detection for demo purposes
         # In real life, this would look for statistical anomalies or hidden markers
         return {
-            "is_authentic": False, # Placeholder
+            "is_authentic": False,  # Placeholder
             "confidence": 0.0,
-            "metadata": {}
+            "metadata": {},
         }

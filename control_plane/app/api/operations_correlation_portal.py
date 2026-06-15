@@ -11,19 +11,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/portal/operations/correlations", tags=["portal-operations-correlation"])
 
+
 @router.get("/")
 async def list_portal_correlations(
-    client: Client = Depends(require_client),
-    db: AsyncSession = Depends(get_db)
+    client: Client = Depends(require_client), db: AsyncSession = Depends(get_db)
 ):
     """
     Lists correlations for the current authenticated portal client.
     Strictly advisory-only.
     """
-    stmt = select(OperationalCorrelation).where(OperationalCorrelation.client_id == client.id).order_by(OperationalCorrelation.created_at.desc())
+    stmt = (
+        select(OperationalCorrelation)
+        .where(OperationalCorrelation.client_id == client.id)
+        .order_by(OperationalCorrelation.created_at.desc())
+    )
     result = await db.execute(stmt)
     correlations = result.scalars().all()
-    
+
     # Per requirement "não expor payload sensível", we return only the necessary fields
     return [
         {
@@ -34,15 +38,15 @@ async def list_portal_correlations(
             "confidence": c.confidence,
             "advisory_only": c.advisory_only,
             "immutable_hash": c.immutable_hash,
-            "created_at": c.created_at.isoformat()
+            "created_at": c.created_at.isoformat(),
         }
         for c in correlations
     ]
 
+
 @router.get("/trust-graph")
 async def get_portal_trust_graph_summary(
-    client: Client = Depends(require_client),
-    db: AsyncSession = Depends(get_db)
+    client: Client = Depends(require_client), db: AsyncSession = Depends(get_db)
 ):
     """
     Returns a summary of the current trust graph state for the current authenticated portal client.

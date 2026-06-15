@@ -6,9 +6,10 @@ from app.services.visual_observability import VisualObservabilityService
 
 def test_dashboard_json_validity():
     dashboard_path = "monitoring/dashboards/platform-overview.json"
-    with open(dashboard_path, "r") as f:
+    with open(dashboard_path) as f:
         data = json.load(f)
     assert data["uid"] == "platform-overview"
+
 
 @pytest.mark.asyncio
 async def test_incident_timeline_sorting():
@@ -18,6 +19,7 @@ async def test_incident_timeline_sorting():
     # Check if timestamps are descending (newest first)
     timestamps = [item["timestamp"] for item in timeline["items"]]
     assert timestamps == sorted(timestamps, reverse=True)
+
 
 def test_dashboard_links_no_secrets():
     service = VisualObservabilityService()

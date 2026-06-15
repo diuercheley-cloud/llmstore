@@ -50,10 +50,9 @@ class SmartRouterInput(BaseModel):
     latency_preference: str | None = None
     budget_preference: str | None = None
     strategy: RoutingStrategy = RoutingStrategy.local_first
-    request_id: str | None = None,
-    correlation_id: str | None = None,
-    qos_tier_name: str | None = None,
-
+    request_id: str | None = (None,)
+    correlation_id: str | None = (None,)
+    qos_tier_name: str | None = (None,)
 
 
 class RoutingDecision(BaseModel):
@@ -93,10 +92,9 @@ class SimulateRoutingRequest(BaseModel):
     latency_preference: str | None = None
     budget_preference: str | None = None
     strategy: RoutingStrategy = RoutingStrategy.local_first
-    request_id: str | None = None,
-    correlation_id: str | None = None,
-    qos_tier_name: str | None = None,
-
+    request_id: str | None = (None,)
+    correlation_id: str | None = (None,)
+    qos_tier_name: str | None = (None,)
 
 
 class SimulateRoutingResponse(BaseModel):
@@ -182,11 +180,13 @@ class CommercialSimulateResponse(BaseModel):
     explanation: str = ""
     tier: str = "unknown"
 
+
 class CommercialCalibrationSimulateRequest(BaseModel):
     provider: str
     model: str
     current_estimated_cost_brl: float
     actual_cost_history_days: int = 7
+
 
 class CommercialCalibrationSimulateResponse(BaseModel):
     current_estimated_cost_brl: float
@@ -194,6 +194,7 @@ class CommercialCalibrationSimulateResponse(BaseModel):
     adjusted_estimated_cost_brl: float
     confidence: str
     reason: str
+
 
 class CommercialConfigRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -214,6 +215,7 @@ class CommercialConfigRead(BaseModel):
     updated_at: datetime
     created_by: str | None
     notes: str | None
+
 
 class CommercialConfigApplyRequest(BaseModel):
     provider: str | None = None
@@ -266,6 +268,7 @@ class CommercialReportScheduleRunResponse(BaseModel):
     preview_html: str | None = None
     report: dict[str, Any] | None = None
 
+
 class CommercialQoSFairnessSummary(BaseModel):
     fairness_index: float
     tier_waits: dict[str, float]
@@ -273,6 +276,7 @@ class CommercialQoSFairnessSummary(BaseModel):
     sla_violations_total: int
     period_hours: int
     status: str = "ok"
+
 
 class CommercialQoSChargebackSummary(BaseModel):
     total_chargeback_brl: float
@@ -317,6 +321,7 @@ class CommercialReportSendTestResponse(BaseModel):
     recipients: list[str] = Field(default_factory=list)
     report_format: str
     delivery_id: UUID | None = None
+
 
 CommercialSimulateResponse.model_rebuild()
 

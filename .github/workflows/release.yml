@@ -20,6 +20,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Validate LICENSE File
+        run: |
+          if [ ! -f LICENSE ]; then
+            echo "ERROR: LICENSE file is missing. Release blocked."
+            exit 1
+          fi
+          echo "LICENSE file present. SPDX: $(head -3 LICENSE | grep -oP 'Apache License|MIT|GNU AGPL|GNU GPL|GNU LGPL|BSD' || echo 'unknown')"
       - name: Setup Python
         uses: ./.github/actions/setup-python-project
       - name: Start Stack
@@ -90,7 +97,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: control_plane/Dockerfile
+          file: docker/control-plane/Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository }}/control-plane:${{ github.ref_name }},ghcr.io/${{ github.repository }}/control-plane:latest
 
@@ -135,10 +142,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build Frontend
+        run: |
+          npm ci
+          npm run build
+          zip -r admin-v2-build.zip control_plane/app/static/admin-v2
+          zip -r client-build.zip frontend/client/dist
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
+          files: |
+            admin-v2-build.zip
+            client-build.zip
           generate_release_notes: true
           draft: false
           prerelease: false

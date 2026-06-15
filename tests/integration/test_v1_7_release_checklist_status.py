@@ -37,9 +37,7 @@ def test_status_script_runs():
         timeout=30,
     )
     print(f"STDOUT:\n{result.stdout}")
-    assert result.returncode == 0, (
-        f"Status script failed:\n{result.stdout}\n{result.stderr}"
-    )
+    assert result.returncode == 0, f"Status script failed:\n{result.stdout}\n{result.stderr}"
 
 
 def test_latest_status_artifact_exists():
@@ -66,9 +64,14 @@ def test_status_json_fields():
     data = json.loads(fp.read_text(encoding="utf-8"))
 
     required = [
-        "version", "git_branch", "git_commit", "generated_at",
-        "blocker_fails", "blocker_warns", "nonblocker_warns",
-        "go_decision"
+        "version",
+        "git_branch",
+        "git_commit",
+        "generated_at",
+        "blocker_fails",
+        "blocker_warns",
+        "nonblocker_warns",
+        "go_decision",
     ]
     for field in required:
         assert field in data, f"Missing field in status JSON: {field}"
@@ -114,7 +117,9 @@ def test_status_version_matches_repo():
     # Or skip if it's clearly a different release line
     if not data["version"].startswith("v2"):
         if data["version"] != actual_version:
-             pytest.skip(f"Status version {data['version']} != repo version {actual_version} (legacy artifact)")
+            pytest.skip(
+                f"Status version {data['version']} != repo version {actual_version} (legacy artifact)"
+            )
 
 
 def test_no_secrets_in_status():

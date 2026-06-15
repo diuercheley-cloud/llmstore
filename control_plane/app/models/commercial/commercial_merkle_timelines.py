@@ -18,11 +18,17 @@ class CommercialMerkleTimeline(Base):
         nullable=False,
         index=True,
     )
-    period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
-    period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    period_start: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
+    period_end: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
     leaf_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     merkle_root: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
-    previous_timeline_root: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    previous_timeline_root: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, index=True
+    )
     timeline_hash: Mapped[str] = mapped_column(String(128), nullable=False, unique=True, index=True)
     status: Mapped[str] = mapped_column(
         String(32),
@@ -31,7 +37,9 @@ class CommercialMerkleTimeline(Base):
         index=True,
     )
     sealed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
 
 class CommercialMerkleLeaf(Base):
@@ -54,7 +62,9 @@ class CommercialMerkleLeaf(Base):
     leaf_hash: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     leaf_index: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
 
 class CommercialExecutionProof(Base):
@@ -87,5 +97,7 @@ class CommercialExecutionProof(Base):
         default="pending",
         index=True,
     )
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

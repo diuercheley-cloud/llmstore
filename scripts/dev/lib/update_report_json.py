@@ -13,18 +13,15 @@ details = sys.argv[6] if len(sys.argv) > 6 else None
 if not os.path.exists(report_path):
     data = {"checks": {}}
 else:
-    with open(report_path, 'r') as f:
+    with open(report_path) as f:
         data = json.load(f)
 
-if category not in data['checks']:
-    data['checks'][category] = []
+if category not in data["checks"]:
+    data["checks"][category] = []
 
-data['checks'][category].append({
-    "name": name,
-    "status": status,
-    "message": message,
-    "details": details
-})
+data["checks"][category].append(
+    {"name": name, "status": status, "message": message, "details": details}
+)
 
-with open(report_path, 'w') as f:
+with open(report_path, "w") as f:
     json.dump(data, f, indent=2)

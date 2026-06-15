@@ -37,10 +37,10 @@ def configure_logging() -> None:
     settings = get_settings()
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(JsonFormatter())
-    
+
     # Apply health-check filter
     handler.addFilter(HealthCheckFilter())
-    
+
     root = logging.getLogger()
     root.handlers.clear()
     root.addHandler(handler)

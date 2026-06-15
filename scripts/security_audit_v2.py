@@ -6,13 +6,10 @@ Exit code: 0 = all pass, 1 = failures found, 2 = warnings only
 """
 
 import ast
-import json
-import os
 import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -23,7 +20,7 @@ WARN = "WARN"
 
 class AuditCheck:
     def __init__(self):
-        self.results: List[Tuple[str, str, str]] = []  # (check_name, status, detail)
+        self.results: list[tuple[str, str, str]] = []  # (check_name, status, detail)
 
     def add(self, name: str, status: str, detail: str = ""):
         self.results.append((name, status, detail))
@@ -34,7 +31,7 @@ class AuditCheck:
     def print_report(self):
         min_width = 65
         print(f"\n{'=' * 80}")
-        print(f" Security Audit v2 Report")
+        print(" Security Audit v2 Report")
         print(f"{'=' * 80}")
         fail_count = 0
         warn_count = 0
@@ -70,10 +67,12 @@ class A01_AccessControl(AuditCheck):
             else:
                 self.add("agent_connectors_admin: require_admin on router", FAIL)
             # Count endpoints without auth parameter
-            endpoint_pattern = re.compile(r'@router\.(get|post|put|delete|patch)\(')
+            endpoint_pattern = re.compile(r"@router\.(get|post|put|delete|patch)\(")
             endpoints = endpoint_pattern.findall(content)
             # All endpoints should be protected by the router-level dependency
-            self.add(f"agent_connectors_admin: {len(endpoints)} endpoints with router-level auth", PASS)
+            self.add(
+                f"agent_connectors_admin: {len(endpoints)} endpoints with router-level auth", PASS
+            )
         else:
             self.add("agent_connectors_admin: file exists", FAIL, "file not found")
 
@@ -81,21 +80,31 @@ class A01_AccessControl(AuditCheck):
         api_dir = REPO_ROOT / "control_plane" / "app" / "api"
         for f in sorted(api_dir.glob("*_admin.py")):
             content = f.read_text()
-            has_router_dep = "Depends(require_admin)" in content or "dependencies=[Depends(" in content
-            has_endpoints = bool(re.findall(r'@router\.(get|post|put|delete|patch)\(', content))
+            has_router_dep = (
+                "Depends(require_admin)" in content or "dependencies=[Depends(" in content
+            )
+            has_endpoints = bool(re.findall(r"@router\.(get|post|put|delete|patch)\(", content))
             if has_endpoints and not has_router_dep:
                 # Check if auto-secure mechanism covers it
                 router_match = re.search(r'prefix\s*=\s*["\']([^"\']+)["\']', content)
                 if router_match:
                     prefix = router_match.group(1)
                     if prefix.startswith(("/admin", "/api/admin", "/api/v1/admin")):
-                        self.add(f"{f.name}: endpoints rely on auto-secure wrapper", WARN, f"prefix={prefix}")
+                        self.add(
+                            f"{f.name}: endpoints rely on auto-secure wrapper",
+                            WARN,
+                            f"prefix={prefix}",
+                        )
                     else:
                         self.add(f"{f.name}: NO auth dependency found", FAIL, f"prefix={prefix}")
                 else:
                     # If it's a *_admin.py router without explicit prefix in the file, it is automatically
                     # registered with an admin prefix and secured by _secure_include_router in routers.py.
-                    self.add(f"{f.name}: endpoints rely on auto-secure wrapper (implicit prefix)", WARN, "implicit admin prefix")
+                    self.add(
+                        f"{f.name}: endpoints rely on auto-secure wrapper (implicit prefix)",
+                        WARN,
+                        "implicit admin prefix",
+                    )
             else:
                 self.add(f"{f.name}: auth check", PASS)
 
@@ -108,21 +117,28 @@ class A01_AccessControl(AuditCheck):
 class A02_Secrets(AuditCheck):
     def run_checks(self):
         secret_patterns = [
-            (r'(?i)(password|passwd|pwd|secret|token|api[_-]?key)\s*[:=]\s*["\'][^"\']{8,}["\']', "Hardcoded secret"),
-            (r'sk-or-v1-[a-zA-Z0-9]{20,}', "OpenRouter API key"),
-            (r'ghp_[a-zA-Z0-9]{36}', "GitHub Personal Access Token"),
-            (r'gho_[a-zA-Z0-9]{36}', "GitHub OAuth Access Token"),
-            (r'xox[bpras]-[0-9a-zA-Z-]{10,}', "Slack token"),
-            (r'AKIA[0-9A-Z]{16}', "AWS Access Key"),
-            (r'-----BEGIN (RSA|EC|DSA|OPENSSH|PRIVATE) KEY-----', "Private key"),
-            (r'eyJ[a-zA-Z0-9_-]+\.eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+', "JWT token"),
+            (
+                r'(?i)(password|passwd|pwd|secret|token|api[_-]?key)\s*[:=]\s*["\'][^"\']{8,}["\']',
+                "Hardcoded secret",
+            ),
+            (r"sk-or-v1-[a-zA-Z0-9]{20,}", "OpenRouter API key"),
+            (r"ghp_[a-zA-Z0-9]{36}", "GitHub Personal Access Token"),
+            (r"gho_[a-zA-Z0-9]{36}", "GitHub OAuth Access Token"),
+            (r"xox[bpras]-[0-9a-zA-Z-]{10,}", "Slack token"),
+            (r"AKIA[0-9A-Z]{16}", "AWS Access Key"),
+            (r"-----BEGIN (RSA|EC|DSA|OPENSSH|PRIVATE) KEY-----", "Private key"),
+            (r"eyJ[a-zA-Z0-9_-]+\.eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+", "JWT token"),
         ]
 
         # Scan for .env files on disk
         env_files = list(REPO_ROOT.glob(".env*"))
         for ef in env_files:
             if ef.name.endswith(".bak") or ".bak." in ef.name:
-                self.add(f"Backup .env file on disk: {ef.name}", FAIL, "Contains secrets, should be removed")
+                self.add(
+                    f"Backup .env file on disk: {ef.name}",
+                    FAIL,
+                    "Contains secrets, should be removed",
+                )
             elif ef.suffix not in (".example", ".template"):
                 self.add(f".env file on disk: {ef.name}", WARN, "Check if it contains real secrets")
 
@@ -141,7 +157,10 @@ class A02_Secrets(AuditCheck):
         try:
             result = subprocess.run(
                 ["git", "grep", "-n", "--cached", "-E", "sk-or-v1-[a-zA-Z0-9]"],
-                capture_output=True, text=True, cwd=str(REPO_ROOT), timeout=30
+                capture_output=True,
+                text=True,
+                cwd=str(REPO_ROOT),
+                timeout=30,
             )
             # Filter out mock/test files and dummy keys
             findings = []
@@ -151,27 +170,36 @@ class A02_Secrets(AuditCheck):
                         continue
                     findings.append(line)
             if findings:
-                self.add("No API keys in git index", FAIL, f"Found OpenRouter key pattern in tracked files: {findings}")
+                self.add(
+                    "No API keys in git index",
+                    FAIL,
+                    f"Found OpenRouter key pattern in tracked files: {findings}",
+                )
             else:
                 self.add("No API keys in git index", PASS)
         except Exception:
             self.add("API key scan", WARN, "Could not run git grep")
 
         # Check for private key files
-        key_files = list(REPO_ROOT.glob("*_key*")) + list(REPO_ROOT.glob("*.pem")) + list(REPO_ROOT.glob("*.key"))
+        key_files = (
+            list(REPO_ROOT.glob("*_key*"))
+            + list(REPO_ROOT.glob("*.pem"))
+            + list(REPO_ROOT.glob("*.key"))
+        )
         for kf in key_files:
             # Check if file is ignored by git
             try:
                 git_check = subprocess.run(
-                    ["git", "check-ignore", "-q", str(kf)],
-                    cwd=str(REPO_ROOT)
+                    ["git", "check-ignore", "-q", str(kf)], cwd=str(REPO_ROOT)
                 )
                 if git_check.returncode == 0:
                     # It is ignored, don't fail, maybe warn/pass
                     continue
             except Exception:
                 pass
-            self.add(f"Key file found: {kf.name}", FAIL, "Private key file should not be in repo root")
+            self.add(
+                f"Key file found: {kf.name}", FAIL, "Private key file should not be in repo root"
+            )
 
         return self
 
@@ -182,7 +210,15 @@ class A02_Secrets(AuditCheck):
 class A03_Injection(AuditCheck):
     def run_checks(self):
         # Check workflow_dag.py for eval
-        dag_file = REPO_ROOT / "control_plane" / "app" / "services" / "agents" / "workflows" / "workflow_dag.py"
+        dag_file = (
+            REPO_ROOT
+            / "control_plane"
+            / "app"
+            / "services"
+            / "agents"
+            / "workflows"
+            / "workflow_dag.py"
+        )
         if dag_file.exists():
             content = dag_file.read_text()
             if "eval(" not in content:
@@ -225,19 +261,24 @@ class A03_Injection(AuditCheck):
                         for kw in node.keywords:
                             if kw.arg == "shell":
                                 is_true = False
-                                if isinstance(kw.value, ast.Constant) and kw.value.value is True:
-                                    is_true = True
-                                elif isinstance(kw.value, ast.Name) and kw.value.id == "True":
+                                if (
+                                    isinstance(kw.value, ast.Constant)
+                                    and kw.value.value is True
+                                    or isinstance(kw.value, ast.Name)
+                                    and kw.value.id == "True"
+                                ):
                                     is_true = True
                                 if is_true:
-                                    lines.append(f"{rel_path}:{node.lineno}: {ast.unparse(node).split('\n')[0][:100]}")
+                                    lines.append(
+                                        f"{rel_path}:{node.lineno}: {ast.unparse(node).splitlines()[0][:100]}"
+                                    )
             except Exception:
                 pass
 
         if lines:
-            self.add(f"No shell=True in production .py files", FAIL, f"Found: {lines}")
+            self.add("No shell=True in production .py files", FAIL, f"Found: {lines}")
         else:
-            self.add(f"No shell=True in production .py files", PASS)
+            self.add("No shell=True in production .py files", PASS)
 
         # Check shell scripts for eval
         sh_files = [
@@ -273,7 +314,7 @@ class A05_Misconfig(AuditCheck):
         # Check Dockerfiles for SHA256 pinning
         for df in dockerfiles:
             content = df.read_text()
-            from_lines = re.findall(r'^FROM\s+(\S+)', content, re.MULTILINE)
+            from_lines = re.findall(r"^FROM\s+(\S+)", content, re.MULTILINE)
             for fl in from_lines:
                 if "@sha256:" in fl:
                     self.add(f"{df.name}: FROM {fl.split(':')[0]} pinned to SHA256", PASS)
@@ -286,7 +327,11 @@ class A05_Misconfig(AuditCheck):
             content = sf.read_text()
             if "cors" in content.lower():
                 if '"*"' in content or "'*'" in content:
-                    self.add(f"{sf.name}: CORS wildcard '*'' found", WARN, "Should be restricted in production")
+                    self.add(
+                        f"{sf.name}: CORS wildcard '*'' found",
+                        WARN,
+                        "Should be restricted in production",
+                    )
                 else:
                     self.add(f"{sf.name}: CORS configured", PASS)
 
@@ -318,13 +363,14 @@ class A07_TokenLeakage(AuditCheck):
                     self.add("enterprise_sso.py: SSO token in URL query param", FAIL)
 
         # Check token in WebSocket URLs
-        ws_patterns = [
-            r'\?token=', r'\?api_key=', r'\?access_token='
-        ]
+        ws_patterns = [r"\?token=", r"\?api_key=", r"\?access_token="]
         for pat in ws_patterns:
             result = subprocess.run(
                 ["git", "grep", "-n", "-E", pat, "--", "*.py", "*.ts", "*.tsx"],
-                capture_output=True, text=True, cwd=str(REPO_ROOT), timeout=30
+                capture_output=True,
+                text=True,
+                cwd=str(REPO_ROOT),
+                timeout=30,
             )
             lines = [l for l in result.stdout.strip().split("\n") if l and "/tests/" not in l]
             if lines:
@@ -340,13 +386,17 @@ class A07_TokenLeakage(AuditCheck):
 class A10_SSRF(AuditCheck):
     def run_checks(self):
         # Check web ingestor for URL validation
-        web_ingestor = REPO_ROOT / "control_plane" / "app" / "services" / "ingestion" / "web_ingestor.py"
+        web_ingestor = (
+            REPO_ROOT / "control_plane" / "app" / "services" / "ingestion" / "web_ingestor.py"
+        )
         if web_ingestor.exists():
             content = web_ingestor.read_text()
             if "private" in content.lower() or "169.254" in content or "127.0.0.1" in content:
                 self.add("web_ingestor.py: SSRF validation", PASS)
             else:
-                self.add("web_ingestor.py: SSRF validation", WARN, "No private IP blocking detected")
+                self.add(
+                    "web_ingestor.py: SSRF validation", WARN, "No private IP blocking detected"
+                )
 
         # Check webhook handlers for URL validation
         webhook_dir = REPO_ROOT / "control_plane" / "app" / "services" / "webhooks"
@@ -354,7 +404,9 @@ class A10_SSRF(AuditCheck):
             for wf in webhook_dir.rglob("*.py"):
                 content = wf.read_text()
                 if "url" in content.lower():
-                    self.add(f"webhooks/{wf.name}: potential SSRF surface", WARN, "Verify URL validation")
+                    self.add(
+                        f"webhooks/{wf.name}: potential SSRF surface", WARN, "Verify URL validation"
+                    )
 
         return self
 
@@ -371,7 +423,11 @@ class SupplyChain(AuditCheck):
             self.add("requirements.txt + uv.lock both exist", PASS)
 
         # Check for SBOM
-        sbom_files = list(REPO_ROOT.glob("**/sbom*")) + list(REPO_ROOT.glob("**/*cyclonedx*")) + list(REPO_ROOT.glob("**/*spdx*"))
+        sbom_files = (
+            list(REPO_ROOT.glob("**/sbom*"))
+            + list(REPO_ROOT.glob("**/*cyclonedx*"))
+            + list(REPO_ROOT.glob("**/*spdx*"))
+        )
         if sbom_files:
             self.add("SBOM file(s) found", PASS)
             for sf in sbom_files:
@@ -387,7 +443,11 @@ class SupplyChain(AuditCheck):
             if "detect-secrets" in content or "detect-private-key" in content:
                 self.add("pre-commit: security hooks configured", PASS)
             else:
-                self.add("pre-commit: security hooks", WARN, "No detect-secrets or detect-private-key hooks")
+                self.add(
+                    "pre-commit: security hooks",
+                    WARN,
+                    "No detect-secrets or detect-private-key hooks",
+                )
         else:
             self.add("pre-commit-config.yaml exists", FAIL)
 
@@ -424,13 +484,24 @@ class Infrastructure(AuditCheck):
         if mw_file.exists():
             content = mw_file.read_text()
             headers_found = []
-            for header in ["X-Content-Type-Options", "X-Frame-Options", "Content-Security-Policy", "Strict-Transport-Security"]:
+            for header in [
+                "X-Content-Type-Options",
+                "X-Frame-Options",
+                "Content-Security-Policy",
+                "Strict-Transport-Security",
+            ]:
                 if header in content:
                     headers_found.append(header)
             if len(headers_found) >= 3:
-                self.add(f"middleware: security headers ({len(headers_found)})", PASS, f"Found: {', '.join(headers_found)}")
+                self.add(
+                    f"middleware: security headers ({len(headers_found)})",
+                    PASS,
+                    f"Found: {', '.join(headers_found)}",
+                )
             else:
-                self.add("middleware: security headers", WARN, f"Only found: {', '.join(headers_found)}")
+                self.add(
+                    "middleware: security headers", WARN, f"Only found: {', '.join(headers_found)}"
+                )
 
         return self
 

@@ -15,10 +15,16 @@ class MCPAPI:
         return self.client._request("POST", f"/admin/agents/mcp/servers/{server_id}/discover")
 
     def approve_tool(self, server_id: str, tool_name: str) -> Dict[str, Any]:
-        return self.client._request("POST", f"/admin/agents/mcp/servers/{server_id}/approve-tool", json={"tool_name": tool_name})
+        return self.client._request(
+            "POST",
+            f"/admin/agents/mcp/servers/{server_id}/approve-tool",
+            json={"tool_name": tool_name},
+        )
 
     def call_tool(self, tool_name: str, params: Dict[str, Any]) -> Dict[str, Any]:
-        return self.client._request("POST", f"/admin/agents/mcp/tools/{tool_name}/call", json=params)
+        return self.client._request(
+            "POST", f"/admin/agents/mcp/tools/{tool_name}/call", json=params
+        )
 
     def list_tools(self) -> List[Dict[str, Any]]:
         return self.client._request("GET", "/admin/agents/mcp/tools")

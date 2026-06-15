@@ -8,6 +8,7 @@ and enough detail for security reviews.
 Events stored in memory (for tests and short-lived processes).
 In production, this should be shipped to a persistent audit sink.
 """
+
 from __future__ import annotations
 
 import time

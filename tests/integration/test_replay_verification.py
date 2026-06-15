@@ -1,5 +1,7 @@
 import pytest
-from app.models.commercial.commercial_inference_reproducibility import CommercialInferenceReproducibilityRecord
+from app.models.commercial.commercial_inference_reproducibility import (
+    CommercialInferenceReproducibilityRecord,
+)
 from app.services.inference.replay_verification import verify_replay
 from app.services.inference.reproducibility import capture_reproducibility_record
 
@@ -16,7 +18,10 @@ async def test_exact_replay_match(session, settings):
         model_alias="demo",
         provider="llama.cpp",
         backend_name="backend-a",
-        request_payload={"messages": [{"role": "user", "content": "hello world"}], "temperature": 0.2},
+        request_payload={
+            "messages": [{"role": "user", "content": "hello world"}],
+            "temperature": 0.2,
+        },
         response_payload={"choices": [{"message": {"content": "exact replay output"}}]},
         prompt_template="chatml",
         metadata_json={"replay_candidate_output": "exact replay output"},
@@ -81,7 +86,11 @@ async def test_drift_detection_flags_tokenizer_and_runtime(session, settings):
                 "model_name": "demo/model",
                 "model_manifest_hash": "other",
                 "runtime_config_json": {"quantization": "Q8_0"},
-                "tokenizer_info_json": {"tokenizer_name": "tok-b", "tokenizer_version": "2", "template_hash": "different"},
+                "tokenizer_info_json": {
+                    "tokenizer_name": "tok-b",
+                    "tokenizer_version": "2",
+                    "template_hash": "different",
+                },
                 "snapshot_hash": "different",
             },
         },
@@ -108,7 +117,10 @@ async def test_replay_disabled_returns_failed(session):
         model_name="demo/model",
         provider="unknown-provider",
         backend_name="backend-x",
-        request_payload={"messages": [{"role": "user", "content": "cannot replay"}], "temperature": 0.9},
+        request_payload={
+            "messages": [{"role": "user", "content": "cannot replay"}],
+            "temperature": 0.9,
+        },
         response_payload=None,
     )
     await session.commit()

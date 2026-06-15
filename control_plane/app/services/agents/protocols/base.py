@@ -1,6 +1,7 @@
 import uuid
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -22,13 +23,13 @@ class MCPToolServer(BaseModel):
     endpoint: str
     transport: str
     trust_level: TrustLevel
-    capabilities: List[str] = Field(default_factory=list)
+    capabilities: list[str] = Field(default_factory=list)
 
 
 class MCPTool(BaseModel):
     name: str
     description: str
-    input_schema: Dict[str, Any]
+    input_schema: dict[str, Any]
     server_id: uuid.UUID
     is_approved: bool = False
 
@@ -38,7 +39,7 @@ class A2AAgentEndpoint(BaseModel):
     agent_name: str
     base_url: str
     trust_level: TrustLevel
-    allowed_message_types: List[str] = Field(default_factory=list)
+    allowed_message_types: list[str] = Field(default_factory=list)
 
 
 class AgentCapability(BaseModel):
@@ -52,4 +53,4 @@ class ProtocolTrustPolicy(BaseModel):
     min_trust_level: TrustLevel
     require_approval: bool = True
     require_signature: bool = False
-    allowed_scopes: List[str] = Field(default_factory=list)
+    allowed_scopes: list[str] = Field(default_factory=list)

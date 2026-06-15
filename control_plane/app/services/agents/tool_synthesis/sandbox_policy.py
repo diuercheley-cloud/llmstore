@@ -13,9 +13,7 @@ class SandboxPolicy:
 
     def create_policy_event(self, session_id, event_type: str, details: dict):
         event = AgentSandboxPolicyEvent(
-            session_id=session_id,
-            event_type=event_type,
-            details=details
+            session_id=session_id, event_type=event_type, details=details
         )
         self.db.add(event)
         self.db.commit()
@@ -23,8 +21,11 @@ class SandboxPolicy:
 
     def enforce_timeout(self, session: AgentSandboxSession):
         from app.core.time import utc_now
+
         if session.expires_at and utc_now() > session.expires_at:
             session.status = "expired"
-            self.create_policy_event(session.id, "timeout", {"expired_at": session.expires_at.isoformat()})
+            self.create_policy_event(
+                session.id, "timeout", {"expired_at": session.expires_at.isoformat()}
+            )
             self.db.commit()
             raise Exception("Sandbox session expired.")

@@ -21,14 +21,14 @@ def test_all_templates_exist():
 def test_legal_disclaimer_present():
     for tpl in REQUIRED_TEMPLATES:
         path = os.path.join(CONTRACTS_DIR, tpl)
-        with open(path, "r") as f:
+        with open(path) as f:
             content = f.read().lower()
-        assert ("revisão jurídica" in content or
-                "revisão por assessoria jurídica" in content or
-                "não constitui aconselhamento jurídico" in content or
-                "template genérico" in content), (
-            f"{tpl} is missing legal disclaimer"
-        )
+        assert (
+            "revisão jurídica" in content
+            or "revisão por assessoria jurídica" in content
+            or "não constitui aconselhamento jurídico" in content
+            or "template genérico" in content
+        ), f"{tpl} is missing legal disclaimer"
 
 
 def test_local_appliance_mentioned():
@@ -36,23 +36,22 @@ def test_local_appliance_mentioned():
         if tpl == "README.md":
             continue
         path = os.path.join(CONTRACTS_DIR, tpl)
-        with open(path, "r") as f:
+        with open(path) as f:
             content = f.read().lower()
-        assert "local appliance" in content, (
-            f"{tpl} does not mention local appliance"
-        )
+        assert "local appliance" in content, f"{tpl} does not mention local appliance"
 
 
 def test_psp_pix_out_of_scope():
     for tpl in ["SOW_TEMPLATE.md", "SERVICE_AGREEMENT_TEMPLATE.md"]:
         path = os.path.join(CONTRACTS_DIR, tpl)
-        with open(path, "r") as f:
+        with open(path) as f:
             content = f.read().lower()
-        assert ("psp" in content or "pix" in content or
-                "pagamentos reais" in content or
-                "processamento de pagamentos" in content), (
-            f"{tpl} missing PSP/PIX limitation"
-        )
+        assert (
+            "psp" in content
+            or "pix" in content
+            or "pagamentos reais" in content
+            or "processamento de pagamentos" in content
+        ), f"{tpl} missing PSP/PIX limitation"
 
 
 def test_no_absolute_performance_guarantees():
@@ -60,7 +59,7 @@ def test_no_absolute_performance_guarantees():
         if tpl == "README.md":
             continue
         path = os.path.join(CONTRACTS_DIR, tpl)
-        with open(path, "r") as f:
+        with open(path) as f:
             content = f.read().lower()
         forbidden = [
             "garantimos 100%",
@@ -70,9 +69,7 @@ def test_no_absolute_performance_guarantees():
             "performance garantida",
         ]
         for phrase in forbidden:
-            assert phrase not in content, (
-                f"{tpl} contains absolute guarantee: {phrase}"
-            )
+            assert phrase not in content, f"{tpl} contains absolute guarantee: {phrase}"
 
 
 def test_no_automatic_compliance_claims():
@@ -80,7 +77,7 @@ def test_no_automatic_compliance_claims():
         if tpl == "README.md":
             continue
         path = os.path.join(CONTRACTS_DIR, tpl)
-        with open(path, "r") as f:
+        with open(path) as f:
             content = f.read().lower()
         # Allow negation phrases like "não garante compliance automático"
         # but flag positive claims
@@ -95,7 +92,7 @@ def test_no_automatic_compliance_claims():
 def test_no_real_data():
     for tpl in REQUIRED_TEMPLATES:
         path = os.path.join(CONTRACTS_DIR, tpl)
-        with open(path, "r") as f:
+        with open(path) as f:
             content = f.read()
         # Real CNPJ/CPF patterns (00.000.000/0001-00 is a placeholder)
         # We check that the only CNPJ-like pattern is the placeholder
@@ -104,13 +101,13 @@ def test_no_real_data():
             if "00.000.000/0001-00" in line or "XX.XXX.XXX" in line:
                 continue
             assert "cnpj" not in line.lower() or "XX." in line, (
-                f"{tpl}:{i+1} may contain real CNPJ data"
+                f"{tpl}:{i + 1} may contain real CNPJ data"
             )
 
 
 def test_sow_contains_required_sections():
     path = os.path.join(CONTRACTS_DIR, "SOW_TEMPLATE.md")
-    with open(path, "r") as f:
+    with open(path) as f:
         content = f.read().lower()
     required_sections = [
         "partes",
@@ -130,14 +127,12 @@ def test_sow_contains_required_sections():
         "revisão jurídica obrigatória",
     ]
     for section in required_sections:
-        assert section in content, (
-            f"SOW_TEMPLATE.md missing required section: {section}"
-        )
+        assert section in content, f"SOW_TEMPLATE.md missing required section: {section}"
 
 
 def test_service_agreement_contains_required_sections():
     path = os.path.join(CONTRACTS_DIR, "SERVICE_AGREEMENT_TEMPLATE.md")
-    with open(path, "r") as f:
+    with open(path) as f:
         content = f.read().lower()
     required_sections = [
         "prestação de serviço",

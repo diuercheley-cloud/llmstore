@@ -10,9 +10,9 @@ from kleberai import Client
 def main():
     api_key = os.getenv("CLIENT_API_KEY") or os.getenv("KLEBERAI_API_KEY", "test-key")
     base_url = os.getenv("KLEBERAI_BASE_URL", "http://localhost:18080")
-    
+
     client = Client(api_key=api_key, base_url=base_url)
-    
+
     print("Enviando pergunta...")
     try:
         response = client.chat("Explique o que é RAG em poucas palavras.")
@@ -20,6 +20,7 @@ def main():
         print(response["choices"][0]["message"]["content"])
     except Exception as e:
         print(f"Erro: {e}")
+
 
 if __name__ == "__main__":
     main()

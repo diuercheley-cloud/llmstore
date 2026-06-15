@@ -22,7 +22,13 @@ def test_validate_script_exists():
 
 def test_summary_has_valid_status():
     content = SUMMARY_DOC.read_text(encoding="utf-8")
-    valid_statuses = ["GO", "GO_WITH_WARNINGS", "GO_WITH_ACCEPTED_WARNINGS", "NO_GO", "V1_7_READY_WITH_ACCEPTED_WARNINGS"]
+    valid_statuses = [
+        "GO",
+        "GO_WITH_WARNINGS",
+        "GO_WITH_ACCEPTED_WARNINGS",
+        "NO_GO",
+        "V1_7_READY_WITH_ACCEPTED_WARNINGS",
+    ]
     has_status = any(s in content for s in valid_statuses)
     assert has_status, f"No valid status found in summary. Expected one of: {valid_statuses}"
     # Check status appears in bold in first 20 lines
@@ -42,9 +48,7 @@ def test_summary_has_version():
 
 def test_summary_mentions_psp_pix():
     content = SUMMARY_DOC.read_text(encoding="utf-8")
-    assert "PSP" in content or "PIX" in content, (
-        "PSP/PIX not mentioned in summary as out of scope"
-    )
+    assert "PSP" in content or "PIX" in content, "PSP/PIX not mentioned in summary as out of scope"
 
 
 def test_summary_mentions_blockers():
@@ -72,16 +76,12 @@ def test_summary_has_evidence():
 
 def test_summary_has_limitations():
     content = SUMMARY_DOC.read_text(encoding="utf-8")
-    assert "Limitacoes Fora do Escopo" in content, (
-        "Limitacoes Fora do Escopo section not found"
-    )
+    assert "Limitacoes Fora do Escopo" in content, "Limitacoes Fora do Escopo section not found"
 
 
 def test_summary_has_final_recommendation():
     content = SUMMARY_DOC.read_text(encoding="utf-8")
-    assert "Recomendacao Final" in content, (
-        "Recomendacao Final section not found"
-    )
+    assert "Recomendacao Final" in content, "Recomendacao Final section not found"
 
 
 def test_summary_has_commands():
@@ -129,9 +129,7 @@ def test_validate_script_runs():
     )
     print(f"STDOUT:\n{result.stdout}")
     print(f"STDERR:\n{result.stderr}")
-    assert result.returncode == 0, (
-        f"Validate script failed:\n{result.stdout}\n{result.stderr}"
-    )
+    assert result.returncode == 0, f"Validate script failed:\n{result.stdout}\n{result.stderr}"
 
 
 def test_summary_not_go_with_blockers():
@@ -152,6 +150,7 @@ def test_summary_not_go_with_blockers():
         pytest.skip("No artifact found to cross-check")
 
     import json
+
     data = json.loads(latest_artifact.read_text(encoding="utf-8"))
     bf = data.get("blocker_fails", 0)
 
@@ -163,7 +162,9 @@ def test_summary_not_go_with_blockers():
 
 def test_summary_has_remediation():
     content = SUMMARY_DOC.read_text(encoding="utf-8")
-    has_remediation = "Remediacao" in content or "Pos-Release" in content or "recomendac" in content.lower()
+    has_remediation = (
+        "Remediacao" in content or "Pos-Release" in content or "recomendac" in content.lower()
+    )
     if has_remediation:
         return
     pytest.skip("No remediation/pos-release section found (non-blocking)")

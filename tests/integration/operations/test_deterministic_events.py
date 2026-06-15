@@ -20,4 +20,3 @@ def test_deterministic_event_hash_replays_cleanly():
 def test_event_lineage_preserves_order():
     lineage = build_lineage([{"event_hash": "a"}, {"event_hash": "b"}])
     assert lineage == ["a", "b"]
-

@@ -36,13 +36,28 @@ class DeepSeekProvider(ProviderAdapter):
 
     async def health_check(self) -> dict[str, Any]:
         if not self.enabled:
-            return {"provider_id": "deepseek", "healthy": None, "latency_ms": 0, "error": "disabled"}
+            return {
+                "provider_id": "deepseek",
+                "healthy": None,
+                "latency_ms": 0,
+                "error": "disabled",
+            }
         if not self.configured:
-            return {"provider_id": "deepseek", "healthy": None, "latency_ms": 0, "error": "not configured"}
+            return {
+                "provider_id": "deepseek",
+                "healthy": None,
+                "latency_ms": 0,
+                "error": "not configured",
+            }
         try:
             async with await self._client() as client:
                 resp = await client.get("/v1/models")
-                return {"provider_id": "deepseek", "healthy": resp.is_success, "latency_ms": 0, "error": None}
+                return {
+                    "provider_id": "deepseek",
+                    "healthy": resp.is_success,
+                    "latency_ms": 0,
+                    "error": None,
+                }
         except Exception as e:
             return {"provider_id": "deepseek", "healthy": False, "latency_ms": 0, "error": str(e)}
 
@@ -87,7 +102,9 @@ class DeepSeekProvider(ProviderAdapter):
             else:
                 return 0.0
         prompt_price, completion_price = pricing[key]
-        return (prompt_tokens / 1_000_000 * prompt_price) + (completion_tokens / 1_000_000 * completion_price)
+        return (prompt_tokens / 1_000_000 * prompt_price) + (
+            completion_tokens / 1_000_000 * completion_price
+        )
 
     def log_prompt_enabled(self) -> bool:
         try:

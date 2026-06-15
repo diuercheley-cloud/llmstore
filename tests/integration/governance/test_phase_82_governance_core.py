@@ -5,7 +5,11 @@ from app.services.governance.policy_engine.receipts import build_policy_receipt
 def test_phase_82_governance_core_decision_and_receipt():
     policy = {
         "rules": [
-            {"name": "approval-prod", "action": "require_approval_if", "conditions": [{"field": "env", "operator": "eq", "value": "prod"}]}
+            {
+                "name": "approval-prod",
+                "action": "require_approval_if",
+                "conditions": [{"field": "env", "operator": "eq", "value": "prod"}],
+            }
         ]
     }
     result = evaluate_policy(policy, {"env": "prod"})

@@ -8,7 +8,8 @@ import os
 import time
 import uuid
 from collections import defaultdict
-from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple
+from collections.abc import AsyncGenerator
+from typing import Any
 
 from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import StreamingResponse
@@ -24,8 +25,8 @@ from ..sanitizer import Sanitizer
 logger = logging.getLogger("llm_harness.server")
 
 # In-memory stores for runs and eval runs
-ACTIVE_RUNS: Dict[str, Dict[str, Any]] = {}
-ACTIVE_EVAL_RUNS: Dict[str, Dict[str, Any]] = {}
+ACTIVE_RUNS: dict[str, dict[str, Any]] = {}
+ACTIVE_EVAL_RUNS: dict[str, dict[str, Any]] = {}
 
 # Concurrency control
 MAX_CONCURRENT_RUNS = 10
@@ -34,17 +35,19 @@ _run_semaphore = asyncio.Semaphore(MAX_CONCURRENT_RUNS)
 # Rate limiting: sliding window per client IP
 RATE_LIMIT_WINDOW = 60.0
 RATE_LIMIT_MAX_REQUESTS = 30
-_rate_limit_store: Dict[str, List[float]] = defaultdict(list)
+_rate_limit_store: dict[str, list[float]] = defaultdict(list)
+
 
 class ServerConfig:
-    api_key_env: Optional[str] = None
+    api_key_env: str | None = None
     allow_stub: bool = True
     rate_limit_enabled: bool = True
+
 
 server_config = ServerConfig()
 
 
-def _check_rate_limit(client_ip: str) -> Tuple[bool, int]:
+def _check_rate_limit(client_ip: str) -> tuple[bool, int]:
     if not server_config.rate_limit_enabled:
         return True, 0
     now = time.monotonic()
@@ -58,13 +61,13 @@ def _check_rate_limit(client_ip: str) -> Tuple[bool, int]:
     return True, 0
 
 
-def get_api_key() -> Optional[str]:
+def get_api_key() -> str | None:
     if server_config.api_key_env:
         return os.getenv(server_config.api_key_env)
     return None
 
 
-def verify_auth(authorization: Optional[str] = Header(None)):
+def verify_auth(authorization: str | None = Header(None)):
     expected_key = get_api_key()
     if not expected_key:
         return
@@ -104,11 +107,11 @@ app = FastAPI(title="LLM Harness Server API", lifespan=lifespan)
 
 class RunRequest(BaseModel):
     task: str
-    agent_id: Optional[str] = "default-coder"
-    workspace: Optional[str] = None
-    provider: Optional[str] = "stub"
-    model: Optional[str] = ""
-    config_overrides: Dict[str, Any] = Field(default_factory=dict)
+    agent_id: str | None = "default-coder"
+    workspace: str | None = None
+    provider: str | None = "stub"
+    model: str | None = ""
+    config_overrides: dict[str, Any] = Field(default_factory=dict)
 
     @field_validator("task")
     @classmethod
@@ -121,9 +124,9 @@ class RunRequest(BaseModel):
 class EvalRunRequest(BaseModel):
     suite_path: str
     concurrency: int = 1
-    provider: Optional[str] = "stub"
-    model: Optional[str] = ""
-    config_overrides: Dict[str, Any] = Field(default_factory=dict)
+    provider: str | None = "stub"
+    model: str | None = ""
+    config_overrides: dict[str, Any] = Field(default_factory=dict)
 
     @field_validator("suite_path")
     @classmethod
@@ -132,12 +135,14 @@ class EvalRunRequest(BaseModel):
             raise ValueError("suite_path must not be empty")
         return v
 
+
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
     client_ip = request.client.host if request.client else "unknown"
     allowed, retry_after = _check_rate_limit(client_ip)
     if not allowed:
         from fastapi.responses import JSONResponse
+
         return JSONResponse(
             status_code=429,
             content={"detail": "Rate limit exceeded"},
@@ -171,7 +176,7 @@ async def create_run(req: RunRequest, background_tasks: BackgroundTasks):
         "finished_at": None,
     }
 
-    def progress_callback(event: Dict[str, Any]):
+    def progress_callback(event: dict[str, Any]):
         if run_id in ACTIVE_RUNS:
             ACTIVE_RUNS[run_id]["events"].append(event)
             for q in ACTIVE_RUNS[run_id]["listeners"]:
@@ -217,11 +222,12 @@ async def create_run(req: RunRequest, background_tasks: BackgroundTasks):
 
     return {"run_id": run_id, "status": "running"}
 
+
 @app.get("/runs/{run_id}", dependencies=[Depends(verify_auth)])
 def get_run(run_id: str):
     if run_id not in ACTIVE_RUNS:
         raise HTTPException(status_code=404, detail="Run not found")
-    
+
     run_data = ACTIVE_RUNS[run_id]
     result_dump = None
     if run_data["result"] is not None:
@@ -236,6 +242,7 @@ def get_run(run_id: str):
         "created_at": run_data.get("created_at"),
         "finished_at": run_data.get("finished_at"),
     }
+
 
 @app.get("/runs/{run_id}/events", dependencies=[Depends(verify_auth)])
 async def get_run_events(run_id: str):
@@ -266,11 +273,12 @@ async def get_run_events(run_id: str):
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
+
 @app.post("/runs/{run_id}/cancel", dependencies=[Depends(verify_auth)])
 def cancel_run(run_id: str):
     if run_id not in ACTIVE_RUNS:
         raise HTTPException(status_code=404, detail="Run not found")
-    
+
     run_data = ACTIVE_RUNS[run_id]
     if run_data["status"] == "running" and run_data["task_handle"]:
         run_data["task_handle"].cancel()
@@ -281,10 +289,12 @@ def cancel_run(run_id: str):
         return {"status": "cancelled"}
     return {"status": run_data["status"]}
 
+
 @app.get("/providers", dependencies=[Depends(verify_auth)])
 def get_providers():
     # Return sanitized registry keys
     return {"providers": sorted(list(_PROVIDER_REGISTRY.keys()))}
+
 
 @app.get("/tools", dependencies=[Depends(verify_auth)])
 def get_tools():
@@ -304,18 +314,23 @@ def get_tools():
     ]
     # In the future, dynamically add plugin/mcp tools here if registered.
     from ..plugins import plugin_registry
+
     for name, tool_class in plugin_registry.list_tools().items():
         core_tools.append({"name": name, "description": f"Plugin tool: {tool_class.__name__}"})
-    
+
     from ..mcp import mcp_client
+
     if mcp_client.is_enabled():
         for name, tool in mcp_client.list_tools().items():
-            core_tools.append({
-                "name": f"mcp:{name}",
-                "description": tool.get("description", "MCP Tool"),
-            })
-            
+            core_tools.append(
+                {
+                    "name": f"mcp:{name}",
+                    "description": tool.get("description", "MCP Tool"),
+                }
+            )
+
     return {"tools": core_tools}
+
 
 @app.get("/evals", dependencies=[Depends(verify_auth)])
 def get_evals():
@@ -326,6 +341,7 @@ def get_evals():
             if f.endswith(".eval_suite.json") or f.endswith(".eval_suite.yaml"):
                 files.append(f)
     return {"eval_suites": sorted(files)}
+
 
 @app.post("/evals/run", dependencies=[Depends(verify_auth)])
 async def run_evals(req: EvalRunRequest):
@@ -342,7 +358,7 @@ async def run_evals(req: EvalRunRequest):
             suite = EvalLoader.load(req.suite_path)
             provider = req.provider or "stub"
             model = req.model or ""
-            eval_kwargs: Dict[str, Any] = {
+            eval_kwargs: dict[str, Any] = {
                 "suite": suite,
                 "provider": provider,
                 "model": model,
@@ -365,16 +381,17 @@ async def run_evals(req: EvalRunRequest):
     asyncio.create_task(run_eval_bg())
     return {"eval_run_id": eval_run_id, "status": "running"}
 
+
 @app.get("/evals/{eval_run_id}", dependencies=[Depends(verify_auth)])
 def get_eval_run_status(eval_run_id: str):
     if eval_run_id not in ACTIVE_EVAL_RUNS:
         raise HTTPException(status_code=404, detail="Eval run not found")
-    
+
     run_data = ACTIVE_EVAL_RUNS[eval_run_id]
     result_dump = None
     if run_data["result"] is not None:
         result_dump = Sanitizer.sanitize_data(run_data["result"].model_dump())
-        
+
     return {
         "eval_run_id": eval_run_id,
         "status": run_data["status"],

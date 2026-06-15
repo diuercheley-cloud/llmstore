@@ -1,27 +1,24 @@
 import json
 import uuid
-from datetime import date, datetime
 
-from app.api.deps import get_db_session
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.services.runtime_dependencies import get_db_session as get_db
-from app.models.core.api_key import ApiKey
 from app.models.billing.billing_invoice import BillingInvoice
 from app.models.billing.billing_plan import BillingPlan
+from app.models.billing.customer_payment import CustomerPayment
+from app.models.core.api_key import ApiKey
 from app.models.core.client import Client
 from app.models.core.client_feature_block import ClientFeatureBlock
-from app.models.billing.customer_payment import CustomerPayment
 from app.models.core.generation_job import GenerationJob
 from app.models.core.quota_counter import QuotaCounter
-from app.models.rag.rag_document import RAGDocument
-from app.models.rag.rag_document_chunk import RAGDocumentChunk
-from app.models.rag.rag_usage_event import RagUsageEvent
 from app.models.core.request_log import RequestLog
 from app.models.core.security_event import SecurityEvent
 from app.models.core.tts_usage_event import TtsUsageEvent
 from app.models.core.usage_record import UsageRecord
 from app.models.core.user_quota_override import UserQuotaOverride
+from app.models.rag.rag_document import RAGDocument
+from app.models.rag.rag_document_chunk import RAGDocumentChunk
+from app.models.rag.rag_usage_event import RagUsageEvent
 from app.schemas.admin import (
     ClientBillingPlanPatch,
     ClientCreate,
@@ -32,6 +29,7 @@ from app.schemas.admin import (
 from app.schemas.quality import SystemPromptUpdate
 from app.services.auth import require_admin
 from app.services.billing import ensure_default_billing_plans
+from app.services.runtime_dependencies import get_db_session as get_db
 from app.services.security_monitor import (
     log_security_event,
     suspend_client_for_security,
@@ -50,7 +48,7 @@ async def create_client(payload: ClientCreate, session: AsyncSession = Depends(g
     if settings.deployment_mode == "managed_control_plane" and not payload.organization_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="organization_id is required in managed_control_plane mode"
+            detail="organization_id is required in managed_control_plane mode",
         )
     plans = await ensure_default_billing_plans(session)
     client_data = payload.model_dump()
@@ -83,7 +81,9 @@ async def delete_client(client_id: uuid.UUID, session: AsyncSession = Depends(ge
     if client is None or client.deleted_at is not None:
         raise HTTPException(status_code=404, detail="client not found")
     paid_invoices = await session.execute(
-        select(BillingInvoice).where(BillingInvoice.client_id == client_id, BillingInvoice.status == "paid")
+        select(BillingInvoice).where(
+            BillingInvoice.client_id == client_id, BillingInvoice.status == "paid"
+        )
     )
     if paid_invoices.first() is not None:
         raise HTTPException(status_code=409, detail="cannot delete client with paid invoices")
@@ -103,16 +103,20 @@ async def purge_client(
     client = await session.get(Client, client_id)
     if client is None:
         raise HTTPException(status_code=404, detail="client not found")
-    is_demo = client.name == "demo-client" or (client.metadata_json and "demo" in client.metadata_json)
+    is_demo = client.name == "demo-client" or (
+        client.metadata_json and "demo" in client.metadata_json
+    )
     if is_demo and not payload.allow_demo_client:
-        raise HTTPException(status_code=403, detail="cannot purge demo client without allow_demo_client=true")
+        raise HTTPException(
+            status_code=403, detail="cannot purge demo client without allow_demo_client=true"
+        )
     await log_security_event(
         session,
         event_type="client.delete.requested",
         severity="high",
         title=f"Client purge requested: {client.name}",
         client_id=client_id,
-        details=payload.model_dump()
+        details=payload.model_dump(),
     )
     try:
         if payload.anonymize_instead:
@@ -125,7 +129,9 @@ async def purge_client(
             client.deleted_at = utc_now()
             client.is_blocked = True
             if not payload.delete_invoices:
-                invoices = await session.execute(select(BillingInvoice).where(BillingInvoice.client_id == client_id))
+                invoices = await session.execute(
+                    select(BillingInvoice).where(BillingInvoice.client_id == client_id)
+                )
                 for inv in invoices.scalars().all():
                     inv.note = "PII Removed"
             await session.execute(
@@ -144,20 +150,38 @@ async def purge_client(
             if payload.delete_usage:
                 await session.execute(delete(UsageRecord).where(UsageRecord.client_id == client_id))
                 await session.execute(delete(RequestLog).where(RequestLog.client_id == client_id))
-                await session.execute(delete(QuotaCounter).where(QuotaCounter.client_id == client_id))
-                await session.execute(delete(UserQuotaOverride).where(UserQuotaOverride.user_id == client_id))
-                await session.execute(delete(GenerationJob).where(GenerationJob.client_id == client_id))
+                await session.execute(
+                    delete(QuotaCounter).where(QuotaCounter.client_id == client_id)
+                )
+                await session.execute(
+                    delete(UserQuotaOverride).where(UserQuotaOverride.user_id == client_id)
+                )
+                await session.execute(
+                    delete(GenerationJob).where(GenerationJob.client_id == client_id)
+                )
             if payload.delete_rag_metadata:
-                await session.execute(delete(RAGDocumentChunk).where(RAGDocumentChunk.client_id == client_id))
+                await session.execute(
+                    delete(RAGDocumentChunk).where(RAGDocumentChunk.client_id == client_id)
+                )
                 await session.execute(delete(RAGDocument).where(RAGDocument.client_id == client_id))
-                await session.execute(delete(RagUsageEvent).where(RagUsageEvent.client_id == client_id))
+                await session.execute(
+                    delete(RagUsageEvent).where(RagUsageEvent.client_id == client_id)
+                )
             if payload.delete_tts_metadata:
-                await session.execute(delete(TtsUsageEvent).where(TtsUsageEvent.client_id == client_id))
-            await session.execute(delete(ClientFeatureBlock).where(ClientFeatureBlock.client_id == client_id))
+                await session.execute(
+                    delete(TtsUsageEvent).where(TtsUsageEvent.client_id == client_id)
+                )
+            await session.execute(
+                delete(ClientFeatureBlock).where(ClientFeatureBlock.client_id == client_id)
+            )
             await session.execute(delete(ApiKey).where(ApiKey.client_id == client_id))
             if payload.delete_invoices:
-                await session.execute(delete(CustomerPayment).where(CustomerPayment.client_id == client_id))
-                await session.execute(delete(BillingInvoice).where(BillingInvoice.client_id == client_id))
+                await session.execute(
+                    delete(CustomerPayment).where(CustomerPayment.client_id == client_id)
+                )
+                await session.execute(
+                    delete(BillingInvoice).where(BillingInvoice.client_id == client_id)
+                )
             client.name = f"deleted-{client_id.hex[:8]}"
             client.deleted_at = utc_now()
             client.is_blocked = True
@@ -167,7 +191,9 @@ async def purge_client(
             client.ip_allowlist_json = None
             client.ip_blocklist_json = None
             if payload.delete_audit_events:
-                await session.execute(delete(SecurityEvent).where(SecurityEvent.client_id == client_id))
+                await session.execute(
+                    delete(SecurityEvent).where(SecurityEvent.client_id == client_id)
+                )
             await log_security_event(
                 session,
                 event_type="client.deleted",
@@ -190,7 +216,9 @@ async def purge_client(
 
 
 @router.patch("/clients/{client_id}", response_model=ClientRead)
-async def patch_client(client_id: uuid.UUID, payload: ClientPatch, session: AsyncSession = Depends(get_db)):
+async def patch_client(
+    client_id: uuid.UUID, payload: ClientPatch, session: AsyncSession = Depends(get_db)
+):
     client = await session.get(Client, client_id)
     if client is None:
         raise HTTPException(status_code=404, detail="client not found")
@@ -199,11 +227,23 @@ async def patch_client(client_id: uuid.UUID, payload: ClientPatch, session: Asyn
         if await session.get(BillingPlan, patch_data["billing_plan_id"]) is None:
             raise HTTPException(status_code=404, detail="billing plan not found")
     if "allowed_models" in patch_data:
-        patch_data["allowed_models_json"] = json.dumps(patch_data.pop("allowed_models")) if patch_data["allowed_models"] is not None else None
+        patch_data["allowed_models_json"] = (
+            json.dumps(patch_data.pop("allowed_models"))
+            if patch_data["allowed_models"] is not None
+            else None
+        )
     if "ip_allowlist" in patch_data:
-        patch_data["ip_allowlist_json"] = json.dumps(patch_data.pop("ip_allowlist")) if patch_data["ip_allowlist"] is not None else None
+        patch_data["ip_allowlist_json"] = (
+            json.dumps(patch_data.pop("ip_allowlist"))
+            if patch_data["ip_allowlist"] is not None
+            else None
+        )
     if "ip_blocklist" in patch_data:
-        patch_data["ip_blocklist_json"] = json.dumps(patch_data.pop("ip_blocklist")) if patch_data["ip_blocklist"] is not None else None
+        patch_data["ip_blocklist_json"] = (
+            json.dumps(patch_data.pop("ip_blocklist"))
+            if patch_data["ip_blocklist"] is not None
+            else None
+        )
     for key, value in patch_data.items():
         setattr(client, key, value)
     client.updated_at = utc_now()
@@ -311,12 +351,34 @@ async def export_client_data(
         client = result.scalar_one_or_none()
     if not client:
         raise HTTPException(status_code=404, detail="client not found")
-    keys = (await session.execute(select(ApiKey).where(ApiKey.client_id == client.id))).scalars().all()
-    invoices = (await session.execute(select(BillingInvoice).where(BillingInvoice.client_id == client.id))).scalars().all()
-    usage = (await session.execute(select(UsageRecord).where(UsageRecord.client_id == client.id))).scalars().all()
-    rag_docs = (await session.execute(select(RAGDocument).where(RAGDocument.client_id == client.id))).scalars().all()
-    security_events = (await session.execute(select(SecurityEvent).where(SecurityEvent.client_id == client.id))).scalars().all()
-    tts_events = (await session.execute(select(TtsUsageEvent).where(TtsUsageEvent.client_id == client.id))).scalars().all()
+    keys = (
+        (await session.execute(select(ApiKey).where(ApiKey.client_id == client.id))).scalars().all()
+    )
+    invoices = (
+        (await session.execute(select(BillingInvoice).where(BillingInvoice.client_id == client.id)))
+        .scalars()
+        .all()
+    )
+    usage = (
+        (await session.execute(select(UsageRecord).where(UsageRecord.client_id == client.id)))
+        .scalars()
+        .all()
+    )
+    rag_docs = (
+        (await session.execute(select(RAGDocument).where(RAGDocument.client_id == client.id)))
+        .scalars()
+        .all()
+    )
+    security_events = (
+        (await session.execute(select(SecurityEvent).where(SecurityEvent.client_id == client.id)))
+        .scalars()
+        .all()
+    )
+    tts_events = (
+        (await session.execute(select(TtsUsageEvent).where(TtsUsageEvent.client_id == client.id)))
+        .scalars()
+        .all()
+    )
     export_payload = {
         "export_version": "1.1",
         "generated_at": utc_now().isoformat(),
@@ -408,9 +470,15 @@ async def export_client_data(
             for e in security_events
         ],
         "model_policies": {
-            "allowed_models": json.loads(client.allowed_models_json) if client.allowed_models_json else None,
-            "ip_allowlist": json.loads(client.ip_allowlist_json) if client.ip_allowlist_json else None,
-            "ip_blocklist": json.loads(client.ip_blocklist_json) if client.ip_blocklist_json else None,
+            "allowed_models": json.loads(client.allowed_models_json)
+            if client.allowed_models_json
+            else None,
+            "ip_allowlist": json.loads(client.ip_allowlist_json)
+            if client.ip_allowlist_json
+            else None,
+            "ip_blocklist": json.loads(client.ip_blocklist_json)
+            if client.ip_blocklist_json
+            else None,
         },
         "redaction": {
             "applied": redact,

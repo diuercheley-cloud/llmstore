@@ -89,7 +89,9 @@ def test_excludes_git_from_copy():
         timeout=60,
     )
     output = result.stdout.lower()
-    assert "exclude" in output or ".git" in output.lower(), "Exclusion patterns not mentioned in output"
+    assert "exclude" in output or ".git" in output.lower(), (
+        "Exclusion patterns not mentioned in output"
+    )
 
 
 def test_dry_run_does_not_require_docker():

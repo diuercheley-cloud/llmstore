@@ -148,5 +148,7 @@ async def test_supply_chain_endpoints_require_admin_auth(admin_client, admin_tok
     unauthorized = await admin_client.get("/admin/models/supply-chain/registry")
     assert unauthorized.status_code == 401
 
-    authorized = await admin_client.get("/admin/models/supply-chain/registry", headers=admin_token_headers)
+    authorized = await admin_client.get(
+        "/admin/models/supply-chain/registry", headers=admin_token_headers
+    )
     assert authorized.status_code == 200

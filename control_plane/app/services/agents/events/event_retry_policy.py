@@ -9,6 +9,7 @@ class EventRetryPolicy:
     """
     Manages retry logic and backoff for event delivery.
     """
+
     def __init__(self, max_retries: int = 5, initial_delay: int = 60):
         self.max_retries = max_retries
         self.initial_delay = initial_delay

@@ -21,8 +21,19 @@ class BackupManifest(BaseModel):
     schema_version: str = "2.0.0"
     scope: str = "logical-agent-backup"
     coverage: str = "partial"
-    included: list[str] = Field(default_factory=lambda: ["agents", "workflows", "embedding metadata"])
-    excluded: list[str] = Field(default_factory=lambda: ["auth", "tenants", "billing", "audit", "policies", "persisted config"])
+    included: list[str] = Field(
+        default_factory=lambda: ["agents", "workflows", "embedding metadata"]
+    )
+    excluded: list[str] = Field(
+        default_factory=lambda: [
+            "auth",
+            "tenants",
+            "billing",
+            "audit",
+            "policies",
+            "persisted config",
+        ]
+    )
     components: list[BackupComponent] = Field(default_factory=list)
     encryption_status: str = "encrypted"
     encryption_algorithm: str = "fernet"

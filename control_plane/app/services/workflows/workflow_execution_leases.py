@@ -14,22 +14,38 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class WorkflowExecutionLeaseService:
-    async def _federated_execution(self, db: AsyncSession, federated_execution_id) -> CommercialFederatedWorkflowExecution:
+    async def _federated_execution(
+        self, db: AsyncSession, federated_execution_id
+    ) -> CommercialFederatedWorkflowExecution:
         row = await db.get(CommercialFederatedWorkflowExecution, federated_execution_id)
         if row is None:
             raise ValueError("federated_workflow_execution_not_found")
         return row
 
-    async def _leases(self, db: AsyncSession, federated_execution_id) -> list[CommercialWorkflowExecutionLease]:
+    async def _leases(
+        self, db: AsyncSession, federated_execution_id
+    ) -> list[CommercialWorkflowExecutionLease]:
         return (
-            await db.execute(
-                select(CommercialWorkflowExecutionLease)
-                .where(CommercialWorkflowExecutionLease.federated_execution_id == federated_execution_id)
-                .order_by(desc(CommercialWorkflowExecutionLease.created_at), desc(CommercialWorkflowExecutionLease.lease_token))
+            (
+                await db.execute(
+                    select(CommercialWorkflowExecutionLease)
+                    .where(
+                        CommercialWorkflowExecutionLease.federated_execution_id
+                        == federated_execution_id
+                    )
+                    .order_by(
+                        desc(CommercialWorkflowExecutionLease.created_at),
+                        desc(CommercialWorkflowExecutionLease.lease_token),
+                    )
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
-    async def expire_stale_leases(self, db: AsyncSession, *, federated_execution_id) -> list[CommercialWorkflowExecutionLease]:
+    async def expire_stale_leases(
+        self, db: AsyncSession, *, federated_execution_id
+    ) -> list[CommercialWorkflowExecutionLease]:
         now = utc_now()
         expired: list[CommercialWorkflowExecutionLease] = []
         for lease in await self._leases(db, federated_execution_id):
@@ -39,7 +55,9 @@ class WorkflowExecutionLeaseService:
         await db.flush()
         return expired
 
-    def deterministic_winner(self, *, workflow_id: str, tenant_id: str | None, candidates: list[str]) -> str:
+    def deterministic_winner(
+        self, *, workflow_id: str, tenant_id: str | None, candidates: list[str]
+    ) -> str:
         if not candidates:
             raise ValueError("lease_candidates_required")
         ranked = sorted(
@@ -54,7 +72,9 @@ class WorkflowExecutionLeaseService:
         )
         return ranked[0]
 
-    async def current_owner(self, db: AsyncSession, *, federated_execution_id) -> CommercialWorkflowExecutionLease | None:
+    async def current_owner(
+        self, db: AsyncSession, *, federated_execution_id
+    ) -> CommercialWorkflowExecutionLease | None:
         await self.expire_stale_leases(db, federated_execution_id=federated_execution_id)
         for lease in await self._leases(db, federated_execution_id):
             if lease.status == "active":
@@ -87,7 +107,13 @@ class WorkflowExecutionLeaseService:
         if current:
             current.status = "superseded"
         previous_hash = current.immutable_hash if current else execution.immutable_hash
-        token = max([lease.lease_token for lease in await self._leases(db, federated_execution_id)] or [0]) + 1
+        token = (
+            max(
+                [lease.lease_token for lease in await self._leases(db, federated_execution_id)]
+                or [0]
+            )
+            + 1
+        )
         lease = CommercialWorkflowExecutionLease(
             federated_execution_id=execution.id,
             workflow_id=execution.workflow_id,

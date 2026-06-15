@@ -1,0 +1,1 @@
+../validators/validate-examples-local.sh

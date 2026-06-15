@@ -39,14 +39,19 @@ class DeterministicExtensionLoader:
                     load_plan_hash=load_plan_hash,
                     load_status=status,
                     dry_run=True,
-                    immutable_hash=sha256_hex({"kind": "plugin_load_plan_immutable", "load_plan_hash": load_plan_hash}),
+                    immutable_hash=sha256_hex(
+                        {"kind": "plugin_load_plan_immutable", "load_plan_hash": load_plan_hash}
+                    ),
                 )
             )
         return load_plans
 
     def validate_load_plan(self, load_plan: DeterministicExtensionLoadPlan) -> dict[str, Any]:
         entries = json.loads(load_plan.load_order)
-        deterministic = entries == sorted(entries, key=lambda item: (item["plugin_name"], item["plugin_version"], item["abi_version"]))
+        deterministic = entries == sorted(
+            entries,
+            key=lambda item: (item["plugin_name"], item["plugin_version"], item["abi_version"]),
+        )
         blocked = load_plan.load_status == "blocked"
         return {
             "valid": deterministic and load_plan.dry_run and not blocked,

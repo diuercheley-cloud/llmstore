@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 from uuid import UUID
 
 from app.contracts.base import BaseContract, ContractCapability
@@ -56,21 +56,30 @@ class BackendLifecycleCapabilities(ContractCapability):
 
 @runtime_checkable
 class BackendLifecycleContract(BaseContract, Protocol):
-    async def get_observed_state(self, backend_id: UUID, desired: BackendDesiredState) -> BackendObservedState:
-        ...
+    async def get_observed_state(
+        self, backend_id: UUID, desired: BackendDesiredState
+    ) -> BackendObservedState: ...
 
-    async def start_backend(self, backend_id: UUID, desired: BackendDesiredState) -> LifecycleActionResult:
-        ...
+    async def start_backend(
+        self, backend_id: UUID, desired: BackendDesiredState
+    ) -> LifecycleActionResult: ...
 
-    async def stop_backend(self, backend_id: UUID, desired: BackendDesiredState) -> LifecycleActionResult:
-        ...
+    async def stop_backend(
+        self, backend_id: UUID, desired: BackendDesiredState
+    ) -> LifecycleActionResult: ...
 
-    async def restart_backend(self, backend_id: UUID, desired: BackendDesiredState) -> LifecycleActionResult:
-        ...
+    async def restart_backend(
+        self, backend_id: UUID, desired: BackendDesiredState
+    ) -> LifecycleActionResult: ...
 
-    def capabilities(self) -> BackendLifecycleCapabilities:
-        ...
+    def capabilities(self) -> BackendLifecycleCapabilities: ...
 
     def validate_contract(self) -> bool:
-        required = ["get_observed_state", "start_backend", "stop_backend", "restart_backend", "capabilities"]
+        required = [
+            "get_observed_state",
+            "start_backend",
+            "stop_backend",
+            "restart_backend",
+            "capabilities",
+        ]
         return all(hasattr(self, m) and callable(getattr(self, m)) for m in required)

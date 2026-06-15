@@ -52,4 +52,8 @@ class FederationReplayVerifier:
                 valid = False
                 break
             previous = link.lineage_hash
-        return {"valid": valid, "chain_length": len(ordered), "replay_verifiable": all(item.replay_verifiable for item in ordered)}
+        return {
+            "valid": valid,
+            "chain_length": len(ordered),
+            "replay_verifiable": all(item.replay_verifiable for item in ordered),
+        }

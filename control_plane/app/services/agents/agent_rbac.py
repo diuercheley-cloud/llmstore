@@ -2,8 +2,8 @@
 Owner: agent-platform
 Status: beta
 """
+
 import logging
-from typing import Optional
 
 from app.core.time import utc_now
 from app.models.agents.agents import AgentRBACEvent
@@ -37,15 +37,37 @@ AGENT_PERMISSIONS = {
 AGENT_ROLES = {
     "agent_viewer": {
         "description": "Read-only access to the agentic plane",
-        "permissions": ["agents:read", "agent_tools:read", "agent_memory:read", "agent_evals:read", "agent_incidents:read"],
+        "permissions": [
+            "agents:read",
+            "agent_tools:read",
+            "agent_memory:read",
+            "agent_evals:read",
+            "agent_incidents:read",
+        ],
     },
     "agent_operator": {
         "description": "Operate and execute agents",
-        "permissions": ["agents:read", "agents:execute", "agent_tools:read", "agent_tools:execute", "agent_incidents:read", "agent_incidents:write"],
+        "permissions": [
+            "agents:read",
+            "agents:execute",
+            "agent_tools:read",
+            "agent_tools:execute",
+            "agent_incidents:read",
+            "agent_incidents:write",
+        ],
     },
     "agent_developer": {
         "description": "Develop and test agents and tools",
-        "permissions": ["agents:read", "agents:write", "agents:execute", "agent_tools:read", "agent_tools:write", "agent_tools:execute", "agent_evals:read", "agent_evals:write"],
+        "permissions": [
+            "agents:read",
+            "agents:write",
+            "agents:execute",
+            "agent_tools:read",
+            "agent_tools:write",
+            "agent_tools:execute",
+            "agent_evals:read",
+            "agent_evals:write",
+        ],
     },
     "agent_reviewer": {
         "description": "Review and approve agent promotions",
@@ -53,7 +75,13 @@ AGENT_ROLES = {
     },
     "agent_security_admin": {
         "description": "Manage security policies and sensitive tool classes",
-        "permissions": ["agent_policies:read", "agent_policies:write", "agents:read", "agent_tools:read", "agent_tools:write"],
+        "permissions": [
+            "agent_policies:read",
+            "agent_policies:write",
+            "agents:read",
+            "agent_tools:read",
+            "agent_tools:write",
+        ],
     },
     "agent_tool_admin": {
         "description": "Manage tool registry and execution sandboxes",
@@ -70,15 +98,16 @@ AGENT_ROLES = {
     "agent_marketplace_admin": {
         "description": "Manage agent bundles in the marketplace",
         "permissions": ["agents:read", "agents:write"],
-    }
+    },
 }
+
 
 async def check_agent_permission(
     db: AsyncSession,
     admin: AuthenticatedAdmin,
     permission: str,
-    resource_id: Optional[str] = None,
-    request: Optional[Request] = None
+    resource_id: str | None = None,
+    request: Request | None = None,
 ) -> bool:
     if admin.has_permission("superadmin:all") or admin.has_permission(permission):
         return True
@@ -95,24 +124,26 @@ async def check_agent_permission(
             "required_permission": permission,
             "granted_permissions": sorted(admin.permission_codes),
             "request_path": request.url.path if request else None,
-            "request_method": request.method if request else None
+            "request_method": request.method if request else None,
         },
-        created_at=utc_now()
+        created_at=utc_now(),
     )
     db.add(event)
     await db.commit()
 
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
-        detail={"error": "forbidden", "required_permission": permission}
+        detail={"error": "forbidden", "required_permission": permission},
     )
+
 
 async def require_agent_permission(permission: str):
     async def decorator(
         request: Request,
         db: AsyncSession,
-        admin: AuthenticatedAdmin # This is usually from Depends(require_admin)
+        admin: AuthenticatedAdmin,  # This is usually from Depends(require_admin)
     ):
         await check_agent_permission(db, admin, permission, request=request)
         return admin
+
     return decorator

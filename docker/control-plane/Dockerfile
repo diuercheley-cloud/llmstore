@@ -1,3 +1,14 @@
+# Stage 0: Build frontend static assets
+FROM node:20-slim AS frontend-builder
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY frontend/admin/package.json ./frontend/admin/
+COPY frontend/client/package.json ./frontend/client/
+COPY sdk/node/package.json ./sdk/node/
+RUN npm ci
+COPY frontend/admin ./frontend/admin
+RUN npm run build --workspace=frontend/admin
+
 FROM python:3.12-slim AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -55,6 +66,7 @@ WORKDIR /app
 # PYTHONPATH includes /app to allow 'import control_plane.app'
 # and /app/control_plane to allow 'import app' for backward compatibility.
 COPY control_plane /app/control_plane
+COPY --from=frontend-builder /app/control_plane/app/static/admin-v2 /app/control_plane/app/static/admin-v2
 COPY scripts /app/scripts
 COPY examples /app/examples
 COPY VERSION /app/VERSION

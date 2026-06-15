@@ -2,8 +2,9 @@
 Owner: agent-platform
 Status: beta
 """
+
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.models.agents.agent_tool_execution import AgentToolExecutionAudit
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +16,7 @@ def sanitize_payload(data: Any) -> Any:
     """Recursively redacts sensitive keys and values from parameter payloads and details."""
     import uuid
     from datetime import date, datetime
+
     if isinstance(data, uuid.UUID):
         return str(data)
     if isinstance(data, (datetime, date)):
@@ -23,7 +25,18 @@ def sanitize_payload(data: Any) -> Any:
         sanitized = {}
         for k, v in data.items():
             k_lower = k.lower()
-            if any(p in k_lower for p in ["api_key", "secret", "password", "token", "authorization", "credential", "private_key"]):
+            if any(
+                p in k_lower
+                for p in [
+                    "api_key",
+                    "secret",
+                    "password",
+                    "token",
+                    "authorization",
+                    "credential",
+                    "private_key",
+                ]
+            ):
                 sanitized[k] = "[REDACTED]"
             else:
                 sanitized[k] = sanitize_payload(v)
@@ -42,12 +55,12 @@ async def log_audit_event(
     db: AsyncSession,
     tenant_id: str,
     event_type: str,
-    invocation_id: Optional[Any] = None,
-    agent_id: Optional[Any] = None,
-    agent_tool_id: Optional[Any] = None,
-    decision: Optional[str] = None,
-    reason: Optional[str] = None,
-    details: Optional[Dict[str, Any]] = None,
+    invocation_id: Any | None = None,
+    agent_id: Any | None = None,
+    agent_tool_id: Any | None = None,
+    decision: str | None = None,
+    reason: str | None = None,
+    details: dict[str, Any] | None = None,
 ) -> AgentToolExecutionAudit:
     """Creates a sanitized audit log record for security, policy, and tool decisions."""
     sanitized_details = sanitize_payload(details) if details else None
@@ -67,10 +80,10 @@ async def log_audit_event(
         reason=clean_reason,
         details=sanitized_details,
     )
-    
+
     db.add(audit_entry)
     await db.flush()
-    
+
     logger.info(
         f"[AUDIT] Tenant: {tenant_id} | Event: {event_type} | Decision: {decision} | Reason: {clean_reason}"
     )

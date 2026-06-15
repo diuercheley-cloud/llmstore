@@ -1,6 +1,6 @@
 # Owner: agent-platform
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from sqlalchemy import select
@@ -10,8 +10,8 @@ from sqlalchemy import select
 async def test_agent_a2a_protocol_flow(e2e_client, admin_headers):
     from app.core.config import get_settings
     from app.db.session import SessionLocal
-    from app.models.core.admin_rbac import AdminAuditEvent
     from app.models.agents.agents import AgentDefinition, AgentDelegationPolicy
+    from app.models.core.admin_rbac import AdminAuditEvent
     from app.services.agents.a2a.a2a_client import A2AClientService
     from app.services.agents.a2a.a2a_security import A2ASecurityService
 
@@ -29,7 +29,9 @@ async def test_agent_a2a_protocol_flow(e2e_client, admin_headers):
     settings.agent_a2a_external_enabled = False
 
     # Attempt to list agents - must fail with 403
-    resp = await e2e_client.get(f"/admin/agents/a2a/agents?tenant_id={tenant_id}", headers=admin_headers)
+    resp = await e2e_client.get(
+        f"/admin/agents/a2a/agents?tenant_id={tenant_id}", headers=admin_headers
+    )
     assert resp.status_code == 403
     assert "Agentic A2A Protocol is disabled." in resp.json()["detail"]
 
@@ -38,9 +40,11 @@ async def test_agent_a2a_protocol_flow(e2e_client, admin_headers):
         "tenant_id": tenant_id,
         "agent_id": str(sender_id),
         "auth_token": "token-sender",
-        "is_external": False
+        "is_external": False,
     }
-    resp = await e2e_client.post("/admin/agents/a2a/register", json=reg_payload, headers=admin_headers)
+    resp = await e2e_client.post(
+        "/admin/agents/a2a/register", json=reg_payload, headers=admin_headers
+    )
     assert resp.status_code == 403
 
     # Step B: Turn on A2A but keep External A2A disabled
@@ -53,9 +57,11 @@ async def test_agent_a2a_protocol_flow(e2e_client, admin_headers):
         "agent_id": str(external_agent_id),
         "auth_token": "token-external",
         "is_external": True,
-        "agent_name": "External Test Agent"
+        "agent_name": "External Test Agent",
     }
-    resp = await e2e_client.post("/admin/agents/a2a/register", json=ext_reg_payload, headers=admin_headers)
+    resp = await e2e_client.post(
+        "/admin/agents/a2a/register", json=ext_reg_payload, headers=admin_headers
+    )
     assert resp.status_code == 403
     assert "External Agentic A2A is disabled." in resp.json()["detail"]
 
@@ -73,7 +79,7 @@ async def test_agent_a2a_protocol_flow(e2e_client, admin_headers):
             owner="admin",
             tenant_id=tenant_id,
             status="active",
-            allowed_tools=[]
+            allowed_tools=[],
         )
         receiver_def = AgentDefinition(
             id=receiver_id,
@@ -84,7 +90,7 @@ async def test_agent_a2a_protocol_flow(e2e_client, admin_headers):
             owner="admin",
             tenant_id=tenant_id,
             status="active",
-            allowed_tools=[]
+            allowed_tools=[],
         )
         db.add(sender_def)
         db.add(receiver_def)
@@ -92,47 +98,63 @@ async def test_agent_a2a_protocol_flow(e2e_client, admin_headers):
 
     # Step D: Register the internal agents via Admin API
     # 1. Register sender
-    resp = await e2e_client.post("/admin/agents/a2a/register", json={
-        "tenant_id": tenant_id,
-        "agent_id": str(sender_id),
-        "auth_token": "token-sender",
-        "capabilities": {"features": ["messaging"]},
-        "is_external": False
-    }, headers=admin_headers)
+    resp = await e2e_client.post(
+        "/admin/agents/a2a/register",
+        json={
+            "tenant_id": tenant_id,
+            "agent_id": str(sender_id),
+            "auth_token": "token-sender",
+            "capabilities": {"features": ["messaging"]},
+            "is_external": False,
+        },
+        headers=admin_headers,
+    )
     assert resp.status_code == 200
     sender_reg_data = resp.json()
     assert sender_reg_data["agent_id"] == str(sender_id)
 
     # 2. Register receiver
-    resp = await e2e_client.post("/admin/agents/a2a/register", json={
-        "tenant_id": tenant_id,
-        "agent_id": str(receiver_id),
-        "auth_token": "token-receiver",
-        "capabilities": {"features": ["delegation"]},
-        "is_external": False
-    }, headers=admin_headers)
+    resp = await e2e_client.post(
+        "/admin/agents/a2a/register",
+        json={
+            "tenant_id": tenant_id,
+            "agent_id": str(receiver_id),
+            "auth_token": "token-receiver",
+            "capabilities": {"features": ["delegation"]},
+            "is_external": False,
+        },
+        headers=admin_headers,
+    )
     assert resp.status_code == 200
 
     # 3. Register external agent (this should create a placeholder definition automatically)
-    resp = await e2e_client.post("/admin/agents/a2a/register", json={
-        "tenant_id": tenant_id,
-        "agent_id": str(external_agent_id),
-        "auth_token": "token-external",
-        "capabilities": {"features": ["translation"]},
-        "is_external": True,
-        "agent_name": "External Translator"
-    }, headers=admin_headers)
+    resp = await e2e_client.post(
+        "/admin/agents/a2a/register",
+        json={
+            "tenant_id": tenant_id,
+            "agent_id": str(external_agent_id),
+            "auth_token": "token-external",
+            "capabilities": {"features": ["translation"]},
+            "is_external": True,
+            "agent_name": "External Translator",
+        },
+        headers=admin_headers,
+    )
     assert resp.status_code == 200
 
     # Verify placeholder external agent definition exists
     async with SessionLocal() as db:
-        res = await db.execute(select(AgentDefinition).where(AgentDefinition.id == external_agent_id))
+        res = await db.execute(
+            select(AgentDefinition).where(AgentDefinition.id == external_agent_id)
+        )
         ext_def = res.scalar_one_or_none()
         assert ext_def is not None
         assert ext_def.owner == "external"
 
     # Step E: Capability Discovery
-    resp = await e2e_client.get(f"/admin/agents/a2a/agents?tenant_id={tenant_id}", headers=admin_headers)
+    resp = await e2e_client.get(
+        f"/admin/agents/a2a/agents?tenant_id={tenant_id}", headers=admin_headers
+    )
     assert resp.status_code == 200
     agents_list = resp.json()
     assert len(agents_list) == 3
@@ -142,12 +164,16 @@ async def test_agent_a2a_protocol_flow(e2e_client, admin_headers):
 
     # Step F: Cross-Tenant Protection
     # Trying to register receiver agent under a different tenant must block
-    resp = await e2e_client.post("/admin/agents/a2a/register", json={
-        "tenant_id": "tenant-other",
-        "agent_id": str(receiver_id),
-        "auth_token": "token-receiver-other",
-        "is_external": False
-    }, headers=admin_headers)
+    resp = await e2e_client.post(
+        "/admin/agents/a2a/register",
+        json={
+            "tenant_id": "tenant-other",
+            "agent_id": str(receiver_id),
+            "auth_token": "token-receiver-other",
+            "is_external": False,
+        },
+        headers=admin_headers,
+    )
     assert resp.status_code == 403
     assert "Cross-tenant registration is blocked." in resp.json()["detail"]
 
@@ -160,7 +186,7 @@ async def test_agent_a2a_protocol_flow(e2e_client, admin_headers):
         "recipient_agent_id": str(receiver_id),
         "content_type": "text/plain",
         "payload": {"text": "Hello, receiver!"},
-        "timestamp": datetime.now(timezone.utc).isoformat()
+        "timestamp": datetime.now(UTC).isoformat(),
     }
 
     # 1. Sign signature
@@ -169,9 +195,7 @@ async def test_agent_a2a_protocol_flow(e2e_client, admin_headers):
 
     # 2. Try sending message without valid token in header
     resp = await e2e_client.post(
-        "/agents/a2a/message",
-        json=msg_payload,
-        headers={"X-Agent-A2A-Token": "token-wrong"}
+        "/agents/a2a/message", json=msg_payload, headers={"X-Agent-A2A-Token": "token-wrong"}
     )
     assert resp.status_code == 401
     assert "Invalid A2A authentication token." in resp.json()["detail"]
@@ -180,18 +204,14 @@ async def test_agent_a2a_protocol_flow(e2e_client, admin_headers):
     wrong_payload = msg_payload.copy()
     wrong_payload["signature"] = "wrong-sig"
     resp = await e2e_client.post(
-        "/agents/a2a/message",
-        json=wrong_payload,
-        headers={"X-Agent-A2A-Token": "token-sender"}
+        "/agents/a2a/message", json=wrong_payload, headers={"X-Agent-A2A-Token": "token-sender"}
     )
     assert resp.status_code == 400
     assert "Invalid message signature." in resp.json()["detail"]
 
     # 4. Successful message delivery
     resp = await e2e_client.post(
-        "/agents/a2a/message",
-        json=msg_payload,
-        headers={"X-Agent-A2A-Token": "token-sender"}
+        "/agents/a2a/message", json=msg_payload, headers={"X-Agent-A2A-Token": "token-sender"}
     )
     assert resp.status_code == 200
     assert resp.json()["status"] == "success"
@@ -204,7 +224,7 @@ async def test_agent_a2a_protocol_flow(e2e_client, admin_headers):
         "delegatee_agent_id": str(receiver_id),
         "task_description": "Translate this text.",
         "input_data": {"text": "hello"},
-        "timestamp": datetime.now(timezone.utc).isoformat()
+        "timestamp": datetime.now(UTC).isoformat(),
     }
     delegation_signature = A2ASecurityService.generate_signature(delegation_payload, "token-sender")
     delegation_payload["signature"] = delegation_signature
@@ -213,7 +233,7 @@ async def test_agent_a2a_protocol_flow(e2e_client, admin_headers):
     resp = await e2e_client.post(
         "/agents/a2a/delegate",
         json=delegation_payload,
-        headers={"X-Agent-A2A-Token": "token-sender"}
+        headers={"X-Agent-A2A-Token": "token-sender"},
     )
     assert resp.status_code == 403
     assert "Delegation policy" in resp.json()["detail"]
@@ -225,7 +245,7 @@ async def test_agent_a2a_protocol_flow(e2e_client, admin_headers):
             tenant_id=tenant_id,
             source_agent_id=sender_id,
             target_agent_id=receiver_id,
-            is_active=True
+            is_active=True,
         )
         db.add(policy)
         await db.commit()
@@ -234,7 +254,7 @@ async def test_agent_a2a_protocol_flow(e2e_client, admin_headers):
     resp = await e2e_client.post(
         "/agents/a2a/delegate",
         json=delegation_payload,
-        headers={"X-Agent-A2A-Token": "token-sender"}
+        headers={"X-Agent-A2A-Token": "token-sender"},
     )
     assert resp.status_code == 200
     assert resp.json()["status"] == "success"
@@ -249,7 +269,9 @@ async def test_agent_a2a_protocol_flow(e2e_client, admin_headers):
         assert msg_received_event.target_id == str(receiver_id)
 
         # Verify delegation receipt audit event was logged
-        del_received_event = next(e for e in events if e.event_type == "agent.a2a.delegation.received")
+        del_received_event = next(
+            e for e in events if e.event_type == "agent.a2a.delegation.received"
+        )
         assert del_received_event.status == "success"
         assert del_received_event.target_id == str(receiver_id)
 
@@ -263,7 +285,7 @@ async def test_agent_a2a_protocol_flow(e2e_client, admin_headers):
             recipient_agent_id=receiver_id,
             conversation_id=conversation_id,
             content_type="text/plain",
-            payload_data={"client": "sdk-message"}
+            payload_data={"client": "sdk-message"},
         )
         assert client_msg_resp["status"] == "delivered_locally"
 
@@ -273,7 +295,7 @@ async def test_agent_a2a_protocol_flow(e2e_client, admin_headers):
             delegator_agent_id=sender_id,
             delegatee_agent_id=receiver_id,
             task_description="Client task delegation",
-            input_data={"client": "sdk-delegate"}
+            input_data={"client": "sdk-delegate"},
         )
         assert client_del_resp["status"] == "delegated_locally"
 

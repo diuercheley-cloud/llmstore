@@ -31,19 +31,21 @@ class MCPConfig(BaseModel):
     servers: list[MCPServerConfig] = Field(default_factory=list)
 
 
-
 class HarnessConfigError(Exception):
     """Base exception for all Harness configuration errors."""
+
     pass
 
 
 class HarnessConfigParseError(HarnessConfigError):
     """Raised when the YAML or TOML file has syntax/parsing errors."""
+
     pass
 
 
 class HarnessConfigSchemaError(HarnessConfigError):
     """Raised when parsed configuration violates the schema (type mismatch, invalid values)."""
+
     pass
 
 
@@ -94,9 +96,9 @@ class HarnessConfig(BaseSettings):
     memory: Literal["disabled", "local"] = "local"
     memory_dir: str = ".llm_harness_memory"
     memory_retention_days: int = 30
-    agent_mode: Literal[
-        "single", "team", "supervisor", "autonomous", "planner-coder-reviewer"
-    ] = "single"
+    agent_mode: Literal["single", "team", "supervisor", "autonomous", "planner-coder-reviewer"] = (
+        "single"
+    )
     agent_registry_file: str = "config/agent-registry.yaml"
     teams: dict[str, Any] = Field(default_factory=dict)
     default_team: str | None = None
@@ -119,9 +121,6 @@ class HarnessConfig(BaseSettings):
     fallback_model_profile: str | None = None
     allow_cloud_models: bool = True
     is_reasoning_model: bool = False
-
-
-
 
     @classmethod
     def _read_file(cls, config_path: str | None = None) -> dict[str, Any]:
@@ -154,9 +153,7 @@ class HarnessConfig(BaseSettings):
                         f"Failed to parse YAML config from {path}: {e}"
                     ) from e
                 except Exception as e:
-                    raise HarnessConfigParseError(
-                        f"Failed to load config from {path}: {e}"
-                    ) from e
+                    raise HarnessConfigParseError(f"Failed to load config from {path}: {e}") from e
 
         return config_data or {}
 

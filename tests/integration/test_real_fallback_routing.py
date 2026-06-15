@@ -12,6 +12,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 @pytest.fixture(autouse=True)
 def clear_settings_cache():
     from app.core.config import get_settings
+
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()
@@ -63,7 +64,10 @@ def test_is_provider_available_unknown():
 
 
 def test_fallback_chain_not_empty_when_local_unavailable(router, monkeypatch):
-    monkeypatch.setattr("app.services.routing.smart_router._is_provider_available", lambda pid: pid not in ("local", "lmstudio"))
+    monkeypatch.setattr(
+        "app.services.routing.smart_router._is_provider_available",
+        lambda pid: pid not in ("local", "lmstudio"),
+    )
     inp = SmartRouterInput(
         endpoint_type=EndpointType.chat,
         cloud_allowed=True,
@@ -75,7 +79,10 @@ def test_fallback_chain_not_empty_when_local_unavailable(router, monkeypatch):
 
 
 def test_fallback_to_cloud_only_if_cloud_allowed(router, monkeypatch):
-    monkeypatch.setattr("app.services.routing.smart_router._is_provider_available", lambda pid: pid not in ("local", "lmstudio"))
+    monkeypatch.setattr(
+        "app.services.routing.smart_router._is_provider_available",
+        lambda pid: pid not in ("local", "lmstudio"),
+    )
     inp = SmartRouterInput(
         endpoint_type=EndpointType.chat,
         cloud_allowed=False,
@@ -87,7 +94,9 @@ def test_fallback_to_cloud_only_if_cloud_allowed(router, monkeypatch):
 
 
 def test_fallback_chain_includes_tried_providers(router, monkeypatch):
-    monkeypatch.setattr("app.services.routing.smart_router._is_provider_available", lambda pid: pid == "mock")
+    monkeypatch.setattr(
+        "app.services.routing.smart_router._is_provider_available", lambda pid: pid == "mock"
+    )
     inp = SmartRouterInput(
         endpoint_type=EndpointType.chat,
         cloud_allowed=True,
@@ -101,6 +110,7 @@ def test_fallback_chain_includes_tried_providers(router, monkeypatch):
 def test_force_local_failure_flag_blocks_local(monkeypatch):
     monkeypatch.setenv("ROUTING_TEST_FORCE_LOCAL_FAILURE", "true")
     from app.core.config import get_settings
+
     get_settings.cache_clear()
     assert _is_provider_available("local") is False
     assert _is_provider_available("lmstudio") is False
@@ -109,6 +119,7 @@ def test_force_local_failure_flag_blocks_local(monkeypatch):
 def test_force_local_failure_not_affect_mock_if_not_in_local_providers(monkeypatch):
     monkeypatch.setenv("ROUTING_TEST_FORCE_LOCAL_FAILURE", "true")
     from app.core.config import get_settings
+
     get_settings.cache_clear()
     assert _is_provider_available("local") is False
 
@@ -116,6 +127,7 @@ def test_force_local_failure_not_affect_mock_if_not_in_local_providers(monkeypat
 def test_force_local_flag_disabled_local_available(monkeypatch):
     monkeypatch.setenv("ROUTING_TEST_FORCE_LOCAL_FAILURE", "false")
     from app.core.config import get_settings
+
     get_settings.cache_clear()
     assert _is_provider_available("local") is True
 

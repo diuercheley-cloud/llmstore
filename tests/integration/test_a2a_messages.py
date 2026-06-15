@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from app.services.agents.a2a.a2a_messages import A2ADelegationPayload, A2AMessagePayload
 from app.services.agents.a2a.a2a_security import A2ASecurityService
@@ -127,7 +127,7 @@ class TestA2ASignatures:
             "delegatee_agent_id": "agent-2",
             "task_description": "Test",
             "input_data": {},
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         signature = A2ASecurityService.generate_signature(payload, secret)
         assert not A2ASecurityService.verify_signature(payload, wrong_secret, signature)
@@ -141,7 +141,7 @@ class TestA2ASignatures:
             "recipient_agent_id": "r1",
             "content_type": "text/plain",
             "payload": {"text": "original"},
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         signature = A2ASecurityService.generate_signature(payload, secret)
         payload["payload"] = {"text": "tampered"}
@@ -155,7 +155,7 @@ class TestA2ASignatures:
             "sender_agent_id": "s1",
             "recipient_agent_id": "r1",
             "payload": {"text": "hello"},
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         sig1 = A2ASecurityService.generate_signature(payload, secret)
         payload_with_sig = {**payload, "signature": sig1}
@@ -170,6 +170,6 @@ class TestA2ASignatures:
             "sender_agent_id": "s1",
             "recipient_agent_id": "r1",
             "payload": {},
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         assert not A2ASecurityService.verify_signature(payload, secret, "invalid-signature")

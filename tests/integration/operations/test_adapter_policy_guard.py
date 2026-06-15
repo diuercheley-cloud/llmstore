@@ -11,16 +11,18 @@ def test_policy_guard_inspect_manifest_network():
     assert len(violations) == 1
     assert violations[0]["violation_type"] == "network_policy"
 
+
 def test_policy_guard_inspect_execution_unsafe():
     guard = AdapterSandboxPolicyGuard()
     ctx = AdapterSandboxContext(
         client_id=uuid.uuid4(),
         manifest_id=uuid.uuid4(),
         sandbox_mode="simulation",
-        allowed_capabilities=["shell"]
+        allowed_capabilities=["shell"],
     )
     violations = guard.inspect_execution_request(ctx, "shell")
     assert any(v["violation_type"] == "unsafe_action" for v in violations)
+
 
 def test_policy_guard_block_logic():
     guard = AdapterSandboxPolicyGuard()

@@ -7,7 +7,10 @@ from app.models.commercial.commercial_federated_workflows import (
     CommercialWorkflowReplayFederationReport,
 )
 from app.models.commercial.commercial_sovereign_governance import CommercialOfflineRevocationList
-from app.models.commercial.commercial_workflows import CommercialWorkflowExecution, CommercialWorkflowStage
+from app.models.commercial.commercial_workflows import (
+    CommercialWorkflowExecution,
+    CommercialWorkflowStage,
+)
 from app.services.workflows.federated_execution import sign_federated_payload
 from app.services.workflows.workflow_provenance import (
     canonical_json,
@@ -19,13 +22,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class FederatedWorkflowReplayService:
-    async def _federated_execution(self, db: AsyncSession, federated_execution_id) -> CommercialFederatedWorkflowExecution:
+    async def _federated_execution(
+        self, db: AsyncSession, federated_execution_id
+    ) -> CommercialFederatedWorkflowExecution:
         row = await db.get(CommercialFederatedWorkflowExecution, federated_execution_id)
         if row is None:
             raise ValueError("federated_workflow_execution_not_found")
         return row
 
-    async def _workflow_execution(self, db: AsyncSession, execution_id) -> CommercialWorkflowExecution:
+    async def _workflow_execution(
+        self, db: AsyncSession, execution_id
+    ) -> CommercialWorkflowExecution:
         row = await db.get(CommercialWorkflowExecution, execution_id)
         if row is None:
             raise ValueError("workflow_execution_not_found")
@@ -33,19 +40,31 @@ class FederatedWorkflowReplayService:
 
     async def _stages(self, db: AsyncSession, execution_id) -> list[CommercialWorkflowStage]:
         return (
-            await db.execute(
-                select(CommercialWorkflowStage)
-                .where(CommercialWorkflowStage.execution_id == execution_id)
-                .order_by(CommercialWorkflowStage.stage_order.asc())
+            (
+                await db.execute(
+                    select(CommercialWorkflowStage)
+                    .where(CommercialWorkflowStage.execution_id == execution_id)
+                    .order_by(CommercialWorkflowStage.stage_order.asc())
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
-    async def _latest_report(self, db: AsyncSession, federated_execution_id) -> CommercialWorkflowReplayFederationReport | None:
+    async def _latest_report(
+        self, db: AsyncSession, federated_execution_id
+    ) -> CommercialWorkflowReplayFederationReport | None:
         return (
             await db.execute(
                 select(CommercialWorkflowReplayFederationReport)
-                .where(CommercialWorkflowReplayFederationReport.federated_execution_id == federated_execution_id)
-                .order_by(desc(CommercialWorkflowReplayFederationReport.created_at), desc(CommercialWorkflowReplayFederationReport.id))
+                .where(
+                    CommercialWorkflowReplayFederationReport.federated_execution_id
+                    == federated_execution_id
+                )
+                .order_by(
+                    desc(CommercialWorkflowReplayFederationReport.created_at),
+                    desc(CommercialWorkflowReplayFederationReport.id),
+                )
                 .limit(1)
             )
         ).scalar_one_or_none()
@@ -54,10 +73,16 @@ class FederatedWorkflowReplayService:
         if not peer_cluster_id:
             return False
         crls = (
-            await db.execute(
-                select(CommercialOfflineRevocationList).order_by(CommercialOfflineRevocationList.created_at.desc())
+            (
+                await db.execute(
+                    select(CommercialOfflineRevocationList).order_by(
+                        CommercialOfflineRevocationList.created_at.desc()
+                    )
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return any(peer_cluster_id in (crl.revoked_peer_ids_json or []) for crl in crls)
 
     async def validate_replay(
@@ -69,7 +94,9 @@ class FederatedWorkflowReplayService:
     ) -> CommercialWorkflowReplayFederationReport:
         federated = await self._federated_execution(db, federated_execution_id)
         source = await self._workflow_execution(db, federated.workflow_execution_id)
-        replay = await self._workflow_execution(db, replay_execution_id or federated.workflow_execution_id)
+        replay = await self._workflow_execution(
+            db, replay_execution_id or federated.workflow_execution_id
+        )
         source_stages = await self._stages(db, source.id)
         replay_stages = await self._stages(db, replay.id)
         stage_pairs = list(zip(source_stages, replay_stages, strict=False))
@@ -80,7 +107,10 @@ class FederatedWorkflowReplayService:
                 mismatches.append({"stage_index": index, "reason": "stage_count_mismatch"})
                 continue
             left, right = pair
-            if left.stage_hash != right.stage_hash or left.runtime_snapshot_hash != right.runtime_snapshot_hash:
+            if (
+                left.stage_hash != right.stage_hash
+                or left.runtime_snapshot_hash != right.runtime_snapshot_hash
+            ):
                 mismatches.append(
                     {
                         "stage_index": index,
@@ -171,7 +201,9 @@ class FederatedWorkflowReplayService:
         report = await db.get(CommercialWorkflowReplayFederationReport, report_id)
         if report is None:
             raise ValueError("federated_replay_report_not_found")
-        if report.sovereign_mode == "sovereign_airgap" and await self._is_peer_revoked(db, report.cluster_id):
+        if report.sovereign_mode == "sovereign_airgap" and await self._is_peer_revoked(
+            db, report.cluster_id
+        ):
             raise ValueError("peer_revoked_by_offline_crl")
         manifest = {
             "report_id": str(report.id),

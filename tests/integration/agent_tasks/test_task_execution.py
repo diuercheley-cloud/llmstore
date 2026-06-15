@@ -111,17 +111,29 @@ async def _assert_completed_artifacts(session, run_id, task_id):
     assert task.output_data["output_hash"]
 
     receipts = (
-        await session.execute(
-            select(AgentRunReceipt).where(AgentRunReceipt.run_id == run_id).order_by(AgentRunReceipt.created_at.asc())
+        (
+            await session.execute(
+                select(AgentRunReceipt)
+                .where(AgentRunReceipt.run_id == run_id)
+                .order_by(AgentRunReceipt.created_at.asc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     assert receipts
 
     steps = (
-        await session.execute(
-            select(AgentRunStep).where(AgentRunStep.run_id == run_id).order_by(AgentRunStep.step_number.asc())
+        (
+            await session.execute(
+                select(AgentRunStep)
+                .where(AgentRunStep.run_id == run_id)
+                .order_by(AgentRunStep.step_number.asc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     assert steps
     assert steps[-1].status == "success"
 
@@ -238,6 +250,7 @@ async def test_memory_read_chama_agent_memory(session, task_engine_settings):
 @pytest.mark.asyncio
 async def test_memory_write_respeita_consent_e_policy(session, task_engine_settings):
     import unittest.mock
+
     task_engine_settings.agent_memory_enabled = True
     task_engine_settings.agent_memory_write_enabled = True
     task_engine_settings.agent_long_term_memory_enabled = True
@@ -274,13 +287,21 @@ async def test_memory_write_respeita_consent_e_policy(session, task_engine_setti
     )
 
     # Mock the indexing service to prevent PGVector syntax errors on SQLite
-    with unittest.mock.patch("app.services.agents.memory_indexing.MemoryIndexingService.index_item", return_value=None):
+    with unittest.mock.patch(
+        "app.services.agents.memory_indexing.MemoryIndexingService.index_item", return_value=None
+    ):
         engine = TaskEngine(session)
         await engine.run_task(task.id)
 
     items = (
-        await session.execute(select(AgentMemoryItem).where(AgentMemoryItem.source_run_id == run.id))
-    ).scalars().all()
+        (
+            await session.execute(
+                select(AgentMemoryItem).where(AgentMemoryItem.source_run_id == run.id)
+            )
+        )
+        .scalars()
+        .all()
+    )
     assert len(items) == 1
     await _assert_completed_artifacts(session, run.id, task.id)
 
@@ -321,7 +342,9 @@ async def test_approval_wait_pausa_run(session):
     assert plan.status == "waiting_approval"
     assert task.status == "waiting_approval"
     approval = (
-        await session.execute(select(AgentApprovalRequest).where(AgentApprovalRequest.agent_run_id == run.id))
+        await session.execute(
+            select(AgentApprovalRequest).where(AgentApprovalRequest.agent_run_id == run.id)
+        )
     ).scalar_one_or_none()
     assert approval is not None
     assert task.output_data["receipt_id"]
@@ -370,7 +393,9 @@ async def test_handoff_chama_agent_handoffs(session, task_engine_settings):
     await engine.run_task(task.id)
 
     handoff = (
-        await session.execute(select(AgentHandoffEvent).where(AgentHandoffEvent.source_run_id == run.id))
+        await session.execute(
+            select(AgentHandoffEvent).where(AgentHandoffEvent.source_run_id == run.id)
+        )
     ).scalar_one_or_none()
     assert handoff is not None
     await _assert_completed_artifacts(session, run.id, task.id)
@@ -409,7 +434,9 @@ async def test_workflow_signal_envia_signal(session):
     await engine.run_task(task.id)
 
     signal = (
-        await session.execute(select(AgentWorkflowSignal).where(AgentWorkflowSignal.run_id == workflow_run.id))
+        await session.execute(
+            select(AgentWorkflowSignal).where(AgentWorkflowSignal.run_id == workflow_run.id)
+        )
     ).scalar_one_or_none()
     assert signal is not None
     await _assert_completed_artifacts(session, run.id, task.id)
@@ -458,7 +485,9 @@ async def test_task_sem_executor_falha_sem_completed(session):
 async def test_not_implemented_nao_aparece_em_modo_real(session, task_engine_settings):
     task_engine_settings.agent_task_simulation_mode = True
     _, _, plan = await _create_agent_run_plan(session)
-    task = await _create_task(session, plan, "tool_call", {"tool_name": "missing", "parameters": {}})
+    task = await _create_task(
+        session, plan, "tool_call", {"tool_name": "missing", "parameters": {}}
+    )
 
     engine = TaskEngine(session)
     await engine.run_task(task.id)

@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from app.core.config import get_settings
@@ -15,7 +15,7 @@ from app.services.routing.commercial_report_export import (
 
 @pytest.mark.asyncio
 async def test_export_json_csv_html(session):
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     session.add(
         CommercialRoutingEvent(
             client_id=uuid.uuid4(),
@@ -48,7 +48,7 @@ async def test_export_json_csv_html(session):
 
 @pytest.mark.asyncio
 async def test_filters_function(session):
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     target_client = uuid.uuid4()
     session.add_all(
         [
@@ -83,7 +83,9 @@ async def test_filters_function(session):
     await session.commit()
 
     service = CommercialReportExportService(session)
-    report = await service.build_executive_report_data(hours=24, client_id=target_client, provider="provider-a", model="model-x")
+    report = await service.build_executive_report_data(
+        hours=24, client_id=target_client, provider="provider-a", model="model-x"
+    )
 
     assert report["profitability"]["actual_revenue_brl"] == 8.0
     assert len(report["top_clients_profitable"]) == 1
@@ -217,7 +219,9 @@ async def test_admin_endpoints_export_and_schedule(admin_client, admin_token_hea
     assert create_resp.status_code == 200
     schedule_id = create_resp.json()["id"]
 
-    list_resp = await admin_client.get("/admin/routing/executive-dashboard/report-schedules", headers=admin_token_headers)
+    list_resp = await admin_client.get(
+        "/admin/routing/executive-dashboard/report-schedules", headers=admin_token_headers
+    )
     assert list_resp.status_code == 200
     assert len(list_resp.json()) == 1
 

@@ -1,4 +1,3 @@
-
 import pytest
 from app.api.dependencies import get_current_admin, get_db
 from app.main import app
@@ -45,10 +44,14 @@ async def test_attestation_api_flow(session: AsyncSession):
         assert listed.status_code == 200
         assert len(listed.json()) == 1
 
-        detail = await ac.get(f"/admin/operations/attestations/{attestation_id}?client_id={client.id}")
+        detail = await ac.get(
+            f"/admin/operations/attestations/{attestation_id}?client_id={client.id}"
+        )
         assert detail.status_code == 200
 
-        blocked = await ac.get(f"/admin/operations/attestations/{attestation_id}?client_id={other_client.id}")
+        blocked = await ac.get(
+            f"/admin/operations/attestations/{attestation_id}?client_id={other_client.id}"
+        )
         assert blocked.status_code == 404
 
         verify = await ac.post(
@@ -90,7 +93,9 @@ async def test_attestation_api_flow(session: AsyncSession):
         )
         assert imported.status_code == 200
 
-        chain = await ac.get(f"/admin/operations/attestation-chains/{attestation_id}?client_id={client.id}")
+        chain = await ac.get(
+            f"/admin/operations/attestation-chains/{attestation_id}?client_id={client.id}"
+        )
         assert chain.status_code == 200
         assert chain.json()["integrity_valid"] is True
 

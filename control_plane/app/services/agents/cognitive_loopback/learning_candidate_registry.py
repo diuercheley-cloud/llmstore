@@ -1,6 +1,5 @@
 # Owner: agent-platform
 import uuid
-from typing import List
 
 from app.models.agents.agent_cognitive_loopback import (
     AgentFeedbackEvent,
@@ -26,9 +25,9 @@ class LearningCandidateRegistry:
                 "input": f"Pattern match for fingerprint {pattern.input_fingerprint}",
                 "reasoning": pattern.success_reason,
                 "tools": pattern.tool_sequence,
-                "answer": "Extracted from successful run"
+                "answer": "Extracted from successful run",
             },
-            validation_status="pending"
+            validation_status="pending",
         )
         self.db.add(candidate)
         await self.db.commit()
@@ -40,9 +39,9 @@ class LearningCandidateRegistry:
         stmt = select(AgentRun).where(AgentRun.id == event.run_id)
         res = await self.db.execute(stmt)
         run = res.scalar_one_or_none()
-        
+
         input_text = run.input_text if run else "Feedback-driven input"
-        
+
         candidate = AgentLearningCandidate(
             agent_id=event.agent_id,
             source_run_id=event.run_id,
@@ -51,19 +50,21 @@ class LearningCandidateRegistry:
                 "input": input_text,
                 "reasoning": "Feedback-approved path",
                 "tools": [],
-                "answer": event.correction_text or "Original answer approved"
+                "answer": event.correction_text or "Original answer approved",
             },
-            validation_status="pending"
+            validation_status="pending",
         )
         self.db.add(candidate)
         await self.db.commit()
         await self.db.refresh(candidate)
         return candidate
 
-    async def list_candidates(self, agent_id: uuid.UUID, tenant_id: str) -> List[AgentLearningCandidate]:
+    async def list_candidates(
+        self, agent_id: uuid.UUID, tenant_id: str
+    ) -> list[AgentLearningCandidate]:
         stmt = select(AgentLearningCandidate).where(
             AgentLearningCandidate.agent_id == agent_id,
-            AgentLearningCandidate.tenant_id == tenant_id
+            AgentLearningCandidate.tenant_id == tenant_id,
         )
         res = await self.db.execute(stmt)
         return list(res.scalars().all())

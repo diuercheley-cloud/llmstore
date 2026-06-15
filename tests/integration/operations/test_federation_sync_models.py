@@ -108,7 +108,9 @@ async def test_federation_sync_models_persist(session):
 
 
 def test_phase_77_migration_presence():
-    content = open("control_plane/alembic/versions/phase77_federation_sync_protocol.py", "r", encoding="utf-8").read()
+    content = open(
+        "control_plane/alembic/versions/phase77_federation_sync_protocol.py", encoding="utf-8"
+    ).read()
     assert "sovereign_federation_environments" in content
     assert "federation_synchronization_sessions" in content
     assert "federation_lineage_links" in content

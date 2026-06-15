@@ -21,7 +21,7 @@ async def test_agent_websocket_streaming_flow(e2e_client, admin_headers):
     settings = get_settings()
     client_id = uuid.uuid4()
     run_id = uuid.uuid4()
-    
+
     # Api key parameters
     api_key_plaintext = "pk_test_1234567890abcdef1234567890"
     api_key_prefix = api_key_plaintext[:12]
@@ -30,10 +30,7 @@ async def test_agent_websocket_streaming_flow(e2e_client, admin_headers):
     # 1. Seed database with Client, ApiKey, AgentDefinition, and AgentRun
     async with SessionLocal() as db:
         tenant_client = DBClient(
-            id=client_id,
-            name="WS Tenant Client",
-            is_blocked=False,
-            billing_status="active"
+            id=client_id, name="WS Tenant Client", is_blocked=False, billing_status="active"
         )
         db.add(tenant_client)
         await db.flush()
@@ -44,7 +41,7 @@ async def test_agent_websocket_streaming_flow(e2e_client, admin_headers):
             name="WS E2E Key",
             key_prefix=api_key_prefix,
             key_hash=api_key_hash,
-            is_active=True
+            is_active=True,
         )
         db.add(key)
         await db.flush()
@@ -58,7 +55,7 @@ async def test_agent_websocket_streaming_flow(e2e_client, admin_headers):
             owner="admin",
             tenant_id=str(client_id),
             status="active",
-            allowed_tools=[]
+            allowed_tools=[],
         )
         db.add(agent_def)
         await db.flush()
@@ -68,7 +65,7 @@ async def test_agent_websocket_streaming_flow(e2e_client, admin_headers):
             tenant_id=str(client_id),
             agent_id=agent_def.id,
             status="running",
-            input_text="hello"
+            input_text="hello",
         )
         db.add(run)
         await db.commit()
@@ -79,7 +76,9 @@ async def test_agent_websocket_streaming_flow(e2e_client, admin_headers):
     # Step A: Assert that WebSocket is rejected when disabled
     settings.agent_websocket_streaming_enabled = False
     with pytest.raises(WebSocketDisconnect) as exc_info:
-        with tc.websocket_connect(f"/v1/agents/runs/{run_id}/stream?token={api_key_plaintext}") as ws:
+        with tc.websocket_connect(
+            f"/v1/agents/runs/{run_id}/stream?token={api_key_plaintext}"
+        ) as ws:
             pass
     assert exc_info.value.code == 1008  # Policy violation
 
@@ -88,7 +87,9 @@ async def test_agent_websocket_streaming_flow(e2e_client, admin_headers):
 
     # Step B: Assert that invalid auth blocks
     with pytest.raises(WebSocketDisconnect) as exc_info:
-        with tc.websocket_connect(f"/v1/agents/runs/{run_id}/stream?token=pk_live_wrong_token") as ws:
+        with tc.websocket_connect(
+            f"/v1/agents/runs/{run_id}/stream?token=pk_live_wrong_token"
+        ) as ws:
             pass
     assert exc_info.value.code == 1008
 
@@ -100,10 +101,7 @@ async def test_agent_websocket_streaming_flow(e2e_client, admin_headers):
 
     async with SessionLocal() as db:
         other_client = DBClient(
-            id=other_client_id,
-            name="Other WS Client",
-            is_blocked=False,
-            billing_status="active"
+            id=other_client_id, name="Other WS Client", is_blocked=False, billing_status="active"
         )
         db.add(other_client)
         await db.flush()
@@ -114,13 +112,15 @@ async def test_agent_websocket_streaming_flow(e2e_client, admin_headers):
             name="WS Other Key",
             key_prefix=other_key_prefix,
             key_hash=other_key_hash,
-            is_active=True
+            is_active=True,
         )
         db.add(other_key)
         await db.commit()
 
     with pytest.raises(WebSocketDisconnect) as exc_info:
-        with tc.websocket_connect(f"/v1/agents/runs/{run_id}/stream?token={other_key_plaintext}") as ws:
+        with tc.websocket_connect(
+            f"/v1/agents/runs/{run_id}/stream?token={other_key_plaintext}"
+        ) as ws:
             pass
     assert exc_info.value.code == 1008
 
@@ -131,10 +131,10 @@ async def test_agent_websocket_streaming_flow(e2e_client, admin_headers):
             "model_response": "Here is the response. Secret: fake-secret-key-32-chars-max-for-testing",
             "db_details": {
                 "db_url": "postgresql://app_user:dbpassword123@localhost/prod_db",
-                "non_sensitive_field": "public_data"
-            }
+                "non_sensitive_field": "public_data",
+            },
         }
-        
+
         # Publish run event
         await RunEventStreamService.publish_run_event(str(run_id), "model.delta", sensitive_data)
 
@@ -142,7 +142,7 @@ async def test_agent_websocket_streaming_flow(e2e_client, admin_headers):
         event_msg = ws.receive_json()
         assert event_msg["event"] == "model.delta"
         assert event_msg["run_id"] == str(run_id)
-        
+
         # Validate that sensitive data has been sanitized
         data = event_msg["data"]
         assert "fake-secret-key-32-chars-max-for-testing" not in data["model_response"]

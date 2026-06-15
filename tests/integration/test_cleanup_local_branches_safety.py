@@ -15,40 +15,31 @@ def _latest_report_dir():
 
 
 def test_dry_run_is_default():
-    result = subprocess.run(
-        [str(SCRIPT)],
-        capture_output=True, text=True
-    )
+    result = subprocess.run([str(SCRIPT)], capture_output=True, text=True)
     assert result.returncode == 0
     assert "DRY-RUN" in result.stdout or "dry-run" in result.stdout
 
 
 def test_does_not_delete_without_yes():
     current = subprocess.run(
-        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-        capture_output=True, text=True
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"], capture_output=True, text=True
     ).stdout.strip()
 
     # Even with merged-only, no --yes should not delete
-    result = subprocess.run(
-        [str(SCRIPT), "--merged-only"],
-        capture_output=True, text=True
-    )
+    result = subprocess.run([str(SCRIPT), "--merged-only"], capture_output=True, text=True)
     assert result.returncode == 0
     assert "DRY" in result.stdout
 
     # Verify current branch still exists
     still_there = subprocess.run(
-        ["git", "branch", "--list", current],
-        capture_output=True, text=True
+        ["git", "branch", "--list", current], capture_output=True, text=True
     )
     assert current in still_there.stdout
 
 
 def test_keep_pattern_protects_branch():
     result = subprocess.run(
-        [str(SCRIPT), "--dry-run", "--keep-pattern", "v1\\.6\\.5"],
-        capture_output=True, text=True
+        [str(SCRIPT), "--dry-run", "--keep-pattern", "v1\\.6\\.5"], capture_output=True, text=True
     )
     assert result.returncode == 0
     report_dir = _latest_report_dir()
@@ -56,15 +47,13 @@ def test_keep_pattern_protects_branch():
     data = json.loads(report_json.read_text())
     for entry in data:
         if "1.6.5" in entry["branch"]:
-            assert entry["recommendation"] == "keep", \
+            assert entry["recommendation"] == "keep", (
                 f"{entry['branch']} should be keep with --keep-pattern v1\\.6\\.5"
+            )
 
 
 def test_feature_branches_not_included_by_default():
-    result = subprocess.run(
-        [str(SCRIPT), "--dry-run"],
-        capture_output=True, text=True
-    )
+    result = subprocess.run([str(SCRIPT), "--dry-run"], capture_output=True, text=True)
     report_dir = _latest_report_dir()
     report_json = Path(report_dir) / "branches-cleanup-report.json"
     data = json.loads(report_json.read_text())
@@ -80,8 +69,7 @@ def test_feature_branches_not_included_by_default():
 
 def test_report_json_valid():
     result = subprocess.run(
-        [str(SCRIPT), "--dry-run", "--merged-only"],
-        capture_output=True, text=True
+        [str(SCRIPT), "--dry-run", "--merged-only"], capture_output=True, text=True
     )
     assert result.returncode == 0
     report_dir = _latest_report_dir()
@@ -95,8 +83,7 @@ def test_report_json_valid():
 
 def test_report_json_no_secrets():
     result = subprocess.run(
-        [str(SCRIPT), "--dry-run", "--merged-only"],
-        capture_output=True, text=True
+        [str(SCRIPT), "--dry-run", "--merged-only"], capture_output=True, text=True
     )
     assert result.returncode == 0
     report_dir = _latest_report_dir()

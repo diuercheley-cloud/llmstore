@@ -25,9 +25,12 @@ SECRET_PATTERNS = [
 
 def test_report_contains_no_api_keys():
     cmd = [
-        "bash", SCRIPT,
-        "--email", "nosecrets@example.local",
-        "--month", "2026-10",
+        "bash",
+        SCRIPT,
+        "--email",
+        "nosecrets@example.local",
+        "--month",
+        "2026-10",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
@@ -35,7 +38,7 @@ def test_report_contains_no_api_keys():
     md_path = _extract_path(result.stdout, "monthly-report.md")
 
     for filepath in [json_path, md_path]:
-        with open(filepath, "r") as f:
+        with open(filepath) as f:
             content = f.read()
         for i, pattern in enumerate(SECRET_PATTERNS):
             matches = pattern.findall(content)
@@ -51,9 +54,12 @@ def test_report_contains_no_api_keys():
 
 def test_report_contains_no_full_prompts():
     cmd = [
-        "bash", SCRIPT,
-        "--email", "noprompts@example.local",
-        "--month", "2026-11",
+        "bash",
+        SCRIPT,
+        "--email",
+        "noprompts@example.local",
+        "--month",
+        "2026-11",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
@@ -61,7 +67,7 @@ def test_report_contains_no_full_prompts():
     md_path = _extract_path(result.stdout, "monthly-report.md")
 
     for filepath in [json_path, md_path]:
-        with open(filepath, "r") as f:
+        with open(filepath) as f:
             content = f.read().lower()
         # Should not contain raw prompt or RAG content
         sensitive_patterns = [
@@ -84,14 +90,17 @@ def test_report_contains_no_full_prompts():
 
 def test_report_contains_no_env_vars():
     cmd = [
-        "bash", SCRIPT,
-        "--email", "noenv@example.local",
-        "--month", "2026-12",
+        "bash",
+        SCRIPT,
+        "--email",
+        "noenv@example.local",
+        "--month",
+        "2026-12",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
     json_path = _extract_path(result.stdout, "monthly-report.json")
-    with open(json_path, "r") as f:
+    with open(json_path) as f:
         content = f.read()
 
     env_var_pattern = re.compile(r"\$\{[A-Z_][A-Z0-9_]*\}")
@@ -109,8 +118,9 @@ def test_report_contains_no_env_vars():
 
 
 def test_artifacts_not_tracked():
-    result = subprocess.check_output(["git", "ls-files", "artifacts/monthly-reports/"], stderr=subprocess.DEVNULL, text=True)
+    result = subprocess.check_output(
+        ["git", "ls-files", "artifacts/monthly-reports/"], stderr=subprocess.DEVNULL, text=True
+    )
     assert result.strip() == "", (
-        "artifacts/monthly-reports/ should NOT be tracked by Git, but found: "
-        + result.strip()
+        "artifacts/monthly-reports/ should NOT be tracked by Git, but found: " + result.strip()
     )

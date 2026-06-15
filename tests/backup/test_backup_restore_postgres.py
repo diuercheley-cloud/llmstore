@@ -3,13 +3,12 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from app.core.config import get_settings
 from app.schemas.backup import BackupCreateRequest, BackupRestoreRequest
 from app.services.backup.backup_service import BackupService
 from app.services.backup.restore_staging_service import RestoreStagingService
-from tests.backup.fixtures import collect_recovery_state, mutate_recovery_state, seed_recovery_state
 
+from tests.backup.fixtures import collect_recovery_state, mutate_recovery_state, seed_recovery_state
 
 pytestmark = [pytest.mark.integration, pytest.mark.backup_dr]
 
@@ -34,7 +33,9 @@ async def test_postgres_full_restore_recovers_all_required_domains(
     async with postgres_session_factory() as session:
         ids = await seed_recovery_state(session, backup_repo_root)
         expected = await collect_recovery_state(session, backup_repo_root, ids)
-        manifest = await BackupService(session).create_backup(BackupCreateRequest(scope="full"), actor="postgres-dr")
+        manifest = await BackupService(session).create_backup(
+            BackupCreateRequest(scope="full"), actor="postgres-dr"
+        )
         assert manifest.scope == "full"
         assert manifest.metadata["database_engine"] == "postgresql"
         backup_id = manifest.backup_id

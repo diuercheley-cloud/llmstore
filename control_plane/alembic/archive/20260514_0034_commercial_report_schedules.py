@@ -29,8 +29,18 @@ def upgrade() -> None:
         sa.Column("filters_json", sa.JSON(), nullable=True),
         sa.Column("last_run_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("next_run_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("CURRENT_TIMESTAMP"),
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("CURRENT_TIMESTAMP"),
+        ),
         sa.Column("created_by", sa.String(length=120), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -49,6 +59,10 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index("ix_commercial_report_schedules_next_run_at", table_name="commercial_report_schedules")
-    op.drop_index("ix_commercial_report_schedules_enabled", table_name="commercial_report_schedules")
+    op.drop_index(
+        "ix_commercial_report_schedules_next_run_at", table_name="commercial_report_schedules"
+    )
+    op.drop_index(
+        "ix_commercial_report_schedules_enabled", table_name="commercial_report_schedules"
+    )
     op.drop_table("commercial_report_schedules")

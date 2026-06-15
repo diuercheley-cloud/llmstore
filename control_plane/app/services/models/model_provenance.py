@@ -15,7 +15,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _canonical_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+    )
 
 
 async def validate_chain_of_custody(chain_of_custody_json: dict[str, Any] | None) -> dict[str, Any]:
@@ -37,11 +39,18 @@ async def create_provenance_attestation(
     chain_of_custody_json: dict[str, Any] | None = None,
 ) -> CommercialModelProvenanceAttestation:
     sanitized_evidence = sanitize_report_payload(evidence_json or {})
-    sanitized_chain = sanitize_report_payload(chain_of_custody_json) if chain_of_custody_json is not None else None
+    sanitized_chain = (
+        sanitize_report_payload(chain_of_custody_json)
+        if chain_of_custody_json is not None
+        else None
+    )
     chain_validation = await validate_chain_of_custody(sanitized_chain)
     if not chain_validation["valid"]:
         raise ValueError(chain_validation["reason"])
-    artifact_hash = artifact_hash or hashlib.sha256(_canonical_json(sanitized_evidence).encode("utf-8")).hexdigest()
+    artifact_hash = (
+        artifact_hash
+        or hashlib.sha256(_canonical_json(sanitized_evidence).encode("utf-8")).hexdigest()
+    )
     item = CommercialModelProvenanceAttestation(
         source_type=str(source_type),
         source_uri=str(source_uri)[:512] if source_uri else None,

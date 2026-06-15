@@ -9,6 +9,7 @@ from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
+
 class BatchScheduler:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -35,7 +36,7 @@ class BatchScheduler:
                 # e.g., {"agent_id": "...", "input_text": "..."}
                 agent_id = item.input_data.get("agent_id")
                 input_text = item.input_data.get("input_text")
-                
+
                 if not agent_id or not input_text:
                     item.status = "failed"
                     item.error = "Missing agent_id or input_text in item data"
@@ -47,12 +48,12 @@ class BatchScheduler:
                     agent_id=uuid.UUID(agent_id),
                     tenant_id=batch.tenant_id,
                     input_text=input_text,
-                    correlation_id=str(batch_id)
+                    correlation_id=str(batch_id),
                 )
-                
+
                 item.agent_run_id = run.id
                 item.status = "in_progress"
-                
+
             except Exception as e:
                 logger.exception(f"Failed to schedule item {item.id}")
                 item.status = "failed"
@@ -62,10 +63,7 @@ class BatchScheduler:
         await self.db.flush()
 
     async def cancel_batch(self, tenant_id: str, batch_id: uuid.UUID):
-        stmt = select(BatchJob).where(
-            BatchJob.id == batch_id,
-            BatchJob.tenant_id == tenant_id
-        )
+        stmt = select(BatchJob).where(BatchJob.id == batch_id, BatchJob.tenant_id == tenant_id)
         res = await self.db.execute(stmt)
         batch = res.scalar_one_or_none()
         if batch and batch.status in ["validating", "in_progress"]:

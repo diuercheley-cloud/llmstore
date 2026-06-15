@@ -1,0 +1,1 @@
+validators/validate-hybrid-platform-report.sh

@@ -25,7 +25,9 @@ def test_quickstart_dockerfile_exposes_healthcheck_and_lite_profile() -> None:
     assert "FROM nvidia/cuda:12.6.3-runtime-ubuntu24.04" in dockerfile
     assert "OPERATIONAL_PROFILE=lite" in dockerfile
     assert "DATABASE_URL=sqlite+aiosqlite:////data/quickstart/llmstack.db" in dockerfile
-    assert 'HEALTHCHECK --interval=30s --timeout=10s --start-period=180s --retries=10 \\' in dockerfile
+    assert (
+        "HEALTHCHECK --interval=30s --timeout=10s --start-period=180s --retries=10 \\" in dockerfile
+    )
     assert 'ENTRYPOINT ["tini", "--", "/app/scripts/deploy/quickstart-bootstrap.sh"]' in dockerfile
 
 
@@ -45,9 +47,12 @@ def test_quickstart_bootstrap_configures_embedded_services() -> None:
     script = (ROOT / "scripts/deploy/quickstart-bootstrap.sh").read_text(encoding="utf-8")
 
     assert 'export OPERATIONAL_PROFILE="${OPERATIONAL_PROFILE:-lite}"' in script
-    assert 'export DATABASE_URL="${DATABASE_URL:-sqlite+aiosqlite:////data/quickstart/llmstack.db}"' in script
-    assert 'redis-server \\' in script
-    assert '/opt/quickstart/llama-entrypoint.sh &' in script
-    assert 'alembic -c /app/control_plane/alembic.ini upgrade head' in script
-    assert 'python -m app.workers.generation_worker &' in script
-    assert 'python -m app.workers.rag_worker &' in script
+    assert (
+        'export DATABASE_URL="${DATABASE_URL:-sqlite+aiosqlite:////data/quickstart/llmstack.db}"'
+        in script
+    )
+    assert "redis-server \\" in script
+    assert "/opt/quickstart/llama-entrypoint.sh &" in script
+    assert "alembic -c /app/control_plane/alembic.ini upgrade head" in script
+    assert "python -m app.workers.generation_worker &" in script
+    assert "python -m app.workers.rag_worker &" in script

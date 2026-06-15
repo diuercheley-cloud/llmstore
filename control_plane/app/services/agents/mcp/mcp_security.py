@@ -13,6 +13,7 @@ Design:
   Every public method either returns silently (check passed) or raises
   PermissionError / ValueError with a human-readable message.
 """
+
 from __future__ import annotations
 
 import re
@@ -127,9 +128,7 @@ class MCPSecurity:
         except ValueError:
             raise ValueError(f"Unknown trust level: '{server_trust}' or '{required}'")
 
-    def require_tool_approved(
-        self, tool_name: str, approved_tools: set[str]
-    ) -> None:
+    def require_tool_approved(self, tool_name: str, approved_tools: set[str]) -> None:
         """Block execution of unapproved tools."""
         if tool_name not in approved_tools:
             raise PermissionError(

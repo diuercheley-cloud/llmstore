@@ -31,6 +31,7 @@ async def db_session():
 @pytest.fixture
 def fake_client_id():
     import uuid
+
     return uuid.uuid4()
 
 
@@ -70,7 +71,13 @@ async def test_credit_manual_positive_only(db_session, fake_client_id):
 @pytest.mark.asyncio
 async def test_debit_usage_reduces_balance(db_session, fake_client_id):
     await credit_manual(db_session, fake_client_id, Decimal("50.0000"))
-    tx = await debit_usage(db_session, fake_client_id, Decimal("30.0000"), reference_type="chat", reference_id="req-001")
+    tx = await debit_usage(
+        db_session,
+        fake_client_id,
+        Decimal("30.0000"),
+        reference_type="chat",
+        reference_id="req-001",
+    )
     await db_session.commit()
     assert tx.amount_brl == Decimal("-30.0000")
     assert tx.type == "usage_debit"
@@ -118,7 +125,9 @@ async def test_refund_increases_balance(db_session, fake_client_id):
 
 @pytest.mark.asyncio
 async def test_adjustment_credit(db_session, fake_client_id):
-    tx = await adjustment(db_session, fake_client_id, Decimal("200.0000"), reason="promotional credit")
+    tx = await adjustment(
+        db_session, fake_client_id, Decimal("200.0000"), reason="promotional credit"
+    )
     await db_session.commit()
     balance = await get_balance(db_session, fake_client_id)
     assert balance["balance_brl"] == 200.0

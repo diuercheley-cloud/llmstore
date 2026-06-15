@@ -1,0 +1,1 @@
+dev/reset-commercial-demo-pack.sh

@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.contracts.agents.base import AgentContract, CompatibilityPolicy
 from pydantic import BaseModel, Field
@@ -12,52 +12,52 @@ class ModelReasoningTaskInputV1(BaseModel):
 
 class ToolCallTaskInputV1(BaseModel):
     tool_name: str = Field(min_length=1)
-    parameters: Dict[str, Any] = Field(default_factory=dict)
+    parameters: dict[str, Any] = Field(default_factory=dict)
 
 
 class MemoryReadTaskInputV1(BaseModel):
     memory_type: str = Field(default="short_term", min_length=1)
-    collection_id: Optional[uuid.UUID] = None
+    collection_id: uuid.UUID | None = None
     limit: int = Field(default=10, ge=1, le=100)
 
 
 class MemoryWriteTaskInputV1(BaseModel):
     memory_type: str = Field(default="short_term", min_length=1)
     content: str = Field(min_length=1)
-    user_id: Optional[str] = None
-    summary: Optional[str] = None
-    collection_id: Optional[uuid.UUID] = None
+    user_id: str | None = None
+    summary: str | None = None
+    collection_id: uuid.UUID | None = None
 
 
 class ApprovalWaitTaskInputV1(BaseModel):
     tool_name: str = Field(min_length=1)
-    parameters: Dict[str, Any] = Field(default_factory=dict)
-    reason: Optional[str] = None
-    risk_level: Optional[str] = None
-    required_role: Optional[str] = None
+    parameters: dict[str, Any] = Field(default_factory=dict)
+    reason: str | None = None
+    risk_level: str | None = None
+    required_role: str | None = None
 
 
 class HandoffTaskInputV1(BaseModel):
     target_agent_id: uuid.UUID
     reason: str = Field(min_length=1)
-    context: Dict[str, Any] = Field(default_factory=dict)
+    context: dict[str, Any] = Field(default_factory=dict)
 
 
 class WorkflowSignalTaskInputV1(BaseModel):
     workflow_run_id: uuid.UUID
     signal_name: str = Field(min_length=1)
-    payload: Dict[str, Any] = Field(default_factory=dict)
+    payload: dict[str, Any] = Field(default_factory=dict)
 
 
 class FinalResponseTaskInputV1(BaseModel):
     output: Any
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class TaskExecutionResultV1(BaseModel):
     execution_mode: str
     executor_name: str
-    result: Dict[str, Any] = Field(default_factory=dict)
+    result: dict[str, Any] = Field(default_factory=dict)
 
 
 class ModelReasoningTaskContractV1(AgentContract[ModelReasoningTaskInputV1, TaskExecutionResultV1]):

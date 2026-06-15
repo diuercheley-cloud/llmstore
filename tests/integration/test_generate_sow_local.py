@@ -6,10 +6,14 @@ SCRIPT = "scripts/dev/generate-sow-local.sh"
 
 def test_generate_sow_basic():
     cmd = [
-        "bash", SCRIPT,
-        "--company-name", "Test Corp",
-        "--project-name", "Local AI Project",
-        "--plan", "Pro",
+        "bash",
+        SCRIPT,
+        "--company-name",
+        "Test Corp",
+        "--project-name",
+        "Local AI Project",
+        "--plan",
+        "Pro",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
     assert "SOW generated successfully" in result.stdout
@@ -26,7 +30,7 @@ def test_generate_sow_basic():
     assert os.path.exists(output_path), f"Output file not found: {output_path}"
 
     # Verify content
-    with open(output_path, "r") as f:
+    with open(output_path) as f:
         content = f.read()
     assert "Test Corp" in content
     assert "Local AI Project" in content or "projeto" in content
@@ -42,11 +46,16 @@ def test_generate_sow_basic():
 def test_generate_sow_with_custom_output():
     output_dir = "/tmp/test-sow-output"
     cmd = [
-        "bash", SCRIPT,
-        "--company-name", "Custom Corp",
-        "--project-name", "Custom Project",
-        "--plan", "Enterprise Local",
-        "--output-dir", output_dir,
+        "bash",
+        SCRIPT,
+        "--company-name",
+        "Custom Corp",
+        "--project-name",
+        "Custom Project",
+        "--plan",
+        "Enterprise Local",
+        "--output-dir",
+        output_dir,
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
@@ -86,9 +95,12 @@ def test_generate_sow_help():
 
 def test_generated_sow_has_legal_warning():
     cmd = [
-        "bash", SCRIPT,
-        "--company-name", "Legal Check Corp",
-        "--project-name", "Legal Check Project",
+        "bash",
+        SCRIPT,
+        "--company-name",
+        "Legal Check Corp",
+        "--project-name",
+        "Legal Check Project",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
@@ -99,7 +111,7 @@ def test_generated_sow_has_legal_warning():
             output_path = candidate
             break
 
-    with open(output_path, "r") as f:
+    with open(output_path) as f:
         content = f.read()
 
     assert "AVISO JURÍDICO" in content

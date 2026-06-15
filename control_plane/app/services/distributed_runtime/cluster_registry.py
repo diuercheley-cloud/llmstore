@@ -1,5 +1,4 @@
 import uuid
-from typing import List, Optional
 
 from app.models.runtime.distributed_runtime import RuntimeCluster
 from sqlalchemy import select
@@ -10,7 +9,9 @@ class ClusterRegistry:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def register_cluster(self, name: str, region: str, is_managed: bool = False) -> RuntimeCluster:
+    async def register_cluster(
+        self, name: str, region: str, is_managed: bool = False
+    ) -> RuntimeCluster:
         result = await self.db.execute(select(RuntimeCluster).where(RuntimeCluster.name == name))
         cluster = result.scalars().first()
         if not cluster:
@@ -23,10 +24,12 @@ class ClusterRegistry:
         await self.db.refresh(cluster)
         return cluster
 
-    async def list_clusters(self) -> List[RuntimeCluster]:
+    async def list_clusters(self) -> list[RuntimeCluster]:
         result = await self.db.execute(select(RuntimeCluster))
         return list(result.scalars().all())
 
-    async def get_cluster(self, cluster_id: uuid.UUID) -> Optional[RuntimeCluster]:
-        result = await self.db.execute(select(RuntimeCluster).where(RuntimeCluster.id == cluster_id))
+    async def get_cluster(self, cluster_id: uuid.UUID) -> RuntimeCluster | None:
+        result = await self.db.execute(
+            select(RuntimeCluster).where(RuntimeCluster.id == cluster_id)
+        )
         return result.scalars().first()

@@ -29,10 +29,12 @@ async def setup_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
+
 @pytest_asyncio.fixture
 async def db_session():
     async with SessionLocal() as session:
         yield session
+
 
 @pytest_asyncio.fixture
 async def sample_agent(db_session):
@@ -44,11 +46,12 @@ async def sample_agent(db_session):
         model_id="gpt-4",
         owner="ml-team",
         tenant_id="tenant-opt",
-        allowed_tools=["github", "slack"]
+        allowed_tools=["github", "slack"],
     )
     db_session.add(agent)
     await db_session.commit()
     return agent
+
 
 @pytest.mark.asyncio
 async def test_optimizer_disabled_blocks(db_session, sample_agent):
@@ -71,13 +74,15 @@ async def test_candidate_generation_from_failures(db_session, sample_agent):
         agent_id=sample_agent.id,
         run_id=uuid.uuid4(),
         failure_type="secret_leak",
-        details={"tool_name": "github", "reason": "Secret API key leaked in output"}
+        details={"tool_name": "github", "reason": "Secret API key leaked in output"},
     )
     db_session.add(failure)
     await db_session.commit()
 
     # 2. Run experiment
-    experiment, candidates = await coordinator.run_optimization_experiment("tenant-opt", sample_agent.id)
+    experiment, candidates = await coordinator.run_optimization_experiment(
+        "tenant-opt", sample_agent.id
+    )
     await db_session.commit()
 
     assert experiment.status == "completed"
@@ -92,10 +97,13 @@ async def test_candidate_generation_from_failures(db_session, sample_agent):
 
     # Verify tool selection candidate is generated
     tool_cand = next(c for c in candidates if c.candidate_type == "tool_selection")
-    stmt_t = select(AgentToolSelectionCandidate).where(AgentToolSelectionCandidate.candidate_id == tool_cand.id)
+    stmt_t = select(AgentToolSelectionCandidate).where(
+        AgentToolSelectionCandidate.candidate_id == tool_cand.id
+    )
     res_t = await db_session.execute(stmt_t)
     tool_detail = res_t.scalar_one()
     assert "github" in tool_detail.allowed_tools
+
 
 @pytest.mark.asyncio
 async def test_candidate_eval_and_deltas(db_session, sample_agent):
@@ -107,13 +115,15 @@ async def test_candidate_eval_and_deltas(db_session, sample_agent):
         agent_id=sample_agent.id,
         run_id=uuid.uuid4(),
         failure_type="tool_error",
-        details={"tool_name": "github"}
+        details={"tool_name": "github"},
     )
     db_session.add(failure)
     await db_session.commit()
 
     # Run experiment
-    experiment, candidates = await coordinator.run_optimization_experiment("tenant-opt", sample_agent.id)
+    experiment, candidates = await coordinator.run_optimization_experiment(
+        "tenant-opt", sample_agent.id
+    )
     await db_session.commit()
 
     # Evaluate the prompt candidate
@@ -126,6 +136,7 @@ async def test_candidate_eval_and_deltas(db_session, sample_agent):
     assert "safety_failure_delta" in result.metrics_delta
     assert prompt_cand.status == "completed"
 
+
 @pytest.mark.asyncio
 async def test_approval_requirement_and_promotion_gate(db_session, sample_agent):
     coordinator = AgentOptimizerCoordinator(db_session)
@@ -136,17 +147,19 @@ async def test_approval_requirement_and_promotion_gate(db_session, sample_agent)
         agent_id=sample_agent.id,
         run_id=uuid.uuid4(),
         failure_type="secret_leak",
-        details={"tool_name": "github", "reason": "Secret API key leaked in output"}
+        details={"tool_name": "github", "reason": "Secret API key leaked in output"},
     )
     db_session.add(failure)
     await db_session.commit()
 
     # Run experiment
-    experiment, candidates = await coordinator.run_optimization_experiment("tenant-opt", sample_agent.id)
+    experiment, candidates = await coordinator.run_optimization_experiment(
+        "tenant-opt", sample_agent.id
+    )
     await db_session.commit()
 
     prompt_cand = next(c for c in candidates if c.candidate_type == "prompt")
-    
+
     # 1. Evaluate candidate
     await service.evaluate_candidate(prompt_cand.id)
     await db_session.commit()
@@ -167,9 +180,12 @@ async def test_approval_requirement_and_promotion_gate(db_session, sample_agent)
     assert applied_cand.status == "applied"
 
     # Verify agent definition was actually updated
-    res_agent = await db_session.execute(select(AgentDefinition).where(AgentDefinition.id == sample_agent.id))
+    res_agent = await db_session.execute(
+        select(AgentDefinition).where(AgentDefinition.id == sample_agent.id)
+    )
     updated_agent = res_agent.scalar_one()
     assert "Compiled Directives (DSPy-Optimized)" in updated_agent.instructions
+
 
 @pytest.mark.asyncio
 async def test_safety_regression_gate_blocks(db_session, sample_agent):
@@ -177,7 +193,9 @@ async def test_safety_regression_gate_blocks(db_session, sample_agent):
     service = OptimizationExperimentService(db_session)
 
     # Run experiment
-    experiment, candidates = await coordinator.run_optimization_experiment("tenant-opt", sample_agent.id)
+    experiment, candidates = await coordinator.run_optimization_experiment(
+        "tenant-opt", sample_agent.id
+    )
     await db_session.commit()
 
     # Set up candidate with simulate_safety_regression flag inside policy rules

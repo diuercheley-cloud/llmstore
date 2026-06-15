@@ -10,10 +10,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class KBReindexService:
     """
     Facilitates full reindexing of a Knowledge Base.
     """
+
     def __init__(self, db: AsyncSession):
         self.db = db
 
@@ -25,20 +27,16 @@ class KBReindexService:
         if not kb:
             raise ValueError("KB not found")
 
-        job = KBIngestionJob(
-            kb_id=kb_id,
-            tenant_id=kb.tenant_id,
-            status="running"
-        )
+        job = KBIngestionJob(kb_id=kb_id, tenant_id=kb.tenant_id, status="running")
         self.db.add(job)
         await self.db.flush()
-        
+
         # In a real system, this would trigger a background task (Celery/Temporal)
         logger.info(f"Reindexing triggered for KB {kb_id}")
-        
+
         # Mock completion
         job.status = "completed"
         job.progress = 1.0
-        
+
         await self.db.commit()
         return job

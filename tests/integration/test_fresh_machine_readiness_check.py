@@ -17,7 +17,9 @@ def test_script_exists():
 def test_script_help():
     result = subprocess.run(
         ["bash", str(SCRIPT), "--help"],
-        capture_output=True, text=True, timeout=30,
+        capture_output=True,
+        text=True,
+        timeout=30,
     )
     assert result.returncode == 0
     assert "Usage:" in result.stdout
@@ -26,7 +28,9 @@ def test_script_help():
 def test_script_dry_run_exit_zero():
     result = subprocess.run(
         ["bash", str(SCRIPT), "--dry-run"],
-        capture_output=True, text=True, timeout=60,
+        capture_output=True,
+        text=True,
+        timeout=60,
     )
     print(f"STDOUT:\n{result.stdout}")
     if result.returncode != 0:
@@ -38,7 +42,9 @@ def test_script_dry_run_generates_report():
     output_dir = ROOT / "artifacts" / "fresh-machine-check"
     result = subprocess.run(
         ["bash", str(SCRIPT), "--dry-run"],
-        capture_output=True, text=True, timeout=60,
+        capture_output=True,
+        text=True,
+        timeout=60,
     )
     assert "Reports generated" in result.stdout, (
         f"No report generation message.\nSTDOUT:\n{result.stdout}"
@@ -55,7 +61,9 @@ def test_script_json_flag():
     output_dir = ROOT / "artifacts" / "fresh-machine-check"
     result = subprocess.run(
         ["bash", str(SCRIPT), "--dry-run", "--json"],
-        capture_output=True, text=True, timeout=60,
+        capture_output=True,
+        text=True,
+        timeout=60,
     )
     json_files = sorted(output_dir.rglob("fresh-machine-check.json"))
     assert len(json_files) > 0
@@ -73,7 +81,9 @@ def test_script_output_dir():
     tmp_dir = ROOT / "artifacts" / "fresh-machine-check"
     result = subprocess.run(
         ["bash", str(SCRIPT), "--dry-run", "--output-dir", str(tmp_dir)],
-        capture_output=True, text=True, timeout=60,
+        capture_output=True,
+        text=True,
+        timeout=60,
     )
     json_files = sorted(tmp_dir.rglob("fresh-machine-check.json"))
     assert len(json_files) > 0, f"No JSON reports in {tmp_dir}"
@@ -84,7 +94,9 @@ def test_script_output_dir():
 def test_script_check_os():
     result = subprocess.run(
         ["bash", str(SCRIPT), "--dry-run"],
-        capture_output=True, text=True, timeout=60,
+        capture_output=True,
+        text=True,
+        timeout=60,
     )
     assert "OS" in result.stdout
 
@@ -92,7 +104,9 @@ def test_script_check_os():
 def test_script_check_docker():
     result = subprocess.run(
         ["bash", str(SCRIPT), "--dry-run"],
-        capture_output=True, text=True, timeout=60,
+        capture_output=True,
+        text=True,
+        timeout=60,
     )
     assert "Docker" in result.stdout
 
@@ -100,7 +114,9 @@ def test_script_check_docker():
 def test_script_check_git():
     result = subprocess.run(
         ["bash", str(SCRIPT), "--dry-run"],
-        capture_output=True, text=True, timeout=60,
+        capture_output=True,
+        text=True,
+        timeout=60,
     )
     assert "git" in result.stdout
 
@@ -108,7 +124,9 @@ def test_script_check_git():
 def test_script_check_env_file():
     result = subprocess.run(
         ["bash", str(SCRIPT), "--dry-run"],
-        capture_output=True, text=True, timeout=60,
+        capture_output=True,
+        text=True,
+        timeout=60,
     )
     assert ".env.local" in result.stdout
 

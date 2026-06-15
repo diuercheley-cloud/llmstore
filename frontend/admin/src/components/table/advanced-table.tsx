@@ -1,5 +1,5 @@
 import * as React from "react"
-import type { ColumnDef, ColumnFiltersState, SortingState, VisibilityState } from "@tanstack/react-table"
+import type { ColumnDef, ColumnFiltersState, PaginationState, SortingState, VisibilityState } from "@tanstack/react-table"
 import {
   flexRender,
   getCoreRowModel,
@@ -68,8 +68,13 @@ export function AdvancedTable<TData, TValue>({
     return saved ? JSON.parse(saved) : {}
   })
   const [sorting, setSorting] = React.useState<SortingState>([])
+  const [internalPagination, setInternalPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  })
   const [isFullscreen, setIsFullscreen] = React.useState(false)
   const [isFilterOpen, setIsFilterOpen] = React.useState(false)
+  const tablePagination = pagination ?? internalPagination
 
   // Selection column
   const tableColumns = React.useMemo(() => [
@@ -106,10 +111,17 @@ export function AdvancedTable<TData, TValue>({
       sorting,
       columnVisibility,
       rowSelection,
-      pagination,
+      pagination: tablePagination,
     },
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: (updater) => {
+      const next = typeof updater === 'function' ? updater(tablePagination) : updater
+      if (!pagination) {
+        setInternalPagination(next)
+      }
+      onPaginationChange?.(next)
+    },
     onSortingChange: (updater) => {
       const next = typeof updater === 'function' ? updater(sorting) : updater
       setSorting(next)
@@ -128,7 +140,7 @@ export function AdvancedTable<TData, TValue>({
     getFacetedUniqueValues: getFacetedUniqueValues(),
     manualPagination: true,
     manualSorting: true,
-    pageCount: rowCount ? Math.ceil(rowCount / (pagination?.pageSize || 10)) : -1,
+    pageCount: rowCount ? Math.ceil(rowCount / tablePagination.pageSize) : Math.ceil(data.length / tablePagination.pageSize),
   })
 
   const selectedRows = table.getSelectedRowModel().rows.map(r => r.original)
@@ -327,10 +339,7 @@ export function AdvancedTable<TData, TValue>({
         </div>
       </div>
 
-      <TablePagination 
-        table={table} 
-        onPaginationChange={onPaginationChange}
-      />
+      <TablePagination table={table} />
     </div>
   )
 }

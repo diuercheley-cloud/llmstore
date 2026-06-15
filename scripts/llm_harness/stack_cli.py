@@ -38,9 +38,21 @@ def build_parser() -> argparse.ArgumentParser:
     install.add_argument("--marketplace", action="store_true", default=False)
 
     backup = subparsers.add_parser("backup", help="Create an encrypted logical agent backup")
-    backup.add_argument("--logical-agent-backup", action="store_true", default=False, help="Create a logical agent backup")
-    backup.add_argument("--full", action="store_true", default=False, help="Create a full backup (deprecated: use --logical-agent-backup)")
-    backup.add_argument("--base-url", default=os.getenv("LLMSTACK_BASE_URL", "http://localhost:8080"))
+    backup.add_argument(
+        "--logical-agent-backup",
+        action="store_true",
+        default=False,
+        help="Create a logical agent backup",
+    )
+    backup.add_argument(
+        "--full",
+        action="store_true",
+        default=False,
+        help="Create a full backup (deprecated: use --logical-agent-backup)",
+    )
+    backup.add_argument(
+        "--base-url", default=os.getenv("LLMSTACK_BASE_URL", "http://localhost:8080")
+    )
     backup.add_argument("--admin-token", default=os.getenv("ADMIN_TOKEN", ""))
 
     restore = subparsers.add_parser("restore", help="Restore a system backup")
@@ -52,11 +64,15 @@ def build_parser() -> argparse.ArgumentParser:
         default=False,
         help="Confirm destructive restore execution",
     )
-    restore.add_argument("--base-url", default=os.getenv("LLMSTACK_BASE_URL", "http://localhost:8080"))
+    restore.add_argument(
+        "--base-url", default=os.getenv("LLMSTACK_BASE_URL", "http://localhost:8080")
+    )
     restore.add_argument("--admin-token", default=os.getenv("ADMIN_TOKEN", ""))
 
     backups = subparsers.add_parser("backups", help="List backups")
-    backups.add_argument("--base-url", default=os.getenv("LLMSTACK_BASE_URL", "http://localhost:8080"))
+    backups.add_argument(
+        "--base-url", default=os.getenv("LLMSTACK_BASE_URL", "http://localhost:8080")
+    )
     backups.add_argument("--admin-token", default=os.getenv("ADMIN_TOKEN", ""))
     return parser
 
@@ -77,7 +93,10 @@ def main(argv: list[str] | None = None) -> int:
             print("ERROR: use `llmstack backup --logical-agent-backup`.", file=sys.stderr)
             return 2
         if args.full:
-            print("WARNING: --full is deprecated. Use --logical-agent-backup instead.", file=sys.stderr)
+            print(
+                "WARNING: --full is deprecated. Use --logical-agent-backup instead.",
+                file=sys.stderr,
+            )
         return _post_json(
             args.base_url,
             "/admin/backup",

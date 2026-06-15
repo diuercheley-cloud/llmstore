@@ -6,14 +6,14 @@ import pytest_asyncio
 from app.core.config import get_settings
 from app.db.base import Base
 from app.main import app
-from app.models.core.api_key import ApiKey
-from app.models.billing.billing_plan import BillingPlan
-from app.models.core.client import Client
 from app.models.agents.web_search import (
     AgentWebSearchCache,
     AgentWebSearchPolicyEvent,
     AgentWebSearchQuery,
 )
+from app.models.billing.billing_plan import BillingPlan
+from app.models.core.api_key import ApiKey
+from app.models.core.client import Client
 from app.services.agents.tools.web_search_tool import WebSearchToolAdapter
 from sqlalchemy import select
 
@@ -32,6 +32,7 @@ async def test_search_env_setup(admin_client, monkeypatch):
     get_settings()
 
     from app.db.session import get_db_session
+
     db_session_override = app.dependency_overrides[get_db_session]
 
     async for db in db_session_override():
@@ -108,9 +109,7 @@ async def test_web_search_disabled_bloqueia(test_search_env_setup, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_external_network_disabled_bloqueia_provider_real(
-    test_search_env_setup, monkeypatch
-):
+async def test_external_network_disabled_bloqueia_provider_real(test_search_env_setup, monkeypatch):
     monkeypatch.setenv("AGENT_WEB_SEARCH_EXTERNAL_NETWORK_ENABLED", "false")
     get_settings.cache_clear()
 
@@ -148,9 +147,7 @@ async def test_mock_provider_retorna_mock_true(test_search_env_setup):
     assert len(result["result_ids"]) == len(result["results"])
 
     # Verify audit query created
-    stmt = select(AgentWebSearchQuery).where(
-        AgentWebSearchQuery.query_hash == result["query_hash"]
-    )
+    stmt = select(AgentWebSearchQuery).where(AgentWebSearchQuery.query_hash == result["query_hash"])
     res = await db.execute(stmt)
     query_record = res.scalar_one_or_none()
     assert query_record is not None
@@ -158,9 +155,7 @@ async def test_mock_provider_retorna_mock_true(test_search_env_setup):
 
 
 @pytest.mark.asyncio
-async def test_allowlist_bloqueia_dominio_nao_permitido(
-    test_search_env_setup, monkeypatch
-):
+async def test_allowlist_bloqueia_dominio_nao_permitido(test_search_env_setup, monkeypatch):
     monkeypatch.setenv("AGENT_WEB_SEARCH_ALLOWLIST_ENABLED", "true")
     get_settings.cache_clear()
 
@@ -276,7 +271,7 @@ async def test_web_search_admin_endpoints(mock_verify, test_search_env_setup, ad
     response = await client.post(
         "/admin/agents/tools/web-search/test",
         headers=admin_token_headers,
-        json={"query": "LLM stacks", "provider": "mock"}
+        json={"query": "LLM stacks", "provider": "mock"},
     )
     assert response.status_code == 200
     res_data = response.json()
@@ -284,20 +279,14 @@ async def test_web_search_admin_endpoints(mock_verify, test_search_env_setup, ad
     assert len(res_data["results"]) > 0
 
     # 2. Test GET /admin/agents/web-search/audit
-    response_audit = await client.get(
-        "/admin/agents/web-search/audit",
-        headers=admin_token_headers
-    )
+    response_audit = await client.get("/admin/agents/web-search/audit", headers=admin_token_headers)
     assert response_audit.status_code == 200
     audit_data = response_audit.json()
     assert len(audit_data) > 0
     assert audit_data[0]["query"] == "LLM stacks"
 
     # 3. Test GET /admin/agents/web-search/cache
-    response_cache = await client.get(
-        "/admin/agents/web-search/cache",
-        headers=admin_token_headers
-    )
+    response_cache = await client.get("/admin/agents/web-search/cache", headers=admin_token_headers)
     assert response_cache.status_code == 200
     cache_data = response_cache.json()
     assert len(cache_data) > 0

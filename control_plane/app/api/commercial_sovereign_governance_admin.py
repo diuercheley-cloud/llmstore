@@ -3,7 +3,6 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from app.services.runtime_dependencies import get_db_session
 from app.models.commercial.commercial_sovereign_governance import (
     CommercialAirgapSyncPackage,
     CommercialOfflineRevocationList,
@@ -16,6 +15,7 @@ from app.services.governance.airgap_sync import (
     reject_package,
     validate_chain_of_custody,
 )
+from app.services.runtime_dependencies import get_db_session
 from app.services.security.hardware_attestation import (
     collect_attestation_evidence,
     summarize_attestation_status,
@@ -34,7 +34,9 @@ router = APIRouter(
 
 
 class AirgapPackageCreatePayload(BaseModel):
-    package_type: str = Field(pattern="^(policy_bundle|audit_trail|evidence|crl|full_governance_snapshot)$")
+    package_type: str = Field(
+        pattern="^(policy_bundle|audit_trail|evidence|crl|full_governance_snapshot)$"
+    )
     source_cluster_id: str
     target_cluster_id: str | None = None
     package_version: str = "1.0"
@@ -70,7 +72,9 @@ class OfflineCRLPayload(BaseModel):
 class AttestationCollectPayload(BaseModel):
     cluster_id: str
     node_id: str | None = None
-    attestation_type: str = Field(default="placeholder", pattern="^(tpm|secure_boot|sgx|sev|placeholder)$")
+    attestation_type: str = Field(
+        default="placeholder", pattern="^(tpm|secure_boot|sgx|sev|placeholder)$"
+    )
     status: str = Field(default="unknown", pattern="^(trusted|untrusted|unknown|expired)$")
     evidence_json: dict[str, Any] = Field(default_factory=dict)
     expires_at: datetime | None = None
@@ -89,7 +93,9 @@ async def list_airgap_packages(db: AsyncSession = Depends(get_db_session)):
 
 
 @router.post("/admin/governance/airgap/packages", status_code=201)
-async def post_airgap_package(payload: AirgapPackageCreatePayload, db: AsyncSession = Depends(get_db_session)):
+async def post_airgap_package(
+    payload: AirgapPackageCreatePayload, db: AsyncSession = Depends(get_db_session)
+):
     try:
         item = await create_airgap_package(
             db,
@@ -130,7 +136,9 @@ async def post_airgap_export(
 
 
 @router.post("/admin/governance/airgap/packages/import", status_code=201)
-async def post_airgap_import(payload: AirgapImportPayload, db: AsyncSession = Depends(get_db_session)):
+async def post_airgap_import(
+    payload: AirgapImportPayload, db: AsyncSession = Depends(get_db_session)
+):
     try:
         item = await import_airgap_package(db, payload.package_bundle)
         await db.commit()
@@ -173,7 +181,9 @@ async def post_airgap_reject(
 @router.get("/admin/security/offline-crl")
 async def list_offline_crl(db: AsyncSession = Depends(get_db_session)):
     rows = await db.execute(
-        select(CommercialOfflineRevocationList).order_by(desc(CommercialOfflineRevocationList.created_at))
+        select(CommercialOfflineRevocationList).order_by(
+            desc(CommercialOfflineRevocationList.created_at)
+        )
     )
     return rows.scalars().all()
 
@@ -202,7 +212,9 @@ async def list_hardware_attestations(db: AsyncSession = Depends(get_db_session))
 
 
 @router.post("/admin/security/hardware-attestation/collect", status_code=201)
-async def post_collect_attestation(payload: AttestationCollectPayload, db: AsyncSession = Depends(get_db_session)):
+async def post_collect_attestation(
+    payload: AttestationCollectPayload, db: AsyncSession = Depends(get_db_session)
+):
     item = await collect_attestation_evidence(db, **payload.model_dump())
     await db.commit()
     await db.refresh(item)
@@ -210,7 +222,9 @@ async def post_collect_attestation(payload: AttestationCollectPayload, db: Async
 
 
 @router.post("/admin/security/hardware-attestation/verify")
-async def post_verify_attestation(payload: AttestationVerifyPayload, db: AsyncSession = Depends(get_db_session)):
+async def post_verify_attestation(
+    payload: AttestationVerifyPayload, db: AsyncSession = Depends(get_db_session)
+):
     try:
         item = await verify_attestation_record(db, payload.record_id)
         await db.commit()

@@ -14,11 +14,12 @@ def test_examples_directory_structure():
         "examples/node/streaming.js",
         "examples/node/rag_query.js",
         "examples/README.md",
-        "scripts/legacy/validate-examples-local.sh"
+        "scripts/legacy/validate-examples-local.sh",
     ]
-    
+
     for file_path in expected_files:
         assert os.path.exists(file_path), f"Missing expected file: {file_path}"
+
 
 def test_scripts_are_executable():
     """Verify that shell scripts have execution permissions."""
@@ -26,8 +27,8 @@ def test_scripts_are_executable():
         "examples/curl/chat.sh",
         "examples/curl/models.sh",
         "examples/curl/streaming.sh",
-        "scripts/legacy/validate-examples-local.sh"
+        "scripts/legacy/validate-examples-local.sh",
     ]
-    
+
     for script in scripts:
         assert os.access(script, os.X_OK), f"Script not executable: {script}"

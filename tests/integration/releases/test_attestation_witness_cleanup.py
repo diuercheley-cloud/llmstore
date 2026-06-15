@@ -7,6 +7,8 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "control_plane"))
 
+from datetime import UTC
+
 from app.models.commercial.commercial_confidential_runtime import (
     CommercialConfidentialInferenceSession,
     CommercialConfidentialRuntimeProfile,
@@ -31,13 +33,13 @@ async def test_sbom_placeholder_fails_in_production():
     provenance = MagicMock()
     provenance.client_id = uuid.uuid4()
     provenance.id = "provenance-123"
-    
+
     # Non-production allows generation
     with patch("app.core.config.get_settings") as mock_settings:
         mock_settings.return_value.app_env = "development"
         placeholder = svc.generate_sbom_placeholder(provenance, {}, [])
         assert isinstance(placeholder, PluginSBOMPlaceholder)
-        
+
         val_res = svc.validate_sbom_placeholder(placeholder)
         assert val_res["valid"] is True
 
@@ -46,7 +48,7 @@ async def test_sbom_placeholder_fails_in_production():
         mock_settings.return_value.app_env = "production"
         with pytest.raises(RuntimeError, match="Placeholder SBOM is blocked in production mode"):
             svc.generate_sbom_placeholder(provenance, {}, [])
-            
+
         dummy_placeholder = PluginSBOMPlaceholder(
             id="dummy",
             client_id=uuid.uuid4(),
@@ -55,10 +57,11 @@ async def test_sbom_placeholder_fails_in_production():
             dependency_summary_json={},
             denied_dependencies_json=[],
             sbom_hash="hash",
-            immutable_hash="hash"
+            immutable_hash="hash",
         )
         with pytest.raises(RuntimeError, match="Placeholder SBOM is blocked in production mode"):
             svc.validate_sbom_placeholder(dummy_placeholder)
+
 
 @pytest.mark.asyncio
 async def test_attestation_requires_signature_in_production():
@@ -69,22 +72,27 @@ async def test_attestation_requires_signature_in_production():
     profile.network_mode = "none"
     profile.filesystem_mode = "read-only"
     profile.limits = {}
-    
+
     key_path = "config/receipts_private_key_test.pem"
     if os.path.exists(key_path):
         try:
             os.remove(key_path)
         except Exception:
             pass
-            
+
     # Verify in production fails if signature is missing or placeholder
-    with patch("app.core.config.get_settings") as mock_settings, \
-         patch.dict(os.environ, {
-             "CRYPTO_RECEIPTS_PRIVATE_KEY_PATH": key_path,
-             "CRYPTO_RECEIPTS_REQUIRE_SIGNATURE": "false"
-         }):
+    with (
+        patch("app.core.config.get_settings") as mock_settings,
+        patch.dict(
+            os.environ,
+            {
+                "CRYPTO_RECEIPTS_PRIVATE_KEY_PATH": key_path,
+                "CRYPTO_RECEIPTS_REQUIRE_SIGNATURE": "false",
+            },
+        ),
+    ):
         mock_settings.return_value.app_env = "production"
-        
+
         # Missing signature
         att = {
             "provider": "gvisor",
@@ -95,72 +103,80 @@ async def test_attestation_requires_signature_in_production():
             "resource_limits": {},
             "artifact_hashes": [],
             "attestation_time": "2026-05-29T12:00:00",
-            "signature": None
+            "signature": None,
         }
         assert AttestationService.verify_attestation(att) is False
-        
+
         # Signature
         att["signature"] = "placeholder-signature-fallback"
         assert AttestationService.verify_attestation(att) is False
-        
+
         # Real signature should pass
         # Let's generate a valid signature first using the real functions
         import json
 
         from app.services.inference.cryptographic_receipts import sign_payload
+
         payload_data = {k: v for k, v in att.items() if k != "signature"}
         canonical_str = json.dumps(payload_data, sort_keys=True)
         att["signature"] = sign_payload(canonical_str)
-        
+
         assert AttestationService.verify_attestation(att) is True
+
 
 @pytest.mark.asyncio
 async def test_witness_signatures_fail_if_placeholders_in_production():
     db = AsyncMock()
-    
+
     timeline = CommercialMerkleTimeline(id=uuid.uuid4(), merkle_root="root123", status="sealed")
     witness = CommercialWitness(id=uuid.uuid4(), status="active")
-    
+
     sig = CommercialWitnessSignature(
         id=uuid.uuid4(),
         timeline_id=timeline.id,
         witness_id=witness.id,
         merkle_root="root123",
         signature="placeholder-signature-fake",
-        verification_status="valid"
+        verification_status="valid",
     )
-    
+
     db.execute.side_effect = [
         MagicMock(scalar_one_or_none=lambda: sig),
         MagicMock(scalar_one_or_none=lambda: witness),
-        MagicMock(scalar_one_or_none=lambda: timeline)
+        MagicMock(scalar_one_or_none=lambda: timeline),
     ]
-    
+
     key_path = "config/receipts_private_key_test.pem"
     if os.path.exists(key_path):
         try:
             os.remove(key_path)
         except Exception:
             pass
-            
-    with patch("app.services.inference.witness_federation.get_settings") as mock_settings, \
-         patch.dict(os.environ, {
-             "CRYPTO_RECEIPTS_PRIVATE_KEY_PATH": key_path,
-             "CRYPTO_RECEIPTS_REQUIRE_SIGNATURE": "false"
-         }):
+
+    with (
+        patch("app.services.inference.witness_federation.get_settings") as mock_settings,
+        patch.dict(
+            os.environ,
+            {
+                "CRYPTO_RECEIPTS_PRIVATE_KEY_PATH": key_path,
+                "CRYPTO_RECEIPTS_REQUIRE_SIGNATURE": "false",
+            },
+        ),
+    ):
         mock_settings.return_value.app_env = "production"
         mock_settings.return_value.admin_token = "admin"
-        
+
         # In production, fake placeholder verification fails
         is_valid = await witness_federation.verify_witness_signature(db, sig.id)
         assert is_valid is False
         assert sig.verification_status == "invalid"
 
+
 @pytest.mark.asyncio
 async def test_witness_unsigned_event_fails():
     db = AsyncMock()
-    from datetime import datetime, timezone
-    
+    from datetime import datetime
+
     # Event with fake/invalid hash
     event = CommercialWitnessAuditEvent(
         id=uuid.uuid4(),
@@ -169,62 +185,67 @@ async def test_witness_unsigned_event_fails():
         timeline_id=uuid.uuid4(),
         summary="Some summary",
         immutable_hash="invalid-hash-value-123",
-        created_at=datetime.now(timezone.utc)
+        created_at=datetime.now(UTC),
     )
-    
-    db.execute.side_effect = [
-        MagicMock(scalar_one_or_none=lambda: event)
-    ]
-    
+
+    db.execute.side_effect = [MagicMock(scalar_one_or_none=lambda: event)]
+
     key_path = "config/receipts_private_key_test.pem"
     if os.path.exists(key_path):
         try:
             os.remove(key_path)
         except Exception:
             pass
-            
-    with patch("app.services.inference.witness_federation.get_settings") as mock_settings, \
-         patch.dict(os.environ, {
-             "CRYPTO_RECEIPTS_PRIVATE_KEY_PATH": key_path,
-             "CRYPTO_RECEIPTS_REQUIRE_SIGNATURE": "false"
-         }):
+
+    with (
+        patch("app.services.inference.witness_federation.get_settings") as mock_settings,
+        patch.dict(
+            os.environ,
+            {
+                "CRYPTO_RECEIPTS_PRIVATE_KEY_PATH": key_path,
+                "CRYPTO_RECEIPTS_REQUIRE_SIGNATURE": "false",
+            },
+        ),
+    ):
         mock_settings.return_value.app_env = "production"
         is_valid = await witness_federation.verify_witness_audit_event(db, event.id)
         assert is_valid is False
 
+
 @pytest.mark.asyncio
 async def test_confidential_cleanup_generates_receipt():
     db = AsyncMock()
-    
+
     profile = CommercialConfidentialRuntimeProfile(
-        id=uuid.uuid4(),
-        profile_name="test-profile",
-        max_retention_seconds=0
+        id=uuid.uuid4(), profile_name="test-profile", max_retention_seconds=0
     )
     session = CommercialConfidentialInferenceSession(
-        id=uuid.uuid4(),
-        client_id="client-abc",
-        retention_policy_applied=False
+        id=uuid.uuid4(), client_id="client-abc", retention_policy_applied=False
     )
-    
+
     key_path = "config/receipts_private_key_test.pem"
     if os.path.exists(key_path):
         try:
             os.remove(key_path)
         except Exception:
             pass
-            
-    with patch("app.services.inference.confidential_runtime.get_settings") as mock_settings, \
-         patch("app.services.inference.confidential_runtime.log_confidential_audit") as mock_log, \
-         patch.dict(os.environ, {
-             "CRYPTO_RECEIPTS_PRIVATE_KEY_PATH": key_path,
-             "CRYPTO_RECEIPTS_REQUIRE_SIGNATURE": "false"
-         }):
+
+    with (
+        patch("app.services.inference.confidential_runtime.get_settings") as mock_settings,
+        patch("app.services.inference.confidential_runtime.log_confidential_audit") as mock_log,
+        patch.dict(
+            os.environ,
+            {
+                "CRYPTO_RECEIPTS_PRIVATE_KEY_PATH": key_path,
+                "CRYPTO_RECEIPTS_REQUIRE_SIGNATURE": "false",
+            },
+        ),
+    ):
         mock_settings.return_value.app_env = "production"
         mock_settings.return_value.commercial_confidential_default_retention_seconds = 0
-        
+
         await confidential_runtime.apply_retention_policy(db, session, profile)
-        
+
         assert session.retention_policy_applied is True
         # Verify clean_up log audit was called
         mock_log.assert_called_once()

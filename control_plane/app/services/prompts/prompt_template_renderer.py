@@ -3,7 +3,7 @@ import hashlib
 import json
 import logging
 import re
-from typing import Any, Dict, Optional, Set, Tuple
+from typing import Any
 
 from jinja2 import StrictUndefined, TemplateError, UndefinedError, meta
 from jinja2.sandbox import SandboxedEnvironment
@@ -16,8 +16,18 @@ SECRET_VALUE_PATTERNS = [
 ]
 
 BLOCKED_VARIABLE_NAMES = {
-    "eval", "exec", "__import__", "open", "system", "globals", "locals",
-    "compile", "__builtins__", "__class__", "__bases__", "__subclasses__",
+    "eval",
+    "exec",
+    "__import__",
+    "open",
+    "system",
+    "globals",
+    "locals",
+    "compile",
+    "__builtins__",
+    "__class__",
+    "__bases__",
+    "__subclasses__",
 }
 
 
@@ -42,9 +52,7 @@ class PromptTemplateRenderer:
 
     def _check_variable_name_is_safe(self, name: str) -> None:
         if name in BLOCKED_VARIABLE_NAMES:
-            raise UnsafeVariableNameError(
-                f"Variable name '{name}' is blocked for security reasons"
-            )
+            raise UnsafeVariableNameError(f"Variable name '{name}' is blocked for security reasons")
 
     def _check_value_is_not_secret(self, name: str, value: Any) -> None:
         if not isinstance(value, str):
@@ -62,7 +70,7 @@ class PromptTemplateRenderer:
                 f"Variable '{name}' must be a primitive type (str, int, float, bool), not {type(value).__name__}"
             )
 
-    def extract_variables(self, template_str: str) -> Set[str]:
+    def extract_variables(self, template_str: str) -> set[str]:
         ast = self.env.parse(template_str)
         return meta.find_undeclared_variables(ast)
 
@@ -75,8 +83,8 @@ class PromptTemplateRenderer:
     def validate_variables_against_declaration(
         self,
         template_str: str,
-        variables: Dict[str, Any],
-        declared_vars: Optional[list] = None,
+        variables: dict[str, Any],
+        declared_vars: list | None = None,
     ) -> None:
         self.validate_template_syntax(template_str)
         used_vars = self.extract_variables(template_str)
@@ -85,13 +93,15 @@ class PromptTemplateRenderer:
             declared_names = {v["name"] for v in declared_vars}
             undeclared = used_vars - declared_names
             if undeclared:
-                raise ValueError(
-                    f"Variables used in template but not declared: {undeclared}"
-                )
+                raise ValueError(f"Variables used in template but not declared: {undeclared}")
 
             for decl in declared_vars:
                 name = decl["name"]
-                if decl.get("required", True) and name not in variables and decl.get("default") is None:
+                if (
+                    decl.get("required", True)
+                    and name not in variables
+                    and decl.get("default") is None
+                ):
                     raise ValueError(f"Required variable '{name}' is missing")
                 if name in variables:
                     self._check_variable_name_is_safe(name)
@@ -100,10 +110,10 @@ class PromptTemplateRenderer:
     def render(
         self,
         template_str: str,
-        variables: Dict[str, Any],
-        declared_vars: Optional[list] = None,
+        variables: dict[str, Any],
+        declared_vars: list | None = None,
         skip_secret_check: bool = False,
-    ) -> Tuple[str, str, str]:
+    ) -> tuple[str, str, str]:
         declared_names = {v["name"] for v in declared_vars} if declared_vars else set()
 
         for name in variables:
@@ -140,18 +150,20 @@ class PromptTemplateRenderer:
         variables_hash = hashlib.sha256(variables_json.encode("utf-8")).hexdigest()
         output_hash = hashlib.sha256(rendered.encode("utf-8")).hexdigest()
         rendered_content_hash = hashlib.sha256(
-            json.dumps({"template": template_str, "variables": sanitized_vars}, sort_keys=True).encode("utf-8")
+            json.dumps(
+                {"template": template_str, "variables": sanitized_vars}, sort_keys=True
+            ).encode("utf-8")
         ).hexdigest()
 
         return rendered, variables_hash, output_hash, rendered_content_hash
 
     def resolve_instructions(
         self,
-        template_str: Optional[str],
-        instructions: Optional[str],
-        variables: Optional[Dict[str, Any]] = None,
-        declared_vars: Optional[list] = None,
-    ) -> Tuple[str, Optional[Dict[str, str]]]:
+        template_str: str | None,
+        instructions: str | None,
+        variables: dict[str, Any] | None = None,
+        declared_vars: list | None = None,
+    ) -> tuple[str, dict[str, str] | None]:
         if template_str:
             rendered, vhash, ohash, chash = self.render(
                 template_str, variables or {}, declared_vars=declared_vars

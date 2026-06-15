@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any
 
 import httpx
 from app.core.config import get_settings
@@ -12,7 +12,7 @@ class HttpSearchProvider(WebSearchProvider):
     def settings(self):
         return get_settings()
 
-    async def search(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
+    async def search(self, query: str, limit: int = 5) -> list[dict[str, Any]]:
         # 1. Enforce external network policy flag
         if not self.settings.agent_web_search_external_network_enabled:
             raise HTTPException(

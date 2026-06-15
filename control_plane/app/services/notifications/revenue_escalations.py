@@ -15,10 +15,16 @@ from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.commercial.commercial_billing_dispute import CommercialBillingDispute
 from app.models.commercial.commercial_financial_anomaly import CommercialFinancialAnomaly
-from app.models.commercial.commercial_financial_reconciliation import CommercialFinancialReconciliation
+from app.models.commercial.commercial_financial_reconciliation import (
+    CommercialFinancialReconciliation,
+)
 from app.models.commercial.commercial_revenue_alert_delivery import CommercialRevenueAlertDelivery
-from app.models.commercial.commercial_revenue_escalation_policy import CommercialRevenueEscalationPolicy
-from app.models.commercial.commercial_revenue_protection_action import CommercialRevenueProtectionAction
+from app.models.commercial.commercial_revenue_escalation_policy import (
+    CommercialRevenueEscalationPolicy,
+)
+from app.models.commercial.commercial_revenue_protection_action import (
+    CommercialRevenueProtectionAction,
+)
 from app.services.routing.commercial_report_email import (
     EmailAttachment,
     build_email_message,
@@ -51,7 +57,9 @@ SENSITIVE_KEYWORDS = {
 SENSITIVE_PATTERNS = [
     re.compile(r"\bsk-[A-Za-z0-9_\-]{8,}\b", re.IGNORECASE),
     re.compile(r"Bearer\s+[A-Za-z0-9._\-+/=]{8,}", re.IGNORECASE),
-    re.compile(r"\b(?:api[_-]?key|secret|token|password|routing_key)\b\s*[:=]\s*[^\s,;]+", re.IGNORECASE),
+    re.compile(
+        r"\b(?:api[_-]?key|secret|token|password|routing_key)\b\s*[:=]\s*[^\s,;]+", re.IGNORECASE
+    ),
 ]
 
 
@@ -65,7 +73,9 @@ def _json_default(value: Any) -> Any:
 
 def _hash_payload(payload: dict[str, Any]) -> str:
     stable_payload = {key: value for key, value in payload.items() if key != "timestamp"}
-    serialized = json.dumps(stable_payload, sort_keys=True, ensure_ascii=True, default=_json_default)
+    serialized = json.dumps(
+        stable_payload, sort_keys=True, ensure_ascii=True, default=_json_default
+    )
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
 
@@ -74,7 +84,9 @@ def _safe_string(value: Any, *, limit: int = 500) -> str | None:
         return None
     sanitized = sanitize_alert_payload(value)
     if isinstance(sanitized, (dict, list)):
-        return json.dumps(sanitized, sort_keys=True, ensure_ascii=True, default=_json_default)[:limit]
+        return json.dumps(sanitized, sort_keys=True, ensure_ascii=True, default=_json_default)[
+            :limit
+        ]
     return str(sanitized)[:limit]
 
 
@@ -125,7 +137,11 @@ def _destination_for(delivery_type: str) -> str:
         return _mask_url(settings.commercial_revenue_slack_webhook_url)
     if delivery_type == "pagerduty":
         return _mask_token(settings.commercial_revenue_pagerduty_routing_key)
-    recipients = [item.strip().lower() for item in settings.commercial_revenue_email_escalation_recipients.split(",") if item.strip()]
+    recipients = [
+        item.strip().lower()
+        for item in settings.commercial_revenue_email_escalation_recipients.split(",")
+        if item.strip()
+    ]
     return ", ".join(_mask_email(item) for item in recipients) if recipients else "not_configured"
 
 
@@ -174,9 +190,11 @@ def build_alert_payload(
     return sanitize_alert_payload(payload)
 
 
-def apply_retry_backoff(retry_count: int, *, base_seconds: int = 30, max_seconds: int = 1800) -> int:
+def apply_retry_backoff(
+    retry_count: int, *, base_seconds: int = 30, max_seconds: int = 1800
+) -> int:
     retry_count = max(0, retry_count)
-    return min(max_seconds, max(1, base_seconds) * (2 ** retry_count))
+    return min(max_seconds, max(1, base_seconds) * (2**retry_count))
 
 
 async def dedupe_alert(
@@ -199,10 +217,19 @@ async def dedupe_alert(
     existing = (await session.execute(stmt)).scalar_one_or_none()
     if existing is None:
         return None
-    if existing.payload_hash == payload_hash and existing.status in {"dry_run", "sent", "pending", "deduplicated"}:
+    if existing.payload_hash == payload_hash and existing.status in {
+        "dry_run",
+        "sent",
+        "pending",
+        "deduplicated",
+    }:
         return "deduplicated"
     existing_created_at = _normalize_dt(existing.created_at)
-    if cooldown_minutes > 0 and existing_created_at and existing_created_at >= utc_now() - timedelta(minutes=cooldown_minutes):
+    if (
+        cooldown_minutes > 0
+        and existing_created_at
+        and existing_created_at >= utc_now() - timedelta(minutes=cooldown_minutes)
+    ):
         return "suppressed"
     return None
 
@@ -219,7 +246,9 @@ async def _post_json(
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
                 response = await client.post(url, json=json_payload, headers=headers or {})
-            return response.status_code, _safe_string({"status_code": response.status_code, "body": response.text[:300]}) or ""
+            return response.status_code, _safe_string(
+                {"status_code": response.status_code, "body": response.text[:300]}
+            ) or ""
         except httpx.HTTPError as exc:
             last_error = _safe_string(str(exc)) or "http_error"
             if attempt >= max_retries:
@@ -234,7 +263,7 @@ async def deliver_webhook(payload: dict[str, Any], *, max_retries: int) -> dict[
     body = json.dumps(payload, sort_keys=True, ensure_ascii=True, default=_json_default)
     signature = hmac.new(
         settings.commercial_revenue_webhook_signing_secret.encode("utf-8"),
-        f"{timestamp}.{body}".encode("utf-8"),
+        f"{timestamp}.{body}".encode(),
         hashlib.sha256,
     ).hexdigest()
     headers = {
@@ -256,10 +285,25 @@ async def deliver_slack(payload: dict[str, Any], *, max_retries: int) -> dict[st
     slack_payload = {
         "text": f"[{payload['severity'].upper()}] {payload['source_type']}: {payload['summary']}",
         "blocks": [
-            {"type": "section", "text": {"type": "mrkdwn", "text": f"*Severity:* {payload['severity']}"}},
-            {"type": "section", "text": {"type": "mrkdwn", "text": f"*Source:* {payload['source_type']}"}},
-            {"type": "section", "text": {"type": "mrkdwn", "text": f"*Summary:* {payload['summary']}"}},
-            {"type": "section", "text": {"type": "mrkdwn", "text": f"*Recommendation:* {payload['recommendation']}"}},
+            {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": f"*Severity:* {payload['severity']}"},
+            },
+            {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": f"*Source:* {payload['source_type']}"},
+            },
+            {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": f"*Summary:* {payload['summary']}"},
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"*Recommendation:* {payload['recommendation']}",
+                },
+            },
             {"type": "context", "elements": [{"type": "mrkdwn", "text": payload["timestamp"]}]},
         ],
     }
@@ -271,7 +315,9 @@ async def deliver_slack(payload: dict[str, Any], *, max_retries: int) -> dict[st
     return {"status": "sent", "response_code": status_code, "response_summary": summary}
 
 
-async def deliver_pagerduty(payload: dict[str, Any], *, dedupe_key: str, max_retries: int) -> dict[str, Any]:
+async def deliver_pagerduty(
+    payload: dict[str, Any], *, dedupe_key: str, max_retries: int
+) -> dict[str, Any]:
     settings = get_settings()
     pd_payload = {
         "routing_key": settings.commercial_revenue_pagerduty_routing_key,
@@ -294,7 +340,11 @@ async def deliver_pagerduty(payload: dict[str, Any], *, dedupe_key: str, max_ret
 
 async def deliver_email(payload: dict[str, Any]) -> dict[str, Any]:
     settings = get_settings()
-    recipients = [item.strip().lower() for item in settings.commercial_revenue_email_escalation_recipients.split(",") if item.strip()]
+    recipients = [
+        item.strip().lower()
+        for item in settings.commercial_revenue_email_escalation_recipients.split(",")
+        if item.strip()
+    ]
     validate_recipient_allowlist(recipients, settings=settings)
     subject = f"[Revenue Escalation][{payload['severity'].upper()}] {payload['source_type']}"
     body = (
@@ -308,7 +358,13 @@ async def deliver_email(payload: dict[str, Any]) -> dict[str, Any]:
         subject=subject,
         recipients=recipients,
         body_text=body,
-        attachments=[EmailAttachment(filename="revenue-escalation.json", content=json.dumps(payload, ensure_ascii=True, indent=2).encode("utf-8"), mime_type="application/json")],
+        attachments=[
+            EmailAttachment(
+                filename="revenue-escalation.json",
+                content=json.dumps(payload, ensure_ascii=True, indent=2).encode("utf-8"),
+                mime_type="application/json",
+            )
+        ],
         settings=settings,
     )
     result = send_report_email(message, recipients, settings=settings)
@@ -324,20 +380,30 @@ def _channel_enabled(delivery_type: str) -> bool:
             and bool(settings.commercial_revenue_webhook_signing_secret.strip())
         )
     if delivery_type == "slack":
-        return settings.commercial_revenue_slack_enabled and bool(settings.commercial_revenue_slack_webhook_url.strip())
+        return settings.commercial_revenue_slack_enabled and bool(
+            settings.commercial_revenue_slack_webhook_url.strip()
+        )
     if delivery_type == "pagerduty":
-        return settings.commercial_revenue_pagerduty_enabled and bool(settings.commercial_revenue_pagerduty_routing_key.strip())
+        return settings.commercial_revenue_pagerduty_enabled and bool(
+            settings.commercial_revenue_pagerduty_routing_key.strip()
+        )
     if delivery_type == "email":
-        return settings.commercial_revenue_email_escalation_enabled and bool(settings.commercial_revenue_email_escalation_recipients.strip())
+        return settings.commercial_revenue_email_escalation_enabled and bool(
+            settings.commercial_revenue_email_escalation_recipients.strip()
+        )
     return False
 
 
-def _policy_matches(policy: CommercialRevenueEscalationPolicy, *, source_type: str, trigger_type: str, severity: str) -> bool:
+def _policy_matches(
+    policy: CommercialRevenueEscalationPolicy, *, source_type: str, trigger_type: str, severity: str
+) -> bool:
     if not policy.enabled:
         return False
     if SEVERITY_ORDER.get(severity, 0) < SEVERITY_ORDER.get(policy.severity_threshold, 0):
         return False
-    triggers = [str(item).strip() for item in (policy.trigger_types_json or []) if str(item).strip()]
+    triggers = [
+        str(item).strip() for item in (policy.trigger_types_json or []) if str(item).strip()
+    ]
     if not triggers:
         return True
     return "*" in triggers or source_type in triggers or trigger_type in triggers
@@ -391,7 +457,9 @@ async def _deliver_one(
 ) -> CommercialRevenueAlertDelivery:
     settings = get_settings()
     destination = _destination_for(delivery_type)
-    dedupe_key = hashlib.sha256(f"{source_type}:{source_id}:{severity}:{delivery_type}:{payload.get('trigger_type')}".encode("utf-8")).hexdigest()
+    dedupe_key = hashlib.sha256(
+        f"{source_type}:{source_id}:{severity}:{delivery_type}:{payload.get('trigger_type')}".encode()
+    ).hexdigest()
     payload_hash = _hash_payload(payload)
     dedupe_state = await dedupe_alert(
         session,
@@ -447,8 +515,20 @@ async def _deliver_one(
             if delivery_type == "email":
                 dry_run_result = send_report_email_dry_run(
                     subject=f"[Revenue Escalation][{severity.upper()}] {source_type}",
-                    recipients=[item.strip().lower() for item in settings.commercial_revenue_email_escalation_recipients.split(",") if item.strip()],
-                    attachments=[EmailAttachment(filename="revenue-escalation.json", content=json.dumps(payload, ensure_ascii=True).encode("utf-8"), mime_type="application/json")],
+                    recipients=[
+                        item.strip().lower()
+                        for item in settings.commercial_revenue_email_escalation_recipients.split(
+                            ","
+                        )
+                        if item.strip()
+                    ],
+                    attachments=[
+                        EmailAttachment(
+                            filename="revenue-escalation.json",
+                            content=json.dumps(payload, ensure_ascii=True).encode("utf-8"),
+                            mime_type="application/json",
+                        )
+                    ],
                     settings=settings,
                 )
                 response_summary = _safe_string(dry_run_result)
@@ -487,7 +567,9 @@ async def _deliver_one(
         elif delivery_type == "slack":
             result = await deliver_slack(payload, max_retries=max_retries)
         elif delivery_type == "pagerduty":
-            result = await deliver_pagerduty(payload, dedupe_key=dedupe_key, max_retries=max_retries)
+            result = await deliver_pagerduty(
+                payload, dedupe_key=dedupe_key, max_retries=max_retries
+            )
         else:
             result = await deliver_email(payload)
         return await _record_delivery(
@@ -549,22 +631,37 @@ async def evaluate_escalation_policies(
         return {"enabled": False, "deliveries": [], "payload": payload}
 
     policies = (
-        await session.execute(
-            select(CommercialRevenueEscalationPolicy)
-            .where(CommercialRevenueEscalationPolicy.enabled.is_(True))
-            .order_by(desc(CommercialRevenueEscalationPolicy.created_at))
+        (
+            await session.execute(
+                select(CommercialRevenueEscalationPolicy)
+                .where(CommercialRevenueEscalationPolicy.enabled.is_(True))
+                .order_by(desc(CommercialRevenueEscalationPolicy.created_at))
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     deliveries: list[CommercialRevenueAlertDelivery] = []
     matched_policy_ids: list[str] = []
 
     for policy in policies:
-        if not _policy_matches(policy, source_type=normalized_source_type, trigger_type=normalized_trigger_type, severity=severity):
+        if not _policy_matches(
+            policy,
+            source_type=normalized_source_type,
+            trigger_type=normalized_trigger_type,
+            severity=severity,
+        ):
             continue
         matched_policy_ids.append(str(policy.id))
-        allowed = [item for item in (policy.allowed_delivery_types_json or list(VALID_DELIVERY_TYPES)) if item in VALID_DELIVERY_TYPES]
+        allowed = [
+            item
+            for item in (policy.allowed_delivery_types_json or list(VALID_DELIVERY_TYPES))
+            if item in VALID_DELIVERY_TYPES
+        ]
         ordered = [item for item in (policy.escalation_order_json or allowed) if item in allowed]
-        types_to_process = [item for item in ordered if not delivery_types or item in delivery_types]
+        types_to_process = [
+            item for item in ordered if not delivery_types or item in delivery_types
+        ]
         for delivery_type in types_to_process:
             delivery = await _deliver_one(
                 session,
@@ -573,7 +670,8 @@ async def evaluate_escalation_policies(
                 severity=severity,
                 delivery_type=delivery_type,
                 payload=payload,
-                cooldown_minutes=policy.cooldown_minutes or settings.commercial_revenue_escalation_cooldown_minutes,
+                cooldown_minutes=policy.cooldown_minutes
+                or settings.commercial_revenue_escalation_cooldown_minutes,
                 max_retries=max(policy.max_retries, 0),
             )
             deliveries.append(delivery)
@@ -599,25 +697,35 @@ async def evaluate_escalation_policies(
 
 async def summarize_deliveries(session: AsyncSession) -> dict[str, Any]:
     deliveries = (
-        await session.execute(
-            select(CommercialRevenueAlertDelivery)
-            .order_by(desc(CommercialRevenueAlertDelivery.created_at))
-            .limit(100)
+        (
+            await session.execute(
+                select(CommercialRevenueAlertDelivery)
+                .order_by(desc(CommercialRevenueAlertDelivery.created_at))
+                .limit(100)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     policies = (
-        await session.execute(
-            select(CommercialRevenueEscalationPolicy)
-            .order_by(desc(CommercialRevenueEscalationPolicy.created_at))
-            .limit(50)
+        (
+            await session.execute(
+                select(CommercialRevenueEscalationPolicy)
+                .order_by(desc(CommercialRevenueEscalationPolicy.created_at))
+                .limit(50)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     by_status = {
         status: count
         for status, count in (
             await session.execute(
-                select(CommercialRevenueAlertDelivery.status, func.count(CommercialRevenueAlertDelivery.id))
-                .group_by(CommercialRevenueAlertDelivery.status)
+                select(
+                    CommercialRevenueAlertDelivery.status,
+                    func.count(CommercialRevenueAlertDelivery.id),
+                ).group_by(CommercialRevenueAlertDelivery.status)
             )
         ).all()
     }
@@ -625,8 +733,10 @@ async def summarize_deliveries(session: AsyncSession) -> dict[str, Any]:
         delivery_type: count
         for delivery_type, count in (
             await session.execute(
-                select(CommercialRevenueAlertDelivery.delivery_type, func.count(CommercialRevenueAlertDelivery.id))
-                .group_by(CommercialRevenueAlertDelivery.delivery_type)
+                select(
+                    CommercialRevenueAlertDelivery.delivery_type,
+                    func.count(CommercialRevenueAlertDelivery.id),
+                ).group_by(CommercialRevenueAlertDelivery.delivery_type)
             )
         ).all()
     }
@@ -646,7 +756,9 @@ async def summarize_deliveries(session: AsyncSession) -> dict[str, Any]:
                 "policy": item.name,
                 "severity_threshold": item.severity_threshold,
                 "trigger_types": sanitize_alert_payload(item.trigger_types_json or []),
-                "delivery_order": sanitize_alert_payload(item.escalation_order_json or item.allowed_delivery_types_json or []),
+                "delivery_order": sanitize_alert_payload(
+                    item.escalation_order_json or item.allowed_delivery_types_json or []
+                ),
             }
             for item in policies
         ],
@@ -674,7 +786,9 @@ async def summarize_deliveries(session: AsyncSession) -> dict[str, Any]:
                 "enabled": item.enabled,
                 "severity_threshold": item.severity_threshold,
                 "trigger_types_json": sanitize_alert_payload(item.trigger_types_json or []),
-                "allowed_delivery_types_json": sanitize_alert_payload(item.allowed_delivery_types_json or []),
+                "allowed_delivery_types_json": sanitize_alert_payload(
+                    item.allowed_delivery_types_json or []
+                ),
                 "cooldown_minutes": item.cooldown_minutes,
                 "max_retries": item.max_retries,
                 "escalation_order_json": sanitize_alert_payload(item.escalation_order_json or []),
@@ -691,7 +805,9 @@ async def summarize_deliveries(session: AsyncSession) -> dict[str, Any]:
     }
 
 
-async def _build_payload_for_retry(session: AsyncSession, delivery: CommercialRevenueAlertDelivery) -> dict[str, Any]:
+async def _build_payload_for_retry(
+    session: AsyncSession, delivery: CommercialRevenueAlertDelivery
+) -> dict[str, Any]:
     source_id = delivery.source_id
     source_type = delivery.source_type
     severity = delivery.severity
@@ -714,7 +830,9 @@ async def _build_payload_for_retry(session: AsyncSession, delivery: CommercialRe
             metadata = sanitize_alert_payload(anomaly.metadata_json or {})
     elif source_type == "reconciliation":
         record_id = _maybe_uuid(source_id)
-        record = await session.get(CommercialFinancialReconciliation, record_id) if record_id else None
+        record = (
+            await session.get(CommercialFinancialReconciliation, record_id) if record_id else None
+        )
         if record is not None:
             summary = record.notes or "Repeated reconciliation mismatches detected."
             recommendation = "Review mismatched ledger and chargeback records."
@@ -727,7 +845,9 @@ async def _build_payload_for_retry(session: AsyncSession, delivery: CommercialRe
             recommendation = "Review dispute queue and customer impact."
     elif source_type == "policy_action":
         action_id = _maybe_uuid(source_id)
-        action = await session.get(CommercialRevenueProtectionAction, action_id) if action_id else None
+        action = (
+            await session.get(CommercialRevenueProtectionAction, action_id) if action_id else None
+        )
         if action is not None:
             summary = action.reason or f"Revenue protection action {action.action_type}"
             recommendation = "Inspect revenue protection state transitions."
@@ -744,7 +864,9 @@ async def _build_payload_for_retry(session: AsyncSession, delivery: CommercialRe
     )
 
 
-async def retry_alert_delivery(session: AsyncSession, delivery_id: uuid.UUID) -> CommercialRevenueAlertDelivery:
+async def retry_alert_delivery(
+    session: AsyncSession, delivery_id: uuid.UUID
+) -> CommercialRevenueAlertDelivery:
     delivery = await session.get(CommercialRevenueAlertDelivery, delivery_id)
     if delivery is None:
         raise ValueError("delivery_not_found")

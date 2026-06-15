@@ -38,12 +38,42 @@ def upgrade() -> None:
         sa.Column("expires_at", sa.DateTime(timezone=True), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_commercial_airgap_sync_packages_package_type"), "commercial_airgap_sync_packages", ["package_type"], unique=False)
-    op.create_index(op.f("ix_commercial_airgap_sync_packages_source_cluster_id"), "commercial_airgap_sync_packages", ["source_cluster_id"], unique=False)
-    op.create_index(op.f("ix_commercial_airgap_sync_packages_target_cluster_id"), "commercial_airgap_sync_packages", ["target_cluster_id"], unique=False)
-    op.create_index(op.f("ix_commercial_airgap_sync_packages_manifest_hash"), "commercial_airgap_sync_packages", ["manifest_hash"], unique=False)
-    op.create_index(op.f("ix_commercial_airgap_sync_packages_encryption_key_id"), "commercial_airgap_sync_packages", ["encryption_key_id"], unique=False)
-    op.create_index(op.f("ix_commercial_airgap_sync_packages_status"), "commercial_airgap_sync_packages", ["status"], unique=False)
+    op.create_index(
+        op.f("ix_commercial_airgap_sync_packages_package_type"),
+        "commercial_airgap_sync_packages",
+        ["package_type"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_airgap_sync_packages_source_cluster_id"),
+        "commercial_airgap_sync_packages",
+        ["source_cluster_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_airgap_sync_packages_target_cluster_id"),
+        "commercial_airgap_sync_packages",
+        ["target_cluster_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_airgap_sync_packages_manifest_hash"),
+        "commercial_airgap_sync_packages",
+        ["manifest_hash"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_airgap_sync_packages_encryption_key_id"),
+        "commercial_airgap_sync_packages",
+        ["encryption_key_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_airgap_sync_packages_status"),
+        "commercial_airgap_sync_packages",
+        ["status"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_offline_revocation_lists",
@@ -59,7 +89,12 @@ def upgrade() -> None:
         sa.Column("expires_at", sa.DateTime(timezone=True), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_commercial_offline_revocation_lists_manifest_hash"), "commercial_offline_revocation_lists", ["manifest_hash"], unique=False)
+    op.create_index(
+        op.f("ix_commercial_offline_revocation_lists_manifest_hash"),
+        "commercial_offline_revocation_lists",
+        ["manifest_hash"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_hardware_attestation_records",
@@ -75,28 +110,89 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_commercial_hardware_attestation_records_node_id"), "commercial_hardware_attestation_records", ["node_id"], unique=False)
-    op.create_index(op.f("ix_commercial_hardware_attestation_records_cluster_id"), "commercial_hardware_attestation_records", ["cluster_id"], unique=False)
-    op.create_index(op.f("ix_commercial_hardware_attestation_records_attestation_type"), "commercial_hardware_attestation_records", ["attestation_type"], unique=False)
-    op.create_index(op.f("ix_commercial_hardware_attestation_records_status"), "commercial_hardware_attestation_records", ["status"], unique=False)
-    op.create_index(op.f("ix_commercial_hardware_attestation_records_evidence_hash"), "commercial_hardware_attestation_records", ["evidence_hash"], unique=False)
+    op.create_index(
+        op.f("ix_commercial_hardware_attestation_records_node_id"),
+        "commercial_hardware_attestation_records",
+        ["node_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_hardware_attestation_records_cluster_id"),
+        "commercial_hardware_attestation_records",
+        ["cluster_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_hardware_attestation_records_attestation_type"),
+        "commercial_hardware_attestation_records",
+        ["attestation_type"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_hardware_attestation_records_status"),
+        "commercial_hardware_attestation_records",
+        ["status"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_hardware_attestation_records_evidence_hash"),
+        "commercial_hardware_attestation_records",
+        ["evidence_hash"],
+        unique=False,
+    )
 
 
 def downgrade() -> None:
-    op.drop_index(op.f("ix_commercial_hardware_attestation_records_evidence_hash"), table_name="commercial_hardware_attestation_records")
-    op.drop_index(op.f("ix_commercial_hardware_attestation_records_status"), table_name="commercial_hardware_attestation_records")
-    op.drop_index(op.f("ix_commercial_hardware_attestation_records_attestation_type"), table_name="commercial_hardware_attestation_records")
-    op.drop_index(op.f("ix_commercial_hardware_attestation_records_cluster_id"), table_name="commercial_hardware_attestation_records")
-    op.drop_index(op.f("ix_commercial_hardware_attestation_records_node_id"), table_name="commercial_hardware_attestation_records")
+    op.drop_index(
+        op.f("ix_commercial_hardware_attestation_records_evidence_hash"),
+        table_name="commercial_hardware_attestation_records",
+    )
+    op.drop_index(
+        op.f("ix_commercial_hardware_attestation_records_status"),
+        table_name="commercial_hardware_attestation_records",
+    )
+    op.drop_index(
+        op.f("ix_commercial_hardware_attestation_records_attestation_type"),
+        table_name="commercial_hardware_attestation_records",
+    )
+    op.drop_index(
+        op.f("ix_commercial_hardware_attestation_records_cluster_id"),
+        table_name="commercial_hardware_attestation_records",
+    )
+    op.drop_index(
+        op.f("ix_commercial_hardware_attestation_records_node_id"),
+        table_name="commercial_hardware_attestation_records",
+    )
     op.drop_table("commercial_hardware_attestation_records")
 
-    op.drop_index(op.f("ix_commercial_offline_revocation_lists_manifest_hash"), table_name="commercial_offline_revocation_lists")
+    op.drop_index(
+        op.f("ix_commercial_offline_revocation_lists_manifest_hash"),
+        table_name="commercial_offline_revocation_lists",
+    )
     op.drop_table("commercial_offline_revocation_lists")
 
-    op.drop_index(op.f("ix_commercial_airgap_sync_packages_status"), table_name="commercial_airgap_sync_packages")
-    op.drop_index(op.f("ix_commercial_airgap_sync_packages_encryption_key_id"), table_name="commercial_airgap_sync_packages")
-    op.drop_index(op.f("ix_commercial_airgap_sync_packages_manifest_hash"), table_name="commercial_airgap_sync_packages")
-    op.drop_index(op.f("ix_commercial_airgap_sync_packages_target_cluster_id"), table_name="commercial_airgap_sync_packages")
-    op.drop_index(op.f("ix_commercial_airgap_sync_packages_source_cluster_id"), table_name="commercial_airgap_sync_packages")
-    op.drop_index(op.f("ix_commercial_airgap_sync_packages_package_type"), table_name="commercial_airgap_sync_packages")
+    op.drop_index(
+        op.f("ix_commercial_airgap_sync_packages_status"),
+        table_name="commercial_airgap_sync_packages",
+    )
+    op.drop_index(
+        op.f("ix_commercial_airgap_sync_packages_encryption_key_id"),
+        table_name="commercial_airgap_sync_packages",
+    )
+    op.drop_index(
+        op.f("ix_commercial_airgap_sync_packages_manifest_hash"),
+        table_name="commercial_airgap_sync_packages",
+    )
+    op.drop_index(
+        op.f("ix_commercial_airgap_sync_packages_target_cluster_id"),
+        table_name="commercial_airgap_sync_packages",
+    )
+    op.drop_index(
+        op.f("ix_commercial_airgap_sync_packages_source_cluster_id"),
+        table_name="commercial_airgap_sync_packages",
+    )
+    op.drop_index(
+        op.f("ix_commercial_airgap_sync_packages_package_type"),
+        table_name="commercial_airgap_sync_packages",
+    )
     op.drop_table("commercial_airgap_sync_packages")

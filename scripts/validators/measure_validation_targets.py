@@ -56,9 +56,7 @@ def run_target(target: str, timeout: int | None = None) -> dict:
         "status": status,
         "exit_code": exit_code,
         "elapsed_seconds": round(elapsed, 2),
-        "output_summary": (
-            (result.stdout.strip() or "")[-200:] if result else ""
-        ),
+        "output_summary": ((result.stdout.strip() or "")[-200:] if result else ""),
     }
 
 

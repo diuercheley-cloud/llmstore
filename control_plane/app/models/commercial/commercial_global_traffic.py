@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 from app.db.base import Base
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
@@ -17,16 +17,21 @@ class CommercialGlobalTrafficPolicy(Base):
     provider = Column(String, nullable=True)
     model = Column(String, nullable=True)
     region = Column(String, nullable=True)
-    mode = Column(String, nullable=False) # dry_run, canary
+    mode = Column(String, nullable=False)  # dry_run, canary
     traffic_percent = Column(Integer, nullable=False)
     max_traffic_percent = Column(Integer, nullable=False)
-    status = Column(String, nullable=False, default="pending") # pending, active, paused, rolled_back, completed
+    status = Column(
+        String, nullable=False, default="pending"
+    )  # pending, active, paused, rolled_back, completed
     reason = Column(String, nullable=True)
     created_by = Column(String, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
-    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
+    updated_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
+    )
     activated_at = Column(DateTime, nullable=True)
     rolled_back_at = Column(DateTime, nullable=True)
+
 
 class CommercialGlobalTrafficDecision(Base):
     __tablename__ = "commercial_global_traffic_decisions"
@@ -40,7 +45,9 @@ class CommercialGlobalTrafficDecision(Base):
     selected_cluster_id = Column(String, nullable=False)
     original_cluster_id = Column(String, nullable=False)
     target_cluster_id = Column(String, nullable=True)
-    decision = Column(String, nullable=False) # stay_local, shift_to_target, rejected, dry_run_would_shift
+    decision = Column(
+        String, nullable=False
+    )  # stay_local, shift_to_target, rejected, dry_run_would_shift
     bucket = Column(Integer, nullable=False)
     traffic_percent = Column(Integer, nullable=False)
     reason = Column(String, nullable=True)

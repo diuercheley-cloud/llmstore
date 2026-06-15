@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 import inspect
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 from uuid import UUID
 
 from app.core.time import utc_now
@@ -54,7 +55,9 @@ class TrustedAgentRuntime:
     def register_tool_handler(self, tool_name: str, handler: ToolHandler) -> None:
         self._handlers[tool_name] = handler
 
-    def build_deterministic_plan(self, actions: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], str, str]:
+    def build_deterministic_plan(
+        self, actions: list[dict[str, Any]]
+    ) -> tuple[list[dict[str, Any]], str, str]:
         normalized: list[dict[str, Any]] = []
         previous_node_hash: str | None = None
         for index, action in enumerate(actions):
@@ -65,7 +68,9 @@ class TrustedAgentRuntime:
                 "payload": action.get("payload", {}),
                 "requires_approval": bool(action.get("requires_approval", False)),
             }
-            normalized_action["planned_input_hash"] = sha256_hex(canonical_json(normalized_action["payload"]))
+            normalized_action["planned_input_hash"] = sha256_hex(
+                canonical_json(normalized_action["payload"])
+            )
             normalized_action["graph_node_hash"] = sha256_hex(
                 canonical_json(
                     {
@@ -133,7 +138,9 @@ class TrustedAgentRuntime:
             runtime_snapshot_hash=runtime_snapshot_hash,
             runtime_mode=runtime_mode,
             dry_run=dry_run,
-            confidential_payload_mode="redacted" if profile.confidential_runtime_required else "allow",
+            confidential_payload_mode="redacted"
+            if profile.confidential_runtime_required
+            else "allow",
             metadata_json={
                 "plan": [
                     {k: v for k, v in action.items() if k != "payload"}
@@ -152,7 +159,9 @@ class TrustedAgentRuntime:
             execution_id=execution.id,
             tenant_id=tenant_id,
             boundary_type=profile.memory_isolation_mode,
-            access_log_hash=sha256_hex(f"{execution.id}:{tenant_id}:{profile.memory_isolation_mode}"),
+            access_log_hash=sha256_hex(
+                f"{execution.id}:{tenant_id}:{profile.memory_isolation_mode}"
+            ),
         )
         db.add(boundary)
         await db.flush()
@@ -185,7 +194,9 @@ class TrustedAgentRuntime:
 
         return execution
 
-    async def execute_plan(self, db: AsyncSession, *, execution_id: UUID) -> CommercialAgentExecution:
+    async def execute_plan(
+        self, db: AsyncSession, *, execution_id: UUID
+    ) -> CommercialAgentExecution:
         execution = await db.get(CommercialAgentExecution, execution_id)
         if execution is None:
             raise ValueError("execution_not_found")
@@ -194,12 +205,16 @@ class TrustedAgentRuntime:
             raise ValueError("agent_not_found")
 
         action_rows = (
-            await db.execute(
-                select(CommercialAgentAction)
-                .where(CommercialAgentAction.execution_id == execution_id)
-                .order_by(CommercialAgentAction.action_index.asc())
+            (
+                await db.execute(
+                    select(CommercialAgentAction)
+                    .where(CommercialAgentAction.execution_id == execution_id)
+                    .order_by(CommercialAgentAction.action_index.asc())
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
         previous_receipt_hash = None
         for action in action_rows:
@@ -212,7 +227,9 @@ class TrustedAgentRuntime:
                 payload=payload,
                 dry_run=execution.dry_run,
             )
-            await self._apply_policy_decision(db, execution=execution, action=action, decision=decision)
+            await self._apply_policy_decision(
+                db, execution=execution, action=action, decision=decision
+            )
             if not decision.allowed:
                 execution.status = "blocked"
                 execution.policy_decision = "denied"
@@ -230,7 +247,10 @@ class TrustedAgentRuntime:
                 handler = self._handlers.get(action.tool_name)
                 if handler is None:
                     action.status = "denied"
-                    action.policy_decision_json = {"decision": "denied", "reason": "missing_runtime_handler"}
+                    action.policy_decision_json = {
+                        "decision": "denied",
+                        "reason": "missing_runtime_handler",
+                    }
                     execution.status = "blocked"
                     execution.policy_decision = "denied"
                     continue
@@ -244,7 +264,9 @@ class TrustedAgentRuntime:
                 handler_result = handler(payload, runtime_context)
                 if inspect.isawaitable(handler_result):
                     handler_result = await handler_result
-                result_hash = sha256_hex(canonical_json(redact_confidential_payload(handler_result)))
+                result_hash = sha256_hex(
+                    canonical_json(redact_confidential_payload(handler_result))
+                )
                 action.result_hash = result_hash
             else:
                 result_hash = sha256_hex("dry_run")
@@ -297,7 +319,11 @@ class TrustedAgentRuntime:
         execution.output_hash = sha256_hex(
             canonical_json(
                 [
-                    {"action_index": row.action_index, "result_hash": row.result_hash, "status": row.status}
+                    {
+                        "action_index": row.action_index,
+                        "result_hash": row.result_hash,
+                        "status": row.status,
+                    }
                     for row in action_rows
                 ]
             )
@@ -329,10 +355,16 @@ class TrustedAgentRuntime:
             raise ValueError("execution_not_found")
 
         approval = (
-            await db.execute(
-                select(CommercialToolApproval).where(CommercialToolApproval.action_id == action_id)
+            (
+                await db.execute(
+                    select(CommercialToolApproval).where(
+                        CommercialToolApproval.action_id == action_id
+                    )
+                )
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         if approval is None:
             approval = CommercialToolApproval(
                 action_id=action.id,
@@ -340,7 +372,9 @@ class TrustedAgentRuntime:
                 tenant_id=action.tenant_id,
                 requested_by="system",
                 status="pending",
-                approval_chain_hash=sha256_hex(f"{action.id}:{action.tool_name}:{action.tenant_id}"),
+                approval_chain_hash=sha256_hex(
+                    f"{action.id}:{action.tool_name}:{action.tenant_id}"
+                ),
             )
             db.add(approval)
         approval.status = status
@@ -360,13 +394,19 @@ class TrustedAgentRuntime:
         total_actions = await db.scalar(select(func.count(CommercialAgentAction.id)))
         total_tools = await db.scalar(select(func.count(CommercialToolRegistry.id)))
         pending_approvals = await db.scalar(
-            select(func.count(CommercialToolApproval.id)).where(CommercialToolApproval.status == "pending")
+            select(func.count(CommercialToolApproval.id)).where(
+                CommercialToolApproval.status == "pending"
+            )
         )
         violations = await db.scalar(
-            select(func.count(CommercialAgentAction.id)).where(CommercialAgentAction.status == "denied")
+            select(func.count(CommercialAgentAction.id)).where(
+                CommercialAgentAction.status == "denied"
+            )
         )
         verified_replays = await db.scalar(
-            select(func.count(CommercialAgentExecution.id)).where(CommercialAgentExecution.replay_status == "verified")
+            select(func.count(CommercialAgentExecution.id)).where(
+                CommercialAgentExecution.replay_status == "verified"
+            )
         )
         return {
             "enabled": True,

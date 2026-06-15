@@ -8,8 +8,6 @@ Tests the full lifecycle:
 5. Cancel a run
 """
 
-import uuid
-
 import pytest
 
 
@@ -20,12 +18,48 @@ async def test_agent_graph_full_lifecycle(async_client, admin_token_headers):
         "name": "e2e-agent-graph",
         "description": "E2E test: Supervisor delegates to parallel workers, reviewer consolidates",
         "nodes": [
-            {"id": "supervisor-1", "type": "supervisor", "name": "Main Supervisor", "max_retries": 1, "timeout_seconds": 30},
-            {"id": "worker-a", "type": "worker", "name": "Worker A (research)", "max_retries": 2, "timeout_seconds": 30},
-            {"id": "worker-b", "type": "worker", "name": "Worker B (implement)", "max_retries": 2, "timeout_seconds": 30},
-            {"id": "worker-c", "type": "worker", "name": "Worker C (test)", "max_retries": 2, "timeout_seconds": 30},
-            {"id": "reviewer-1", "type": "reviewer", "name": "Reviewer", "max_retries": 1, "timeout_seconds": 30},
-            {"id": "planner-1", "type": "planner", "name": "Planner", "max_retries": 1, "timeout_seconds": 30},
+            {
+                "id": "supervisor-1",
+                "type": "supervisor",
+                "name": "Main Supervisor",
+                "max_retries": 1,
+                "timeout_seconds": 30,
+            },
+            {
+                "id": "worker-a",
+                "type": "worker",
+                "name": "Worker A (research)",
+                "max_retries": 2,
+                "timeout_seconds": 30,
+            },
+            {
+                "id": "worker-b",
+                "type": "worker",
+                "name": "Worker B (implement)",
+                "max_retries": 2,
+                "timeout_seconds": 30,
+            },
+            {
+                "id": "worker-c",
+                "type": "worker",
+                "name": "Worker C (test)",
+                "max_retries": 2,
+                "timeout_seconds": 30,
+            },
+            {
+                "id": "reviewer-1",
+                "type": "reviewer",
+                "name": "Reviewer",
+                "max_retries": 1,
+                "timeout_seconds": 30,
+            },
+            {
+                "id": "planner-1",
+                "type": "planner",
+                "name": "Planner",
+                "max_retries": 1,
+                "timeout_seconds": 30,
+            },
         ],
         "edges": [
             {"source": "supervisor-1", "target": "planner-1"},

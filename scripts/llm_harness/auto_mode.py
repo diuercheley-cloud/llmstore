@@ -32,9 +32,7 @@ class AutoModeApprovalProvider(ApprovalProvider):
     ) -> tuple[bool, dict[str, Any]]:
         # If stop_on_risk is enabled and policy blocked or flagged it, we deny
         if self.stop_on_risk and policy_decision and not policy_decision.get("allowed", True):
-            logger.warning(
-                "AutoMode: Risk detected and stop-on-risk is active. Denying action."
-            )
+            logger.warning("AutoMode: Risk detected and stop-on-risk is active. Denying action.")
             return False, action
 
         action_type = action.get("action_type") or action.get("type")
@@ -111,9 +109,7 @@ class AutoModeRunner:
                 part for part in [result.message, result.error, result.output] if part
             )
             diagnostics = diagnose_errors(failure_text)
-            policy_blocked = any(
-                event.get("event") == "policy.blocked" for event in result.events
-            )
+            policy_blocked = any(event.get("event") == "policy.blocked" for event in result.events)
 
             if diagnostics:
                 logger.warning(f"AutoMode: Diagnostics of failure attempt {attempt}: {diagnostics}")
@@ -140,9 +136,7 @@ class AutoModeRunner:
             )
 
         final_failure_text = "\n".join(
-            part
-            for part in [last_result.message, last_result.error, last_result.output]
-            if part
+            part for part in [last_result.message, last_result.error, last_result.output] if part
         )
         diagnostics = diagnose_errors(final_failure_text)
         if diagnostics:

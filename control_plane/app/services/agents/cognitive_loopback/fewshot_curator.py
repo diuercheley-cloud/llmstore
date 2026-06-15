@@ -1,6 +1,5 @@
 # Owner: agent-platform
 import uuid
-from typing import List
 
 from app.models.agents.agent_cognitive_loopback import AgentFewShotExample
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,11 +10,13 @@ class FewShotCurator:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_active_examples(self, agent_id: uuid.UUID, tenant_id: str) -> List[AgentFewShotExample]:
+    async def get_active_examples(
+        self, agent_id: uuid.UUID, tenant_id: str
+    ) -> list[AgentFewShotExample]:
         stmt = select(AgentFewShotExample).where(
             AgentFewShotExample.agent_id == agent_id,
             AgentFewShotExample.tenant_id == tenant_id,
-            AgentFewShotExample.is_active == True
+            AgentFewShotExample.is_active == True,
         )
         res = await self.db.execute(stmt)
         return list(res.scalars().all())

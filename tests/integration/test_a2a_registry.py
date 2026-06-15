@@ -10,8 +10,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 @pytest.fixture(autouse=True)
 def patch_a2a_enabled():
-    with patch("app.services.agents.a2a.a2a_security.A2ASecurityService.verify_a2a_enabled_or_raise"):
-        with patch("app.services.agents.a2a.a2a_security.A2ASecurityService.verify_external_enabled_or_raise"):
+    with patch(
+        "app.services.agents.a2a.a2a_security.A2ASecurityService.verify_a2a_enabled_or_raise"
+    ):
+        with patch(
+            "app.services.agents.a2a.a2a_security.A2ASecurityService.verify_external_enabled_or_raise"
+        ):
             yield
 
 
@@ -22,15 +26,21 @@ class TestA2ARegistryService:
         agent_def = AgentDefinition(id=agent_id, tenant_id="tenant-1", name="Test Agent")
 
         db = MagicMock(spec=AsyncSession)
-        db.execute = AsyncMock(side_effect=[
-            MagicMock(scalar_one_or_none=lambda: agent_def),
-            MagicMock(scalar_one_or_none=lambda: None),
-        ])
+        db.execute = AsyncMock(
+            side_effect=[
+                MagicMock(scalar_one_or_none=lambda: agent_def),
+                MagicMock(scalar_one_or_none=lambda: None),
+            ]
+        )
 
         reg = await A2ARegistryService.register_agent(
-            db=db, tenant_id="tenant-1", agent_id=agent_id,
-            auth_token="token-123", target_url=None,
-            capabilities={"tools": ["search"]}, is_external=False,
+            db=db,
+            tenant_id="tenant-1",
+            agent_id=agent_id,
+            auth_token="token-123",
+            target_url=None,
+            capabilities={"tools": ["search"]},
+            is_external=False,
         )
         assert reg.tenant_id == "tenant-1"
         assert reg.agent_id == agent_id
@@ -43,15 +53,22 @@ class TestA2ARegistryService:
         agent_id = uuid.uuid4()
 
         db = MagicMock(spec=AsyncSession)
-        db.execute = AsyncMock(side_effect=[
-            MagicMock(scalar_one_or_none=lambda: None),
-            MagicMock(scalar_one_or_none=lambda: None),
-        ])
+        db.execute = AsyncMock(
+            side_effect=[
+                MagicMock(scalar_one_or_none=lambda: None),
+                MagicMock(scalar_one_or_none=lambda: None),
+            ]
+        )
 
         reg = await A2ARegistryService.register_agent(
-            db=db, tenant_id="tenant-1", agent_id=agent_id,
-            auth_token="ext-token", target_url="https://ext.example.com/a2a",
-            capabilities={}, is_external=True, agent_name="External Agent",
+            db=db,
+            tenant_id="tenant-1",
+            agent_id=agent_id,
+            auth_token="ext-token",
+            target_url="https://ext.example.com/a2a",
+            capabilities={},
+            is_external=True,
+            agent_name="External Agent",
         )
         assert reg.is_external is True
         assert reg.target_url == "https://ext.example.com/a2a"
@@ -66,8 +83,11 @@ class TestA2ARegistryService:
 
         with pytest.raises(HTTPException) as exc:
             await A2ARegistryService.register_agent(
-                db=db, tenant_id="tenant-1", agent_id=agent_id,
-                auth_token="token", is_external=False,
+                db=db,
+                tenant_id="tenant-1",
+                agent_id=agent_id,
+                auth_token="token",
+                is_external=False,
             )
         assert exc.value.status_code == 404
 
@@ -77,14 +97,19 @@ class TestA2ARegistryService:
         agent_def = AgentDefinition(id=agent_id, tenant_id="other-tenant", name="Other")
 
         db = MagicMock(spec=AsyncSession)
-        db.execute = AsyncMock(side_effect=[
-            MagicMock(scalar_one_or_none=lambda: agent_def),
-        ])
+        db.execute = AsyncMock(
+            side_effect=[
+                MagicMock(scalar_one_or_none=lambda: agent_def),
+            ]
+        )
 
         with pytest.raises(HTTPException) as exc:
             await A2ARegistryService.register_agent(
-                db=db, tenant_id="tenant-1", agent_id=agent_id,
-                auth_token="token", is_external=False,
+                db=db,
+                tenant_id="tenant-1",
+                agent_id=agent_id,
+                auth_token="token",
+                is_external=False,
             )
         assert exc.value.status_code == 403
 
@@ -93,19 +118,26 @@ class TestA2ARegistryService:
         agent_id = uuid.uuid4()
         agent_def = AgentDefinition(id=agent_id, tenant_id="tenant-1", name="Test")
         existing_reg = AgentA2ARegistration(
-            id=uuid.uuid4(), tenant_id="tenant-1", agent_id=agent_id,
+            id=uuid.uuid4(),
+            tenant_id="tenant-1",
+            agent_id=agent_id,
             auth_token="old-token",
         )
 
         db = MagicMock(spec=AsyncSession)
-        db.execute = AsyncMock(side_effect=[
-            MagicMock(scalar_one_or_none=lambda: agent_def),
-            MagicMock(scalar_one_or_none=lambda: existing_reg),
-        ])
+        db.execute = AsyncMock(
+            side_effect=[
+                MagicMock(scalar_one_or_none=lambda: agent_def),
+                MagicMock(scalar_one_or_none=lambda: existing_reg),
+            ]
+        )
 
         reg = await A2ARegistryService.register_agent(
-            db=db, tenant_id="tenant-1", agent_id=agent_id,
-            auth_token="new-token", target_url="https://new.url",
+            db=db,
+            tenant_id="tenant-1",
+            agent_id=agent_id,
+            auth_token="new-token",
+            target_url="https://new.url",
         )
         assert reg.auth_token == "new-token"
         assert reg.target_url == "https://new.url"
@@ -115,13 +147,14 @@ class TestA2ARegistryService:
     async def test_list_registered_agents(self):
         agent_id = uuid.uuid4()
         reg = AgentA2ARegistration(
-            id=uuid.uuid4(), tenant_id="tenant-1", agent_id=agent_id, auth_token="token",
+            id=uuid.uuid4(),
+            tenant_id="tenant-1",
+            agent_id=agent_id,
+            auth_token="token",
         )
 
         db = MagicMock(spec=AsyncSession)
-        db.execute = AsyncMock(return_value=MagicMock(
-            scalars=lambda: MagicMock(all=lambda: [reg])
-        ))
+        db.execute = AsyncMock(return_value=MagicMock(scalars=lambda: MagicMock(all=lambda: [reg])))
 
         agents = await A2ARegistryService.list_registered_agents(db, "tenant-1")
         assert len(agents) == 1
@@ -130,9 +163,7 @@ class TestA2ARegistryService:
     @pytest.mark.asyncio
     async def test_list_registered_agents_empty(self):
         db = MagicMock(spec=AsyncSession)
-        db.execute = AsyncMock(return_value=MagicMock(
-            scalars=lambda: MagicMock(all=lambda: [])
-        ))
+        db.execute = AsyncMock(return_value=MagicMock(scalars=lambda: MagicMock(all=lambda: [])))
 
         agents = await A2ARegistryService.list_registered_agents(db, "tenant-1")
         assert agents == []
@@ -141,7 +172,10 @@ class TestA2ARegistryService:
     async def test_get_agent_registration_found(self):
         agent_id = uuid.uuid4()
         reg = AgentA2ARegistration(
-            id=uuid.uuid4(), tenant_id="tenant-1", agent_id=agent_id, auth_token="token",
+            id=uuid.uuid4(),
+            tenant_id="tenant-1",
+            agent_id=agent_id,
+            auth_token="token",
         )
 
         db = MagicMock(spec=AsyncSession)

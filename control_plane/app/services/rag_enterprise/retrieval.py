@@ -1,7 +1,7 @@
 import logging
 import re
 import uuid
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 from app.core.config import get_settings
@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
-def cosine_similarity(a: List[float], b: List[float]) -> float:
+def cosine_similarity(a: list[float], b: list[float]) -> float:
     if not a or not b or len(a) != len(b):
         return 0.0
     a_arr = np.array(a)
@@ -50,50 +50,46 @@ def cosine_similarity(a: List[float], b: List[float]) -> float:
 async def search_chunks(
     session: AsyncSession,
     client_id: uuid.UUID,
-    query_embedding: List[float],
+    query_embedding: list[float],
     top_k: int = 5,
     score_threshold: float = 0.0,
-    document_ids: Optional[List[uuid.UUID]] = None,
-    collection_ids: Optional[List[uuid.UUID]] = None,
-) -> List[Tuple[float, RAGDocumentChunk, Optional[RAGDocument]]]:
+    document_ids: list[uuid.UUID] | None = None,
+    collection_ids: list[uuid.UUID] | None = None,
+) -> list[tuple[float, RAGDocumentChunk, RAGDocument | None]]:
     from app.services.vectorstores.vectorstore_factory import VectorStoreFactory
+
     store = VectorStoreFactory.get_instance(session=session)
-    
+
     filters = {"client_id": client_id}
     if document_ids:
         # Simple implementation: use the first document_id if provided
         filters["document_id"] = document_ids[0]
 
     hits = await store.search(
-        collection_name="rag_chunks",
-        vector=query_embedding,
-        limit=top_k,
-        filters=filters
+        collection_name="rag_chunks", vector=query_embedding, limit=top_k, filters=filters
     )
 
     if not hits:
         return []
 
     results = []
-    doc_cache: dict[uuid.UUID, Optional[RAGDocument]] = {}
+    doc_cache: dict[uuid.UUID, RAGDocument | None] = {}
 
     for hit in hits:
         if hit.get("score", 0.0) < score_threshold:
             continue
-            
+
         chunk_id = uuid.UUID(hit["id"])
-        chunk = (await session.execute(
-            select(RAGDocumentChunk).where(RAGDocumentChunk.id == chunk_id)
-        )).scalar_one_or_none()
-        
+        chunk = (
+            await session.execute(select(RAGDocumentChunk).where(RAGDocumentChunk.id == chunk_id))
+        ).scalar_one_or_none()
+
         if not chunk:
             continue
 
         doc_id = chunk.document_id
         if doc_id not in doc_cache:
-            doc_result = await session.execute(
-                select(RAGDocument).where(RAGDocument.id == doc_id)
-            )
+            doc_result = await session.execute(select(RAGDocument).where(RAGDocument.id == doc_id))
             doc_cache[doc_id] = doc_result.scalar_one_or_none()
 
         doc = doc_cache.get(doc_id)
@@ -111,14 +107,17 @@ async def execute_enterprise_query(
     question: str,
     top_k: int = 5,
     score_threshold: float = 0.0,
-    document_ids: Optional[List[uuid.UUID]] = None,
-    collection_ids: Optional[List[uuid.UUID]] = None,
+    document_ids: list[uuid.UUID] | None = None,
+    collection_ids: list[uuid.UUID] | None = None,
     cloud_allowed: bool = False,
-    user_identity: Optional[str] = None,
-    requested_model: Optional[str] = None,
-    abac_attributes: Optional[dict[str, Any]] = None,
+    user_identity: str | None = None,
+    requested_model: str | None = None,
+    abac_attributes: dict[str, Any] | None = None,
     return_audit: bool = False,
-) -> Tuple[List[EnterpriseSource], List[float]] | Tuple[List[EnterpriseSource], List[float], dict[str, Any]]:
+) -> (
+    tuple[list[EnterpriseSource], list[float]]
+    | tuple[list[EnterpriseSource], list[float], dict[str, Any]]
+):
     embedding_service = get_enterprise_embedding_service()
     query_embedding = await embedding_service.embed_text(question, cloud_allowed=cloud_allowed)
 
@@ -197,7 +196,9 @@ async def execute_enterprise_query(
                     fallback_text=chunk.content,
                     commercial_chunk=commercial_chunk,
                 )
-                poison = await analyze_and_record_poisoning(session, vault_id=vault.id, text=source_text)
+                poison = await analyze_and_record_poisoning(
+                    session, vault_id=vault.id, text=source_text
+                )
                 if poison.flagged:
                     audit_payload["violations"].append(poison.alert_type)
                     commercial_chunk.poisoned_flag = True
@@ -205,23 +206,36 @@ async def execute_enterprise_query(
                         continue
                 source_text = sanitize_retrieval_text(source_text)
 
-        sources.append(EnterpriseSource(
-            document_id=chunk.document_id,
-            filename=doc.original_filename if doc else "unknown",
-            page=page,
-            chunk_index=chunk.chunk_index,
-            text=source_text,
-            score=float(score),
-        ))
+        sources.append(
+            EnterpriseSource(
+                document_id=chunk.document_id,
+                filename=doc.original_filename if doc else "unknown",
+                page=page,
+                chunk_index=chunk.chunk_index,
+                text=source_text,
+                score=float(score),
+            )
+        )
         all_scores.append(float(score))
         if access_context and len(sources) >= access_context.max_context_chunks:
             break
 
-    audit_payload["policy_result"] = "deny" if audit_payload["violations"] and access_context and access_context.policy_mode == "enforce" else ("report_only" if audit_payload["violations"] else "allow")
+    audit_payload["policy_result"] = (
+        "deny"
+        if audit_payload["violations"]
+        and access_context
+        and access_context.policy_mode == "enforce"
+        else ("report_only" if audit_payload["violations"] else "allow")
+    )
     audit_payload["retrieval_hash"] = hash_payload(
         {
             "question": question,
-            "source_hashes": [hash_payload({"doc": str(src.document_id), "idx": src.chunk_index, "text": src.text}) for src in sources],
+            "source_hashes": [
+                hash_payload(
+                    {"doc": str(src.document_id), "idx": src.chunk_index, "text": src.text}
+                )
+                for src in sources
+            ],
             "commercial_chunk_ids": commercial_chunk_ids,
         }
     )
@@ -230,7 +244,7 @@ async def execute_enterprise_query(
     return sources, all_scores
 
 
-def build_rag_context(sources: List[EnterpriseSource]) -> str:
+def build_rag_context(sources: list[EnterpriseSource]) -> str:
     parts = []
     for src in sources:
         parts.append(
@@ -280,5 +294,7 @@ def sanitize_retrieval_text(text: str) -> str:
     sanitized = sanitize_text(text, max_len=4000)
     sanitized = re.sub(r"(?i)ignore previous instructions", "[sanitized-instruction]", sanitized)
     sanitized = re.sub(r"(?i)system override", "[sanitized-override]", sanitized)
-    sanitized = re.sub(r"(?i)(private key|secret token|root credentials)", "[sanitized-secret]", sanitized)
+    sanitized = re.sub(
+        r"(?i)(private key|secret token|root credentials)", "[sanitized-secret]", sanitized
+    )
     return sanitized

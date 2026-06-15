@@ -2,12 +2,14 @@
 Owner: platform-ops
 Status: implementation
 """
+
 import enum
 import logging
 import os
+from collections.abc import Iterable
 from datetime import timedelta
 from pathlib import Path
-from typing import Any, Dict, Iterable
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -32,7 +34,7 @@ class RealExecutionReadinessService:
         self.settings = get_settings()
         self._base_dir = Path(__file__).resolve().parents[4]
 
-    async def check_readiness(self) -> Dict[str, Any]:
+    async def check_readiness(self) -> dict[str, Any]:
         deployment_mode = getattr(self.settings, "deployment_mode", "appliance")
         production_like = deployment_mode in ("production", "enterprise_managed")
         pilot_like = deployment_mode == "pilot"
@@ -45,7 +47,9 @@ class RealExecutionReadinessService:
             "timestamp": utc_now().isoformat(),
         }
 
-        def add_check(check_id: str, name: str, status: str, value: Any, message: str | None = None) -> None:
+        def add_check(
+            check_id: str, name: str, status: str, value: Any, message: str | None = None
+        ) -> None:
             payload = {"id": check_id, "name": name, "status": status, "value": value}
             if message:
                 payload["message"] = message
@@ -78,9 +82,13 @@ class RealExecutionReadinessService:
             exec_status = "fail" if production_like else "warn"
             exec_message = "Real tool execution is disabled."
             if production_like:
-                results["blockers"].append("Real tool execution is disabled in production-like mode.")
+                results["blockers"].append(
+                    "Real tool execution is disabled in production-like mode."
+                )
             elif pilot_like:
-                results["warnings"].append("Real tool execution is disabled; pilot will not exercise real side effects.")
+                results["warnings"].append(
+                    "Real tool execution is disabled; pilot will not exercise real side effects."
+                )
             else:
                 results["warnings"].append("Real tool execution is disabled.")
         add_check(
@@ -92,13 +100,25 @@ class RealExecutionReadinessService:
         )
 
         queue_enabled = bool(
-            getattr(self.settings, "agent_execution_plane_enabled", self.settings.agent_execution_enabled)
+            getattr(
+                self.settings,
+                "agent_execution_plane_enabled",
+                self.settings.agent_execution_enabled,
+            )
         )
         queue_status = "pass" if queue_enabled else "fail"
-        queue_message = "Durable execution queue is enabled." if queue_enabled else "Durable execution queue is disabled."
+        queue_message = (
+            "Durable execution queue is enabled."
+            if queue_enabled
+            else "Durable execution queue is disabled."
+        )
         if not queue_enabled and (production_like or pilot_like):
-            results["blockers"].append("Durable execution queue is disabled but required for production/pilot.")
-        add_check("durable_queue", "Durable Queue Status", queue_status, queue_enabled, queue_message)
+            results["blockers"].append(
+                "Durable execution queue is disabled but required for production/pilot."
+            )
+        add_check(
+            "durable_queue", "Durable Queue Status", queue_status, queue_enabled, queue_message
+        )
 
         scheduler_enabled = bool(getattr(self.settings, "agent_cron_triggers_enabled", False))
         scheduler_status = "pass"
@@ -110,7 +130,13 @@ class RealExecutionReadinessService:
                 results["blockers"].append("Scheduler is enabled without a durable queue.")
             else:
                 results["warnings"].append(scheduler_message)
-        add_check("scheduler_safety", "Scheduler Safety", scheduler_status, {"cron_enabled": scheduler_enabled, "queue_enabled": queue_enabled}, scheduler_message)
+        add_check(
+            "scheduler_safety",
+            "Scheduler Safety",
+            scheduler_status,
+            {"cron_enabled": scheduler_enabled, "queue_enabled": queue_enabled},
+            scheduler_message,
+        )
 
         active_workers = 0
         worker_status = "pass"
@@ -122,11 +148,19 @@ class RealExecutionReadinessService:
                 .where(AgentWorkerHeartbeat.status == "active")
             )
             active_workers = res_workers.scalar() or 0
-            worker_status = "pass" if active_workers > 0 or not self.settings.agent_worker_enabled else "warn"
+            worker_status = (
+                "pass" if active_workers > 0 or not self.settings.agent_worker_enabled else "warn"
+            )
             worker_message = f"{active_workers} active workers observed in the last 5 minutes."
-            if active_workers == 0 and self.settings.agent_worker_enabled and (production_like or pilot_like):
+            if (
+                active_workers == 0
+                and self.settings.agent_worker_enabled
+                and (production_like or pilot_like)
+            ):
                 worker_status = "fail"
-                results["blockers"].append("No active worker heartbeats detected in the last 5 minutes.")
+                results["blockers"].append(
+                    "No active worker heartbeats detected in the last 5 minutes."
+                )
             elif active_workers == 0 and self.settings.agent_worker_enabled:
                 results["warnings"].append("No active workers detected.")
         except Exception as exc:
@@ -136,8 +170,16 @@ class RealExecutionReadinessService:
                 worker_status = "fail"
                 results["blockers"].append("Worker heartbeat store is unreachable.")
             else:
-                results["warnings"].append("Worker heartbeat store is unreachable in non-production mode.")
-        add_check("active_workers", "Active Worker Presence", worker_status, active_workers, worker_message)
+                results["warnings"].append(
+                    "Worker heartbeat store is unreachable in non-production mode."
+                )
+        add_check(
+            "active_workers",
+            "Active Worker Presence",
+            worker_status,
+            active_workers,
+            worker_message,
+        )
 
         sandbox_enabled = bool(getattr(self.settings, "agent_tool_sandbox_enabled", False))
         sandbox_status = "pass" if sandbox_enabled else "warn"
@@ -146,13 +188,23 @@ class RealExecutionReadinessService:
             sandbox_message = "Tool sandbox is disabled."
             if production_like:
                 sandbox_status = "fail"
-                results["blockers"].append("Sandbox execution is disabled in production environment.")
+                results["blockers"].append(
+                    "Sandbox execution is disabled in production environment."
+                )
             elif pilot_like:
                 results["warnings"].append("Sandbox execution is disabled.")
-        add_check("sandbox_hardened", "Sandbox Hardening", sandbox_status, sandbox_enabled, sandbox_message)
+        add_check(
+            "sandbox_hardened",
+            "Sandbox Hardening",
+            sandbox_status,
+            sandbox_enabled,
+            sandbox_message,
+        )
 
         connector_mode = str(getattr(self.settings, "agent_connector_mode", "mock")).strip().lower()
-        connector_real_http = bool(getattr(self.settings, "agent_connector_real_http_enabled", False))
+        connector_real_http = bool(
+            getattr(self.settings, "agent_connector_real_http_enabled", False)
+        )
         connector_status = "pass"
         connector_message = f"Connectors use explicit mode '{connector_mode}'."
         if connector_mode not in {"mock", "real"}:
@@ -163,7 +215,9 @@ class RealExecutionReadinessService:
             connector_status = "fail" if (production_like or pilot_like) else "warn"
             connector_message = "Connector mode is real but outbound real HTTP is disabled."
             if production_like or pilot_like:
-                results["blockers"].append("Connector mode is real while AGENT_CONNECTOR_REAL_HTTP_ENABLED=false.")
+                results["blockers"].append(
+                    "Connector mode is real while AGENT_CONNECTOR_REAL_HTTP_ENABLED=false."
+                )
             else:
                 results["warnings"].append(connector_message)
         add_check(
@@ -174,16 +228,33 @@ class RealExecutionReadinessService:
             connector_message,
         )
 
-        operator_mode = str(os.environ.get("OPERATOR_MODE", "real" if not self._env_truthy("OPERATOR_DRY_RUN") else "dry_run")).strip().lower()
+        operator_mode = (
+            str(
+                os.environ.get(
+                    "OPERATOR_MODE",
+                    "real" if not self._env_truthy("OPERATOR_DRY_RUN") else "dry_run",
+                )
+            )
+            .strip()
+            .lower()
+        )
         operator_status = "pass"
         operator_message = f"Operator mode is '{operator_mode}'."
         if production_like and operator_mode != "real":
             operator_status = "fail"
-            results["blockers"].append(f"Kubernetes operator mode '{operator_mode}' does not allow real reconciliation.")
+            results["blockers"].append(
+                f"Kubernetes operator mode '{operator_mode}' does not allow real reconciliation."
+            )
         elif pilot_like and operator_mode not in {"real", "mock"}:
             operator_status = "warn"
             results["warnings"].append(operator_message)
-        add_check("k8s_operator", "Kubernetes Operator Type", operator_status, operator_mode, operator_message)
+        add_check(
+            "k8s_operator",
+            "Kubernetes Operator Type",
+            operator_status,
+            operator_mode,
+            operator_message,
+        )
 
         code_findings = self._scan_code_integrity()
         code_status = "pass" if not code_findings else "fail"
@@ -193,8 +264,12 @@ class RealExecutionReadinessService:
             "code_integrity",
             "Execution Logic Integrity",
             code_status,
-            "No placeholder fallbacks in execution hot paths" if not code_findings else code_findings,
-            "Execution hot paths have no implicit mock or NotImplementedError fallback." if not code_findings else "; ".join(code_findings),
+            "No placeholder fallbacks in execution hot paths"
+            if not code_findings
+            else code_findings,
+            "Execution hot paths have no implicit mock or NotImplementedError fallback."
+            if not code_findings
+            else "; ".join(code_findings),
         )
 
         if results["blockers"]:
@@ -228,15 +303,27 @@ class RealExecutionReadinessService:
                     findings.append(f"{relative_path} still contains blocked pattern: {pattern}")
         return findings
 
-    def _code_scan_rules(self) -> Dict[str, Iterable[str]]:
+    def _code_scan_rules(self) -> dict[str, Iterable[str]]:
         return {
             "control_plane/app/services/agents/tool_executor.py": [
                 "Simulated execution of tool",
             ],
-            "control_plane/app/services/agents/connectors/github_connector.py": ["NotImplementedError"],
-            "control_plane/app/services/agents/connectors/confluence_connector.py": ["NotImplementedError"],
-            "control_plane/app/services/agents/connectors/jira_connector.py": ["NotImplementedError"],
-            "control_plane/app/services/agents/connectors/slack_connector.py": ["NotImplementedError"],
-            "control_plane/app/services/agents/connectors/microsoft365_connector.py": ["NotImplementedError"],
-            "control_plane/app/services/agents/connectors/salesforce_connector.py": ["NotImplementedError"],
+            "control_plane/app/services/agents/connectors/github_connector.py": [
+                "NotImplementedError"
+            ],
+            "control_plane/app/services/agents/connectors/confluence_connector.py": [
+                "NotImplementedError"
+            ],
+            "control_plane/app/services/agents/connectors/jira_connector.py": [
+                "NotImplementedError"
+            ],
+            "control_plane/app/services/agents/connectors/slack_connector.py": [
+                "NotImplementedError"
+            ],
+            "control_plane/app/services/agents/connectors/microsoft365_connector.py": [
+                "NotImplementedError"
+            ],
+            "control_plane/app/services/agents/connectors/salesforce_connector.py": [
+                "NotImplementedError"
+            ],
         }

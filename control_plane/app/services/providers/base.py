@@ -30,7 +30,9 @@ class ProviderType(str, enum.Enum):
 
 
 class ProviderAdapter(ProviderContract, ABC):
-    def __init__(self, provider_id: str, provider_type: ProviderType, enabled: bool, configured: bool):
+    def __init__(
+        self, provider_id: str, provider_type: ProviderType, enabled: bool, configured: bool
+    ):
         self._provider_id = provider_id
         self._provider_type = provider_type
         self._enabled = enabled
@@ -56,32 +58,25 @@ class ProviderAdapter(ProviderContract, ABC):
         return self._configured
 
     @abstractmethod
-    async def health_check(self) -> dict[str, Any]:
-        ...
+    async def health_check(self) -> dict[str, Any]: ...
 
     @abstractmethod
-    async def list_models(self) -> list[str]:
-        ...
+    async def list_models(self) -> list[str]: ...
 
     @abstractmethod
-    async def chat_completion(self, payload: dict[str, Any]) -> dict[str, Any]:
-        ...
+    async def chat_completion(self, payload: dict[str, Any]) -> dict[str, Any]: ...
 
     @abstractmethod
-    async def responses(self, payload: dict[str, Any]) -> dict[str, Any]:
-        ...
+    async def responses(self, payload: dict[str, Any]) -> dict[str, Any]: ...
 
     @abstractmethod
-    async def embeddings(self, payload: dict[str, Any]) -> dict[str, Any]:
-        ...
+    async def embeddings(self, payload: dict[str, Any]) -> dict[str, Any]: ...
 
     @abstractmethod
-    def estimate_cost(self, model: str, prompt_tokens: int, completion_tokens: int) -> float:
-        ...
+    def estimate_cost(self, model: str, prompt_tokens: int, completion_tokens: int) -> float: ...
 
     @abstractmethod
-    def capabilities(self) -> ProviderCapabilities:
-        ...
+    def capabilities(self) -> ProviderCapabilities: ...
 
     def mask_api_key(self, key: str | None) -> str | None:
         if not key:

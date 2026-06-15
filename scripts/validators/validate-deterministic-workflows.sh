@@ -8,7 +8,7 @@ test -f control_plane/app/services/workflows/deterministic_orchestrator.py
 test -f control_plane/app/services/workflows/workflow_receipts.py
 test -f control_plane/app/services/workflows/checkpoint_replay.py
 test -f control_plane/app/services/workflows/workflow_provenance.py
-test -f control_plane/alembic/versions/20260515_phase55_verifiable_workflows.py
+test -f control_plane/alembic/archive/20260515_phase55_verifiable_workflows.py
 test -f docs/DETERMINISTIC_WORKFLOWS.md
 
 grep -q "CommercialWorkflowStage" control_plane/app/models/commercial_workflows.py

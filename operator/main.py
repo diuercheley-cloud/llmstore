@@ -2,10 +2,11 @@
 Owner: platform-ops
 Status: implementation
 """
+
 import datetime
 import os
 from copy import deepcopy
-from typing import Any, Dict, List
+from typing import Any
 
 import kopf
 import kubernetes
@@ -41,24 +42,28 @@ def get_api_client():
     return kubernetes.client.ApiClient()
 
 
-def update_status(name: str, namespace: str, plural: str, conditions: List[Dict[str, Any]], logger):
+def update_status(name: str, namespace: str, plural: str, conditions: list[dict[str, Any]], logger):
     if not _apply_enabled():
-        logger.info(f"[{_mode_log_prefix()}] Would update status for {plural}/{name} in {namespace}")
+        logger.info(
+            f"[{_mode_log_prefix()}] Would update status for {plural}/{name} in {namespace}"
+        )
         return
 
     api = kubernetes.client.CustomObjectsApi()
     group = "llm.stack.local"
     version = "v1"
 
-    now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    now = datetime.datetime.now(datetime.UTC).isoformat()
     for condition in conditions:
         condition.setdefault("lastTransitionTime", now)
 
     status = {"conditions": conditions}
-    api.patch_namespaced_custom_object_status(group, version, namespace, plural, name, {"status": status})
+    api.patch_namespaced_custom_object_status(
+        group, version, namespace, plural, name, {"status": status}
+    )
 
 
-def _ensure_list(value: Any) -> List[Any]:
+def _ensure_list(value: Any) -> list[Any]:
     if value is None:
         return []
     if isinstance(value, list):
@@ -66,8 +71,8 @@ def _ensure_list(value: Any) -> List[Any]:
     return [value]
 
 
-def _merge_env(env: List[Dict[str, Any]], extra_env: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    merged: Dict[str, Dict[str, Any]] = {}
+def _merge_env(env: list[dict[str, Any]], extra_env: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    merged: dict[str, dict[str, Any]] = {}
     for item in env + extra_env:
         name = item.get("name")
         if name:
@@ -75,7 +80,7 @@ def _merge_env(env: List[Dict[str, Any]], extra_env: List[Dict[str, Any]]) -> Li
     return list(merged.values())
 
 
-def _build_probe(probe: Dict[str, Any] | None, default_port: int) -> Dict[str, Any] | None:
+def _build_probe(probe: dict[str, Any] | None, default_port: int) -> dict[str, Any] | None:
     if not probe:
         return None
     probe = deepcopy(probe)
@@ -87,7 +92,7 @@ def _build_probe(probe: Dict[str, Any] | None, default_port: int) -> Dict[str, A
     return probe
 
 
-def _default_probes(container_port: int) -> Dict[str, Dict[str, Any]]:
+def _default_probes(container_port: int) -> dict[str, dict[str, Any]]:
     return {
         "readinessProbe": {
             "httpGet": {"path": "/healthz", "port": container_port},
@@ -106,7 +111,9 @@ def _default_probes(container_port: int) -> Dict[str, Dict[str, Any]]:
     }
 
 
-def _build_persistent_volume_claim(name: str, namespace: str, claim: Dict[str, Any]) -> Dict[str, Any]:
+def _build_persistent_volume_claim(
+    name: str, namespace: str, claim: dict[str, Any]
+) -> dict[str, Any]:
     access_modes = claim.get("accessModes") or ["ReadWriteOnce"]
     storage_class_name = claim.get("storageClassName")
     pvc = {
@@ -127,8 +134,8 @@ def _build_persistent_volume_claim(name: str, namespace: str, claim: Dict[str, A
     return pvc
 
 
-def _build_hpa_body(name: str, namespace: str, autoscaling: Dict[str, Any]) -> Dict[str, Any]:
-    metrics: List[Dict[str, Any]] = []
+def _build_hpa_body(name: str, namespace: str, autoscaling: dict[str, Any]) -> dict[str, Any]:
+    metrics: list[dict[str, Any]] = []
     cpu = autoscaling.get("targetCPUUtilizationPercentage")
     memory = autoscaling.get("targetMemoryUtilizationPercentage")
     if cpu:
@@ -168,7 +175,7 @@ def _build_hpa_body(name: str, namespace: str, autoscaling: Dict[str, Any]) -> D
     }
 
 
-def _build_deployment_body(name: str, namespace: str, spec: Dict[str, Any]) -> Dict[str, Any]:
+def _build_deployment_body(name: str, namespace: str, spec: dict[str, Any]) -> dict[str, Any]:
     metadata = spec.get("metadata", {})
     pod_metadata = spec.get("podMetadata", {})
     labels = {"app": name, **metadata.get("labels", {})}
@@ -243,13 +250,19 @@ def _build_deployment_body(name: str, namespace: str, spec: Dict[str, Any]) -> D
             }
         )
         mount_path = persistent_volume_claim.get("mountPath", "/data")
-        deployment["spec"]["template"]["spec"]["containers"][0].setdefault("volumeMounts", []).append(
+        deployment["spec"]["template"]["spec"]["containers"][0].setdefault(
+            "volumeMounts", []
+        ).append(
             {"name": persistent_volume_claim.get("volumeName", "data"), "mountPath": mount_path}
         )
 
     probes = _default_probes(container_port)
-    readiness_probe = _build_probe(spec.get("readinessProbe"), container_port) or probes["readinessProbe"]
-    liveness_probe = _build_probe(spec.get("livenessProbe"), container_port) or probes["livenessProbe"]
+    readiness_probe = (
+        _build_probe(spec.get("readinessProbe"), container_port) or probes["readinessProbe"]
+    )
+    liveness_probe = (
+        _build_probe(spec.get("livenessProbe"), container_port) or probes["livenessProbe"]
+    )
     startup_probe = _build_probe(spec.get("startupProbe"), container_port)
     deployment["spec"]["template"]["spec"]["containers"][0]["readinessProbe"] = readiness_probe
     deployment["spec"]["template"]["spec"]["containers"][0]["livenessProbe"] = liveness_probe
@@ -258,14 +271,18 @@ def _build_deployment_body(name: str, namespace: str, spec: Dict[str, Any]) -> D
 
     if spec.get("gpu", {}).get("enabled"):
         gpu_count = spec["gpu"].get("count", 1)
-        container_resources = deployment["spec"]["template"]["spec"]["containers"][0].setdefault("resources", {})
+        container_resources = deployment["spec"]["template"]["spec"]["containers"][0].setdefault(
+            "resources", {}
+        )
         container_resources.setdefault("limits", {})
         container_resources["limits"]["nvidia.com/gpu"] = gpu_count
 
     return deployment
 
 
-def _build_service_body(name: str, namespace: str, spec: Dict[str, Any] | None = None) -> Dict[str, Any]:
+def _build_service_body(
+    name: str, namespace: str, spec: dict[str, Any] | None = None
+) -> dict[str, Any]:
     spec = spec or {}
     service_spec = spec.get("service", {})
     port = int(service_spec.get("port", 80))
@@ -289,7 +306,9 @@ def _build_service_body(name: str, namespace: str, spec: Dict[str, Any] | None =
     return body
 
 
-def apply_deployment(name: str, namespace: str, spec: Dict[str, Any], owner: Dict[str, Any], logger):
+def apply_deployment(
+    name: str, namespace: str, spec: dict[str, Any], owner: dict[str, Any], logger
+):
     apps_v1 = kubernetes.client.AppsV1Api()
     deployment = _build_deployment_body(name, namespace, spec)
     kopf.adopt(deployment, owner)
@@ -308,7 +327,7 @@ def apply_deployment(name: str, namespace: str, spec: Dict[str, Any], owner: Dic
         logger.info(f"Updated Deployment {name}")
 
 
-def apply_service(name: str, namespace: str, spec: Dict[str, Any], owner: Dict[str, Any], logger):
+def apply_service(name: str, namespace: str, spec: dict[str, Any], owner: dict[str, Any], logger):
     core_v1 = kubernetes.client.CoreV1Api()
     service = _build_service_body(name, namespace, spec)
     kopf.adopt(service, owner)
@@ -327,7 +346,9 @@ def apply_service(name: str, namespace: str, spec: Dict[str, Any], owner: Dict[s
         logger.info(f"Patched Service {name}")
 
 
-def apply_persistent_volume_claim(name: str, namespace: str, spec: Dict[str, Any], owner: Dict[str, Any], logger):
+def apply_persistent_volume_claim(
+    name: str, namespace: str, spec: dict[str, Any], owner: dict[str, Any], logger
+):
     claim = spec.get("persistentVolumeClaim")
     if not claim:
         return
@@ -336,7 +357,9 @@ def apply_persistent_volume_claim(name: str, namespace: str, spec: Dict[str, Any
     kopf.adopt(pvc, owner)
 
     if not _apply_enabled():
-        logger.info(f"[{_mode_log_prefix()}] Would apply PersistentVolumeClaim {pvc['metadata']['name']}")
+        logger.info(
+            f"[{_mode_log_prefix()}] Would apply PersistentVolumeClaim {pvc['metadata']['name']}"
+        )
         return
 
     try:
@@ -353,7 +376,9 @@ def apply_persistent_volume_claim(name: str, namespace: str, spec: Dict[str, Any
         logger.info(f"Patched PersistentVolumeClaim {pvc['metadata']['name']}")
 
 
-def apply_horizontal_pod_autoscaler(name: str, namespace: str, spec: Dict[str, Any], owner: Dict[str, Any], logger):
+def apply_horizontal_pod_autoscaler(
+    name: str, namespace: str, spec: dict[str, Any], owner: dict[str, Any], logger
+):
     autoscaling = spec.get("autoscaling", {})
     if not autoscaling.get("enabled"):
         return
@@ -371,11 +396,13 @@ def apply_horizontal_pod_autoscaler(name: str, namespace: str, spec: Dict[str, A
     except kubernetes.client.exceptions.ApiException as exc:
         if exc.status != 409:
             raise
-        autoscaling_v2.patch_namespaced_horizontal_pod_autoscaler(name=name, namespace=namespace, body=hpa)
+        autoscaling_v2.patch_namespaced_horizontal_pod_autoscaler(
+            name=name, namespace=namespace, body=hpa
+        )
         logger.info(f"Patched HorizontalPodAutoscaler {name}")
 
 
-def _resource_status_message(base: str, spec: Dict[str, Any]) -> str:
+def _resource_status_message(base: str, spec: dict[str, Any]) -> str:
     resources = ["deployment"]
     if spec.get("service", {}).get("enabled", True):
         resources.append("service")
@@ -394,14 +421,17 @@ def reconcile_worker(spec, name, namespace, body, logger, **kwargs):
     # Agentic Health Check (Semantic sanity)
     # In a real scenario, this would query Prometheus/Metrics for agent error rates
     semantic_health = spec.get("healthThreshold", 0.95)
-    
+
     try:
         worker_spec = deepcopy(spec)
         # Injection of self-healing environment variables
-        worker_spec["env"] = _merge_env(_ensure_list(worker_spec.get("env")), [
-            {"name": "AGENT_SELF_HEALING_ENABLED", "value": "true"},
-            {"name": "AGENT_HEALTH_THRESHOLD", "value": str(semantic_health)},
-        ])
+        worker_spec["env"] = _merge_env(
+            _ensure_list(worker_spec.get("env")),
+            [
+                {"name": "AGENT_SELF_HEALING_ENABLED", "value": "true"},
+                {"name": "AGENT_HEALTH_THRESHOLD", "value": str(semantic_health)},
+            ],
+        )
 
         apply_persistent_volume_claim(name, namespace, worker_spec, body, logger)
         apply_deployment(name, namespace, worker_spec, body, logger)
@@ -410,7 +440,16 @@ def reconcile_worker(spec, name, namespace, body, logger, **kwargs):
             name,
             namespace,
             "llmworkers",
-            [{"type": "Ready", "status": "True", "reason": "Success", "message": _resource_status_message("Worker deployment reconciled", worker_spec)}],
+            [
+                {
+                    "type": "Ready",
+                    "status": "True",
+                    "reason": "Success",
+                    "message": _resource_status_message(
+                        "Worker deployment reconciled", worker_spec
+                    ),
+                }
+            ],
             logger,
         )
     except Exception as exc:
@@ -440,7 +479,16 @@ def reconcile_inference_stack(spec, name, namespace, body, logger, **kwargs):
             name,
             namespace,
             "llminferencestacks",
-            [{"type": "Ready", "status": "True", "reason": "Success", "message": _resource_status_message("All resources reconciled", control_plane_spec)}],
+            [
+                {
+                    "type": "Ready",
+                    "status": "True",
+                    "reason": "Success",
+                    "message": _resource_status_message(
+                        "All resources reconciled", control_plane_spec
+                    ),
+                }
+            ],
             logger,
         )
     except Exception as exc:
@@ -470,7 +518,16 @@ def reconcile_model_runtime(spec, name, namespace, body, logger, **kwargs):
             name,
             namespace,
             "llmmodelruntimes",
-            [{"type": "Ready", "status": "True", "reason": "Success", "message": _resource_status_message("Runtime deployment reconciled", runtime_spec)}],
+            [
+                {
+                    "type": "Ready",
+                    "status": "True",
+                    "reason": "Success",
+                    "message": _resource_status_message(
+                        "Runtime deployment reconciled", runtime_spec
+                    ),
+                }
+            ],
             logger,
         )
     except Exception as exc:
@@ -494,7 +551,14 @@ def reconcile_provider(spec, name, namespace, logger, **kwargs):
             name,
             namespace,
             "llmproviders",
-            [{"type": "Degraded", "status": "True", "reason": "MissingSecret", "message": "apiKeySecretRef is required"}],
+            [
+                {
+                    "type": "Degraded",
+                    "status": "True",
+                    "reason": "MissingSecret",
+                    "message": "apiKeySecretRef is required",
+                }
+            ],
             logger,
         )
         return
@@ -504,7 +568,14 @@ def reconcile_provider(spec, name, namespace, logger, **kwargs):
             name,
             namespace,
             "llmproviders",
-            [{"type": "Ready", "status": "True", "reason": "MockValidated", "message": f"Validated provider secret reference {secret_ref} in {get_operator_mode()} mode"}],
+            [
+                {
+                    "type": "Ready",
+                    "status": "True",
+                    "reason": "MockValidated",
+                    "message": f"Validated provider secret reference {secret_ref} in {get_operator_mode()} mode",
+                }
+            ],
             logger,
         )
         return
@@ -516,7 +587,14 @@ def reconcile_provider(spec, name, namespace, logger, **kwargs):
             name,
             namespace,
             "llmproviders",
-            [{"type": "Ready", "status": "True", "reason": "SecretFound", "message": "API key secret found"}],
+            [
+                {
+                    "type": "Ready",
+                    "status": "True",
+                    "reason": "SecretFound",
+                    "message": "API key secret found",
+                }
+            ],
             logger,
         )
     except kubernetes.client.exceptions.ApiException as exc:
@@ -526,7 +604,14 @@ def reconcile_provider(spec, name, namespace, logger, **kwargs):
             name,
             namespace,
             "llmproviders",
-            [{"type": "Degraded", "status": "True", "reason": "SecretNotFound", "message": f"Secret {secret_ref} not found"}],
+            [
+                {
+                    "type": "Degraded",
+                    "status": "True",
+                    "reason": "SecretNotFound",
+                    "message": f"Secret {secret_ref} not found",
+                }
+            ],
             logger,
         )
 

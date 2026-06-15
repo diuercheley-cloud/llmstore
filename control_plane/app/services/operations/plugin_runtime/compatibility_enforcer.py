@@ -47,10 +47,15 @@ class PluginRuntimeCompatibilityEnforcer:
         except ValueError as exc:
             return {"valid": False, "reason": str(exc)}
         if parsed["major"] < 1:
-            return {"valid": False, "reason": "semantic version governance requires stable major version"}
+            return {
+                "valid": False,
+                "reason": "semantic version governance requires stable major version",
+            }
         return {"valid": True, "reason": "semantic version governance passed"}
 
-    def enforce_compatibility(self, contract: Any, runtime_version: str | None = None) -> PluginRuntimeCompatibilityCheck:
+    def enforce_compatibility(
+        self, contract: Any, runtime_version: str | None = None
+    ) -> PluginRuntimeCompatibilityCheck:
         runtime_version = runtime_version or contract.plugin_version
         runtime_report = self.check_runtime_compatibility(contract, runtime_version)
         schema_report = self.check_schema_compatibility(contract)

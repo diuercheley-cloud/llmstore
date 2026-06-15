@@ -47,15 +47,21 @@ class AgentEvalsAPI:
     def __init__(self, client):
         self.client = client
 
-    def run(self, agent_id: Union[str, uuid.UUID], suite_id: Optional[str] = None) -> Dict[str, Any]:
+    def run(
+        self, agent_id: Union[str, uuid.UUID], suite_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         payload = {"suite_id": suite_id}
         return self.client._request("POST", f"/client/agents/{agent_id}/evals/run", json=payload)
 
     def create_dataset(self, dataset_def: Dict[str, Any]) -> Dict[str, Any]:
         return self.client._request("POST", "/admin/agent-evals/datasets", json=dataset_def)
 
-    def create_dataset_version(self, dataset_id: str, version_def: Dict[str, Any]) -> Dict[str, Any]:
-        return self.client._request("POST", f"/admin/agent-evals/datasets/{dataset_id}/versions", json=version_def)
+    def create_dataset_version(
+        self, dataset_id: str, version_def: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        return self.client._request(
+            "POST", f"/admin/agent-evals/datasets/{dataset_id}/versions", json=version_def
+        )
 
     def get_reports(self, agent_id: Union[str, uuid.UUID]) -> List[Dict[str, Any]]:
         return self.client._request("GET", f"/admin/agent-evals/reports/{agent_id}")
@@ -168,7 +174,9 @@ class AdminAgentsAPI:
         return self.client._request("GET", "/admin/agents/observability/telemetry/status")
 
     def export_traces(self, export_def: Dict[str, Any]) -> Dict[str, Any]:
-        return self.client._request("POST", "/admin/agents/observability/traces/export", json=export_def)
+        return self.client._request(
+            "POST", "/admin/agents/observability/traces/export", json=export_def
+        )
 
     def a2a_discover(self) -> List[Dict[str, Any]]:
         return self.client._request("GET", "/admin/agents/a2a/discover")

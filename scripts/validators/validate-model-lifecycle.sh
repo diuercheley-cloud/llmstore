@@ -14,7 +14,7 @@ python3 -m py_compile "$PROJECT_ROOT/control_plane/app/services/models/model_pro
 python3 -m py_compile "$PROJECT_ROOT/control_plane/app/services/models/model_lineage.py" && echo "  OK: model_lineage" || echo "  FAIL: model_lineage"
 python3 -m py_compile "$PROJECT_ROOT/control_plane/app/services/models/model_quarantine.py" && echo "  OK: model_quarantine" || echo "  FAIL: model_quarantine"
 python3 -m py_compile "$PROJECT_ROOT/control_plane/app/api/commercial_model_lifecycle_admin.py" && echo "  OK: api" || echo "  FAIL: api"
-python3 -m py_compile "$PROJECT_ROOT/control_plane/alembic/versions/20260515_phase59_offline_model_lifecycle.py" && echo "  OK: migration" || echo "  FAIL: migration"
+python3 -m py_compile "$PROJECT_ROOT/control_plane/alembic/archive/20260515_phase59_offline_model_lifecycle.py" && echo "  OK: migration" || echo "  FAIL: migration"
 
 echo ""
 echo "2. Running unit tests..."

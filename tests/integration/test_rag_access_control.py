@@ -3,13 +3,13 @@ import uuid
 import pytest
 import pytest_asyncio
 from app.db.base import Base
-from app.models.core.client import Client
 from app.models.commercial.commercial_rag_vault_vault import (
     CommercialRAGAccessPolicy,
     CommercialRAGDocument,
     CommercialRAGLegalHold,
     CommercialRAGVault,
 )
+from app.models.core.client import Client
 from app.services.rag.rag_access_control import (
     RetrievalAccessDenied,
     evaluate_chunk_acl,
@@ -43,7 +43,7 @@ async def test_cross_tenant_blocked(session: AsyncSession):
         vault_name="tenant-vault",
         vault_mode="confidential",
         encryption_required=True,
-        retrieval_mode="hybrid"
+        retrieval_mode="hybrid",
     )
     session.add(vault)
     await session.flush()
@@ -76,7 +76,13 @@ async def test_signed_document_and_legal_hold_enforced(session: AsyncSession):
     client = Client(name="regulated")
     session.add(client)
     await session.flush()
-    vault = CommercialRAGVault(client_id=client.id, vault_name="tenant-vault", vault_mode="confidential", encryption_required=True, retrieval_mode="hybrid")
+    vault = CommercialRAGVault(
+        client_id=client.id,
+        vault_name="tenant-vault",
+        vault_mode="confidential",
+        encryption_required=True,
+        retrieval_mode="hybrid",
+    )
     session.add(vault)
     await session.flush()
     policy = CommercialRAGAccessPolicy(
@@ -131,4 +137,3 @@ def test_acl_enforcement():
     assert "acl_client_mismatch" in violations
     assert "acl_role_mismatch" in violations
     assert "acl_user_mismatch" in violations
-

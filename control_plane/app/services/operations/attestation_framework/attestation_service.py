@@ -17,13 +17,17 @@ def _sanitize_subject(subject: dict[str, Any]) -> dict[str, Any]:
     redacted: dict[str, Any] = {}
     for key, value in subject.items():
         lowered = key.lower()
-        if any(marker in lowered for marker in ("secret", "token", "password", "credential", "key")):
+        if any(
+            marker in lowered for marker in ("secret", "token", "password", "credential", "key")
+        ):
             redacted[key] = "redacted"
             continue
         if isinstance(value, dict):
             redacted[key] = _sanitize_subject(value)
         elif isinstance(value, list):
-            redacted[key] = [_sanitize_subject(item) if isinstance(item, dict) else item for item in value]
+            redacted[key] = [
+                _sanitize_subject(item) if isinstance(item, dict) else item for item in value
+            ]
         else:
             redacted[key] = value
     return redacted
@@ -32,7 +36,9 @@ def _sanitize_subject(subject: dict[str, Any]) -> dict[str, Any]:
 class SovereignExecutionAttestationService:
     deterministic_version = "v1"
 
-    def issue_attestation(self, subject: dict[str, Any], attestation_type: str) -> SovereignExecutionAttestation:
+    def issue_attestation(
+        self, subject: dict[str, Any], attestation_type: str
+    ) -> SovereignExecutionAttestation:
         signature = subject.get("signature") or sign_payload(f"{attestation_type}")
         if not signature:
             raise ValueError("signature is required")
@@ -95,7 +101,9 @@ class SovereignExecutionAttestationService:
             immutable_hash=immutable_hash,
         )
 
-    def verify_attestation(self, attestation: SovereignExecutionAttestation) -> AttestationVerificationResult:
+    def verify_attestation(
+        self, attestation: SovereignExecutionAttestation
+    ) -> AttestationVerificationResult:
         expected_hash = compute_attestation_hash(
             {
                 "client_id": str(attestation.client_id),
@@ -119,7 +127,9 @@ class SovereignExecutionAttestationService:
         status = "passed" if passed else "failed"
         summary = self.explain_attestation(attestation)
         return AttestationVerificationResult(
-            id=sha256_hex({"kind": "verification_id", "attestation_id": attestation.id, "status": status}),
+            id=sha256_hex(
+                {"kind": "verification_id", "attestation_id": attestation.id, "status": status}
+            ),
             client_id=attestation.client_id,
             attestation_id=attestation.id,
             verification_type="attestation",
@@ -128,10 +138,18 @@ class SovereignExecutionAttestationService:
             replay_verified=replay_verified,
             chain_verified=chain_verified,
             offline_verified=offline_verified,
-            immutable_hash=sha256_hex({"kind": "verification", "attestation_hash": attestation.attestation_hash, "status": status}),
+            immutable_hash=sha256_hex(
+                {
+                    "kind": "verification",
+                    "attestation_hash": attestation.attestation_hash,
+                    "status": status,
+                }
+            ),
         )
 
-    def revoke_attestation(self, attestation: SovereignExecutionAttestation, reason: str) -> SovereignExecutionAttestation:
+    def revoke_attestation(
+        self, attestation: SovereignExecutionAttestation, reason: str
+    ) -> SovereignExecutionAttestation:
         if not reason or not reason.strip():
             raise ValueError("reason is required")
         attestation.attestation_status = "revoked"
@@ -145,7 +163,9 @@ class SovereignExecutionAttestationService:
         )
         return attestation
 
-    def build_attestation_chain(self, attestations: list[SovereignExecutionAttestation]) -> list[AttestationChainLink]:
+    def build_attestation_chain(
+        self, attestations: list[SovereignExecutionAttestation]
+    ) -> list[AttestationChainLink]:
         ordered = sorted(attestations, key=lambda item: int(item.attestation_chain_position))
         chain: list[AttestationChainLink] = []
         previous_link_hash: str | None = None
@@ -169,7 +189,9 @@ class SovereignExecutionAttestationService:
                     current_link_hash=current_link_hash,
                     chain_position=attestation.attestation_chain_position,
                     replay_verifiable=attestation.replay_verifiable,
-                    immutable_hash=sha256_hex({"kind": "chain_link", "link_hash": current_link_hash}),
+                    immutable_hash=sha256_hex(
+                        {"kind": "chain_link", "link_hash": current_link_hash}
+                    ),
                 )
             )
             previous_link_hash = current_link_hash

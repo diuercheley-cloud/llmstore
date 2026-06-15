@@ -21,7 +21,7 @@ class SpeechToTextService:
     def __init__(self):
         self.policy_service = MultimodalPolicyService()
         self.usage_service = MultimodalUsageService()
-        
+
         base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
         self.storage_dir = os.path.join(base_dir, "data", "multimodal_assets")
         os.makedirs(self.storage_dir, exist_ok=True)
@@ -32,7 +32,7 @@ class SpeechToTextService:
         client_id: uuid.UUID,
         audio_file: UploadFile = None,
         base64_audio: str = None,
-        save_audio_by_policy: bool = False  # False by default (do not save raw audio)
+        save_audio_by_policy: bool = False,  # False by default (do not save raw audio)
     ) -> dict:
         # 1. Policy check
         await self.policy_service.check_policy(db, client_id, "speech-to-text")
@@ -48,11 +48,11 @@ class SpeechToTextService:
             mime_type = audio_file.content_type or "audio/wav"
         elif base64_audio:
             import base64
+
             audio_bytes = base64.b64decode(base64_audio)
         else:
             raise HTTPException(
-                status_code=400,
-                detail="No audio input provided. Specify upload or base64_audio."
+                status_code=400, detail="No audio input provided. Specify upload or base64_audio."
             )
 
         if not audio_bytes:
@@ -60,9 +60,10 @@ class SpeechToTextService:
 
         # 3. Process transcription using real provider
         from app.services.multimodal.providers.local_whisper import LocalWhisperProvider
+
         provider = LocalWhisperProvider()
         result = provider.transcribe(audio_bytes)
-        
+
         # Real duration calculation would check audio headers. Here we estimate 1 second per 16KB of audio
         duration_seconds = max(1, int(len(audio_bytes) / 16000))
         detected_language = result.get("language", "en")
@@ -76,7 +77,7 @@ class SpeechToTextService:
             file_hash = hashlib.sha256(audio_bytes).hexdigest()
             ext = os.path.splitext(filename)[1] or ".wav"
             storage_path = os.path.join(self.storage_dir, f"{asset_id}{ext}")
-            
+
             with open(storage_path, "wb") as f:
                 f.write(audio_bytes)
 
@@ -90,7 +91,7 @@ class SpeechToTextService:
                 file_hash=file_hash,
                 provenance="uploaded",
                 exif_sanitized=False,
-                metadata_json={"duration_seconds": duration_seconds}
+                metadata_json={"duration_seconds": duration_seconds},
             )
             db.add(asset)
             await db.commit()
@@ -112,5 +113,5 @@ class SpeechToTextService:
             "text": transcription_text,
             "duration": duration_seconds,
             "language": detected_language,
-            "confidence": confidence
+            "confidence": confidence,
         }

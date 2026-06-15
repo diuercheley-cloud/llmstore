@@ -22,6 +22,7 @@ Test tools:
   danger : description contains prompt-injection bait (for sanitization tests)
   sampler: advertises sampling capability (for sampling-block tests)
 """
+
 from __future__ import annotations
 
 import json
@@ -147,5 +148,9 @@ class FakeMCPServer:
         if name == "echo":
             return {"content": [{"type": "text", "text": arguments.get("text", "")}]}
         if name == "add":
-            return {"content": [{"type": "text", "text": str(arguments.get("a", 0) + arguments.get("b", 0))}]}
+            return {
+                "content": [
+                    {"type": "text", "text": str(arguments.get("a", 0) + arguments.get("b", 0))}
+                ]
+            }
         raise ValueError(f"Unknown tool: {name!r}")

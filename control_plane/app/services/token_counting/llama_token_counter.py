@@ -1,8 +1,9 @@
 import importlib
 import logging
-from typing import Any, Dict, List, Union
+from typing import Any, Union
 
 logger = logging.getLogger(__name__)
+
 
 def _load_hf_tokenizer_cls():
     try:
@@ -10,10 +11,16 @@ def _load_hf_tokenizer_cls():
     except (ImportError, AttributeError):
         return None
 
+
 class LlamaTokenCounter:
     """Token counter for LLaMA models using a SentencePiece/HuggingFace tokenizer if available."""
 
-    def __init__(self, fallback_counter=None, fallback_allowed: bool = True, tokenizer_model_path: str | None = None):
+    def __init__(
+        self,
+        fallback_counter=None,
+        fallback_allowed: bool = True,
+        tokenizer_model_path: str | None = None,
+    ):
         self.fallback_counter = fallback_counter
         self.fallback_allowed = fallback_allowed
         self._hf_tokenizer = None
@@ -25,7 +32,9 @@ class LlamaTokenCounter:
                 except Exception as e:
                     logger.warning(f"Failed to load HF tokenizer for LLaMA: {e}")
 
-    def count_prompt_tokens(self, prompt: Union[str, List[Dict[str, Any]]], model: str) -> tuple[int, str, bool]:
+    def count_prompt_tokens(
+        self, prompt: Union[str, list[dict[str, Any]]], model: str
+    ) -> tuple[int, str, bool]:
         if self._hf_tokenizer:
             try:
                 if isinstance(prompt, str):
@@ -53,5 +62,9 @@ class LlamaTokenCounter:
                 logger.warning(f"Llama HF token counting failed: {e}")
 
         if self.fallback_allowed and self.fallback_counter:
-            return self.fallback_counter.count_completion_tokens(completion, model), "fallback", True
+            return (
+                self.fallback_counter.count_completion_tokens(completion, model),
+                "fallback",
+                True,
+            )
         raise RuntimeError("LLaMA tokenizer not available and fallback is disabled")

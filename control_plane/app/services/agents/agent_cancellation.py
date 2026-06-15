@@ -2,6 +2,7 @@
 Owner: agent-platform
 Status: beta
 """
+
 import logging
 import uuid
 
@@ -14,6 +15,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
+
 
 class AgentCancellationService:
     @staticmethod
@@ -32,11 +34,17 @@ class AgentCancellationService:
         job.updated_at = utc_now()
 
         # Update the associated AgentRun status to "cancelled"
-        await agent_state.update_run(db, job.agent_run_id, status="cancelled", completed_at=utc_now())
-        await agent_state.log_run_event(db, job.agent_run_id, "cancelled", {"reason": "admin_request"})
+        await agent_state.update_run(
+            db, job.agent_run_id, status="cancelled", completed_at=utc_now()
+        )
+        await agent_state.log_run_event(
+            db, job.agent_run_id, "cancelled", {"reason": "admin_request"}
+        )
 
         # Record metrics
-        LLM_AGENT_JOBS_CANCELLED_TOTAL.labels(tenant_id=job.tenant_id, agent_id=str(job.agent_id)).inc()
+        LLM_AGENT_JOBS_CANCELLED_TOTAL.labels(
+            tenant_id=job.tenant_id, agent_id=str(job.agent_id)
+        ).inc()
 
         # Delete any leases
         stmt_delete = delete(AgentExecutionLease).where(AgentExecutionLease.job_id == job.id)
@@ -53,7 +61,7 @@ class AgentCancellationService:
         job = res.scalar_one_or_none()
         if job:
             return await AgentCancellationService.cancel_job(db, job.id)
-        
+
         # If no job exists, update run directly
         run = await agent_state.get_agent_run(db, run_id)
         if run and run.status != "cancelled":

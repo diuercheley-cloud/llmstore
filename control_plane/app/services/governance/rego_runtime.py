@@ -1,8 +1,9 @@
 import hashlib
 import logging
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
+
 
 class RegoRuntime:
     """
@@ -22,7 +23,9 @@ class RegoRuntime:
         logger.info(f"Loaded rego bundle with hash: {rego_hash}")
         return rego_hash
 
-    def evaluate(self, namespace: str, input_data: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+    def evaluate(
+        self, namespace: str, input_data: dict[str, Any], context: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Evaluates a payload deterministically.
         Returns the raw result of the rego query, simulating OPA structured output.
@@ -30,23 +33,25 @@ class RegoRuntime:
         # This is a mocked embedded evaluation engine that parses standard fields
         tenant_id = context.get("tenant_id")
         action = input_data.get("action", "unknown")
-        
+
         # Simulated deterministic evaluation
         allowed = True
         violations = []
         matched_rules = []
-        
+
         if "restrict" in action.lower():
             allowed = False
-            violations.append({
-                "code": f"{namespace}.RESTRICTED_ACTION",
-                "severity": "high",
-                "message": "Action is restricted by policy"
-            })
+            violations.append(
+                {
+                    "code": f"{namespace}.RESTRICTED_ACTION",
+                    "severity": "high",
+                    "message": "Action is restricted by policy",
+                }
+            )
             matched_rules.append("rule_restrict_action")
         else:
             matched_rules.append("rule_default_allow")
-            
+
         return {
             "result": {
                 "allow": allowed,
@@ -54,6 +59,6 @@ class RegoRuntime:
                 "violations": violations,
                 "matched_rules": matched_rules,
                 "namespace": namespace,
-                "tenant_id": str(tenant_id) if tenant_id else None
+                "tenant_id": str(tenant_id) if tenant_id else None,
             }
         }

@@ -7,17 +7,19 @@ from .tokenizer import TokenCounter
 
 logger = logging.getLogger(__name__)
 
+
 class ContextManager:
     """
     Manages the context window for LLM calls.
     Handles pruning, summarization, and preservation of critical messages.
     """
+
     def __init__(
         self,
         max_context_tokens: int = 4096,
         reserved_output_tokens: int = 1024,
         token_counter: TokenCounter | None = None,
-        summarize_func: Callable[[str], str | Coroutine[Any, Any, str]] | None = None
+        summarize_func: Callable[[str], str | Coroutine[Any, Any, str]] | None = None,
     ):
         self.max_context_tokens = max_context_tokens
         self.reserved_output_tokens = reserved_output_tokens
@@ -134,9 +136,7 @@ class ContextManager:
             final_messages_indices = sorted(new_critical + extra_to_add)
         else:
             # Add non-critical messages from the end until budget is full
-            non_critical_indices = [
-                i for i in range(len(messages)) if i not in critical_indices
-            ]
+            non_critical_indices = [i for i in range(len(messages)) if i not in critical_indices]
 
             to_add: list[int] = []
             for i in reversed(non_critical_indices):

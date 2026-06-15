@@ -1,6 +1,5 @@
 # Owner: agent-platform
 import uuid
-from typing import Optional
 
 from app.api.deps import get_db as get_async_db
 from app.api.deps import require_admin
@@ -17,23 +16,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/agents/code-interpreter", tags=["agent-code-interpreter"])
 
+
 class CodeRunRequest(BaseModel):
     code: str
-    agent_id: Optional[uuid.UUID] = None
-    run_id: Optional[uuid.UUID] = None
-    session_id: Optional[uuid.UUID] = None
-    tenant_id: Optional[str] = "default"
+    agent_id: uuid.UUID | None = None
+    run_id: uuid.UUID | None = None
+    session_id: uuid.UUID | None = None
+    tenant_id: str | None = "default"
+
 
 @router.post("/run")
 async def run_code(
-    req: CodeRunRequest, 
-    db: AsyncSession = Depends(get_async_db), 
-    settings: Settings = Depends(get_settings), 
-    _: dict = Depends(require_admin)
+    req: CodeRunRequest,
+    db: AsyncSession = Depends(get_async_db),
+    settings: Settings = Depends(get_settings),
+    _: dict = Depends(require_admin),
 ):
     if not settings.agent_code_interpreter_enabled:
         raise HTTPException(status_code=400, detail="Code interpreter is not enabled")
-    
+
     interpreter = CodeInterpreter(db)
     try:
         result = await interpreter.run_code(
@@ -41,17 +42,16 @@ async def run_code(
             agent_id=req.agent_id,
             run_id=req.run_id,
             tenant_id=req.tenant_id,
-            session_id=req.session_id
+            session_id=req.session_id,
         )
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/runs/{run_id}")
 async def get_run(
-    run_id: uuid.UUID, 
-    db: AsyncSession = Depends(get_async_db), 
-    _: dict = Depends(require_admin)
+    run_id: uuid.UUID, db: AsyncSession = Depends(get_async_db), _: dict = Depends(require_admin)
 ):
     stmt = select(AgentCodeInterpreterRun).where(AgentCodeInterpreterRun.id == run_id)
     res = await db.execute(stmt)
@@ -69,11 +69,12 @@ async def get_run(
         "created_at": run.created_at.isoformat() if run.created_at else None,
     }
 
+
 @router.get("/artifacts/{artifact_id}")
 async def get_artifact(
-    artifact_id: uuid.UUID, 
-    db: AsyncSession = Depends(get_async_db), 
-    _: dict = Depends(require_admin)
+    artifact_id: uuid.UUID,
+    db: AsyncSession = Depends(get_async_db),
+    _: dict = Depends(require_admin),
 ):
     stmt = select(AgentSandboxArtifact).where(AgentSandboxArtifact.id == artifact_id)
     res = await db.execute(stmt)
@@ -90,11 +91,10 @@ async def get_artifact(
         "created_at": artifact.created_at.isoformat() if artifact.created_at else None,
     }
 
+
 @router.post("/runs/{run_id}/cancel")
 async def cancel_run(
-    run_id: uuid.UUID, 
-    db: AsyncSession = Depends(get_async_db), 
-    _: dict = Depends(require_admin)
+    run_id: uuid.UUID, db: AsyncSession = Depends(get_async_db), _: dict = Depends(require_admin)
 ):
     # Logic to cancel a running sandbox execution
     return {"status": "cancelled", "run_id": str(run_id)}

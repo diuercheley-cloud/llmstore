@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.models.commercial.commercial_governance_supervisor import (
     CommercialGovernanceSupervisorDecision,
@@ -26,13 +26,15 @@ class GovernanceSupervisor:
         self.remediation = GovernanceAutoRemediation(db)
         self.explainer = GovernanceDecisionExplainer(db)
 
-    async def analyze_system_state(self, client_id: Optional[uuid.UUID] = None) -> List[CommercialGovernanceSupervisorIncident]:
+    async def analyze_system_state(
+        self, client_id: uuid.UUID | None = None
+    ) -> list[CommercialGovernanceSupervisorIncident]:
         """
         Gathers anomalies, drift signals, and risk factors to generate incidents.
         """
         # Calculate risk scores
         risk_score = await self.risk_engine.calculate_risk(client_id)
-        
+
         incidents = []
         if risk_score.overall_risk_score > 0.7:
             incident = CommercialGovernanceSupervisorIncident(
@@ -42,7 +44,7 @@ class GovernanceSupervisor:
                 title="System-wide high risk detected",
                 description=f"Overall risk score reached {risk_score.overall_risk_score}",
                 triggering_signals={"overall_risk_score": risk_score.overall_risk_score},
-                status="open"
+                status="open",
             )
             self.db.add(incident)
             incidents.append(incident)
@@ -55,7 +57,7 @@ class GovernanceSupervisor:
                 title="Financial Risk Threshold Breached",
                 description="Financial risk score indicates potential revenue loss or budget overrun.",
                 triggering_signals={"financial_risk": risk_score.financial_risk},
-                status="open"
+                status="open",
             )
             self.db.add(incident)
             incidents.append(incident)
@@ -68,7 +70,7 @@ class GovernanceSupervisor:
                 title="Compliance Drift Detected",
                 description="System runtime drifting from compliance policies.",
                 triggering_signals={"compliance_risk": risk_score.compliance_risk},
-                status="open"
+                status="open",
             )
             self.db.add(incident)
             incidents.append(incident)
@@ -76,7 +78,9 @@ class GovernanceSupervisor:
         await self.db.commit()
         return incidents
 
-    async def process_incident(self, incident: CommercialGovernanceSupervisorIncident) -> Optional[CommercialGovernanceSupervisorDecision]:
+    async def process_incident(
+        self, incident: CommercialGovernanceSupervisorIncident
+    ) -> CommercialGovernanceSupervisorDecision | None:
         """
         Evaluate an incident and create a remediation decision based on active policies.
         """
@@ -90,17 +94,16 @@ class GovernanceSupervisor:
         # Simple policy matching logic for the sake of the supervisor
         matched_policy = None
         for policy in policies:
-            if policy.policy_type in incident.incident_type or \
-               (policy.policy_type == "financial" and "financial" in incident.incident_type):
+            if policy.policy_type in incident.incident_type or (
+                policy.policy_type == "financial" and "financial" in incident.incident_type
+            ):
                 matched_policy = policy
                 break
-                
+
         if not matched_policy:
             # Fallback to a default advisory policy if no match
             matched_policy = CommercialGovernanceSupervisorPolicy(
-                name=f"default_fallback_{uuid.uuid4()}",
-                policy_type="fallback",
-                mode="advisory"
+                name=f"default_fallback_{uuid.uuid4()}", policy_type="fallback", mode="advisory"
             )
 
         # Generate decision
@@ -112,7 +115,7 @@ class GovernanceSupervisor:
             rationale=f"Triggered by incident {incident.title} matching policy {matched_policy.name}",
             expected_impact={"risk_reduction": 0.3},
             mode_used=matched_policy.mode,
-            is_approved=not matched_policy.approval_required
+            is_approved=not matched_policy.approval_required,
         )
         self.db.add(decision)
         await self.db.commit()
@@ -127,7 +130,7 @@ class GovernanceSupervisor:
 
         return decision
 
-    async def run_supervisor_cycle(self) -> Dict[str, Any]:
+    async def run_supervisor_cycle(self) -> dict[str, Any]:
         """
         Main entrypoint for background task or cron.
         """
@@ -137,9 +140,9 @@ class GovernanceSupervisor:
             decision = await self.process_incident(incident)
             if decision:
                 decisions.append(decision)
-                
+
         return {
             "incidents_created": len(incidents),
             "decisions_made": len(decisions),
-            "status": "completed"
+            "status": "completed",
         }

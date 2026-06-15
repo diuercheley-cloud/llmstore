@@ -1,6 +1,5 @@
 import uuid
 from datetime import timedelta
-from typing import List
 
 from app.core.time import utc_now
 from app.models.commercial.commercial_crypto_trust import (
@@ -18,17 +17,21 @@ class KeyRotationService:
         self.db = db
         self.kms_runtime = KMSRuntime(db)
 
-    def get_keys_pending_rotation(self) -> List[CommercialKeyRotationSchedule]:
+    def get_keys_pending_rotation(self) -> list[CommercialKeyRotationSchedule]:
         now = utc_now()
-        schedules = self.db.query(CommercialKeyRotationSchedule).filter(
-            CommercialKeyRotationSchedule.next_rotation_at <= now
-        ).all()
+        schedules = (
+            self.db.query(CommercialKeyRotationSchedule)
+            .filter(CommercialKeyRotationSchedule.next_rotation_at <= now)
+            .all()
+        )
         return schedules
 
     async def rotate_key(self, schedule_id: uuid.UUID) -> CommercialKeyMaterial:
-        schedule = self.db.query(CommercialKeyRotationSchedule).filter(
-            CommercialKeyRotationSchedule.id == schedule_id
-        ).first()
+        schedule = (
+            self.db.query(CommercialKeyRotationSchedule)
+            .filter(CommercialKeyRotationSchedule.id == schedule_id)
+            .first()
+        )
 
         if not schedule:
             raise ValueError("Schedule not found")
@@ -47,7 +50,7 @@ class KeyRotationService:
             key_alias=f"{old_key.key_alias}_rot_{utc_now().strftime('%Y%m%d%H%M%S')}",
             key_type=old_key.key_type,
             status=KeyUsageStatus.ACTIVE,
-            encrypted_key_blob=new_key_data.get("material") # Or encrypted equivalent
+            encrypted_key_blob=new_key_data.get("material"),  # Or encrypted equivalent
         )
         self.db.add(new_key)
 
@@ -58,7 +61,9 @@ class KeyRotationService:
         # Update schedule
         schedule.key_id = new_key.id
         schedule.last_rotated_at = utc_now()
-        schedule.next_rotation_at = schedule.last_rotated_at + timedelta(days=schedule.rotation_interval_days)
+        schedule.next_rotation_at = schedule.last_rotated_at + timedelta(
+            days=schedule.rotation_interval_days
+        )
 
         self.db.commit()
         self.db.refresh(new_key)
@@ -70,7 +75,15 @@ class KeyRotationService:
         for schedule in schedules:
             try:
                 new_key = await self.rotate_key(schedule.id)
-                results.append({"schedule_id": str(schedule.id), "status": "success", "new_key_id": str(new_key.id)})
+                results.append(
+                    {
+                        "schedule_id": str(schedule.id),
+                        "status": "success",
+                        "new_key_id": str(new_key.id),
+                    }
+                )
             except Exception as e:
-                results.append({"schedule_id": str(schedule.id), "status": "failed", "error": str(e)})
+                results.append(
+                    {"schedule_id": str(schedule.id), "status": "failed", "error": str(e)}
+                )
         return results

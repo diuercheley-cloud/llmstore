@@ -1,17 +1,18 @@
 import logging
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.models.agents.agent_iam import AgentCredentialAuditEvent
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger("agent_iam_audit")
 
+
 class IAMAuditService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    def _redact_dict(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _redact_dict(self, data: dict[str, Any]) -> dict[str, Any]:
         """Recursively redact keys containing 'token', 'secret', 'key'."""
         redacted = {}
         for k, v in data.items():
@@ -27,7 +28,9 @@ class IAMAuditService:
             elif isinstance(v, dict):
                 redacted[k] = self._redact_dict(v)
             elif isinstance(v, list):
-                redacted[k] = [self._redact_dict(item) if isinstance(item, dict) else item for item in v]
+                redacted[k] = [
+                    self._redact_dict(item) if isinstance(item, dict) else item for item in v
+                ]
             else:
                 redacted[k] = v
         return redacted
@@ -36,10 +39,10 @@ class IAMAuditService:
         self,
         tenant_id: str,
         event_type: str,
-        agent_id: Optional[uuid.UUID] = None,
-        actor_id: Optional[str] = None,
-        actor_type: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
+        agent_id: uuid.UUID | None = None,
+        actor_id: str | None = None,
+        actor_type: str | None = None,
+        details: dict[str, Any] | None = None,
     ) -> AgentCredentialAuditEvent:
         """
         Logs an IAM credential event to both the standard logger and database.

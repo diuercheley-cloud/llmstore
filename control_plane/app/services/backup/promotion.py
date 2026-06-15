@@ -1,27 +1,36 @@
-import os
+import logging
 import shutil
 import tempfile
-import logging
 from pathlib import Path
-from typing import Any, Dict
-from sqlalchemy.ext.asyncio import AsyncSession
-from .errors import RestorePromotionError
+from typing import Any
+
 from app.services.backup.database_providers import SQLiteBackupProvider
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from .errors import RestorePromotionError
 
 logger = logging.getLogger(__name__)
+
 
 class RestorePromotionService:
     def __init__(self, db: AsyncSession, repo_root: Path):
         self.db = db
         self.repo_root = repo_root
 
-    async def promote_database(self, manifest_scope: str, parts: Dict[str, Any], sqlite_staging_file: Path | None, provider_factory) -> None:
+    async def promote_database(
+        self,
+        manifest_scope: str,
+        parts: dict[str, Any],
+        sqlite_staging_file: Path | None,
+        provider_factory,
+    ) -> None:
         try:
             db_url = str(self.db.bind.url) if getattr(self.db, "bind", None) is not None else ""
-            
+
             # Fetch current audit logs to preserve them across restore
-            from sqlalchemy import select
             from app.models.agents.immutable_audit import ImmutableAuditLog
+            from sqlalchemy import select
+
             existing_logs_data = []
             try:
                 stmt = select(ImmutableAuditLog).order_by(ImmutableAuditLog.id.asc())
@@ -49,6 +58,7 @@ class RestorePromotionService:
                 if sqlite_staging_file:
                     if "mode=memory" in db_url:
                         from .backup_service import BackupService
+
                         service = BackupService(self.db)
                         await service._restore_database(parts["database.json"])
                         await self.db.commit()
@@ -68,12 +78,15 @@ class RestorePromotionService:
             else:
                 # Logical restore
                 from .backup_service import BackupService
+
                 service = BackupService(self.db)
                 await service._restore_database(parts["database.json"])
                 await self.db.commit()
 
             # Re-insert preserved audit logs that are not already present in the restored database
-            logger.debug(f"promote_database: existing_logs_data count to re-insert: {len(existing_logs_data)}")
+            logger.debug(
+                f"promote_database: existing_logs_data count to re-insert: {len(existing_logs_data)}"
+            )
             if existing_logs_data:
                 try:
                     await self.db.commit()
@@ -82,7 +95,7 @@ class RestorePromotionService:
                     res = await self.db.execute(stmt)
                     restored_logs = res.scalars().all()
                     restored_hashes = {log.hash for log in restored_logs}
-                    
+
                     inserted_count = 0
                     for log_data in existing_logs_data:
                         if log_data["hash"] not in restored_hashes:
@@ -98,19 +111,20 @@ class RestorePromotionService:
             logger.error(f"promote_database: outer exception: {e}")
             raise RestorePromotionError(f"Database promotion failed: {e}")
 
-    def promote_configs(self, configs_payload: Dict[str, Any], staging_config_dir: Path) -> None:
+    def promote_configs(self, configs_payload: dict[str, Any], staging_config_dir: Path) -> None:
         try:
             from .backup_service import BackupService
-            service = BackupService(self.db) # For _resolve_restore_path
-            
+
+            service = BackupService(self.db)  # For _resolve_restore_path
+
             for entry in configs_payload.get("files", []):
                 target = service._resolve_restore_path(entry["path"])
                 target.parent.mkdir(parents=True, exist_ok=True)
-                
+
                 if target.exists():
                     bak_target = target.with_suffix(target.suffix + ".bak")
                     bak_target.write_text(target.read_text(encoding="utf-8"), encoding="utf-8")
-                
+
                 staging_src = staging_config_dir / target.relative_to(self.repo_root.resolve())
                 target.write_text(staging_src.read_text(encoding="utf-8"), encoding="utf-8")
         except Exception as e:

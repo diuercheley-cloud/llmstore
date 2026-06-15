@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import timedelta
 
 import pytest
-
 from app.core.time import utc_now
 from app.models.commercial.commercial_governance import CommercialPolicyBundle
 from app.models.commercial.commercial_workflows import (
@@ -45,9 +44,15 @@ async def _setup_execution(session: AsyncSession):
             }
         ],
     )
-    execution = await orchestrator.start_execution(session, definition_id=definition.id, session_id="approval-session", tenant_id="tenant-a")
+    execution = await orchestrator.start_execution(
+        session, definition_id=definition.id, session_id="approval-session", tenant_id="tenant-a"
+    )
     stage = (
-        await session.execute(select(CommercialWorkflowStage).where(CommercialWorkflowStage.execution_id == execution.id))
+        await session.execute(
+            select(CommercialWorkflowStage).where(
+                CommercialWorkflowStage.execution_id == execution.id
+            )
+        )
     ).scalar_one()
     snapshot = await session.get(CommercialWorkflowPolicySnapshot, stage.active_policy_snapshot_id)
     return execution, stage, snapshot

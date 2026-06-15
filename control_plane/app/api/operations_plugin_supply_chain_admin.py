@@ -69,7 +69,6 @@ class SBOMRequest(BaseModel):
     signature: str | None = None
 
 
-
 class DependencyVerificationRequest(BaseModel):
     client_id: UUID
     dependency_summary_json: dict[str, Any] = Field(default_factory=dict)
@@ -193,7 +192,9 @@ async def _get_contract(db: AsyncSession, contract_id: str, client_id: UUID) -> 
     return contract
 
 
-async def _get_provenance(db: AsyncSession, provenance_id: str, client_id: UUID) -> PluginProvenanceRecord:
+async def _get_provenance(
+    db: AsyncSession, provenance_id: str, client_id: UUID
+) -> PluginProvenanceRecord:
     item = (
         await db.execute(
             select(PluginProvenanceRecord).where(
@@ -236,12 +237,16 @@ async def list_provenance(
     _admin: Any = Depends(get_current_admin),
 ):
     rows = (
-        await db.execute(
-            select(PluginProvenanceRecord)
-            .where(PluginProvenanceRecord.client_id == client_id)
-            .order_by(PluginProvenanceRecord.created_at.desc())
+        (
+            await db.execute(
+                select(PluginProvenanceRecord)
+                .where(PluginProvenanceRecord.client_id == client_id)
+                .order_by(PluginProvenanceRecord.created_at.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return [_serialize_provenance(item) for item in rows]
 
 
@@ -253,7 +258,10 @@ async def get_provenance(
     _admin: Any = Depends(get_current_admin),
 ):
     item = await _get_provenance(db, provenance_id, client_id)
-    return {"provenance": _serialize_provenance(item), "explanation": PROVENANCE_SERVICE.explain_provenance(item)}
+    return {
+        "provenance": _serialize_provenance(item),
+        "explanation": PROVENANCE_SERVICE.explain_provenance(item),
+    }
 
 
 @router.post("/admin/operations/plugin-supply-chain/provenance/{provenance_id}/verify")
@@ -266,9 +274,17 @@ async def verify_provenance(
     item = await _get_provenance(db, provenance_id, request.client_id)
     verification = PROVENANCE_SERVICE.verify_provenance(item)
     item.replay_safe = verification["replay_safe"]
-    event = build_plugin_supply_chain_audit_event("provenance_verified", str(request.client_id), {"provenance_id": item.id, "status": item.provenance_status})
+    event = build_plugin_supply_chain_audit_event(
+        "provenance_verified",
+        str(request.client_id),
+        {"provenance_id": item.id, "status": item.provenance_status},
+    )
     await db.commit()
-    return {"provenance": _serialize_provenance(item), "verification": verification, "audit_event": event}
+    return {
+        "provenance": _serialize_provenance(item),
+        "verification": verification,
+        "audit_event": event,
+    }
 
 
 @router.post("/admin/operations/plugin-supply-chain/provenance/{provenance_id}/revoke")
@@ -292,12 +308,13 @@ async def generate_sbom(
     db: AsyncSession = Depends(get_db),
     _admin: Any = Depends(get_current_admin),
 ):
+    from pathlib import Path
+
     from app.core.config import get_settings
     from fastapi.responses import JSONResponse
-    from pathlib import Path
-    
+
     provenance = await _get_provenance(db, provenance_id, request.client_id)
-    
+
     # Try to resolve plugin path
     plugin_path_str = request.plugin_path
     if not plugin_path_str:
@@ -311,12 +328,20 @@ async def generate_sbom(
             )
         ).scalar_one_or_none()
         if contract:
-            from app.models.plugins.marketplace import PluginInstall, PluginVersion, PluginMarketplaceEntry
+            from app.models.plugins.marketplace import (
+                PluginInstall,
+                PluginMarketplaceEntry,
+                PluginVersion,
+            )
+
             row = (
                 await db.execute(
                     select(PluginInstall)
                     .join(PluginVersion, PluginVersion.id == PluginInstall.current_version_id)
-                    .join(PluginMarketplaceEntry, PluginMarketplaceEntry.id == PluginInstall.plugin_entry_id)
+                    .join(
+                        PluginMarketplaceEntry,
+                        PluginMarketplaceEntry.id == PluginInstall.plugin_entry_id,
+                    )
                     .where(
                         PluginMarketplaceEntry.name == contract.plugin_name,
                         PluginVersion.version == contract.plugin_version,
@@ -326,9 +351,9 @@ async def generate_sbom(
             ).scalar_one_or_none()
             if row:
                 plugin_path_str = row.install_path
-                
+
     policy_decision = getattr(get_settings(), "plugin_sbom_policy_decision", "block")
-    
+
     if not plugin_path_str:
         reason = "Could not resolve plugin package install path or directory."
         if policy_decision == "block":
@@ -349,7 +374,7 @@ async def generate_sbom(
                     "policy_decision": "warn",
                 },
             )
-            
+
     plugin_path = Path(plugin_path_str)
     if not plugin_path.exists() or not plugin_path.is_dir():
         reason = f"Plugin path does not exist or is not a directory: {plugin_path_str}"
@@ -371,7 +396,7 @@ async def generate_sbom(
                     "policy_decision": "warn",
                 },
             )
-            
+
     try:
         sbom_record = SBOM_SERVICE.generate_sbom(
             provenance,
@@ -401,16 +426,21 @@ async def generate_sbom(
                     "policy_decision": "warn",
                 },
             )
-            
+
     db.add(sbom_record)
-    event = build_plugin_supply_chain_audit_event("sbom_generated", str(request.client_id), {"provenance_id": provenance.id, "sbom_id": sbom_record.id})
+    event = build_plugin_supply_chain_audit_event(
+        "sbom_generated",
+        str(request.client_id),
+        {"provenance_id": provenance.id, "sbom_id": sbom_record.id},
+    )
     await db.commit()
     return {
         "sbom": _serialize_sbom(sbom_record),
-        "validation": SBOM_SERVICE.validate_sbom(sbom_record, expected_hash=request.expected_hash, signature=request.signature),
+        "validation": SBOM_SERVICE.validate_sbom(
+            sbom_record, expected_hash=request.expected_hash, signature=request.signature
+        ),
         "audit_event": event,
     }
-
 
 
 @router.get("/admin/operations/plugin-supply-chain/sbom")
@@ -420,12 +450,16 @@ async def list_sbom_placeholders(
     _admin: Any = Depends(get_current_admin),
 ):
     rows = (
-        await db.execute(
-            select(PluginSBOMPlaceholder)
-            .where(PluginSBOMPlaceholder.client_id == client_id)
-            .order_by(PluginSBOMPlaceholder.created_at.desc())
+        (
+            await db.execute(
+                select(PluginSBOMPlaceholder)
+                .where(PluginSBOMPlaceholder.client_id == client_id)
+                .order_by(PluginSBOMPlaceholder.created_at.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return [_serialize_sbom(item) for item in rows]
 
 
@@ -481,12 +515,16 @@ async def list_dependency_verifications(
     _admin: Any = Depends(get_current_admin),
 ):
     rows = (
-        await db.execute(
-            select(PluginDependencyVerification)
-            .where(PluginDependencyVerification.client_id == client_id)
-            .order_by(PluginDependencyVerification.created_at.desc())
+        (
+            await db.execute(
+                select(PluginDependencyVerification)
+                .where(PluginDependencyVerification.client_id == client_id)
+                .order_by(PluginDependencyVerification.created_at.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return [_serialize_verification(item) for item in rows]
 
 
@@ -501,9 +539,17 @@ async def create_lineage(
     lineage = LINEAGE_SERVICE.create_lineage(provenance, request.parent_artifact_hash)
     verification = LINEAGE_SERVICE.verify_lineage(lineage, provenance)
     db.add(lineage)
-    event = build_plugin_supply_chain_audit_event("lineage_verified", str(request.client_id), {"provenance_id": provenance.id, "lineage_id": lineage.id})
+    event = build_plugin_supply_chain_audit_event(
+        "lineage_verified",
+        str(request.client_id),
+        {"provenance_id": provenance.id, "lineage_id": lineage.id},
+    )
     await db.commit()
-    return {"lineage": _serialize_lineage(lineage), "verification": verification, "audit_event": event}
+    return {
+        "lineage": _serialize_lineage(lineage),
+        "verification": verification,
+        "audit_event": event,
+    }
 
 
 @router.get("/admin/operations/plugin-supply-chain/lineage")
@@ -513,12 +559,16 @@ async def list_lineage(
     _admin: Any = Depends(get_current_admin),
 ):
     rows = (
-        await db.execute(
-            select(PluginArtifactLineage)
-            .where(PluginArtifactLineage.client_id == client_id)
-            .order_by(PluginArtifactLineage.created_at.desc())
+        (
+            await db.execute(
+                select(PluginArtifactLineage)
+                .where(PluginArtifactLineage.client_id == client_id)
+                .order_by(PluginArtifactLineage.created_at.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return [_serialize_lineage(item) for item in rows]
 
 
@@ -541,9 +591,12 @@ async def create_signature(
     _admin: Any = Depends(get_current_admin),
 ):
     from app.core.config import get_settings
+
     if get_settings().app_env == "production":
-        raise HTTPException(status_code=400, detail="Signatures are strictly validated in production mode.")
-        
+        raise HTTPException(
+            status_code=400, detail="Signatures are strictly validated in production mode."
+        )
+
     provenance = await _get_provenance(db, provenance_id, request.client_id)
     if request.signature_status not in PLUGIN_SIGNATURE_STATUSES:
         raise HTTPException(status_code=400, detail="Unsupported signature status")
@@ -560,7 +613,9 @@ async def create_signature(
         signature=sign_payload(f"{request.signature_scope}:{provenance.provenance_hash[:16]}"),
         signature_scope=request.signature_scope,
         signature_status=request.signature_status,
-        immutable_hash=sha256_hex({"kind": "plugin_signed_artifact_placeholder_immutable", **logical_payload}),
+        immutable_hash=sha256_hex(
+            {"kind": "plugin_signed_artifact_placeholder_immutable", **logical_payload}
+        ),
     )
     db.add(signature)
     await db.commit()
@@ -575,9 +630,15 @@ async def create_receipt(
     _admin: Any = Depends(get_current_admin),
 ):
     provenance = await _get_provenance(db, provenance_id, request.client_id)
-    receipt = build_supply_chain_receipt(request.receipt_type, provenance, provenance.provenance_hash)
+    receipt = build_supply_chain_receipt(
+        request.receipt_type, provenance, provenance.provenance_hash
+    )
     db.add(receipt)
-    event = build_plugin_supply_chain_audit_event("supply_chain_receipt_created", str(request.client_id), {"provenance_id": provenance.id, "receipt_id": receipt.id})
+    event = build_plugin_supply_chain_audit_event(
+        "supply_chain_receipt_created",
+        str(request.client_id),
+        {"provenance_id": provenance.id, "receipt_id": receipt.id},
+    )
     await db.commit()
     return {"receipt": _serialize_receipt(receipt), "audit_event": event}
 
@@ -589,12 +650,16 @@ async def list_receipts(
     _admin: Any = Depends(get_current_admin),
 ):
     rows = (
-        await db.execute(
-            select(PluginSupplyChainReceipt)
-            .where(PluginSupplyChainReceipt.client_id == client_id)
-            .order_by(PluginSupplyChainReceipt.generated_at.desc())
+        (
+            await db.execute(
+                select(PluginSupplyChainReceipt)
+                .where(PluginSupplyChainReceipt.client_id == client_id)
+                .order_by(PluginSupplyChainReceipt.generated_at.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return [_serialize_receipt(item) for item in rows]
 
 
@@ -605,22 +670,46 @@ async def get_dashboard_summary(
     _admin: Any = Depends(get_current_admin),
 ):
     provenance_count = (
-        await db.execute(select(func.count()).select_from(PluginProvenanceRecord).where(PluginProvenanceRecord.client_id == client_id))
+        await db.execute(
+            select(func.count())
+            .select_from(PluginProvenanceRecord)
+            .where(PluginProvenanceRecord.client_id == client_id)
+        )
     ).scalar_one()
     sbom_count = (
-        await db.execute(select(func.count()).select_from(PluginSBOMPlaceholder).where(PluginSBOMPlaceholder.client_id == client_id))
+        await db.execute(
+            select(func.count())
+            .select_from(PluginSBOMPlaceholder)
+            .where(PluginSBOMPlaceholder.client_id == client_id)
+        )
     ).scalar_one()
     verification_count = (
-        await db.execute(select(func.count()).select_from(PluginDependencyVerification).where(PluginDependencyVerification.client_id == client_id))
+        await db.execute(
+            select(func.count())
+            .select_from(PluginDependencyVerification)
+            .where(PluginDependencyVerification.client_id == client_id)
+        )
     ).scalar_one()
     lineage_count = (
-        await db.execute(select(func.count()).select_from(PluginArtifactLineage).where(PluginArtifactLineage.client_id == client_id))
+        await db.execute(
+            select(func.count())
+            .select_from(PluginArtifactLineage)
+            .where(PluginArtifactLineage.client_id == client_id)
+        )
     ).scalar_one()
     signature_count = (
-        await db.execute(select(func.count()).select_from(PluginSignedArtifact).where(PluginSignedArtifact.client_id == client_id))
+        await db.execute(
+            select(func.count())
+            .select_from(PluginSignedArtifact)
+            .where(PluginSignedArtifact.client_id == client_id)
+        )
     ).scalar_one()
     receipt_count = (
-        await db.execute(select(func.count()).select_from(PluginSupplyChainReceipt).where(PluginSupplyChainReceipt.client_id == client_id))
+        await db.execute(
+            select(func.count())
+            .select_from(PluginSupplyChainReceipt)
+            .where(PluginSupplyChainReceipt.client_id == client_id)
+        )
     ).scalar_one()
     return {
         "section": "Plugin Supply-Chain Provenance & SBOM Placeholder Framework",

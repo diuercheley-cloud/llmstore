@@ -1,6 +1,6 @@
 def test_federation_dashboard_markers():
-    admin = open("control_plane/app/static/admin/index.html", "r", encoding="utf-8").read()
-    portal = open("control_plane/app/static/portal/index.html", "r", encoding="utf-8").read()
+    admin = open("control_plane/app/static/admin/index.html", encoding="utf-8").read()
+    portal = open("control_plane/app/static/portal/index.html", encoding="utf-8").read()
     assert "Sovereign Federation Synchronization Protocol" in admin
     assert "federationEnvironmentCount" in admin
     assert "offline federation only" in admin

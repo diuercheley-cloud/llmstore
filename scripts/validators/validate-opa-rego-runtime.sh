@@ -5,7 +5,7 @@ echo "Validating OPA/Rego Policy Runtime Integration (Phase 61)..."
 
 echo "1. Checking Python Syntax..."
 python3 -m py_compile control_plane/app/models/commercial_policy_runtime.py
-python3 -m py_compile control_plane/alembic/versions/20260515_phase61_opa_rego_policy_runtime.py
+python3 -m py_compile control_plane/alembic/archive/20260515_phase61_opa_rego_policy_runtime.py
 python3 -m py_compile control_plane/app/services/governance/rego_runtime.py
 python3 -m py_compile control_plane/app/services/governance/policy_evaluator.py
 python3 -m py_compile control_plane/app/services/governance/policy_trace.py

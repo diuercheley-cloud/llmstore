@@ -20,8 +20,8 @@ router = APIRouter(
 )
 
 
-from app.services.runtime_dependencies import get_db_session
 from app.services.routing.commercial_config_store import CommercialConfigStore
+from app.services.runtime_dependencies import get_db_session
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -47,11 +47,13 @@ async def simulate_routing(
         budget_preference=req.budget_preference,
         strategy=req.strategy,
     )
-    
+
     store = CommercialConfigStore(db)
     dynamic_configs = await store.list_configs(active_only=True)
-    
-    decision, strategies, provider_states, config_snapshot = smart_router.simulate(inp, dynamic_configs=dynamic_configs)
+
+    decision, strategies, provider_states, config_snapshot = smart_router.simulate(
+        inp, dynamic_configs=dynamic_configs
+    )
     return SimulateRoutingResponse(
         decision=decision,
         strategies_considered=strategies,
@@ -83,7 +85,8 @@ async def get_last_decisions(
     limit: int = Query(default=50, ge=1, le=200),
     smart_router: SmartRouter = Depends(get_smart_router),
 ):
-    from datetime import datetime, UTC
+    from datetime import UTC, datetime
+
     decisions = smart_router.get_last_decisions(limit=limit)
     result = []
     for d in decisions:
@@ -93,19 +96,21 @@ async def get_last_decisions(
                 ts = datetime.fromisoformat(ts)
             except (ValueError, TypeError):
                 ts = datetime.now(UTC)
-        result.append(LastDecisionRead(
-            id=d.get("id", ""),
-            timestamp=ts,
-            requested_model=d.get("requested_model", ""),
-            resolved_model=d.get("resolved_model", ""),
-            selected_provider=d.get("selected_provider", ""),
-            routing_strategy=d.get("routing_strategy", ""),
-            fallback_used=d.get("fallback_used", False),
-            fallback_reason=d.get("fallback_reason"),
-            cloud_used=d.get("cloud_used", False),
-            estimated_cost_brl=d.get("estimated_cost_brl", 0.0),
-            sanitized_reason=d.get("sanitized_reason", ""),
-        ))
+        result.append(
+            LastDecisionRead(
+                id=d.get("id", ""),
+                timestamp=ts,
+                requested_model=d.get("requested_model", ""),
+                resolved_model=d.get("resolved_model", ""),
+                selected_provider=d.get("selected_provider", ""),
+                routing_strategy=d.get("routing_strategy", ""),
+                fallback_used=d.get("fallback_used", False),
+                fallback_reason=d.get("fallback_reason"),
+                cloud_used=d.get("cloud_used", False),
+                estimated_cost_brl=d.get("estimated_cost_brl", 0.0),
+                sanitized_reason=d.get("sanitized_reason", ""),
+            )
+        )
     return result
 
 

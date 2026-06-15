@@ -20,7 +20,7 @@ test -f tests/test_tool_policy_engine.py
 test -f tests/test_agent_replay.py
 test -f tests/test_agent_receipts.py
 test -f docs/TRUSTED_AGENT_RUNTIME.md
-test -f control_plane/alembic/versions/20260515_phase54_agentic_execution.py
+test -f control_plane/alembic/archive/20260515_phase54_agentic_execution.py
 
 echo "[trusted-agent-runtime] running focused pytest"
 PYTEST_BIN="pytest"

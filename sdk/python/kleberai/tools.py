@@ -39,4 +39,6 @@ class ToolsAPI:
         return self.client._request("POST", "/admin/agent-tools/credentials", json=credential)
 
     def revoke_credential(self, credential_id: str) -> Dict[str, Any]:
-        return self.client._request("POST", f"/admin/agent-tools/credentials/{credential_id}/revoke")
+        return self.client._request(
+            "POST", f"/admin/agent-tools/credentials/{credential_id}/revoke"
+        )

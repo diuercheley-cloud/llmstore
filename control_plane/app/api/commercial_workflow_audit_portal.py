@@ -4,15 +4,15 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from app.services.runtime_dependencies import get_db_session
-from app.models.core.client import Client
 from app.models.commercial.commercial_workflows import (
     CommercialWorkflowExecution,
     CommercialWorkflowPolicySnapshot,
     CommercialWorkflowReceipt,
     CommercialWorkflowReplaySession,
 )
+from app.models.core.client import Client
 from app.services.auth import require_client
+from app.services.runtime_dependencies import get_db_session
 from app.services.workflows.workflow_governance_ledger import WorkflowGovernanceLedgerService
 from app.services.workflows.workflow_provenance import WorkflowProvenanceService
 from app.services.workflows.workflow_receipts import WorkflowReceiptService
@@ -34,13 +34,17 @@ async def list_workflow_executions(
 ) -> dict[str, Any]:
     tenant_id = str(client.id)
     rows = (
-        await db.execute(
-            select(CommercialWorkflowExecution)
-            .where(CommercialWorkflowExecution.tenant_id == tenant_id)
-            .order_by(desc(CommercialWorkflowExecution.started_at))
-            .limit(100)
+        (
+            await db.execute(
+                select(CommercialWorkflowExecution)
+                .where(CommercialWorkflowExecution.tenant_id == tenant_id)
+                .order_by(desc(CommercialWorkflowExecution.started_at))
+                .limit(100)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {
         "items": [
             {
@@ -63,13 +67,17 @@ async def list_workflow_receipts(
 ) -> dict[str, Any]:
     tenant_id = str(client.id)
     rows = (
-        await db.execute(
-            select(CommercialWorkflowReceipt)
-            .where(CommercialWorkflowReceipt.tenant_id == tenant_id)
-            .order_by(desc(CommercialWorkflowReceipt.created_at))
-            .limit(100)
+        (
+            await db.execute(
+                select(CommercialWorkflowReceipt)
+                .where(CommercialWorkflowReceipt.tenant_id == tenant_id)
+                .order_by(desc(CommercialWorkflowReceipt.created_at))
+                .limit(100)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {
         "items": [
             {
@@ -106,13 +114,17 @@ async def get_workflow_determinism(
     if execution is None or execution.tenant_id != str(client.id):
         raise HTTPException(status_code=404, detail="workflow_execution_not_found")
     receipts = (
-        await db.execute(
-            select(CommercialWorkflowReceipt)
-            .where(CommercialWorkflowReceipt.execution_id == execution_id)
-            .order_by(desc(CommercialWorkflowReceipt.created_at))
-            .limit(1)
+        (
+            await db.execute(
+                select(CommercialWorkflowReceipt)
+                .where(CommercialWorkflowReceipt.execution_id == execution_id)
+                .order_by(desc(CommercialWorkflowReceipt.created_at))
+                .limit(1)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     receipt = receipts[0] if receipts else None
     verification = await _receipts.verify_receipt(db, receipt) if receipt else None
     await db.commit()
@@ -131,13 +143,17 @@ async def list_governed_executions(
     db: AsyncSession = Depends(get_db_session),
 ) -> dict[str, Any]:
     rows = (
-        await db.execute(
-            select(CommercialWorkflowExecution)
-            .where(CommercialWorkflowExecution.tenant_id == str(client.id))
-            .order_by(desc(CommercialWorkflowExecution.started_at))
-            .limit(100)
+        (
+            await db.execute(
+                select(CommercialWorkflowExecution)
+                .where(CommercialWorkflowExecution.tenant_id == str(client.id))
+                .order_by(desc(CommercialWorkflowExecution.started_at))
+                .limit(100)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {
         "items": [
             {
@@ -162,12 +178,16 @@ async def get_governance_view(
     if execution is None or execution.tenant_id != str(client.id):
         raise HTTPException(status_code=404, detail="workflow_execution_not_found")
     snapshots = (
-        await db.execute(
-            select(CommercialWorkflowPolicySnapshot)
-            .where(CommercialWorkflowPolicySnapshot.execution_id == execution.id)
-            .order_by(CommercialWorkflowPolicySnapshot.created_at.asc())
+        (
+            await db.execute(
+                select(CommercialWorkflowPolicySnapshot)
+                .where(CommercialWorkflowPolicySnapshot.execution_id == execution.id)
+                .order_by(CommercialWorkflowPolicySnapshot.created_at.asc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     events = await _ledger.list_events(db, execution_id=execution.id)
     return {
         "execution_id": str(execution.id),
@@ -200,19 +220,25 @@ async def list_replay_sessions(
     db: AsyncSession = Depends(get_db_session),
 ) -> dict[str, Any]:
     rows = (
-        await db.execute(
-            select(CommercialWorkflowReplaySession)
-            .where(CommercialWorkflowReplaySession.tenant_id == str(client.id))
-            .order_by(desc(CommercialWorkflowReplaySession.created_at))
-            .limit(100)
+        (
+            await db.execute(
+                select(CommercialWorkflowReplaySession)
+                .where(CommercialWorkflowReplaySession.tenant_id == str(client.id))
+                .order_by(desc(CommercialWorkflowReplaySession.created_at))
+                .limit(100)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {
         "items": [
             {
                 "id": str(row.id),
                 "original_execution_id": str(row.original_execution_id),
-                "replay_execution_id": str(row.replay_execution_id) if row.replay_execution_id else None,
+                "replay_execution_id": str(row.replay_execution_id)
+                if row.replay_execution_id
+                else None,
                 "session_status": row.session_status,
                 "policy_mismatch_detected": row.policy_mismatch_detected,
                 "report_hash": row.report_hash,

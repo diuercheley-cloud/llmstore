@@ -30,18 +30,35 @@ class AnthropicProvider(ProviderAdapter):
         )
 
     async def _client(self) -> httpx.AsyncClient:
-        headers = {"x-api-key": self._api_key, "anthropic-version": "2023-06-01"} if self._api_key else {}
+        headers = (
+            {"x-api-key": self._api_key, "anthropic-version": "2023-06-01"} if self._api_key else {}
+        )
         return httpx.AsyncClient(base_url=self._base_url, timeout=self._timeout, headers=headers)
 
     async def health_check(self) -> dict[str, Any]:
         if not self.enabled:
-            return {"provider_id": "anthropic", "healthy": None, "latency_ms": 0, "error": "disabled"}
+            return {
+                "provider_id": "anthropic",
+                "healthy": None,
+                "latency_ms": 0,
+                "error": "disabled",
+            }
         if not self.configured:
-            return {"provider_id": "anthropic", "healthy": None, "latency_ms": 0, "error": "not configured"}
+            return {
+                "provider_id": "anthropic",
+                "healthy": None,
+                "latency_ms": 0,
+                "error": "not configured",
+            }
         try:
             async with await self._client() as client:
                 resp = await client.get("/models")
-                return {"provider_id": "anthropic", "healthy": resp.is_success, "latency_ms": 0, "error": None}
+                return {
+                    "provider_id": "anthropic",
+                    "healthy": resp.is_success,
+                    "latency_ms": 0,
+                    "error": None,
+                }
         except Exception as e:
             return {"provider_id": "anthropic", "healthy": False, "latency_ms": 0, "error": str(e)}
 
@@ -73,7 +90,9 @@ class AnthropicProvider(ProviderAdapter):
         if payload.get("top_p") is not None:
             body["top_p"] = payload["top_p"]
         if payload.get("stop"):
-            body["stop_sequences"] = payload["stop"] if isinstance(payload["stop"], list) else [payload["stop"]]
+            body["stop_sequences"] = (
+                payload["stop"] if isinstance(payload["stop"], list) else [payload["stop"]]
+            )
         if payload.get("stream"):
             body["stream"] = True
         async with await self._client() as client:
@@ -83,7 +102,9 @@ class AnthropicProvider(ProviderAdapter):
             return self._to_openai_format(raw, payload.get("model", ""))
 
     async def responses(self, payload: dict[str, Any]) -> dict[str, Any]:
-        raise NotImplementedError("Anthropic does not support Responses API — use chat_completion (Messages API)")
+        raise NotImplementedError(
+            "Anthropic does not support Responses API — use chat_completion (Messages API)"
+        )
 
     async def embeddings(self, payload: dict[str, Any]) -> dict[str, Any]:
         raise NotImplementedError("Anthropic does not support embeddings via Messages API")
@@ -106,7 +127,9 @@ class AnthropicProvider(ProviderAdapter):
             else:
                 return 0.0
         prompt_price, completion_price = pricing[key]
-        return (prompt_tokens / 1_000_000 * prompt_price) + (completion_tokens / 1_000_000 * completion_price)
+        return (prompt_tokens / 1_000_000 * prompt_price) + (
+            completion_tokens / 1_000_000 * completion_price
+        )
 
     def log_prompt_enabled(self) -> bool:
         try:
@@ -147,7 +170,11 @@ class AnthropicProvider(ProviderAdapter):
             if role == "system":
                 content = m.get("content", "")
                 if isinstance(content, list):
-                    text = " ".join(c.get("text", "") for c in content if isinstance(c, dict) and c.get("type") == "text")
+                    text = " ".join(
+                        c.get("text", "")
+                        for c in content
+                        if isinstance(c, dict) and c.get("type") == "text"
+                    )
                 else:
                     text = str(content)
                 if text:
@@ -164,7 +191,9 @@ class AnthropicProvider(ProviderAdapter):
             if role == "system":
                 continue
             if role == "assistant":
-                mapped.append({"role": "assistant", "content": self._map_content(m.get("content", ""))})
+                mapped.append(
+                    {"role": "assistant", "content": self._map_content(m.get("content", ""))}
+                )
             else:
                 mapped.append({"role": "user", "content": self._map_content(m.get("content", ""))})
         return mapped
@@ -183,12 +212,21 @@ class AnthropicProvider(ProviderAdapter):
                         source = block.get("image_url", {})
                         url = source.get("url", "")
                         if url.startswith("data:image"):
-                            media_type = url.split(";")[0].split(":")[1] if ";" in url else "image/png"
+                            media_type = (
+                                url.split(";")[0].split(":")[1] if ";" in url else "image/png"
+                            )
                             data = url.split(",")[1] if "," in url else url
-                            blocks.append({"type": "image", "source": {"type": "base64", "media_type": media_type, "data": data}})
-                    elif t == "tool_use":
-                        blocks.append(block)
-                    elif t == "tool_result":
+                            blocks.append(
+                                {
+                                    "type": "image",
+                                    "source": {
+                                        "type": "base64",
+                                        "media_type": media_type,
+                                        "data": data,
+                                    },
+                                }
+                            )
+                    elif t == "tool_use" or t == "tool_result":
                         blocks.append(block)
             return blocks
         return str(content)
@@ -204,10 +242,17 @@ class AnthropicProvider(ProviderAdapter):
             "id": raw.get("id", "anthropic-chat"),
             "object": "chat.completion",
             "model": model,
-            "choices": [{"index": 0, "message": {"role": "assistant", "content": content}, "finish_reason": "stop"}],
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": content},
+                    "finish_reason": "stop",
+                }
+            ],
             "usage": {
                 "prompt_tokens": raw.get("usage", {}).get("input_tokens", 0),
                 "completion_tokens": raw.get("usage", {}).get("output_tokens", 0),
-                "total_tokens": raw.get("usage", {}).get("input_tokens", 0) + raw.get("usage", {}).get("output_tokens", 0),
+                "total_tokens": raw.get("usage", {}).get("input_tokens", 0)
+                + raw.get("usage", {}).get("output_tokens", 0),
             },
         }

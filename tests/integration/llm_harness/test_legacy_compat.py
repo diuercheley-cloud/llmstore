@@ -99,4 +99,3 @@ async def test_run_harness_with_config():
             allow_stub=True,
         )
     assert res is not None
-

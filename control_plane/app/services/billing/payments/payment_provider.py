@@ -1,16 +1,13 @@
 # Owner: agent-platform
 import uuid
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class PaymentProvider(ABC):
     @abstractmethod
     async def create_customer(
-        self,
-        client_id: uuid.UUID,
-        name: str,
-        email: Optional[str] = None
+        self, client_id: uuid.UUID, name: str, email: str | None = None
     ) -> str:
         """
         Creates a customer in the billing system and returns the provider customer ID.
@@ -24,8 +21,8 @@ class PaymentProvider(ABC):
         amount_cents: int,
         currency: str,
         provider_customer_id: str,
-        idempotency_key: Optional[str] = None
-    ) -> Dict[str, Any]:
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
         """
         Creates a payment intent on the provider and returns intent details.
         Expected return dict:
@@ -43,8 +40,8 @@ class PaymentProvider(ABC):
         client_id: uuid.UUID,
         amount_cents: int,
         currency: str,
-        idempotency_key: Optional[str] = None
-    ) -> Dict[str, Any]:
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
         """
         Creates a PIX payment and returns payment details including QR code.
         """
@@ -57,8 +54,8 @@ class PaymentProvider(ABC):
         amount_cents: int,
         currency: str,
         payment_method_id: str,
-        idempotency_key: Optional[str] = None
-    ) -> Dict[str, Any]:
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
         """
         Creates a card payment using a tokenized payment method.
         """

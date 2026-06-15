@@ -1,0 +1,1 @@
+validators/validate-fresh-machine-docs.sh

@@ -1,10 +1,10 @@
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import httpx
 from app.core.config import get_settings
-from app.services.runtime_dependencies import get_db_session
 from app.models.core.auth import OAuthState, UserSession
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
@@ -35,7 +35,9 @@ def _generate_session_token() -> str:
 
 
 @router.get("/login/{provider}", response_model=AuthURLResponse)
-async def login_oauth(provider: str, request: Request, session: AsyncSession = Depends(get_db_session)):
+async def login_oauth(
+    provider: str, request: Request, session: AsyncSession = Depends(get_db_session)
+):
     settings = get_settings()
 
     if provider == "google":
@@ -54,7 +56,7 @@ async def login_oauth(provider: str, request: Request, session: AsyncSession = D
 
     state_value = secrets.token_urlsafe(32)
     redirect_uri = str(request.base_url).rstrip("/") + f"/auth/callback/{provider}"
-    expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
+    expires_at = datetime.now(UTC) + timedelta(minutes=10)
 
     oauth_state = OAuthState(
         provider=provider,
@@ -96,7 +98,7 @@ async def callback_oauth(
             OAuthState.provider == provider,
             OAuthState.state == payload.state,
             OAuthState.used == False,
-            OAuthState.expires_at > datetime.now(timezone.utc),
+            OAuthState.expires_at > datetime.now(UTC),
         )
     )
     oauth_state = result.scalar_one_or_none()
@@ -184,7 +186,7 @@ async def callback_oauth(
         raise HTTPException(status_code=400, detail="email not provided by provider")
 
     session_token = _generate_session_token()
-    expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
+    expires_at = datetime.now(UTC) + timedelta(hours=24)
 
     user_session = UserSession(
         provider=provider,
@@ -217,13 +219,13 @@ async def get_current_session(
         select(UserSession).where(
             UserSession.session_token == token,
             UserSession.is_active == True,
-            UserSession.expires_at > datetime.now(timezone.utc),
+            UserSession.expires_at > datetime.now(UTC),
         )
     )
     user_session = result.scalar_one_or_none()
     if not user_session:
         raise HTTPException(status_code=401, detail="invalid or expired session")
-    user_session.last_used_at = datetime.now(timezone.utc)
+    user_session.last_used_at = datetime.now(UTC)
     await session.commit()
     return {
         "email": user_session.email,

@@ -12,11 +12,11 @@ async def test_payment_processing_flow(e2e_client, admin_headers, monkeypatch):
     from app.core.config import get_settings
     from app.db.session import SessionLocal
     from app.models.billing.billing_invoice import BillingInvoice
-    from app.models.core.client import Client as DBClient
     from app.models.billing.payments import (
         PaymentAuditEvent,
         PaymentIntent,
     )
+    from app.models.core.client import Client as DBClient
 
     settings = get_settings()
     client_id = uuid.uuid4()
@@ -26,16 +26,14 @@ async def test_payment_processing_flow(e2e_client, admin_headers, monkeypatch):
     # Seed client and invoice
     async with SessionLocal() as db:
         tenant_client = DBClient(
-            id=client_id,
-            name="Payment E2E Client",
-            is_blocked=False,
-            billing_status="active"
+            id=client_id, name="Payment E2E Client", is_blocked=False, billing_status="active"
         )
         db.add(tenant_client)
         await db.flush()
 
         from datetime import date
         from decimal import Decimal
+
         invoice = BillingInvoice(
             id=invoice_id,
             client_id=client_id,
@@ -49,7 +47,7 @@ async def test_payment_processing_flow(e2e_client, admin_headers, monkeypatch):
             overage_tokens=0,
             overage_price_per_1k_tokens=Decimal("0"),
             overage_cost=Decimal("0"),
-            total_amount=Decimal("15.00")
+            total_amount=Decimal("15.00"),
         )
         db.add(invoice)
         await db.commit()
@@ -63,9 +61,9 @@ async def test_payment_processing_flow(e2e_client, admin_headers, monkeypatch):
             "amount_cents": 1500,
             "currency": "brl",
             "invoice_id": str(invoice_id),
-            "idempotency_key": idempotency_key
+            "idempotency_key": idempotency_key,
         },
-        headers=admin_headers
+        headers=admin_headers,
     )
     assert resp.status_code == 403
     assert "Payment processing is disabled." in resp.json()["detail"]
@@ -84,9 +82,9 @@ async def test_payment_processing_flow(e2e_client, admin_headers, monkeypatch):
             "amount_cents": 1500,
             "currency": "brl",
             "invoice_id": str(invoice_id),
-            "idempotency_key": idempotency_key
+            "idempotency_key": idempotency_key,
         },
-        headers=admin_headers
+        headers=admin_headers,
     )
     assert resp.status_code == 200
     intent_data = resp.json()
@@ -94,7 +92,7 @@ async def test_payment_processing_flow(e2e_client, admin_headers, monkeypatch):
     assert intent_data["amount_cents"] == 1500
     assert intent_data["provider"] == "mock"
     assert "seti_mock_" in intent_data["client_secret"]
-    
+
     intent_uuid = uuid.UUID(intent_data["id"])
 
     # Step C: Assert Idempotency Key Works
@@ -106,16 +104,18 @@ async def test_payment_processing_flow(e2e_client, admin_headers, monkeypatch):
             "amount_cents": 1500,
             "currency": "brl",
             "invoice_id": str(invoice_id),
-            "idempotency_key": idempotency_key
+            "idempotency_key": idempotency_key,
         },
-        headers=admin_headers
+        headers=admin_headers,
     )
     assert resp_idem.status_code == 200
     assert resp_idem.json()["id"] == str(intent_uuid)
 
     # Step D: Verify Secret is NOT recorded in audit logs
     async with SessionLocal() as db:
-        res = await db.execute(select(PaymentAuditEvent).where(PaymentAuditEvent.client_id == client_id))
+        res = await db.execute(
+            select(PaymentAuditEvent).where(PaymentAuditEvent.client_id == client_id)
+        )
         audit_events = res.scalars().all()
         assert len(audit_events) > 0
         for event in audit_events:
@@ -132,12 +132,8 @@ async def test_payment_processing_flow(e2e_client, admin_headers, monkeypatch):
 
     resp = await e2e_client.post(
         "/admin/billing/payments/create-intent",
-        json={
-            "client_id": str(client_id),
-            "amount_cents": 1500,
-            "currency": "brl"
-        },
-        headers=admin_headers
+        json={"client_id": str(client_id), "amount_cents": 1500, "currency": "brl"},
+        headers=admin_headers,
     )
     assert resp.status_code == 403
     assert "Stripe payment is disabled." in resp.json()["detail"]
@@ -151,7 +147,7 @@ async def test_payment_processing_flow(e2e_client, admin_headers, monkeypatch):
     resp = await e2e_client.post(
         "/billing/webhooks/stripe",
         content=json.dumps({"id": "evt_test_1", "type": "payment_intent.succeeded"}),
-        headers={}
+        headers={},
     )
     assert resp.status_code == 400
     assert "Missing Stripe-Signature header." in resp.json()["detail"]
@@ -170,7 +166,7 @@ async def test_payment_processing_flow(e2e_client, admin_headers, monkeypatch):
             provider="stripe",
             provider_intent_id=stripe_intent_id,
             client_secret="secret_stripe_123",
-            idempotency_key="stripe_idem_1"
+            idempotency_key="stripe_idem_1",
         )
         db.add(stripe_intent)
         await db.commit()
@@ -179,15 +175,11 @@ async def test_payment_processing_flow(e2e_client, admin_headers, monkeypatch):
     stripe_event_payload = {
         "id": "evt_stripe_test_abc",
         "type": "payment_intent.succeeded",
-        "data": {
-            "object": {
-                "id": stripe_intent_id,
-                "status": "succeeded"
-            }
-        }
+        "data": {"object": {"id": stripe_intent_id, "status": "succeeded"}},
     }
-    
+
     import sys
+
     # Dynamically mock stripe module in sys.modules to avoid dependency issues if stripe library is missing
     class MockStripeWebhook:
         @staticmethod
@@ -206,14 +198,16 @@ async def test_payment_processing_flow(e2e_client, admin_headers, monkeypatch):
     resp = await e2e_client.post(
         "/billing/webhooks/stripe",
         content=json.dumps(stripe_event_payload),
-        headers={"Stripe-Signature": "t=123,v1=valid_sig"}
+        headers={"Stripe-Signature": "t=123,v1=valid_sig"},
     )
     assert resp.status_code == 200
     assert resp.json()["status"] == "success"
 
     # Verify database updated status to succeeded and linked invoice updated status to paid
     async with SessionLocal() as db:
-        res_intent = await db.execute(select(PaymentIntent).where(PaymentIntent.provider_intent_id == stripe_intent_id))
+        res_intent = await db.execute(
+            select(PaymentIntent).where(PaymentIntent.provider_intent_id == stripe_intent_id)
+        )
         intent_obj = res_intent.scalar_one()
         assert intent_obj.status == "succeeded"
 
@@ -226,7 +220,7 @@ async def test_payment_processing_flow(e2e_client, admin_headers, monkeypatch):
     resp_dup = await e2e_client.post(
         "/billing/webhooks/stripe",
         content=json.dumps(stripe_event_payload),
-        headers={"Stripe-Signature": "t=123,v1=valid_sig"}
+        headers={"Stripe-Signature": "t=123,v1=valid_sig"},
     )
     assert resp_dup.status_code == 200
     assert resp_dup.json()["status"] == "idempotent_skip"
@@ -236,9 +230,6 @@ async def test_payment_processing_flow(e2e_client, admin_headers, monkeypatch):
     settings.payment_provider = "mock"
     settings.stripe_payment_enabled = False
 
-    resp = await e2e_client.get(
-        f"/admin/billing/payments/{intent_uuid}",
-        headers=admin_headers
-    )
+    resp = await e2e_client.get(f"/admin/billing/payments/{intent_uuid}", headers=admin_headers)
     assert resp.status_code == 200
     assert resp.json()["id"] == str(intent_uuid)

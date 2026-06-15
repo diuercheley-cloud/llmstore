@@ -43,9 +43,7 @@ def test_no_secrets_in_manifests():
                     if allow in content:
                         break
                 else:
-                    assert False, (
-                        f"Secret pattern '{pat}' ({name}) found in {fname}"
-                    )
+                    assert False, f"Secret pattern '{pat}' ({name}) found in {fname}"
 
 
 def test_no_tar_gz_versioned():
@@ -80,8 +78,17 @@ def test_bundle_manifest_includes_exclude_paths():
     fp = RELEASE_DIR / "bundle-manifest.json"
     data = json.loads(fp.read_text(encoding="utf-8"))
     excluded = data.get("excluded_paths", [])
-    must_exclude = ["models", "data/rag_uploads", ".env", ".env.local",
-                     "backups", "exports", "artifacts", "*.gguf", "*.tar.gz"]
+    must_exclude = [
+        "models",
+        "data/rag_uploads",
+        ".env",
+        ".env.local",
+        "backups",
+        "exports",
+        "artifacts",
+        "*.gguf",
+        "*.tar.gz",
+    ]
     for item in must_exclude:
         assert item in excluded, f"'{item}' not in excluded_paths"
 
@@ -129,9 +136,7 @@ def test_check_secrets_on_release_dir():
         timeout=30,
     )
     print(f"STDOUT:\n{result.stdout}")
-    assert result.returncode == 0, (
-        f"check-secrets failed on release dir:\n{result.stdout}"
-    )
+    assert result.returncode == 0, f"check-secrets failed on release dir:\n{result.stdout}"
 
 
 def test_no_forbidden_files_in_release():

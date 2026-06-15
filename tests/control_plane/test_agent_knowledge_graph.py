@@ -24,7 +24,9 @@ async def kg_db():
 @pytest.mark.asyncio
 async def test_extractor_creates_entity_and_relation():
     extractor = GraphExtractor()
-    entities, relations = extractor.extract_entities_and_relations("Alice owns ProjectX", tenant_id="tenant-1")
+    entities, relations = extractor.extract_entities_and_relations(
+        "Alice owns ProjectX", tenant_id="tenant-1"
+    )
     assert len(entities) > 0
     assert len(relations) > 0
     assert relations[0].type == "owns"

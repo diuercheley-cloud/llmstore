@@ -36,8 +36,12 @@ class CommercialModelLifecycleRecord(Base):
     provider: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     checksum_sha256: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     manifest_hash: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
-    lifecycle_state: Mapped[str] = mapped_column(String(32), nullable=False, default="discovered", index=True)
-    previous_lifecycle_state: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
+    lifecycle_state: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="discovered", index=True
+    )
+    previous_lifecycle_state: Mapped[str | None] = mapped_column(
+        String(32), nullable=True, index=True
+    )
     tenant_scope_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     provenance_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
@@ -55,9 +59,15 @@ class CommercialModelLifecycleRecord(Base):
     cluster_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     node_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    state_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+    state_changed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
 
 
 class CommercialModelPromotionRequest(Base):
@@ -86,10 +96,14 @@ class CommercialModelPromotionRequest(Base):
     )
     approval_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     signed_manifest_hash: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
-    immutable_receipt_hash: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    immutable_receipt_hash: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, index=True
+    )
     media_ref: Mapped[str | None] = mapped_column(String(512), nullable=True)
     chain_of_custody_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
@@ -124,7 +138,9 @@ class CommercialModelLineage(Base):
     )
     evidence_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     dag_node_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
 
 class CommercialModelRollbackRecord(Base):
@@ -153,8 +169,12 @@ class CommercialModelRollbackRecord(Base):
     lineage_valid: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     attestation_valid: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     chain_of_custody_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    immutable_receipt_hash: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    immutable_receipt_hash: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
 
 class CommercialOfflineModelVerification(Base):
@@ -184,5 +204,9 @@ class CommercialOfflineModelVerification(Base):
     signed_manifest: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     verification_details_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     verified_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    verified_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    verified_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )

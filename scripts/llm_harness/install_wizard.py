@@ -229,7 +229,7 @@ def derive_compose(
                 "command": [
                     "sh",
                     "-c",
-                    "cd control_plane && alembic upgrade head && cd .. && python -m app.workers.generation_worker",
+                    "cd control_plane && alembic upgrade heads && cd .. && python -m app.workers.generation_worker",
                 ],
                 "volumes": [
                     f"{rel_root}/control_plane:/app/control_plane",

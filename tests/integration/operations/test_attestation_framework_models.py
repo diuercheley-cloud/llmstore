@@ -1,4 +1,3 @@
-
 import pytest
 from app.models.core.client import Client
 from app.models.operations.attestation_framework import (
@@ -97,7 +96,7 @@ async def test_attestation_framework_models_persist(session: AsyncSession):
 
 def test_phase_76_migration_presence():
     migration_path = "control_plane/alembic/versions/phase76_attestation_framework.py"
-    content = open(migration_path, "r", encoding="utf-8").read()
+    content = open(migration_path, encoding="utf-8").read()
     assert "sovereign_execution_attestations" in content
     assert "attestation_trust_policies" in content
     assert "attestation_federation_bundles" in content

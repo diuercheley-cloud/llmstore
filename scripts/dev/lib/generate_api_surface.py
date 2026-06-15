@@ -13,12 +13,12 @@ from starlette.routing import Route
 
 def generate():
     yaml_path = os.path.join(base_dir, "config/api-surface.yaml")
-    
+
     # Load existing to preserve manual overrides if run repeatedly
     existing_recs = {}
     if os.path.exists(yaml_path):
         try:
-            with open(yaml_path, "r", encoding="utf-8") as f:
+            with open(yaml_path, encoding="utf-8") as f:
                 data = yaml.safe_load(f) or []
                 for entry in data:
                     key = (entry["endpoint"], entry["method"])
@@ -91,16 +91,18 @@ def generate():
             elif "commercial" in path:
                 owner = "commercial-ops"
 
-            records.append({
-                "endpoint": path,
-                "method": method,
-                "owner": owner,
-                "status": status,
-                "replacement": replacement,
-                "since_version": since_version,
-                "deprecation_version": deprecation_version,
-                "docs_url": docs_url
-            })
+            records.append(
+                {
+                    "endpoint": path,
+                    "method": method,
+                    "owner": owner,
+                    "status": status,
+                    "replacement": replacement,
+                    "since_version": since_version,
+                    "deprecation_version": deprecation_version,
+                    "docs_url": docs_url,
+                }
+            )
 
     # Sort records for clean yaml structure
     records.sort(key=lambda r: (r["endpoint"], r["method"]))
@@ -110,6 +112,7 @@ def generate():
         yaml.safe_dump(records, f, sort_keys=False, allow_unicode=True)
 
     print(f"Generated {len(records)} entries in config/api-surface.yaml")
+
 
 if __name__ == "__main__":
     generate()

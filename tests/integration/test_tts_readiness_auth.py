@@ -7,8 +7,8 @@ from app.core.security import hash_secret, short_prefix
 from app.db.base import Base
 from app.db.session import get_db_session, get_redis
 from app.main import app
-from app.models.core.api_key import ApiKey
 from app.models.billing.billing_plan import BillingPlan
+from app.models.core.api_key import ApiKey
 from app.models.core.client import Client
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -69,7 +69,9 @@ async def tts_auth_setup(tts_auth_env):
 
         allowed_client = Client(name="TTS Allowed Client", billing_plan_id=enabled_plan.id)
         denied_client = Client(name="TTS Denied Client", billing_plan_id=disabled_plan.id)
-        suspended_client = Client(name="TTS Suspended Client", billing_plan_id=enabled_plan.id, billing_status="suspended")
+        suspended_client = Client(
+            name="TTS Suspended Client", billing_plan_id=enabled_plan.id, billing_status="suspended"
+        )
         session.add_all([allowed_client, denied_client, suspended_client])
         await session.flush()
 
@@ -78,9 +80,27 @@ async def tts_auth_setup(tts_auth_env):
         suspended_key = "sk-tts-suspended-" + uuid.uuid4().hex
         session.add_all(
             [
-                ApiKey(client_id=allowed_client.id, name="Allowed", key_prefix=short_prefix(allowed_key), key_hash=hash_secret(allowed_key), is_active=True),
-                ApiKey(client_id=denied_client.id, name="Denied", key_prefix=short_prefix(denied_key), key_hash=hash_secret(denied_key), is_active=True),
-                ApiKey(client_id=suspended_client.id, name="Suspended", key_prefix=short_prefix(suspended_key), key_hash=hash_secret(suspended_key), is_active=True),
+                ApiKey(
+                    client_id=allowed_client.id,
+                    name="Allowed",
+                    key_prefix=short_prefix(allowed_key),
+                    key_hash=hash_secret(allowed_key),
+                    is_active=True,
+                ),
+                ApiKey(
+                    client_id=denied_client.id,
+                    name="Denied",
+                    key_prefix=short_prefix(denied_key),
+                    key_hash=hash_secret(denied_key),
+                    is_active=True,
+                ),
+                ApiKey(
+                    client_id=suspended_client.id,
+                    name="Suspended",
+                    key_prefix=short_prefix(suspended_key),
+                    key_hash=hash_secret(suspended_key),
+                    is_active=True,
+                ),
             ]
         )
         await session.commit()

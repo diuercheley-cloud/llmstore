@@ -9,7 +9,7 @@ test -f control_plane/app/services/workflows/workflow_approval_chain.py
 test -f control_plane/app/services/workflows/workflow_replay_sessions.py
 test -f control_plane/app/services/workflows/workflow_governance_ledger.py
 test -f control_plane/app/api/commercial_workflow_governance_portal.py
-test -f control_plane/alembic/versions/20260515_phase56_workflow_policy_enforcement.py
+test -f control_plane/alembic/archive/20260515_phase56_workflow_policy_enforcement.py
 test -f docs/WORKFLOW_GOVERNANCE_ENFORCEMENT.md
 
 grep -q "CommercialWorkflowPolicyBinding" control_plane/app/models/commercial_workflows.py

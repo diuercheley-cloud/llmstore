@@ -25,7 +25,7 @@ class TestAdapterRegistryAPI:
             subprocess_allowed=False,
             external_system_access_allowed=False,
             capabilities_json={"requested": []},
-            denied_capabilities_json={"denied": []}
+            denied_capabilities_json={"denied": []},
         )
         session.add(manifest)
         await session.commit()
@@ -38,12 +38,9 @@ class TestAdapterRegistryAPI:
         app.dependency_overrides[get_db] = lambda: session
 
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-            payload = {
-                "client_id": str(client_id),
-                "manifest_id": str(manifest.id)
-            }
+            payload = {"client_id": str(client_id), "manifest_id": str(manifest.id)}
             response = await ac.post("/admin/operations/adapter-registry/entries", json=payload)
-            
+
         assert response.status_code == 200
         data = response.json()
         assert data["entry"]["adapter_name"] == "api_adapter"

@@ -51,8 +51,12 @@ def test_confidential_mode_must_not_expose_plaintext():
 
 
 def test_tenant_scoped_records_require_client_id():
-    failing = validate_tenant_scoped_record_has_client_id({"tenant_scoped": True, "client_id": None})
-    passing = validate_tenant_scoped_record_has_client_id({"tenant_scoped": True, "client_id": "client-1"})
+    failing = validate_tenant_scoped_record_has_client_id(
+        {"tenant_scoped": True, "client_id": None}
+    )
+    passing = validate_tenant_scoped_record_has_client_id(
+        {"tenant_scoped": True, "client_id": "client-1"}
+    )
     assert failing.passed is False
     assert passing.passed is True
 
@@ -80,7 +84,9 @@ def test_exported_sovereign_bundle_must_be_sanitized():
 
 
 def test_signed_artifact_must_include_signature_metadata_placeholder():
-    failing = validate_signed_artifact_has_signature_metadata({"signed": True, "signature_metadata": {}})
+    failing = validate_signed_artifact_has_signature_metadata(
+        {"signed": True, "signature_metadata": {}}
+    )
     passing = validate_signed_artifact_has_signature_metadata(
         {"signed": True, "signature_metadata": {"placeholder": "pending"}}
     )
@@ -89,7 +95,9 @@ def test_signed_artifact_must_include_signature_metadata_placeholder():
 
 
 def test_repair_operation_must_emit_healing_receipt():
-    failing = validate_repair_operation_emits_healing_receipt({"emitted_events": (), "healing_receipt": {}})
+    failing = validate_repair_operation_emits_healing_receipt(
+        {"emitted_events": (), "healing_receipt": {}}
+    )
     passing = validate_repair_operation_emits_healing_receipt(
         {
             "emitted_events": ("runtime.healing_receipt.emitted",),

@@ -4,10 +4,10 @@ import re
 
 from app.core.config import get_settings
 from app.core.security import generate_api_key, hash_secret, short_prefix
-from app.models.core.api_key import ApiKey
 from app.models.billing.billing_plan import BillingPlan
-from app.models.core.client import Client
 from app.models.billing.pricing_rule import PricingRule
+from app.models.core.api_key import ApiKey
+from app.models.core.client import Client
 from app.schemas.public import PublicSignupRequest
 from app.services.billing import resolve_effective_plan
 from fastapi import HTTPException
@@ -104,13 +104,17 @@ def marketing_summary(plan: BillingPlan, _pricing_rule: PricingRule | None) -> d
 
 async def list_public_plans(session: AsyncSession) -> list[dict]:
     rows = (
-        await session.execute(
-            select(BillingPlan)
-            .options(selectinload(BillingPlan.pricing_rules))
-            .where(BillingPlan.is_active.is_(True))
-            .order_by(BillingPlan.created_at.asc())
+        (
+            await session.execute(
+                select(BillingPlan)
+                .options(selectinload(BillingPlan.pricing_rules))
+                .where(BillingPlan.is_active.is_(True))
+                .order_by(BillingPlan.created_at.asc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     serialized = []
     for plan in rows:
         pricing_rule = next((item for item in plan.pricing_rules if item.is_active), None)

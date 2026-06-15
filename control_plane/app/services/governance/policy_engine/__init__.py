@@ -22,22 +22,32 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 class PolicyEngineService:
     @staticmethod
-    def sign_policy_bundle(rules_json: dict[str, Any], immutable_hash: str, secret_key: str = "internal-governance-secret") -> str:
+    def sign_policy_bundle(
+        rules_json: dict[str, Any],
+        immutable_hash: str,
+        secret_key: str = "internal-governance-secret",
+    ) -> str:
         payload = {"rules": rules_json, "hash": immutable_hash, "secret": secret_key}
         encoded = json.dumps(payload, sort_keys=True).encode("utf-8")
         return hashlib.sha256(encoded).hexdigest()
 
     @staticmethod
-    def validate_policy_signature(bundle: CommercialPolicyBundle, secret_key: str = "internal-governance-secret") -> bool:
+    def validate_policy_signature(
+        bundle: CommercialPolicyBundle, secret_key: str = "internal-governance-secret"
+    ) -> bool:
         if not bundle.signature:
             return False
-        expected_sig = PolicyEngineService.sign_policy_bundle(bundle.rules_json, bundle.immutable_hash, secret_key)
+        expected_sig = PolicyEngineService.sign_policy_bundle(
+            bundle.rules_json, bundle.immutable_hash, secret_key
+        )
         return bundle.signature == expected_sig
 
     async def validate_policy_bundle(self, rules_json: dict[str, Any]) -> tuple[bool, list[str]]:
         errors: list[str] = []
         routing = rules_json.get("routing", {})
-        if "max_cost_per_request_brl" in routing and not isinstance(routing["max_cost_per_request_brl"], (int, float)):
+        if "max_cost_per_request_brl" in routing and not isinstance(
+            routing["max_cost_per_request_brl"], (int, float)
+        ):
             errors.append("routing.max_cost_per_request_brl must be a number")
         return len(errors) == 0, errors
 
@@ -47,7 +57,9 @@ class PolicyEngineService:
         bundle_id: uuid.UUID,
         runtime_context: dict[str, Any],
     ) -> dict[str, Any]:
-        result = await db.execute(select(CommercialPolicyBundle).where(CommercialPolicyBundle.id == bundle_id))
+        result = await db.execute(
+            select(CommercialPolicyBundle).where(CommercialPolicyBundle.id == bundle_id)
+        )
         bundle = result.scalar_one_or_none()
         if not bundle:
             raise ValueError("Policy bundle not found")
@@ -70,7 +82,9 @@ class PolicyEngineService:
         artifact = CommercialPolicyArtifact(
             bundle_id=bundle.id,
             artifact_type="simulation",
-            artifact_hash=hashlib.sha256(json.dumps(simulation_results, sort_keys=True).encode("utf-8")).hexdigest(),
+            artifact_hash=hashlib.sha256(
+                json.dumps(simulation_results, sort_keys=True).encode("utf-8")
+            ).hexdigest(),
             artifact_json=simulation_results,
         )
         db.add(artifact)
@@ -107,7 +121,9 @@ class PolicyEngineService:
             from app.services.governance.policy_registry import PolicyRegistryService
 
             expected_hash = active_bundle.immutable_hash
-            observed_hash = PolicyRegistryService.calculate_bundle_hash(runtime_config, active_bundle.metadata_json)
+            observed_hash = PolicyRegistryService.calculate_bundle_hash(
+                runtime_config, active_bundle.metadata_json
+            )
             if expected_hash != observed_hash:
                 event = CommercialPolicyDriftEvent(
                     bundle_id=active_bundle.id,
@@ -123,7 +139,9 @@ class PolicyEngineService:
                 drifts.append(event)
         return drifts
 
-    async def evaluate_rules(self, bundle: CommercialPolicyBundle, context: dict[str, Any]) -> dict[str, Any]:
+    async def evaluate_rules(
+        self, bundle: CommercialPolicyBundle, context: dict[str, Any]
+    ) -> dict[str, Any]:
         rules = bundle.rules_json
         mode = bundle.mode
         if mode == "disabled":

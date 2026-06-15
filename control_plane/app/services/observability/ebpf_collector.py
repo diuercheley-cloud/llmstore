@@ -1,6 +1,6 @@
 import logging
-from typing import List, Optional
-from app.services.observability.base import ObservabilityMetric, MetricType
+
+from app.services.observability.base import MetricType, ObservabilityMetric
 
 logger = logging.getLogger(__name__)
 
@@ -11,6 +11,7 @@ class EBPFCollector:
     Prepared for integration with BCC or libbpf.
     Currently returns 'unavailable' status if binary dependencies are missing.
     """
+
     def __init__(self):
         self._available = self._check_ebpf_support()
 
@@ -18,6 +19,7 @@ class EBPFCollector:
         try:
             # Check for common eBPF indicators in Linux
             import os
+
             return os.path.exists("/sys/kernel/debug/tracing")
         except Exception:
             return False
@@ -25,7 +27,7 @@ class EBPFCollector:
     def is_available(self) -> bool:
         return self._available
 
-    async def collect_kernel_metrics(self) -> List[ObservabilityMetric]:
+    async def collect_kernel_metrics(self) -> list[ObservabilityMetric]:
         if not self._available:
             return []
 
@@ -37,15 +39,15 @@ class EBPFCollector:
                 value=0.5,
                 type=MetricType.GAUGE,
                 unit="ms",
-                tags={"source": "ebpf"}
+                tags={"source": "ebpf"},
             ),
             ObservabilityMetric(
                 name="kernel.network_throughput",
                 value=1024.0,
                 type=MetricType.COUNTER,
                 unit="bytes",
-                tags={"source": "ebpf"}
-            )
+                tags={"source": "ebpf"},
+            ),
         ]
 
     def get_status(self) -> str:

@@ -7,13 +7,14 @@ def test_sanitize_value():
         "prompt": "secret prompt",
         "api_key": "sk-123",
         "normal_field": "hello",
-        "long_field": "a" * 600
+        "long_field": "a" * 600,
     }
     sanitized = sanitize_value(data)
     assert sanitized["prompt"] == "<redacted>"
     assert sanitized["api_key"] == "<redacted>"
     assert sanitized["normal_field"] == "hello"
     assert "truncated" in sanitized["long_field"]
+
 
 def test_has_sufficient_role():
     assert has_sufficient_role(AdminRole.SUPER, "admin_write") is True

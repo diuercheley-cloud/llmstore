@@ -5,6 +5,7 @@ from app.services.routing.commercial_routing import simulate_commercial_routing
 
 CLOUD_PROVIDERS = {"openai", "anthropic", "deepseek", "openrouter"}
 
+
 def _req(**overrides) -> CommercialSimulateRequest:
     kwargs = dict(
         plan="basic",
@@ -23,30 +24,48 @@ class TestCommercialRoutingBasic:
     def test_basic_prefers_local_first(self):
         req = _req(plan="basic", task_type=TaskType.general)
         resp = simulate_commercial_routing(req)
-        assert (resp.selected_route.provider if resp.selected_route else None) in ("local", "lmstudio", "mock")
+        assert (resp.selected_route.provider if resp.selected_route else None) in (
+            "local",
+            "lmstudio",
+            "mock",
+        )
         assert resp.tier == "basic"
         assert (resp.selected_route.provider if resp.selected_route else None) is not None
 
     def test_basic_blocks_cloud_when_not_allowed(self):
         req = _req(plan="basic", cloud_allowed=False)
         resp = simulate_commercial_routing(req)
-        if (resp.selected_route.provider if resp.selected_route else None):
-            assert (resp.selected_route.provider if resp.selected_route else None) not in ("openai", "anthropic", "deepseek", "openrouter")
+        if resp.selected_route.provider if resp.selected_route else None:
+            assert (resp.selected_route.provider if resp.selected_route else None) not in (
+                "openai",
+                "anthropic",
+                "deepseek",
+                "openrouter",
+            )
         for r in resp.rejected_routes:
             if r.provider in ("openai", "anthropic", "deepseek", "openrouter"):
                 assert (len(r.rejection_reasons) > 0) is True
 
     def test_basic_cloud_enabled_explicitly(self):
-        req = _req(plan="basic", cloud_allowed=True, estimated_input_tokens=10, estimated_output_tokens=50)
+        req = _req(
+            plan="basic", cloud_allowed=True, estimated_input_tokens=10, estimated_output_tokens=50
+        )
         resp = simulate_commercial_routing(req)
         assert (resp.selected_route.provider if resp.selected_route else None) is not None
 
     def test_basic_blocks_provider_on_excessive_cost(self):
-        req = _req(plan="basic", cloud_allowed=True, estimated_input_tokens=50000, estimated_output_tokens=50000)
+        req = _req(
+            plan="basic",
+            cloud_allowed=True,
+            estimated_input_tokens=50000,
+            estimated_output_tokens=50000,
+        )
         resp = simulate_commercial_routing(req)
         for r in resp.rejected_routes:
             if r.estimated_cost_brl > 0.10:
-                assert (len(r.rejection_reasons) > 0) is True, f"{r.provider} should be rejected, cost={r.estimated_cost_brl}"
+                assert (len(r.rejection_reasons) > 0) is True, (
+                    f"{r.provider} should be rejected, cost={r.estimated_cost_brl}"
+                )
 
 
 class TestCommercialRoutingPro:
@@ -56,18 +75,28 @@ class TestCommercialRoutingPro:
         assert resp.tier == "pro"
         assert (resp.selected_route.provider if resp.selected_route else None) is not None
 
-
     def test_pro_respects_wallet_balance(self):
-        req = _req(plan="pro", cloud_allowed=True, wallet_balance_brl=0.05, estimated_input_tokens=10000, estimated_output_tokens=10000)
+        req = _req(
+            plan="pro",
+            cloud_allowed=True,
+            wallet_balance_brl=0.05,
+            estimated_input_tokens=10000,
+            estimated_output_tokens=10000,
+        )
         resp = simulate_commercial_routing(req)
         for r in resp.rejected_routes:
             if r.estimated_cost_brl > 0.05 and (r.provider in CLOUD_PROVIDERS):
                 assert (len(r.rejection_reasons) > 0) is True
 
     def pro_respects_max_cost_per_request(self):
-        req = _req(plan="pro", cloud_allowed=True, estimated_input_tokens=500000, estimated_output_tokens=500000)
+        req = _req(
+            plan="pro",
+            cloud_allowed=True,
+            estimated_input_tokens=500000,
+            estimated_output_tokens=500000,
+        )
         resp = simulate_commercial_routing(req)
-        if (resp.selected_route.provider if resp.selected_route else None):
+        if resp.selected_route.provider if resp.selected_route else None:
             assert resp.selected_route.estimated_cost_brl <= 0.50
         for r in resp.rejected_routes:
             if r.estimated_cost_brl > 0.50:
@@ -81,17 +110,32 @@ class TestCommercialRoutingPremium:
         assert resp.tier == "premium"
 
     def test_premium_respects_max_cost_per_request(self):
-        req = _req(plan="enterprise", cloud_allowed=True, estimated_input_tokens=500000, estimated_output_tokens=500000)
+        req = _req(
+            plan="enterprise",
+            cloud_allowed=True,
+            estimated_input_tokens=500000,
+            estimated_output_tokens=500000,
+        )
         resp = simulate_commercial_routing(req)
-        if (resp.selected_route.provider if resp.selected_route else None):
+        if resp.selected_route.provider if resp.selected_route else None:
             assert resp.selected_route.estimated_cost_brl <= 1.00
 
     def test_premium_allows_better_providers(self):
         req = _req(plan="enterprise", cloud_allowed=True)
         resp = simulate_commercial_routing(req)
         assert (resp.selected_route.provider if resp.selected_route else None) is not None
-        providers_in_premium_order = ["openai", "anthropic", "local", "lmstudio", "deepseek", "openrouter", "mock"]
-        assert (resp.selected_route.provider if resp.selected_route else None) in providers_in_premium_order
+        providers_in_premium_order = [
+            "openai",
+            "anthropic",
+            "local",
+            "lmstudio",
+            "deepseek",
+            "openrouter",
+            "mock",
+        ]
+        assert (
+            resp.selected_route.provider if resp.selected_route else None
+        ) in providers_in_premium_order
 
 
 class TestCommercialRoutingCoding:
@@ -99,11 +143,25 @@ class TestCommercialRoutingCoding:
         req = _req(plan="pro", task_type=TaskType.coding, cloud_allowed=True)
         resp = simulate_commercial_routing(req)
         assert resp.tier == "coding"
-        if (resp.selected_route.provider if resp.selected_route else None):
-            assert (resp.selected_route.provider if resp.selected_route else None) in ("anthropic", "openai", "deepseek", "local", "lmstudio", "openrouter", "mock")
+        if resp.selected_route.provider if resp.selected_route else None:
+            assert (resp.selected_route.provider if resp.selected_route else None) in (
+                "anthropic",
+                "openai",
+                "deepseek",
+                "local",
+                "lmstudio",
+                "openrouter",
+                "mock",
+            )
 
     def test_coding_falls_back_when_margin_negative(self):
-        req = _req(plan="pro", task_type=TaskType.coding, cloud_allowed=True, estimated_input_tokens=50000, estimated_output_tokens=50000)
+        req = _req(
+            plan="pro",
+            task_type=TaskType.coding,
+            cloud_allowed=True,
+            estimated_input_tokens=50000,
+            estimated_output_tokens=50000,
+        )
         resp = simulate_commercial_routing(req)
         assert (resp.selected_route.provider if resp.selected_route else None) is not None
         for r in resp.rejected_routes:
@@ -116,17 +174,28 @@ class TestCommercialRoutingSuspended:
         req = _req(plan="basic", billing_status="suspended", cloud_allowed=True)
         resp = simulate_commercial_routing(req)
         assert resp.tier == "suspended"
-        if (resp.selected_route.provider if resp.selected_route else None):
-            assert (resp.selected_route.provider if resp.selected_route else None) not in ("openai", "anthropic", "deepseek", "openrouter")
+        if resp.selected_route.provider if resp.selected_route else None:
+            assert (resp.selected_route.provider if resp.selected_route else None) not in (
+                "openai",
+                "anthropic",
+                "deepseek",
+                "openrouter",
+            )
         for r in resp.rejected_routes:
-            if (r.provider in CLOUD_PROVIDERS):
-                assert (len(r.rejection_reasons) > 0) is True, f"cloud provider {r.provider} should be rejected for suspended client"
+            if r.provider in CLOUD_PROVIDERS:
+                assert (len(r.rejection_reasons) > 0) is True, (
+                    f"cloud provider {r.provider} should be rejected for suspended client"
+                )
 
     def test_suspended_allows_local(self):
         req = _req(plan="basic", billing_status="suspended", cloud_allowed=True)
         resp = simulate_commercial_routing(req)
-        if (resp.selected_route.provider if resp.selected_route else None):
-            assert (resp.selected_route.provider if resp.selected_route else None) in ("local", "lmstudio", "mock")
+        if resp.selected_route.provider if resp.selected_route else None:
+            assert (resp.selected_route.provider if resp.selected_route else None) in (
+                "local",
+                "lmstudio",
+                "mock",
+            )
 
     def test_suspended_with_no_local_routes_still_returns_error(self):
         req = _req(plan="basic", billing_status="suspended", cloud_allowed=False)
@@ -162,13 +231,25 @@ class TestCommercialRoutingEdgeCases:
             ("pro", 0.50, 500000),
             ("enterprise", 1.00, 500000),
         ]:
-            req = _req(plan=plan, cloud_allowed=True, estimated_input_tokens=tokens, estimated_output_tokens=tokens)
+            req = _req(
+                plan=plan,
+                cloud_allowed=True,
+                estimated_input_tokens=tokens,
+                estimated_output_tokens=tokens,
+            )
             resp = simulate_commercial_routing(req)
-            if (resp.selected_route.provider if resp.selected_route else None):
-                assert resp.selected_route.estimated_cost_brl <= max_cost, f"{plan}: cost {resp.selected_route.estimated_cost_brl} > {max_cost}"
+            if resp.selected_route.provider if resp.selected_route else None:
+                assert resp.selected_route.estimated_cost_brl <= max_cost, (
+                    f"{plan}: cost {resp.selected_route.estimated_cost_brl} > {max_cost}"
+                )
 
     def test_fallback_on_negative_margin(self):
-        req = _req(plan="pro", cloud_allowed=True, estimated_input_tokens=100000, estimated_output_tokens=100000)
+        req = _req(
+            plan="pro",
+            cloud_allowed=True,
+            estimated_input_tokens=100000,
+            estimated_output_tokens=100000,
+        )
         resp = simulate_commercial_routing(req)
         assert (resp.selected_route.provider if resp.selected_route else None) is not None
         for r in resp.rejected_routes:
@@ -177,6 +258,7 @@ class TestCommercialRoutingEdgeCases:
 
     def test_no_real_cloud_calls(self):
         import app.services.routing.commercial_routing as cr
+
         original = cr.estimate_provider_cost
         call_count = [0]
 
@@ -190,6 +272,7 @@ class TestCommercialRoutingEdgeCases:
             assert call_count[0] > 0
 
         import app.services.routing.smart_router as sr
+
         with patch.object(sr, "_is_provider_available", return_value=True):
             with patch.object(sr, "_provider_health", return_value="healthy"):
                 req = _req(plan="pro", cloud_allowed=True)
@@ -214,7 +297,9 @@ class TestCommercialRoutingEdgeCases:
             )
             resp = simulate_commercial_routing(req)
             assert resp.tier, f"{plan}/{billing_status}: missing tier"
-            assert isinstance(resp.rejected_routes, list), f"{plan}/{billing_status}: rejected_routes not a list"
+            assert isinstance(resp.rejected_routes, list), (
+                f"{plan}/{billing_status}: rejected_routes not a list"
+            )
             assert len(resp.rejected_routes) > 0, f"{plan}/{billing_status}: no routes evaluated"
 
     def test_response_contains_all_required_fields(self):

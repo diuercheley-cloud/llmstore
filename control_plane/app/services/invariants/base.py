@@ -39,4 +39,3 @@ def _as_mapping(payload: dict[str, Any] | None) -> dict[str, Any]:
     """Normalize optional payloads to deterministic mapping access."""
 
     return payload or {}
-

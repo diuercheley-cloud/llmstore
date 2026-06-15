@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 
 def get_current_tag() -> str:
@@ -19,11 +19,12 @@ def get_current_tag() -> str:
     # Fallback to local default
     return "v2.0.2-agentic-ga-readiness"
 
-def get_current_release_context() -> Dict[str, Any]:
+
+def get_current_release_context() -> dict[str, Any]:
     tag = get_current_tag()
     is_production = any(keyword in tag for keyword in ["production", "agentic", "platform"])
     return {
         "tag": tag,
         "is_production": is_production,
-        "environment": "production" if is_production else "development"
+        "environment": "production" if is_production else "development",
     }

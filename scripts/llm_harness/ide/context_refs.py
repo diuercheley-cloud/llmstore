@@ -14,23 +14,23 @@ def parse_refs(text: str, workspace=None) -> list[ContextRef]:
         cleaned_token = token
         while cleaned_token and cleaned_token[-1] in ".,?!;)]}":
             cleaned_token = cleaned_token[:-1]
-        
+
         if not cleaned_token.startswith("@"):
             continue
-            
+
         ref_str = cleaned_token[1:]
-        
+
         if ref_str.startswith("file:"):
-            path = ref_str[len("file:"):]
+            path = ref_str[len("file:") :]
             refs.append(ContextRef(ref_type=ContextRefType.FILE, path=path))
         elif ref_str.startswith("folder:"):
-            path = ref_str[len("folder:"):]
+            path = ref_str[len("folder:") :]
             refs.append(ContextRef(ref_type=ContextRefType.FOLDER, path=path))
         elif ref_str.startswith("symbol:"):
-            symbol = ref_str[len("symbol:"):]
+            symbol = ref_str[len("symbol:") :]
             refs.append(ContextRef(ref_type=ContextRefType.SYMBOL, path="", symbol=symbol))
         elif ref_str.startswith("selection:"):
-            content = ref_str[len("selection:"):]
+            content = ref_str[len("selection:") :]
             if ":" in content:
                 parts = content.rsplit(":", 1)
                 path = parts[0]
@@ -48,30 +48,34 @@ def parse_refs(text: str, workspace=None) -> list[ContextRef]:
                         start_line = end_line = int(line_range)
                     except ValueError:
                         pass
-                refs.append(ContextRef(
-                    ref_type=ContextRefType.SELECTION,
-                    path=path,
-                    start_line=start_line,
-                    end_line=end_line
-                ))
+                refs.append(
+                    ContextRef(
+                        ref_type=ContextRefType.SELECTION,
+                        path=path,
+                        start_line=start_line,
+                        end_line=end_line,
+                    )
+                )
         else:
             # Short forms
             match_range = re.search(r":(\d+)(?:-(\d+))?$", ref_str)
             if match_range:
                 start_line = int(match_range.group(1))
                 end_line = int(match_range.group(2)) if match_range.group(2) else start_line
-                path = ref_str[:match_range.start()]
-                refs.append(ContextRef(
-                    ref_type=ContextRefType.SELECTION,
-                    path=path,
-                    start_line=start_line,
-                    end_line=end_line
-                ))
+                path = ref_str[: match_range.start()]
+                refs.append(
+                    ContextRef(
+                        ref_type=ContextRefType.SELECTION,
+                        path=path,
+                        start_line=start_line,
+                        end_line=end_line,
+                    )
+                )
                 continue
 
             workspace_root = workspace.path if workspace else "."
             resolved_path = os.path.join(workspace_root, ref_str)
-            
+
             if os.path.isdir(resolved_path):
                 refs.append(ContextRef(ref_type=ContextRefType.FOLDER, path=ref_str))
             elif os.path.isfile(resolved_path):
@@ -83,11 +87,9 @@ def parse_refs(text: str, workspace=None) -> list[ContextRef]:
                     refs.append(ContextRef(ref_type=ContextRefType.SYMBOL, path="", symbol=ref_str))
     return refs
 
+
 async def build_context_bundle(
-    refs: list[ContextRef],
-    workspace,
-    policy_engine,
-    token_budget: int = 4000
+    refs: list[ContextRef], workspace, policy_engine, token_budget: int = 4000
 ) -> ContextBundle:
     bundle = ContextBundle()
     tokenizer = TokenCounter(method="auto")
@@ -125,7 +127,7 @@ async def build_context_bundle(
         if ref.ref_type == ContextRefType.FILE:
             full_path = os.path.join(workspace_root, ref.path)
             if os.path.exists(full_path) and os.path.isfile(full_path):
-                with open(full_path, "r", errors="ignore") as f:
+                with open(full_path, errors="ignore") as f:
                     content = f.read()
                 sanitized = Sanitizer.sanitize_text(content)
                 tokens = tokenizer.count_tokens(sanitized)
@@ -144,31 +146,35 @@ async def build_context_bundle(
         elif ref.ref_type == ContextRefType.SELECTION:
             full_path = os.path.join(workspace_root, ref.path)
             if os.path.exists(full_path) and os.path.isfile(full_path):
-                with open(full_path, "r", errors="ignore") as f:
+                with open(full_path, errors="ignore") as f:
                     lines = f.readlines()
                 start = max(1, ref.start_line or 1)
                 end = min(len(lines), ref.end_line or len(lines))
-                content = "".join(lines[start - 1:end])
+                content = "".join(lines[start - 1 : end])
                 sanitized = Sanitizer.sanitize_text(content)
                 tokens = tokenizer.count_tokens(sanitized)
                 if running_tokens + tokens <= token_budget:
-                    bundle.selections.append({
-                        "path": ref.path,
-                        "start_line": start,
-                        "end_line": end,
-                        "content": sanitized
-                    })
+                    bundle.selections.append(
+                        {
+                            "path": ref.path,
+                            "start_line": start,
+                            "end_line": end,
+                            "content": sanitized,
+                        }
+                    )
                     running_tokens += tokens
                 else:
                     rem = token_budget - running_tokens
                     if rem > 50:
                         trunc = truncate_to_tokens(sanitized, rem)
-                        bundle.selections.append({
-                            "path": ref.path,
-                            "start_line": start,
-                            "end_line": end,
-                            "content": trunc
-                        })
+                        bundle.selections.append(
+                            {
+                                "path": ref.path,
+                                "start_line": start,
+                                "end_line": end,
+                                "content": trunc,
+                            }
+                        )
                         running_tokens = token_budget
                     else:
                         break
@@ -190,13 +196,13 @@ async def build_context_bundle(
                         if decision.allowed:
                             files_to_add.append(rel_path)
             files_to_add.sort()
-            
+
             for file_path in files_to_add:
                 if running_tokens >= token_budget:
                     break
                 full_file = os.path.join(workspace_root, file_path)
                 if os.path.exists(full_file) and os.path.isfile(full_file):
-                    with open(full_file, "r", errors="ignore") as f:
+                    with open(full_file, errors="ignore") as f:
                         content = f.read()
                     sanitized = Sanitizer.sanitize_text(content)
                     tokens = tokenizer.count_tokens(sanitized)
@@ -227,51 +233,44 @@ async def build_context_bundle(
                     decision = policy_engine.evaluate_file_path(rel_path)
                     if not decision.allowed:
                         continue
-                    
+
                     full_file = os.path.join(root, file)
                     try:
-                        with open(full_file, "r", errors="ignore") as f:
+                        with open(full_file, errors="ignore") as f:
                             source = f.read()
                         tree = ast.parse(source)
                         for node in ast.walk(tree):
                             if isinstance(
-                                node,
-                                (ast.FunctionDef, ast.ClassDef, ast.AsyncFunctionDef)
+                                node, (ast.FunctionDef, ast.ClassDef, ast.AsyncFunctionDef)
                             ):
                                 if node.name == symbol_name:
                                     lines = source.splitlines(keepends=True)
                                     start = node.lineno
                                     end = getattr(node, "end_lineno", len(lines))
-                                    body = "".join(lines[start - 1:end])
-                                    matches.append({
-                                        "name": symbol_name,
-                                        "path": rel_path,
-                                        "content": body
-                                    })
+                                    body = "".join(lines[start - 1 : end])
+                                    matches.append(
+                                        {"name": symbol_name, "path": rel_path, "content": body}
+                                    )
                     except Exception:
                         pass
-            
+
             for m in matches:
                 if running_tokens >= token_budget:
                     break
                 sanitized = Sanitizer.sanitize_text(m["content"])
                 tokens = tokenizer.count_tokens(sanitized)
                 if running_tokens + tokens <= token_budget:
-                    bundle.symbols.append({
-                        "name": m["name"],
-                        "path": m["path"],
-                        "content": sanitized
-                    })
+                    bundle.symbols.append(
+                        {"name": m["name"], "path": m["path"], "content": sanitized}
+                    )
                     running_tokens += tokens
                 else:
                     rem = token_budget - running_tokens
                     if rem > 50:
                         trunc = truncate_to_tokens(sanitized, rem)
-                        bundle.symbols.append({
-                            "name": m["name"],
-                            "path": m["path"],
-                            "content": trunc
-                        })
+                        bundle.symbols.append(
+                            {"name": m["name"], "path": m["path"], "content": trunc}
+                        )
                         running_tokens = token_budget
                     else:
                         break

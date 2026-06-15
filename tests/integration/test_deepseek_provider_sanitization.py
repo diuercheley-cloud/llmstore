@@ -16,9 +16,9 @@ if str(SCRIPT_LIB) not in sys.path:
     sys.path.insert(0, str(SCRIPT_LIB))
 from deepseek_real_validator import mask_key, sanitize_log
 
-DEEPSEEK_MASK_KEY = "sk-" "deepseek-test-key-1234567890"
-DEEPSEEK_REALISTIC_KEY = "sk-" "test-real-key-1234567890abcdef"
-DEEPSEEK_REPORT_KEY = "sk-" "deepseek-real-key-12345678901234567890"
+DEEPSEEK_MASK_KEY = "sk-deepseek-test-key-1234567890"
+DEEPSEEK_REALISTIC_KEY = "sk-test-real-key-1234567890abcdef"
+DEEPSEEK_REPORT_KEY = "sk-deepseek-real-key-12345678901234567890"
 DEEPSEEK_REPORT_ENV_KEY = "test-deepseek-key"
 
 
@@ -67,6 +67,7 @@ async def test_no_key_in_health_check_output():
     os.environ["DEEPSEEK_PROVIDER_ENABLED"] = "true"
     os.environ["REAL_PROVIDER_VALIDATION_ENABLED"] = "true"
     from app.core.config import get_settings
+
     get_settings.cache_clear()
     provider = DeepSeekProvider()
     result = await provider.health_check()
@@ -125,8 +126,18 @@ def test_mask_key_keeps_prefix_suffix():
 
 def test_no_full_prompt_in_report_by_default(tmp_path):
     from deepseek_real_validator import DeepSeekRealValidator
-    args = type("Args", (), {"dry_run": True, "real": True, "max_cost_brl": 2.0, "model": "deepseek-chat",
-                             "output_dir": str(tmp_path)})
+
+    args = type(
+        "Args",
+        (),
+        {
+            "dry_run": True,
+            "real": True,
+            "max_cost_brl": 2.0,
+            "model": "deepseek-chat",
+            "output_dir": str(tmp_path),
+        },
+    )
     env = {
         "REAL_PROVIDER_VALIDATION_ENABLED": "true",
         "DEEPSEEK_PROVIDER_ENABLED": "true",
@@ -147,16 +158,20 @@ def test_sanitize_log_handles_non_string():
 def test_responses_raises_not_implemented():
     provider = DeepSeekProvider()
     import pytest
+
     with pytest.raises(NotImplementedError):
         import asyncio
+
         asyncio.run(provider.responses({"model": "deepseek-chat"}))
 
 
 def test_embeddings_raises_not_implemented():
     provider = DeepSeekProvider()
     import pytest
+
     with pytest.raises(NotImplementedError):
         import asyncio
+
         asyncio.run(provider.embeddings({"model": "deepseek-chat", "input": "test"}))
 
 

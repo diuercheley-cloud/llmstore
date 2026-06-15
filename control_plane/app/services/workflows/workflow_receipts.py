@@ -35,12 +35,16 @@ class WorkflowReceiptService:
             )
         ).scalar_one_or_none()
         stages = (
-            await db.execute(
-                select(CommercialWorkflowStage)
-                .where(CommercialWorkflowStage.execution_id == execution.id)
-                .order_by(CommercialWorkflowStage.stage_order.asc())
+            (
+                await db.execute(
+                    select(CommercialWorkflowStage)
+                    .where(CommercialWorkflowStage.execution_id == execution.id)
+                    .order_by(CommercialWorkflowStage.stage_order.asc())
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         receipt_body = sanitize_report_payload(
             {
                 "execution_id": str(execution.id),
@@ -100,7 +104,9 @@ class WorkflowReceiptService:
                 )
             ).scalar_one_or_none()
             previous_valid = previous is not None
-        receipt.verification_status = "verified" if hash_valid and signature_valid and previous_valid else "tampered"
+        receipt.verification_status = (
+            "verified" if hash_valid and signature_valid and previous_valid else "tampered"
+        )
         receipt.verified_at = utc_now()
         return {
             "receipt_id": str(receipt.id),
@@ -128,7 +134,9 @@ class WorkflowReceiptService:
             "detached_signature": receipt.detached_signature,
             "signature_algorithm": receipt.signature_algorithm,
             "immutable_hash": receipt.immutable_hash,
-            "receipt_json": receipt.receipt_json if include_sensitive else sanitize_report_payload(receipt.receipt_json or {}),
+            "receipt_json": receipt.receipt_json
+            if include_sensitive
+            else sanitize_report_payload(receipt.receipt_json or {}),
             "export_classification": receipt.export_classification,
         }
         exported["export_hash"] = sha256_hex(canonical_json(exported))

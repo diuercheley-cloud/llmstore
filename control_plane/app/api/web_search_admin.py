@@ -1,10 +1,8 @@
-from typing import Optional
-
-from app.services.runtime_dependencies import get_db_session
 from app.services.agents.tools.web_search_tool import WebSearchToolAdapter
 from app.services.agents.web_search.search_audit import SearchAuditService
 from app.services.agents.web_search.search_cache import SearchCacheService
 from app.services.auth import require_admin
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,8 +12,8 @@ router = APIRouter(tags=["web-search-admin"])
 
 class WebSearchTestRequest(BaseModel):
     query: str
-    limit: Optional[int] = 5
-    provider: Optional[str] = "local_tavily_real"
+    limit: int | None = 5
+    provider: str | None = "local_tavily_real"
 
 
 @router.post("/admin/agents/tools/web-search/test")

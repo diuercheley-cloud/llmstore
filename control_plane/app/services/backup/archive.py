@@ -1,14 +1,14 @@
 import io
-import tarfile
 import json
-import hashlib
+import tarfile
 from datetime import UTC, datetime
-from typing import Any, Dict
+from typing import Any
+
 from .errors import BackupArchiveError
-from .contracts import ArchiveProvider
+
 
 class ArchiveService:
-    def create(self, payload_parts: Dict[str, bytes]) -> bytes:
+    def create(self, payload_parts: dict[str, bytes]) -> bytes:
         try:
             buffer = io.BytesIO()
             with tarfile.open(fileobj=buffer, mode="w:gz") as tar:
@@ -21,9 +21,9 @@ class ArchiveService:
         except Exception as e:
             raise BackupArchiveError(f"Failed to create archive: {e}")
 
-    def extract(self, archive_bytes: bytes) -> Dict[str, Any]:
+    def extract(self, archive_bytes: bytes) -> dict[str, Any]:
         try:
-            extracted: Dict[str, Any] = {}
+            extracted: dict[str, Any] = {}
             with tarfile.open(fileobj=io.BytesIO(archive_bytes), mode="r:gz") as tar:
                 for member in tar.getmembers():
                     f = tar.extractfile(member)
@@ -38,18 +38,20 @@ class ArchiveService:
         except Exception as e:
             raise BackupArchiveError(f"Failed to extract archive: {e}")
 
-# Maintain backward compatibility for now if needed, 
+
+# Maintain backward compatibility for now if needed,
 # but new code should use ArchiveService
 class ArchiveWriter:
     @staticmethod
-    def create(payload_parts: Dict[str, bytes]) -> bytes:
+    def create(payload_parts: dict[str, bytes]) -> bytes:
         return ArchiveService().create(payload_parts)
+
 
 class ArchiveReader:
     @staticmethod
-    def extract(archive_bytes: bytes) -> Dict[str, Any]:
+    def extract(archive_bytes: bytes) -> dict[str, Any]:
         return ArchiveService().extract(archive_bytes)
-    
+
     @staticmethod
     def get_member_content(archive_bytes: bytes, file_name: str) -> bytes:
         try:

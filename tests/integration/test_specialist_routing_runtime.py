@@ -28,9 +28,7 @@ async def test_specialist_routing_runtime_executes_dispatch_and_synthesis():
     runtime.obs.record_trace = AsyncMock()
     runtime.obs.record_message = AsyncMock()
     runtime.policy.validate_delegation = AsyncMock(return_value=(True, "OK"))
-    runtime.arbitrator.arbitrate = AsyncMock(
-        return_value={"final_synthesis": "final answer"}
-    )
+    runtime.arbitrator.arbitrate = AsyncMock(return_value={"final_synthesis": "final answer"})
 
     result = await runtime.execute(team_id, "investigate auth regression")
 

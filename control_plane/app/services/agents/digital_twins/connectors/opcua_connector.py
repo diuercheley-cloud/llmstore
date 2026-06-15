@@ -1,6 +1,6 @@
 import logging
 import uuid
-from typing import Any, Dict
+from typing import Any
 
 from app.models.agents.digital_twin import DigitalTwin
 from app.services.agents.digital_twins.twin_connector import TwinConnector
@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 try:
     from asyncua import Client as OPCUAClient
     from asyncua import ua
+
     HAS_OPCUA = True
 except ImportError:
     HAS_OPCUA = False
@@ -39,7 +40,7 @@ class OPCUATwinConnector(TwinConnector):
     def _node_id(self, twin_id: uuid.UUID, suffix: str = "state") -> str:
         return f"ns=2;s=twins.{twin_id}.{suffix}"
 
-    async def read(self, twin_id: uuid.UUID) -> Dict[str, Any]:
+    async def read(self, twin_id: uuid.UUID) -> dict[str, Any]:
         twin = await self.db.get(DigitalTwin, twin_id)
         if not twin:
             raise ValueError("Twin not found")
@@ -64,7 +65,9 @@ class OPCUATwinConnector(TwinConnector):
             current = await self.state_service.get_latest_state(twin_id)
             return current or {"status": "error", "error": str(e)}
 
-    async def execute_command(self, twin_id: uuid.UUID, command: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute_command(
+        self, twin_id: uuid.UUID, command: str, params: dict[str, Any]
+    ) -> dict[str, Any]:
         twin = await self.db.get(DigitalTwin, twin_id)
         if not twin:
             raise ValueError("Twin not found")
@@ -78,7 +81,11 @@ class OPCUATwinConnector(TwinConnector):
 
         try:
             cmd_node = client.get_node(self._node_id(twin_id, "commands"))
-            await cmd_node.write_value(ua.DataValue(ua.Variant({"command": command, "params": params}, ua.VariantType.Dict)))
+            await cmd_node.write_value(
+                ua.DataValue(
+                    ua.Variant({"command": command, "params": params}, ua.VariantType.Dict)
+                )
+            )
             return {"status": "written", "command": command, "tx": str(uuid.uuid4())}
         except Exception as e:
             logger.error(f"OPC-UA command failed for {twin_id}: {e}")

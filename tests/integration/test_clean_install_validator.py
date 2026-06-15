@@ -9,12 +9,16 @@ VALIDATOR_SCRIPT = ROOT / "scripts" / "validate-clean-install-validator.sh"
 
 def test_clean_install_script_exists():
     assert CLEAN_INSTALL_SCRIPT.exists(), "validate-clean-install-local.sh missing"
-    assert os.access(CLEAN_INSTALL_SCRIPT, os.X_OK), "validate-clean-install-local.sh not executable"
+    assert os.access(CLEAN_INSTALL_SCRIPT, os.X_OK), (
+        "validate-clean-install-local.sh not executable"
+    )
 
 
 def test_validator_script_exists():
     assert VALIDATOR_SCRIPT.exists(), "validate-clean-install-validator.sh missing"
-    assert os.access(VALIDATOR_SCRIPT, os.X_OK), "validate-clean-install-validator.sh not executable"
+    assert os.access(VALIDATOR_SCRIPT, os.X_OK), (
+        "validate-clean-install-validator.sh not executable"
+    )
 
 
 def test_help_flag():

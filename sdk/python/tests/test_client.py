@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock
-import json
 from kleberai import Client, KleberAIError
+
 
 class TestClient(unittest.TestCase):
     def setUp(self):
@@ -11,9 +11,7 @@ class TestClient(unittest.TestCase):
     def test_chat_success(self, mock_request):
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "choices": [{"message": {"content": "Hello world"}}]
-        }
+        mock_response.json.return_value = {"choices": [{"message": {"content": "Hello world"}}]}
         mock_request.return_value = mock_response
 
         res = self.client.chat("Hi")
@@ -38,12 +36,16 @@ class TestClient(unittest.TestCase):
         mock_response.text = "Unauthorized"
         # Manually trigger raise_for_status error simulation or just check how _request handles it
         import httpx
-        mock_response.raise_for_status.side_effect = httpx.HTTPStatusError("401", request=MagicMock(), response=mock_response)
+
+        mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
+            "401", request=MagicMock(), response=mock_response
+        )
         mock_request.return_value = mock_response
 
         with self.assertRaises(KleberAIError) as cm:
             self.client.models()
         self.assertIn("401", str(cm.exception))
+
 
 if __name__ == "__main__":
     unittest.main()

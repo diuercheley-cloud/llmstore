@@ -3,7 +3,7 @@ import logging
 import threading
 import time
 from collections import defaultdict, deque
-from typing import Callable, Dict, List, Optional
+from collections.abc import Callable
 
 from app.core.config import get_settings
 from app.core.metrics import (
@@ -36,22 +36,22 @@ class TelemetryBackpressure:
 
         self._queue: deque = deque()
         self._lock = threading.Lock()
-        self._drain_thread: Optional[threading.Thread] = None
+        self._drain_thread: threading.Thread | None = None
         self._running = False
 
         self.bucket_manager = LeakyBucketManager()
         self.sampler = SpanSampler()
-        self._exporters: List[Callable[[Dict], Optional[Dict]]] = []
+        self._exporters: list[Callable[[dict], dict | None]] = []
 
         self._drop_count: int = 0
         self._export_failure_count: int = 0
 
-    def register_exporter(self, exporter: Callable[[Dict], Optional[Dict]]) -> None:
+    def register_exporter(self, exporter: Callable[[dict], dict | None]) -> None:
         self._exporters.append(exporter)
 
     def enqueue(
         self,
-        span: Dict,
+        span: dict,
         tenant_id: str = "default",
         agent_id: str = "unknown",
     ) -> bool:
@@ -71,8 +71,10 @@ class TelemetryBackpressure:
 
             if priority == SpanPriority.DEBUG and settings.agent_telemetry_drop_debug_spans_enabled:
                 LLM_AGENT_TELEMETRY_SPANS_DROPPED_TOTAL.labels(
-                    tenant_id=tenant_id, agent_id=agent_id,
-                    priority=priority.name.lower(), reason="leaky_bucket",
+                    tenant_id=tenant_id,
+                    agent_id=agent_id,
+                    priority=priority.name.lower(),
+                    reason="leaky_bucket",
                 ).inc()
                 self._drop_count += 1
                 return False
@@ -101,15 +103,15 @@ class TelemetryBackpressure:
         if target_remove <= 0:
             return 0
 
-        to_drop = self.sampler.select_spans_to_drop(
-            list(self._queue), target_remove
-        )
+        to_drop = self.sampler.select_spans_to_drop(list(self._queue), target_remove)
         for idx in sorted(to_drop, reverse=True):
             span = self._queue[idx]
             span_priority = classify_span_priority(span.get("type", ""))
             LLM_AGENT_TELEMETRY_SPANS_DROPPED_TOTAL.labels(
-                tenant_id=tenant_id, agent_id=agent_id,
-                priority=span_priority.name.lower(), reason="queue_full",
+                tenant_id=tenant_id,
+                agent_id=agent_id,
+                priority=span_priority.name.lower(),
+                reason="queue_full",
             ).inc()
             del self._queue[idx]
 
@@ -117,19 +119,22 @@ class TelemetryBackpressure:
         return len(to_drop)
 
     def _update_metrics(self, tenant_id: str, agent_id: str) -> None:
-        priority_counts: Dict[str, int] = defaultdict(int)
+        priority_counts: dict[str, int] = defaultdict(int)
         for s in self._queue:
             p = classify_span_priority(s.get("type", ""))
             priority_counts[p.name.lower()] += 1
 
         for pname, count in priority_counts.items():
             LLM_AGENT_TELEMETRY_QUEUE_DEPTH.labels(
-                tenant_id=tenant_id, agent_id=agent_id, priority=pname,
+                tenant_id=tenant_id,
+                agent_id=agent_id,
+                priority=pname,
             ).set(count)
 
         is_active = 1 if len(self._queue) > self.max_queue_size * 0.8 else 0
         LLM_AGENT_TELEMETRY_BACKPRESSURE_ACTIVE.labels(
-            tenant_id=tenant_id, agent_id=agent_id,
+            tenant_id=tenant_id,
+            agent_id=agent_id,
         ).set(is_active)
 
     def start_drain_loop(self) -> None:
@@ -155,7 +160,7 @@ class TelemetryBackpressure:
             time.sleep(self.drain_interval_seconds)
 
     def _flush_batch(self) -> int:
-        batch: List[Dict] = []
+        batch: list[dict] = []
         with self._lock:
             for _ in range(min(self.drain_batch_size, len(self._queue))):
                 batch.append(self._queue.popleft())
@@ -175,13 +180,15 @@ class TelemetryBackpressure:
                     )
             if exported is not None and not exported:
                 LLM_AGENT_TELEMETRY_EXPORT_FAILURES_TOTAL.labels(
-                    tenant_id="default", agent_id="unknown", exporter="default",
+                    tenant_id="default",
+                    agent_id="unknown",
+                    exporter="default",
                 ).inc()
                 self._export_failure_count += 1
 
         return len(batch)
 
-    def _export_span(self, span: Dict) -> Optional[bool]:
+    def _export_span(self, span: dict) -> bool | None:
         if not self._exporters:
             return None
         for exporter in self._exporters:
@@ -196,7 +203,7 @@ class TelemetryBackpressure:
 
     def enqueue_span(
         self,
-        span: Dict,
+        span: dict,
         tenant_id: str = "default",
         agent_id: str = "unknown",
     ) -> bool:

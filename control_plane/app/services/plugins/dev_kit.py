@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -7,29 +7,32 @@ from pydantic import BaseModel, Field
 class ToolManifest(BaseModel):
     name: str
     description: str
-    parameters: Dict[str, Any]
+    parameters: dict[str, Any]
+
 
 class PluginManifest(BaseModel):
     id: str
     version: str
     name: str
     description: str
-    tools: List[ToolManifest]
-    permissions: List[str] = Field(default_factory=list)
+    tools: list[ToolManifest]
+    permissions: list[str] = Field(default_factory=list)
+
 
 class PluginHarness:
     """
     Local test harness for plugin developers.
     """
+
     def __init__(self, manifest_path: str):
-        with open(manifest_path, "r") as f:
+        with open(manifest_path) as f:
             self.manifest = PluginManifest(**json.load(f))
 
-    def dry_run_tool(self, tool_name: str, arguments: Dict[str, Any]):
+    def dry_run_tool(self, tool_name: str, arguments: dict[str, Any]):
         tool = next((t for t in self.manifest.tools if t.name == tool_name), None)
         if not tool:
             raise ValueError(f"Tool {tool_name} not found in manifest")
-        
+
         print(f"Dry-running tool '{tool_name}' with args: {arguments}")
         # In a real harness, this would load the plugin code and execute it in a sandbox
         return {"status": "success", "data": f"Dry-run result for {tool_name}"}

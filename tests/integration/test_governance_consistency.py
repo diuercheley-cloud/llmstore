@@ -52,15 +52,27 @@ async def test_compare_active_policies_across_clusters(session: AsyncSession):
 async def test_detect_cross_region_drift(session: AsyncSession):
     federation = PolicyFederationService()
     await federation.register_governance_peer(
-        db=session, peer_cluster_id="peer-offline", environment="production", status="offline", region="us-west"
+        db=session,
+        peer_cluster_id="peer-offline",
+        environment="production",
+        status="offline",
+        region="us-west",
     )
     await federation.register_governance_peer(
-        db=session, peer_cluster_id="peer-online", environment="production", status="active", region="eu-central"
+        db=session,
+        peer_cluster_id="peer-online",
+        environment="production",
+        status="active",
+        region="eu-central",
     )
 
     registry = PolicyRegistryService()
     bundle = await registry.create_policy_bundle(
-        db=session, bundle_name="Test", bundle_version="1.0", bundle_type="routing", rules_json={"r": 1}
+        db=session,
+        bundle_name="Test",
+        bundle_version="1.0",
+        bundle_type="routing",
+        rules_json={"r": 1},
     )
     bundle.status = "active"
     await session.flush()
@@ -109,10 +121,18 @@ async def test_check_compliance_consistency(session: AsyncSession):
 async def test_generate_consistency_report(session: AsyncSession):
     federation = PolicyFederationService()
     await federation.register_governance_peer(
-        db=session, peer_cluster_id="peer-a", environment="production", region="us-east", status="active"
+        db=session,
+        peer_cluster_id="peer-a",
+        environment="production",
+        region="us-east",
+        status="active",
     )
     await federation.register_governance_peer(
-        db=session, peer_cluster_id="peer-b", environment="staging", region="eu-west", status="active"
+        db=session,
+        peer_cluster_id="peer-b",
+        environment="staging",
+        region="eu-west",
+        status="active",
     )
 
     service = GovernanceConsistencyService()

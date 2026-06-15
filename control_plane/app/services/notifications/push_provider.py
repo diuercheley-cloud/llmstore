@@ -2,7 +2,7 @@ import json
 import logging
 import urllib.error
 import urllib.request
-from typing import Any, Dict
+from typing import Any
 
 from app.core.config import get_settings
 from app.models.agents.agent_notifications import NotificationPreference, PushDevice
@@ -22,12 +22,7 @@ class PushProviderService:
 
     @classmethod
     async def register_device(
-        cls,
-        db: AsyncSession,
-        tenant_id: str,
-        user_id: str,
-        device_token: str,
-        platform: str
+        cls, db: AsyncSession, tenant_id: str, user_id: str, device_token: str, platform: str
     ) -> PushDevice:
         """Registers a push device for a user, maintaining tenant/user isolation."""
         # Find if device_token already exists
@@ -47,7 +42,7 @@ class PushProviderService:
                 user_id=user_id,
                 device_token=device_token,
                 platform=platform,
-                is_active=True
+                is_active=True,
             )
             db.add(device)
 
@@ -56,13 +51,8 @@ class PushProviderService:
 
     @classmethod
     async def send_push(
-        cls,
-        db: AsyncSession,
-        tenant_id: str,
-        user_id: str,
-        title: str,
-        body: str
-    ) -> Dict[str, Any]:
+        cls, db: AsyncSession, tenant_id: str, user_id: str, title: str, body: str
+    ) -> dict[str, Any]:
         """Sends push notification to all active devices of a user."""
         settings = get_settings()
 
@@ -72,8 +62,7 @@ class PushProviderService:
 
         # 2. Check user notification preference
         stmt_pref = select(NotificationPreference).where(
-            NotificationPreference.tenant_id == tenant_id,
-            NotificationPreference.user_id == user_id
+            NotificationPreference.tenant_id == tenant_id, NotificationPreference.user_id == user_id
         )
         res_pref = await db.execute(stmt_pref)
         pref = res_pref.scalar_one_or_none()
@@ -84,13 +73,15 @@ class PushProviderService:
         stmt_devices = select(PushDevice).where(
             PushDevice.tenant_id == tenant_id,
             PushDevice.user_id == user_id,
-            PushDevice.is_active == True
+            PushDevice.is_active == True,
         )
         res_devices = await db.execute(stmt_devices)
         devices = res_devices.scalars().all()
 
         if not devices:
-            logger.info(f"No active push devices registered for user {user_id} under tenant {tenant_id}")
+            logger.info(
+                f"No active push devices registered for user {user_id} under tenant {tenant_id}"
+            )
             return {"status": "skipped", "reason": "no_registered_devices", "recipient": user_id}
 
         results = []
@@ -99,16 +90,20 @@ class PushProviderService:
         for dev in devices:
             try:
                 if provider == "mock":
-                    cls.sent_mock_pushes.append({
-                        "tenant_id": tenant_id,
-                        "user_id": user_id,
-                        "device_token": dev.device_token,
-                        "platform": dev.platform,
-                        "title": title,
-                        "body": body
-                    })
+                    cls.sent_mock_pushes.append(
+                        {
+                            "tenant_id": tenant_id,
+                            "user_id": user_id,
+                            "device_token": dev.device_token,
+                            "platform": dev.platform,
+                            "title": title,
+                            "body": body,
+                        }
+                    )
                     logger.info(f"[Mock Push] Sent to {dev.device_token} ({dev.platform}): {title}")
-                    results.append({"device_token": dev.device_token, "status": "sent", "provider": "mock"})
+                    results.append(
+                        {"device_token": dev.device_token, "status": "sent", "provider": "mock"}
+                    )
 
                 elif provider == "fcm":
                     res = cls._send_fcm(dev.device_token, title, body)
@@ -123,16 +118,14 @@ class PushProviderService:
 
             except Exception as e:
                 logger.error(f"Failed to send push to device {dev.device_token}: {e}")
-                results.append({"device_token": dev.device_token, "status": "failed", "error": str(e)})
+                results.append(
+                    {"device_token": dev.device_token, "status": "failed", "error": str(e)}
+                )
 
-        return {
-            "status": "completed",
-            "recipient": user_id,
-            "results": results
-        }
+        return {"status": "completed", "recipient": user_id, "results": results}
 
     @classmethod
-    def _send_fcm(cls, device_token: str, title: str, body: str) -> Dict[str, Any]:
+    def _send_fcm(cls, device_token: str, title: str, body: str) -> dict[str, Any]:
         settings = get_settings()
         if not settings.fcm_api_key:
             raise ValueError("FCM API Key is not configured.")
@@ -140,11 +133,7 @@ class PushProviderService:
         url = "https://fcm.googleapis.com/fcm/send"
         payload = {
             "to": device_token,
-            "notification": {
-                "title": title,
-                "body": body,
-                "sound": "default"
-            }
+            "notification": {"title": title, "body": body, "sound": "default"},
         }
 
         req = urllib.request.Request(
@@ -152,9 +141,9 @@ class PushProviderService:
             data=json.dumps(payload).encode("utf-8"),
             headers={
                 "Authorization": f"key={settings.fcm_api_key}",
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             },
-            method="POST"
+            method="POST",
         )
 
         try:
@@ -168,7 +157,7 @@ class PushProviderService:
             raise
 
     @classmethod
-    def _send_apns(cls, device_token: str, title: str, body: str) -> Dict[str, Any]:
+    def _send_apns(cls, device_token: str, title: str, body: str) -> dict[str, Any]:
         # APNS requires HTTP/2 and client certificates or token authentication
         # For our stub/client configuration, verify key presence and do mock/stub request
         settings = get_settings()

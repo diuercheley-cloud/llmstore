@@ -23,14 +23,14 @@ class TestDeterministicRemediationPlanner:
         plan = planner.build_plan(inputs)
         assert plan["risk_level"] == "critical"
         assert plan["requires_approval"] is True
-        assert plan["blast_radius"] == "high" # Due to critical risk
+        assert plan["blast_radius"] == "high"  # Due to critical risk
 
     def test_build_steps_structure(self):
         planner = DeterministicRemediationPlanner()
         inputs = {"involved_domains": ["auth", "billing"]}
         plan = planner.build_plan(inputs)
         steps = planner.build_steps(plan, inputs)
-        
+
         # Containment (2) + Mitigation (2) + Validation (1) = 5
         assert len(steps) == 5
         assert steps[0]["action_type"] == "containment"

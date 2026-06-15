@@ -34,20 +34,20 @@ def test_document_exists():
 
 
 def test_all_required_sections_present():
-    with open(DOC, "r") as f:
+    with open(DOC) as f:
         content = f.read()
     for section in REQUIRED_SECTIONS:
         assert section in content, f"Missing required section: {section}"
 
 
 def test_mentions_backup():
-    with open(DOC, "r") as f:
+    with open(DOC) as f:
         content = f.read().lower()
     assert "backup" in content, "Document should mention backup"
 
 
 def test_mentions_acceptance_criteria():
-    with open(DOC, "r") as f:
+    with open(DOC) as f:
         content = f.read()
     assert any(
         phrase in content.lower()
@@ -56,7 +56,7 @@ def test_mentions_acceptance_criteria():
 
 
 def test_psp_pix_disclaimer():
-    with open(DOC, "r") as f:
+    with open(DOC) as f:
         content = f.read().lower()
     assert any(
         phrase in content
@@ -65,7 +65,7 @@ def test_psp_pix_disclaimer():
 
 
 def test_no_absolute_guarantees():
-    with open(DOC, "r") as f:
+    with open(DOC) as f:
         content = f.read().lower()
     forbidden = [
         "100% de disponibilidade",
@@ -77,7 +77,7 @@ def test_no_absolute_guarantees():
 
 
 def test_no_secrets():
-    with open(DOC, "r") as f:
+    with open(DOC) as f:
         content = f.read()
     secrets_patterns = [
         "sk-",
@@ -91,33 +91,37 @@ def test_no_secrets():
         if pattern in content:
             lines = content.split("\n")
             for line in lines:
-                if pattern in line and "exemplo" not in line.lower() and "example" not in line.lower():
+                if (
+                    pattern in line
+                    and "exemplo" not in line.lower()
+                    and "example" not in line.lower()
+                ):
                     pytest.fail(f"Potential secret pattern '{pattern}' found in:\n{line}")
 
 
 def test_all_statuses_defined():
-    with open(DOC, "r") as f:
+    with open(DOC) as f:
         content = f.read()
     for status in VALID_STATUSES:
         assert status in content, f"Status definition missing: {status}"
 
 
 def test_client_provider_responsibilities_separated():
-    with open(DOC, "r") as f:
+    with open(DOC) as f:
         content = f.read()
     assert "Responsabilidades do Cliente" in content
     assert "Responsabilidades do Fornecedor" in content
 
 
 def test_no_public_domain_required():
-    with open(DOC, "r") as f:
+    with open(DOC) as f:
         content = f.read().lower()
     # Should not require public domain or cloud
     assert "domínio público" not in content or "não" in content
 
 
 def test_no_cloud_requirement():
-    with open(DOC, "r") as f:
+    with open(DOC) as f:
         content = f.read().lower()
     # Should not require cloud infrastructure
     assert "cloud" not in content

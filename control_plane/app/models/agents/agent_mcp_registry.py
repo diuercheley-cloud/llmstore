@@ -25,5 +25,9 @@ class AgentMCPServer(Base):
     discovered_resources: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     discovered_prompts: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     server_info: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )

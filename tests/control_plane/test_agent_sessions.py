@@ -66,7 +66,9 @@ def sample_tenant_b():
 
 
 class TestCreateSession:
-    async def test_create_session_success(self, session_service, mock_db, sample_agent_id, sample_tenant_a):
+    async def test_create_session_success(
+        self, session_service, mock_db, sample_agent_id, sample_tenant_a
+    ):
         session = await session_service.create_session(
             tenant_id=sample_tenant_a,
             agent_id=sample_agent_id,
@@ -82,7 +84,9 @@ class TestCreateSession:
         mock_db.commit.assert_awaited()
         mock_db.refresh.assert_awaited_with(session)
 
-    async def test_create_session_with_user(self, session_service, mock_db, sample_agent_id, sample_tenant_a):
+    async def test_create_session_with_user(
+        self, session_service, mock_db, sample_agent_id, sample_tenant_a
+    ):
         session = await session_service.create_session(
             tenant_id=sample_tenant_a,
             agent_id=sample_agent_id,
@@ -91,7 +95,9 @@ class TestCreateSession:
         )
         assert session.user_id == "user-123"
 
-    async def test_create_session_custom_retention(self, session_service, mock_db, sample_agent_id, sample_tenant_a):
+    async def test_create_session_custom_retention(
+        self, session_service, mock_db, sample_agent_id, sample_tenant_a
+    ):
         retention = {"retention_days": 180, "keep_summaries": False}
         session = await session_service.create_session(
             tenant_id=sample_tenant_a,
@@ -125,7 +131,9 @@ class TestGetSession:
         result = await session_service.get_session(session_id, sample_tenant_a)
         assert result is None
 
-    async def test_tenant_isolation(self, session_service, mock_db, sample_tenant_a, sample_tenant_b):
+    async def test_tenant_isolation(
+        self, session_service, mock_db, sample_tenant_a, sample_tenant_b
+    ):
         session_id = uuid.uuid4()
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = None
@@ -281,7 +289,9 @@ class TestSessionContextBuilder:
         mock_result.scalars.return_value.all.return_value = [mock_msg]
         mock_db.execute.return_value = mock_result
 
-        context = await context_builder.build_context(session_id, redact_secrets=True, redact_pii=False)
+        context = await context_builder.build_context(
+            session_id, redact_secrets=True, redact_pii=False
+        )
         assert "[REDACTED]" in context["history"][0]["content"]
         assert "sk-abc123def456ghi789" not in context["history"][0]["content"]
 
@@ -299,7 +309,9 @@ class TestSessionContextBuilder:
         mock_result.scalars.return_value.all.return_value = [mock_msg]
         mock_db.execute.return_value = mock_result
 
-        context = await context_builder.build_context(session_id, redact_secrets=False, redact_pii=True)
+        context = await context_builder.build_context(
+            session_id, redact_secrets=False, redact_pii=True
+        )
         assert "[EMAIL REDACTED]" in context["history"][0]["content"]
         assert "test@example.com" not in context["history"][0]["content"]
 
@@ -327,11 +339,10 @@ class TestSessionContextBuilder:
         async def execute_side_effect(*args, **kwargs):
             return mock_msg_result
 
-
         async def execute_with_summary(*args, **kwargs):
             query = args[0]
-            query_str = str(query) if hasattr(query, '__str__') else str(query)
-            if 'agent_session_summaries' in query_str:
+            query_str = str(query) if hasattr(query, "__str__") else str(query)
+            if "agent_session_summaries" in query_str:
                 return mock_sum_result
             return mock_msg_result
 
@@ -416,7 +427,9 @@ class TestTenantIsolation:
         sessions = await session_service.list_sessions(tenant_id=sample_tenant_a)
         assert len(sessions) == 2
 
-    async def test_delete_session_tenant_isolation(self, session_service, mock_db, sample_tenant_a, sample_tenant_b):
+    async def test_delete_session_tenant_isolation(
+        self, session_service, mock_db, sample_tenant_a, sample_tenant_b
+    ):
         session_id = uuid.uuid4()
         mock_tenant_a_session = MagicMock(spec=AgentSession)
         mock_tenant_a_session.id = session_id

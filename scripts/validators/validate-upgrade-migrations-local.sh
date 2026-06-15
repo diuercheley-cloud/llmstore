@@ -4,7 +4,14 @@ set -euo pipefail
 # scripts/validators/validate-upgrade-migrations-local.sh
 # Simula e valida o processo de upgrade de migrations com segurança.
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve symlink if BASH_SOURCE[0] is a symlink
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 # shellcheck source=/dev/null
 source "${SCRIPT_DIR}/../dev/common.sh"
 init_stack_env
@@ -51,9 +58,10 @@ if ! ./scripts/validators/validate-migrations-local.sh; then
 fi
 
 # 3. Upgrade de Migrations
-log_info "Passo 3: Executando upgrade head no control-plane..."
-if ! dc exec -T control-plane alembic upgrade head; then
-    log_error "Erro ao executar alembic upgrade head."
+log_info "Passo 3: Executando upgrade heads no control-plane..."
+# alembic upgrade head
+if ! dc exec -T control-plane alembic upgrade heads; then
+    log_error "Erro ao executar alembic upgrade heads."
     exit 1
 fi
 

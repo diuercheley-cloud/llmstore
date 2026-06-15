@@ -4,14 +4,18 @@ from typing import Any
 from app.utils.model_prompting import sanitize_assistant_text
 
 
-def normalize_chat_completion(payload: dict[str, Any], *, include_reasoning: bool, prompt_template: str | None = None) -> dict[str, Any]:
+def normalize_chat_completion(
+    payload: dict[str, Any], *, include_reasoning: bool, prompt_template: str | None = None
+) -> dict[str, Any]:
     normalized: dict[str, Any] = {
         "id": payload.get("id"),
         "object": payload.get("object", "chat.completion"),
         "created": payload.get("created"),
         "model": payload.get("model"),
         "choices": [
-            _normalize_choice(item, include_reasoning=include_reasoning, prompt_template=prompt_template)
+            _normalize_choice(
+                item, include_reasoning=include_reasoning, prompt_template=prompt_template
+            )
             for item in payload.get("choices", [])
         ],
     }
@@ -22,7 +26,9 @@ def normalize_chat_completion(payload: dict[str, Any], *, include_reasoning: boo
     return normalized
 
 
-def normalize_chat_stream_line(line: str, *, include_reasoning: bool, prompt_template: str | None = None) -> str | None:
+def normalize_chat_stream_line(
+    line: str, *, include_reasoning: bool, prompt_template: str | None = None
+) -> str | None:
     if not line.startswith("data: "):
         return line
     if line == "data: [DONE]":
@@ -44,7 +50,9 @@ def normalize_chat_stream_line(line: str, *, include_reasoning: bool, prompt_tem
     return f"data: {json.dumps(normalized, ensure_ascii=False)}"
 
 
-def _normalize_choice(choice: dict[str, Any], *, include_reasoning: bool, prompt_template: str | None = None) -> dict[str, Any]:
+def _normalize_choice(
+    choice: dict[str, Any], *, include_reasoning: bool, prompt_template: str | None = None
+) -> dict[str, Any]:
     normalized: dict[str, Any] = {
         "index": choice.get("index", 0),
         "finish_reason": choice.get("finish_reason"),
@@ -68,7 +76,9 @@ def _normalize_choice(choice: dict[str, Any], *, include_reasoning: bool, prompt
     return normalized
 
 
-def _normalize_message(message: dict[str, Any], *, include_reasoning: bool, prompt_template: str | None = None) -> dict[str, Any]:
+def _normalize_message(
+    message: dict[str, Any], *, include_reasoning: bool, prompt_template: str | None = None
+) -> dict[str, Any]:
     normalized: dict[str, Any] = {}
     if "role" in message:
         normalized["role"] = message.get("role")

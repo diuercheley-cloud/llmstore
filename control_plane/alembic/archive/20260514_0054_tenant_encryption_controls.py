@@ -5,6 +5,7 @@ Revises: 20260514_0053
 Create Date: 2026-05-15 00:10:00.000000
 
 """
+
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
@@ -13,6 +14,7 @@ revision = "20260514_0054"
 down_revision = "20260514_0053"
 branch_labels = None
 depends_on = None
+
 
 def upgrade():
     op.create_table(
@@ -30,10 +32,30 @@ def upgrade():
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_commercial_tenant_encryption_keys_client_id", "commercial_tenant_encryption_keys", ["client_id"], unique=False)
-    op.create_index("ix_commercial_tenant_encryption_keys_key_purpose", "commercial_tenant_encryption_keys", ["key_purpose"], unique=False)
-    op.create_index("ix_commercial_tenant_encryption_keys_key_status", "commercial_tenant_encryption_keys", ["key_status"], unique=False)
-    op.create_index("ix_commercial_tenant_encryption_keys_key_fingerprint", "commercial_tenant_encryption_keys", ["key_fingerprint"], unique=False)
+    op.create_index(
+        "ix_commercial_tenant_encryption_keys_client_id",
+        "commercial_tenant_encryption_keys",
+        ["client_id"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_commercial_tenant_encryption_keys_key_purpose",
+        "commercial_tenant_encryption_keys",
+        ["key_purpose"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_commercial_tenant_encryption_keys_key_status",
+        "commercial_tenant_encryption_keys",
+        ["key_status"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_commercial_tenant_encryption_keys_key_fingerprint",
+        "commercial_tenant_encryption_keys",
+        ["key_fingerprint"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_encrypted_artifacts",
@@ -48,13 +70,35 @@ def upgrade():
         sa.Column("key_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["key_id"], ["commercial_tenant_encryption_keys.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(
+            ["key_id"], ["commercial_tenant_encryption_keys.id"], ondelete="SET NULL"
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_commercial_encrypted_artifacts_client_id", "commercial_encrypted_artifacts", ["client_id"], unique=False)
-    op.create_index("ix_commercial_encrypted_artifacts_artifact_type", "commercial_encrypted_artifacts", ["artifact_type"], unique=False)
-    op.create_index("ix_commercial_encrypted_artifacts_resource_type", "commercial_encrypted_artifacts", ["resource_type"], unique=False)
-    op.create_index("ix_commercial_encrypted_artifacts_resource_id", "commercial_encrypted_artifacts", ["resource_id"], unique=False)
+    op.create_index(
+        "ix_commercial_encrypted_artifacts_client_id",
+        "commercial_encrypted_artifacts",
+        ["client_id"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_commercial_encrypted_artifacts_artifact_type",
+        "commercial_encrypted_artifacts",
+        ["artifact_type"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_commercial_encrypted_artifacts_resource_type",
+        "commercial_encrypted_artifacts",
+        ["resource_type"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_commercial_encrypted_artifacts_resource_id",
+        "commercial_encrypted_artifacts",
+        ["resource_id"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_encryption_audit_events",
@@ -71,8 +115,19 @@ def upgrade():
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_commercial_encryption_audit_events_client_id", "commercial_encryption_audit_events", ["client_id"], unique=False)
-    op.create_index("ix_commercial_encryption_audit_events_event_type", "commercial_encryption_audit_events", ["event_type"], unique=False)
+    op.create_index(
+        "ix_commercial_encryption_audit_events_client_id",
+        "commercial_encryption_audit_events",
+        ["client_id"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_commercial_encryption_audit_events_event_type",
+        "commercial_encryption_audit_events",
+        ["event_type"],
+        unique=False,
+    )
+
 
 def downgrade():
     op.drop_table("commercial_encryption_audit_events")

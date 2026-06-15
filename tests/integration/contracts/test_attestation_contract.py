@@ -14,7 +14,7 @@ class MockAttestation(AttestationContract):
             measurements={},
             policy_result="passed",
             signature="sig",
-            certificate_chain="cert"
+            certificate_chain="cert",
         )
 
     async def verify_report(self, report: AttestationReport) -> bool:
@@ -26,16 +26,17 @@ class MockAttestation(AttestationContract):
     def validate_contract(self) -> bool:
         return True
 
+
 @pytest.mark.asyncio
 async def test_attestation_contract_implementation():
     attestation = MockAttestation()
     assert attestation.validate_contract() is True
-    
+
     report = await attestation.generate_report()
     assert report.subject == "test"
-    
+
     is_valid = await attestation.verify_report(report)
     assert is_valid is True
-    
+
     caps = attestation.capabilities()
     assert caps.hardware_trust is True

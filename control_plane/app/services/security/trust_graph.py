@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections import Counter, defaultdict
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Any
 
 from app.models.commercial.commercial_autonomous_guardrails import (
@@ -38,7 +38,10 @@ from app.models.commercial.commercial_sovereign_governance import (
     CommercialAirgapSyncPackage,
     CommercialHardwareAttestationRecord,
 )
-from app.models.commercial.commercial_trust_graph import CommercialTrustGraphEdge, CommercialTrustGraphNode
+from app.models.commercial.commercial_trust_graph import (
+    CommercialTrustGraphEdge,
+    CommercialTrustGraphNode,
+)
 from app.models.commercial.commercial_workflows import (
     CommercialWorkflowDefinition,
     CommercialWorkflowExecution,
@@ -53,7 +56,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _canonical_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+    )
 
 
 def _sha256(payload: Any) -> str:
@@ -171,7 +176,9 @@ class TrustGraphService:
         metadata: dict[str, Any],
     ) -> CommercialTrustGraphEdge:
         sanitized_metadata = _sanitize(metadata)
-        edge_hash = self.calculate_edge_hash(str(source_node_id), str(target_node_id), edge_type, sanitized_metadata)
+        edge_hash = self.calculate_edge_hash(
+            str(source_node_id), str(target_node_id), edge_type, sanitized_metadata
+        )
         existing = (
             await db.execute(
                 select(CommercialTrustGraphEdge).where(
@@ -341,7 +348,9 @@ class TrustGraphService:
 
         federated_syncs = await self._safe_scalars(
             db,
-            select(CommercialFederatedPolicySync).order_by(CommercialFederatedPolicySync.created_at.asc()),
+            select(CommercialFederatedPolicySync).order_by(
+                CommercialFederatedPolicySync.created_at.asc()
+            ),
         )
         for sync in federated_syncs:
             target_id = peer_node_ids_by_cluster.get(sync.target_cluster_id)
@@ -363,7 +372,9 @@ class TrustGraphService:
 
         federated_audits = await self._safe_scalars(
             db,
-            select(CommercialFederatedAuditTrail).order_by(CommercialFederatedAuditTrail.received_at.asc()),
+            select(CommercialFederatedAuditTrail).order_by(
+                CommercialFederatedAuditTrail.received_at.asc()
+            ),
         )
         for audit in federated_audits:
             peer_id = peer_node_ids_by_cluster.get(audit.source_cluster_id)
@@ -405,7 +416,9 @@ class TrustGraphService:
 
         runtime_events = await self._safe_scalars(
             db,
-            select(CommercialRuntimeFabricEvent).order_by(CommercialRuntimeFabricEvent.created_at.asc()),
+            select(CommercialRuntimeFabricEvent).order_by(
+                CommercialRuntimeFabricEvent.created_at.asc()
+            ),
         )
         for event in runtime_events:
             event_id = add_node(
@@ -423,7 +436,12 @@ class TrustGraphService:
             )
             runtime_id = runtime_node_ids_by_key.get(event.source_node_id)
             if runtime_id is not None:
-                add_edge(runtime_id, event_id, "runtime_trust_propagation", {"component": event.component})
+                add_edge(
+                    runtime_id,
+                    event_id,
+                    "runtime_trust_propagation",
+                    {"component": event.component},
+                )
 
         workflow_definitions = await self._safe_scalars(
             db,
@@ -455,7 +473,9 @@ class TrustGraphService:
 
         workflow_executions = await self._safe_scalars(
             db,
-            select(CommercialWorkflowExecution).order_by(CommercialWorkflowExecution.started_at.asc()),
+            select(CommercialWorkflowExecution).order_by(
+                CommercialWorkflowExecution.started_at.asc()
+            ),
         )
         workflow_execution_ids: dict[str, str] = {}
         for execution in workflow_executions:
@@ -473,7 +493,9 @@ class TrustGraphService:
                     "governance_status": execution.governance_status,
                     "offline_bundle_hash": execution.offline_bundle_hash,
                     "policy_gate_status": execution.policy_gate_status,
-                    "replay_of_execution_id": str(execution.replay_of_execution_id) if execution.replay_of_execution_id else None,
+                    "replay_of_execution_id": str(execution.replay_of_execution_id)
+                    if execution.replay_of_execution_id
+                    else None,
                     "replay_status": execution.replay_status,
                     "status": execution.status,
                     "tenant_id": execution.tenant_id,
@@ -487,7 +509,12 @@ class TrustGraphService:
             if execution.replay_of_execution_id is not None:
                 replay_parent = workflow_execution_ids.get(str(execution.replay_of_execution_id))
                 if replay_parent is not None:
-                    add_edge(replay_parent, node_id, "replay_lineage", {"status": execution.replay_status})
+                    add_edge(
+                        replay_parent,
+                        node_id,
+                        "replay_lineage",
+                        {"status": execution.replay_status},
+                    )
 
         workflow_stages = await self._safe_scalars(
             db,
@@ -535,7 +562,12 @@ class TrustGraphService:
             for dependency in sorted(stage.dependencies_json or []):
                 dependency_stage = stage_ids.get((str(stage.execution_id), dependency))
                 if dependency_stage is not None:
-                    add_edge(dependency_stage, current_stage, "dependency_integrity", {"dependency": dependency})
+                    add_edge(
+                        dependency_stage,
+                        current_stage,
+                        "dependency_integrity",
+                        {"dependency": dependency},
+                    )
 
         workflow_receipts = await self._safe_scalars(
             db,
@@ -570,24 +602,42 @@ class TrustGraphService:
 
         workflow_bindings = await self._safe_scalars(
             db,
-            select(CommercialWorkflowPolicyBinding).order_by(CommercialWorkflowPolicyBinding.created_at.asc()),
+            select(CommercialWorkflowPolicyBinding).order_by(
+                CommercialWorkflowPolicyBinding.created_at.asc()
+            ),
         )
         for binding in workflow_bindings:
-            stage_node = stage_ids.get((str(binding.execution_id), next(
+            stage_node = stage_ids.get(
                 (
-                    stage.stage_key
-                    for stage in workflow_stages
-                    if str(stage.id) == str(binding.stage_id)
-                ),
-                "",
-            )))
-            bundle_node = policy_node_ids_by_db_id.get(str(binding.bundle_id)) if binding.bundle_id is not None else None
+                    str(binding.execution_id),
+                    next(
+                        (
+                            stage.stage_key
+                            for stage in workflow_stages
+                            if str(stage.id) == str(binding.stage_id)
+                        ),
+                        "",
+                    ),
+                )
+            )
+            bundle_node = (
+                policy_node_ids_by_db_id.get(str(binding.bundle_id))
+                if binding.bundle_id is not None
+                else None
+            )
             if stage_node is not None and bundle_node is not None:
-                add_edge(bundle_node, stage_node, "governance_binding", {"binding_status": binding.binding_status})
+                add_edge(
+                    bundle_node,
+                    stage_node,
+                    "governance_binding",
+                    {"binding_status": binding.binding_status},
+                )
 
         inference_receipts = await self._safe_scalars(
             db,
-            select(CommercialInferenceReceipt).order_by(CommercialInferenceReceipt.created_at.asc()),
+            select(CommercialInferenceReceipt).order_by(
+                CommercialInferenceReceipt.created_at.asc()
+            ),
         )
         for receipt in inference_receipts:
             if not _tenant_matches(receipt.client_id, tenant_id):
@@ -616,11 +666,15 @@ class TrustGraphService:
 
         airgap_packages = await self._safe_scalars(
             db,
-            select(CommercialAirgapSyncPackage).order_by(CommercialAirgapSyncPackage.created_at.asc()),
+            select(CommercialAirgapSyncPackage).order_by(
+                CommercialAirgapSyncPackage.created_at.asc()
+            ),
         )
         for package in airgap_packages:
             metadata = {
-                "manifest_hash": package.manifest_hash if not redact_sovereign else f"redacted:{package.manifest_hash[:16]}",
+                "manifest_hash": package.manifest_hash
+                if not redact_sovereign
+                else f"redacted:{package.manifest_hash[:16]}",
                 "package_type": package.package_type,
                 "package_version": package.package_version,
                 "source_cluster_id": package.source_cluster_id,
@@ -655,14 +709,21 @@ class TrustGraphService:
                 {
                     "attestation_type": attestation.attestation_type,
                     "cluster_id": attestation.cluster_id,
-                    "evidence_hash": attestation.evidence_hash if not redact_sovereign else f"redacted:{attestation.evidence_hash[:16]}",
+                    "evidence_hash": attestation.evidence_hash
+                    if not redact_sovereign
+                    else f"redacted:{attestation.evidence_hash[:16]}",
                     "node_id": attestation.node_id,
                     "status": attestation.status,
                     "verified_at": _iso(attestation.verified_at),
                 },
             )
             if attestation.node_id and attestation.node_id in runtime_node_ids_by_key:
-                add_edge(runtime_node_ids_by_key[attestation.node_id], node_id, "sovereign_isolation", {"status": attestation.status})
+                add_edge(
+                    runtime_node_ids_by_key[attestation.node_id],
+                    node_id,
+                    "sovereign_isolation",
+                    {"status": attestation.status},
+                )
 
         confidential_profiles = await self._safe_scalars(
             db,
@@ -711,8 +772,16 @@ class TrustGraphService:
                     "retention_policy_applied": session.retention_policy_applied,
                 },
             )
-            if session.profile_id is not None and str(session.profile_id) in confidential_profile_ids:
-                add_edge(confidential_profile_ids[str(session.profile_id)], node_id, "lineage", {"scope": "confidential_session"})
+            if (
+                session.profile_id is not None
+                and str(session.profile_id) in confidential_profile_ids
+            ):
+                add_edge(
+                    confidential_profile_ids[str(session.profile_id)],
+                    node_id,
+                    "lineage",
+                    {"scope": "confidential_session"},
+                )
 
         model_registry = await self._safe_scalars(
             db,
@@ -740,7 +809,9 @@ class TrustGraphService:
 
         model_scans = await self._safe_scalars(
             db,
-            select(CommercialModelIntegrityScan).order_by(CommercialModelIntegrityScan.created_at.asc()),
+            select(CommercialModelIntegrityScan).order_by(
+                CommercialModelIntegrityScan.created_at.asc()
+            ),
         )
         for scan in model_scans:
             node_id = add_node(
@@ -751,17 +822,30 @@ class TrustGraphService:
                     "cluster_id": scan.cluster_id,
                     "integrity_status": scan.integrity_status,
                     "node_id": scan.node_id,
-                    "observed_checksum": f"redacted:{(scan.observed_checksum or '')[:16]}" if scan.observed_checksum else None,
+                    "observed_checksum": f"redacted:{(scan.observed_checksum or '')[:16]}"
+                    if scan.observed_checksum
+                    else None,
                     "scan_type": scan.scan_type,
                 },
             )
-            registry_id = model_node_ids_by_registry.get(str(scan.registry_entry_id)) if scan.registry_entry_id else None
+            registry_id = (
+                model_node_ids_by_registry.get(str(scan.registry_entry_id))
+                if scan.registry_entry_id
+                else None
+            )
             if registry_id is not None:
-                add_edge(registry_id, node_id, "dependency_integrity", {"integrity_status": scan.integrity_status})
+                add_edge(
+                    registry_id,
+                    node_id,
+                    "dependency_integrity",
+                    {"integrity_status": scan.integrity_status},
+                )
 
         model_attestations = await self._safe_scalars(
             db,
-            select(CommercialRuntimeModelAttestation).order_by(CommercialRuntimeModelAttestation.attested_at.asc()),
+            select(CommercialRuntimeModelAttestation).order_by(
+                CommercialRuntimeModelAttestation.attested_at.asc()
+            ),
         )
         for attestation in model_attestations:
             node_id = add_node(
@@ -775,11 +859,25 @@ class TrustGraphService:
                     "node_id": attestation.node_id,
                 },
             )
-            registry_id = model_node_ids_by_registry.get(str(attestation.registry_entry_id)) if attestation.registry_entry_id else None
+            registry_id = (
+                model_node_ids_by_registry.get(str(attestation.registry_entry_id))
+                if attestation.registry_entry_id
+                else None
+            )
             if registry_id is not None:
-                add_edge(registry_id, node_id, "runtime_trust_propagation", {"attestation_status": attestation.attestation_status})
+                add_edge(
+                    registry_id,
+                    node_id,
+                    "runtime_trust_propagation",
+                    {"attestation_status": attestation.attestation_status},
+                )
             if attestation.node_id and attestation.node_id in runtime_node_ids_by_key:
-                add_edge(runtime_node_ids_by_key[attestation.node_id], node_id, "dependency_integrity", {"model_name": attestation.model_name})
+                add_edge(
+                    runtime_node_ids_by_key[attestation.node_id],
+                    node_id,
+                    "dependency_integrity",
+                    {"model_name": attestation.model_name},
+                )
 
         autonomous_policies = await self._safe_scalars(
             db,
@@ -812,7 +910,10 @@ class TrustGraphService:
                 },
             )
             autonomous_policy_node_ids[str(policy.id)] = policy_node_id
-            if policy.policy_bundle_id is not None and str(policy.policy_bundle_id) in policy_node_ids_by_db_id:
+            if (
+                policy.policy_bundle_id is not None
+                and str(policy.policy_bundle_id) in policy_node_ids_by_db_id
+            ):
                 add_edge(
                     policy_node_ids_by_db_id[str(policy.policy_bundle_id)],
                     policy_node_id,
@@ -822,7 +923,9 @@ class TrustGraphService:
 
         blast_radius_rows = await self._safe_scalars(
             db,
-            select(CommercialExecutionBlastRadius).order_by(CommercialExecutionBlastRadius.created_at.asc()),
+            select(CommercialExecutionBlastRadius).order_by(
+                CommercialExecutionBlastRadius.created_at.asc()
+            ),
         )
         for blast in blast_radius_rows:
             if not _tenant_matches(blast.tenant_id, tenant_id):
@@ -873,7 +976,10 @@ class TrustGraphService:
                 },
             )
             autonomous_checkpoint_ids[str(checkpoint.id)] = checkpoint_node_id
-            if checkpoint.policy_id is not None and str(checkpoint.policy_id) in autonomous_policy_node_ids:
+            if (
+                checkpoint.policy_id is not None
+                and str(checkpoint.policy_id) in autonomous_policy_node_ids
+            ):
                 add_edge(
                     autonomous_policy_node_ids[str(checkpoint.policy_id)],
                     checkpoint_node_id,
@@ -883,12 +989,19 @@ class TrustGraphService:
             target_key = (checkpoint.tenant_id, checkpoint.target_type, checkpoint.target_id)
             previous_checkpoint = last_checkpoint_by_target.get(target_key)
             if previous_checkpoint is not None:
-                add_edge(previous_checkpoint, checkpoint_node_id, "lineage", {"scope": "human_approval_chain"})
+                add_edge(
+                    previous_checkpoint,
+                    checkpoint_node_id,
+                    "lineage",
+                    {"scope": "human_approval_chain"},
+                )
             last_checkpoint_by_target[target_key] = checkpoint_node_id
 
         guardrail_events = await self._safe_scalars(
             db,
-            select(CommercialExecutionGuardrailEvent).order_by(CommercialExecutionGuardrailEvent.created_at.asc()),
+            select(CommercialExecutionGuardrailEvent).order_by(
+                CommercialExecutionGuardrailEvent.created_at.asc()
+            ),
         )
         for event in guardrail_events:
             if not _tenant_matches(event.tenant_id, tenant_id):
@@ -909,13 +1022,22 @@ class TrustGraphService:
                 },
             )
             autonomous_event_ids[str(event.id)] = event_node_id
-            runtime_node_id = runtime_node_ids_by_key.get((event.details_json or {}).get("node_id") or "")
+            runtime_node_id = runtime_node_ids_by_key.get(
+                (event.details_json or {}).get("node_id") or ""
+            )
             if runtime_node_id is not None:
-                add_edge(runtime_node_id, event_node_id, "runtime_trust_propagation", {"decision": event.decision})
+                add_edge(
+                    runtime_node_id,
+                    event_node_id,
+                    "runtime_trust_propagation",
+                    {"decision": event.decision},
+                )
 
         autonomous_receipts = await self._safe_scalars(
             db,
-            select(CommercialAutonomousExecutionReceipt).order_by(CommercialAutonomousExecutionReceipt.created_at.asc()),
+            select(CommercialAutonomousExecutionReceipt).order_by(
+                CommercialAutonomousExecutionReceipt.created_at.asc()
+            ),
         )
         for receipt in autonomous_receipts:
             if not _tenant_matches(receipt.tenant_id, tenant_id):
@@ -938,28 +1060,40 @@ class TrustGraphService:
                 },
             )
             autonomous_receipt_ids_by_hash[receipt.receipt_hash] = receipt_node_id
-            if receipt.policy_id is not None and str(receipt.policy_id) in autonomous_policy_node_ids:
+            if (
+                receipt.policy_id is not None
+                and str(receipt.policy_id) in autonomous_policy_node_ids
+            ):
                 add_edge(
                     autonomous_policy_node_ids[str(receipt.policy_id)],
                     receipt_node_id,
                     "receipt_chain",
                     {"scope": "autonomous_execution"},
                 )
-            if receipt.checkpoint_id is not None and str(receipt.checkpoint_id) in autonomous_checkpoint_ids:
+            if (
+                receipt.checkpoint_id is not None
+                and str(receipt.checkpoint_id) in autonomous_checkpoint_ids
+            ):
                 add_edge(
                     autonomous_checkpoint_ids[str(receipt.checkpoint_id)],
                     receipt_node_id,
                     "approval_chain",
                     {"scope": "checkpoint_receipt"},
                 )
-            if receipt.blast_radius_id is not None and str(receipt.blast_radius_id) in autonomous_blast_ids:
+            if (
+                receipt.blast_radius_id is not None
+                and str(receipt.blast_radius_id) in autonomous_blast_ids
+            ):
                 add_edge(
                     autonomous_blast_ids[str(receipt.blast_radius_id)],
                     receipt_node_id,
                     "dependency_integrity",
                     {"scope": "blast_radius_receipt"},
                 )
-            if receipt.guardrail_event_id is not None and str(receipt.guardrail_event_id) in autonomous_event_ids:
+            if (
+                receipt.guardrail_event_id is not None
+                and str(receipt.guardrail_event_id) in autonomous_event_ids
+            ):
                 add_edge(
                     autonomous_event_ids[str(receipt.guardrail_event_id)],
                     receipt_node_id,
@@ -988,11 +1122,15 @@ class TrustGraphService:
                 {
                     "created_at": _iso(snapshot.created_at),
                     "immutable_hash": snapshot.immutable_hash,
-                    "previous_snapshot_hash": (snapshot.snapshot_data or {}).get("snapshot", {}).get("previous_snapshot_hash"),
+                    "previous_snapshot_hash": (snapshot.snapshot_data or {})
+                    .get("snapshot", {})
+                    .get("previous_snapshot_hash"),
                 },
             )
             if previous_snapshot_node is not None:
-                add_edge(previous_snapshot_node, snapshot_node, "lineage", {"scope": "trust_snapshot"})
+                add_edge(
+                    previous_snapshot_node, snapshot_node, "lineage", {"scope": "trust_snapshot"}
+                )
             previous_snapshot_node = snapshot_node
 
         nodes = list(node_index.values())
@@ -1006,7 +1144,9 @@ class TrustGraphService:
         tenant_id: str | None = None,
     ) -> dict[str, Any]:
         unique_nodes = {node["id"]: node for node in nodes}
-        unique_edges = {(edge["source"], edge["target"], edge["type"], edge["hash"]): edge for edge in edges}
+        unique_edges = {
+            (edge["source"], edge["target"], edge["type"], edge["hash"]): edge for edge in edges
+        }
         sorted_nodes = [unique_nodes[key] for key in sorted(unique_nodes)]
         sorted_edges = [unique_edges[key] for key in sorted(unique_edges)]
 
@@ -1059,7 +1199,9 @@ class TrustGraphService:
         include_manual: bool = True,
         redact_sovereign: bool = True,
     ) -> dict[str, Any]:
-        derived = await self._build_derived_graph(db, tenant_id=tenant_id, redact_sovereign=redact_sovereign)
+        derived = await self._build_derived_graph(
+            db, tenant_id=tenant_id, redact_sovereign=redact_sovereign
+        )
         if not include_manual:
             return derived
         manual = await self._load_manual_graph(db)
@@ -1106,7 +1248,9 @@ class TrustGraphService:
             "node_id": node_id,
             "found": True,
             "nodes": [nodes[item] for item in sorted(selected_nodes)],
-            "edges": sorted(selected_edges, key=lambda item: (item["type"], item["source"], item["target"])),
+            "edges": sorted(
+                selected_edges, key=lambda item: (item["type"], item["source"], item["target"])
+            ),
         }
 
     async def verify_graph_integrity(
@@ -1134,7 +1278,9 @@ class TrustGraphService:
                     }
                 )
         for edge in manual["edges"]:
-            expected_hash = self.calculate_edge_hash(edge["source"], edge["target"], edge["type"], edge["metadata"])
+            expected_hash = self.calculate_edge_hash(
+                edge["source"], edge["target"], edge["type"], edge["metadata"]
+            )
             if edge["hash"] != expected_hash:
                 violations.append(
                     {

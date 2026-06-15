@@ -20,10 +20,10 @@ import logging
 import tarfile
 import tempfile
 import uuid
-from datetime import datetime, UTC
-from pathlib import Path
-from typing import Any, Dict, List, Optional
 import warnings
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
 
 from app.core.config import get_settings
 from sqlalchemy import select
@@ -39,8 +39,14 @@ _DEPRECATION_MSG = (
 
 
 class BackupManifest:
-    def __init__(self, backup_id: str, agent_ids: List[str], backup_type: str = "full",
-                 created_at: Optional[str] = None, checksum: str = ""):
+    def __init__(
+        self,
+        backup_id: str,
+        agent_ids: list[str],
+        backup_type: str = "full",
+        created_at: str | None = None,
+        checksum: str = "",
+    ):
         self.backup_id = backup_id
         self.agent_ids = agent_ids
         self.backup_type = backup_type
@@ -81,10 +87,15 @@ class AgentBackupService:
         self.settings = get_settings()
         self._backup_dir = Path(self.settings.disaster_recovery_backup_dir or "/tmp/agent-backups")
         self._backup_dir.mkdir(parents=True, exist_ok=True)
-        self._running_tasks: Dict[str, asyncio.Task] = {}
+        self._running_tasks: dict[str, asyncio.Task] = {}
 
-    async def create_backup(self, agent_ids: List[str], backup_type: str = "full",
-                            include_memory: bool = True, include_runs: bool = True) -> BackupManifest:
+    async def create_backup(
+        self,
+        agent_ids: list[str],
+        backup_type: str = "full",
+        include_memory: bool = True,
+        include_runs: bool = True,
+    ) -> BackupManifest:
         warnings.warn(_DEPRECATION_MSG, DeprecationWarning, stacklevel=2)
         backup_id = f"backup-{uuid.uuid4().hex[:12]}"
         manifest = BackupManifest(backup_id, agent_ids, backup_type)
@@ -110,17 +121,23 @@ class AgentBackupService:
                 tar.add(str(tmp_dir), arcname=backup_id)
 
             import hashlib
+
             with open(str(backup_path), "rb") as f:
                 manifest.checksum = hashlib.sha256(f.read()).hexdigest()[:16]
 
-            logger.info("Backup %s created: %d agents, type=%s", backup_id, len(agent_ids), backup_type)
+            logger.info(
+                "Backup %s created: %d agents, type=%s", backup_id, len(agent_ids), backup_type
+            )
             return manifest
 
         finally:
             import shutil
+
             shutil.rmtree(str(tmp_dir), ignore_errors=True)
 
-    async def restore_backup(self, backup_id: str, target_agent_ids: Optional[List[str]] = None) -> int:
+    async def restore_backup(
+        self, backup_id: str, target_agent_ids: list[str] | None = None
+    ) -> int:
         warnings.warn(_DEPRECATION_MSG, DeprecationWarning, stacklevel=2)
         backup_path = self._backup_dir / f"{backup_id}.tar.gz"
         if not backup_path.exists():
@@ -131,6 +148,7 @@ class AgentBackupService:
 
         try:
             from app.utils.archive import safe_extract_tar
+
             with tarfile.open(str(backup_path), "r:gz") as tar:
                 safe_extract_tar(tar, tmp_dir)
 
@@ -148,20 +166,24 @@ class AgentBackupService:
                 await self._restore_agent_memory(agent_id, agent_dir)
                 restored_count += 1
 
-            logger.info("Restored %d/%d agents from backup %s", restored_count, len(agent_ids), backup_id)
+            logger.info(
+                "Restored %d/%d agents from backup %s", restored_count, len(agent_ids), backup_id
+            )
             return restored_count
 
         finally:
             import shutil
+
             shutil.rmtree(str(tmp_dir), ignore_errors=True)
 
-    async def list_backups(self, agent_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    async def list_backups(self, agent_id: str | None = None) -> list[dict[str, Any]]:
         warnings.warn(_DEPRECATION_MSG, DeprecationWarning, stacklevel=2)
         backups = []
         for f in sorted(self._backup_dir.glob("backup-*.tar.gz"), reverse=True):
             try:
                 import json
                 import tarfile
+
                 with tarfile.open(str(f), "r:gz") as tar:
                     mf = tar.extractfile(f"{f.stem}/manifest.json")
                     if mf:
@@ -175,6 +197,7 @@ class AgentBackupService:
 
     async def _backup_agent_config(self, agent_id: str, agent_dir: Path):
         from app.models.agents.agents import AgentDefinition
+
         result = await self.db.execute(
             select(AgentDefinition).where(AgentDefinition.id == agent_id)
         )
@@ -198,6 +221,7 @@ class AgentBackupService:
 
     async def _backup_agent_memory(self, agent_id: str, agent_dir: Path):
         from app.models.agents.agents import AgentMemoryItem
+
         result = await self.db.execute(
             select(AgentMemoryItem).where(AgentMemoryItem.agent_id == agent_id).limit(1000)
         )
@@ -205,34 +229,41 @@ class AgentBackupService:
         if items:
             memory_data = []
             for item in items:
-                memory_data.append({
-                    "id": str(item.id),
-                    "memory_type": item.memory_type,
-                    "content": item.content,
-                    "metadata": item.metadata_json,
-                    "created_at": item.created_at.isoformat() if item.created_at else None,
-                })
+                memory_data.append(
+                    {
+                        "id": str(item.id),
+                        "memory_type": item.memory_type,
+                        "content": item.content,
+                        "metadata": item.metadata_json,
+                        "created_at": item.created_at.isoformat() if item.created_at else None,
+                    }
+                )
             (agent_dir / "memory.json").write_text(json.dumps(memory_data, indent=2, default=str))
 
     async def _backup_agent_runs(self, agent_id: str, agent_dir: Path):
         from app.models.agents.agents import AgentRun
+
         result = await self.db.execute(
-            select(AgentRun).where(AgentRun.agent_id == agent_id)
-            .order_by(AgentRun.created_at.desc()).limit(500)
+            select(AgentRun)
+            .where(AgentRun.agent_id == agent_id)
+            .order_by(AgentRun.created_at.desc())
+            .limit(500)
         )
         runs = result.scalars().all()
         if runs:
             runs_data = []
             for run in runs:
-                runs_data.append({
-                    "id": str(run.id),
-                    "status": run.status,
-                    "input": run.input_text,
-                    "output": run.result,
-                    "total_tokens": run.total_tokens,
-                    "estimated_cost_brl": run.estimated_cost_brl,
-                    "created_at": run.created_at.isoformat() if run.created_at else None,
-                })
+                runs_data.append(
+                    {
+                        "id": str(run.id),
+                        "status": run.status,
+                        "input": run.input_text,
+                        "output": run.result,
+                        "total_tokens": run.total_tokens,
+                        "estimated_cost_brl": run.estimated_cost_brl,
+                        "created_at": run.created_at.isoformat() if run.created_at else None,
+                    }
+                )
             (agent_dir / "runs.json").write_text(json.dumps(runs_data, indent=2, default=str))
 
     async def _restore_agent_config(self, agent_id: str, agent_dir: Path):
@@ -241,6 +272,7 @@ class AgentBackupService:
             return
         config = json.loads(config_file.read_text())
         from app.models.agents.agents import AgentDefinition
+
         result = await self.db.execute(
             select(AgentDefinition).where(AgentDefinition.id == agent_id)
         )
@@ -250,7 +282,9 @@ class AgentBackupService:
                 if field in config:
                     setattr(existing, field, config[field])
         else:
-            new_agent = AgentDefinition(id=agent_id, **{k: v for k, v in config.items() if k != "id"})
+            new_agent = AgentDefinition(
+                id=agent_id, **{k: v for k, v in config.items() if k != "id"}
+            )
             self.db.add(new_agent)
         await self.db.flush()
 
@@ -260,6 +294,7 @@ class AgentBackupService:
             return
         memory_data = json.loads(memory_file.read_text())
         from app.models.agents.agents import AgentMemoryItem
+
         for item_data in memory_data:
             existing = await self.db.get(AgentMemoryItem, item_data["id"])
             if not existing:
@@ -286,11 +321,12 @@ class BackupScheduler:
         warnings.warn(
             "BackupScheduler is deprecated since v2.4. "
             "Use cron + `llmstack backup --logical-agent-backup` instead.",
-            DeprecationWarning, stacklevel=2,
+            DeprecationWarning,
+            stacklevel=2,
         )
         self.db = db
         self.service = AgentBackupService(db)
-        self._task: Optional[asyncio.Task] = None
+        self._task: asyncio.Task | None = None
 
     async def start_schedule(self, interval_hours: int = 24):
         if self._task and not self._task.done():
@@ -300,8 +336,11 @@ class BackupScheduler:
             while True:
                 try:
                     from app.models.agents.agents import AgentDefinition
+
                     result = await self.db.execute(
-                        select(AgentDefinition.id).where(AgentDefinition.status.in_(["active", "production"]))
+                        select(AgentDefinition.id).where(
+                            AgentDefinition.status.in_(["active", "production"])
+                        )
                     )
                     agent_ids = [str(row[0]) for row in result.all()]
                     if agent_ids:

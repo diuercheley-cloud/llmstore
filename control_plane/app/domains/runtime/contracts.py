@@ -28,4 +28,3 @@ class RuntimeDomainContract:
         "must not require direct imports from other domain contracts",
         "must preserve existing app.* imports while modularization is incremental",
     )
-

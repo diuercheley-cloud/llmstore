@@ -88,13 +88,7 @@ async def test_agent_client_retry_503(mock_env):
             200,
             data={
                 "choices": [
-                    {
-                        "message": {
-                            "content": (
-                                '{"type":"plan","payload":{"reason":"next"}}'
-                            )
-                        }
-                    }
+                    {"message": {"content": ('{"type":"plan","payload":{"reason":"next"}}')}}
                 ]
             },
         ),
@@ -102,10 +96,13 @@ async def test_agent_client_retry_503(mock_env):
     mock_client.__aenter__.return_value = mock_client
     mock_client.__aexit__.return_value = None
 
-    with patch(
-        "scripts.llm_harness.providers.httpx.AsyncClient",
-        return_value=mock_client,
-    ), patch("asyncio.sleep", new_callable=AsyncMock):
+    with (
+        patch(
+            "scripts.llm_harness.providers.httpx.AsyncClient",
+            return_value=mock_client,
+        ),
+        patch("asyncio.sleep", new_callable=AsyncMock),
+    ):
         client = AgentClient(
             agent_id="test",
             base_url="http://api.example.com",

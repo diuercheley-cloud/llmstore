@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from app.services.agents.tool_adapter_contract import ToolAdapterContract
 
@@ -13,41 +13,41 @@ class AdminReadinessToolAdapter(ToolAdapterContract):
         return "1.0.0"
 
     @property
-    def input_schema(self) -> Dict[str, Any]:
+    def input_schema(self) -> dict[str, Any]:
         return {
             "type": "object",
             "properties": {
                 "component": {"type": "string", "description": "System component to check."}
-            }
+            },
         }
 
     @property
-    def output_schema(self) -> Dict[str, Any]:
+    def output_schema(self) -> dict[str, Any]:
         return {
             "type": "object",
             "properties": {
                 "ready": {"type": "boolean"},
                 "status": {"type": "string"},
-                "details": {"type": "object"}
-            }
+                "details": {"type": "object"},
+            },
         }
 
     @property
     def side_effect_level(self) -> str:
         return "none"
 
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    async def execute(self, **kwargs) -> dict[str, Any]:
         # Implementation would check actual system health
         return {
             "ready": True,
             "status": "healthy",
-            "details": {"component": kwargs.get("component", "all")}
+            "details": {"component": kwargs.get("component", "all")},
         }
 
-    async def dry_run(self, **kwargs) -> Dict[str, Any]:
+    async def dry_run(self, **kwargs) -> dict[str, Any]:
         return await self.execute(**kwargs)
 
-    async def rollback(self, invocation_id: str, **kwargs) -> Dict[str, Any]:
+    async def rollback(self, invocation_id: str, **kwargs) -> dict[str, Any]:
         return {"status": "success", "message": "No rollback for health checks."}
 
     async def healthcheck(self) -> bool:

@@ -11,8 +11,10 @@ async def test_ops_center_endpoints_unauthorized(async_client: AsyncClient):
         "/admin/ops/workflows",
         "/admin/ops/receipts",
         "/admin/ops/compliance",
-        "/admin/ops/attestation"
+        "/admin/ops/attestation",
     ]
     for endpoint in endpoints:
         response = await async_client.get(endpoint)
-        assert response.status_code in [401, 403], f"Endpoint {endpoint} should require authentication"
+        assert response.status_code in [401, 403], (
+            f"Endpoint {endpoint} should require authentication"
+        )

@@ -1,14 +1,17 @@
-from datetime import datetime, UTC
-from enum import Enum
-from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
 import uuid
+from datetime import UTC, datetime
+from enum import Enum
+from typing import Any
+
+from pydantic import BaseModel, Field
+
 
 class ComplianceFramework(str, Enum):
     SOC2 = "SOC2"
     ISO27001 = "ISO27001"
     GDPR = "GDPR"
     LGPD = "LGPD"
+
 
 class EvidenceType(str, Enum):
     POLICY_DECISION = "policy_decision"
@@ -18,6 +21,7 @@ class EvidenceType(str, Enum):
     BACKUP_VERIFICATION = "backup_verification"
     EVAL_REPORT = "eval_report"
     INCIDENT_RECORD = "incident_record"
+
 
 class EvidenceItem(BaseModel):
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
@@ -29,11 +33,15 @@ class EvidenceItem(BaseModel):
     status: str = "collected"
     content_hash: str
     redaction_status: str = "redacted"
-    data: Dict[str, Any] = Field(default_factory=dict)
+    data: dict[str, Any] = Field(default_factory=dict)
+
 
 class EvidenceCollectionRequest(BaseModel):
-    frameworks: List[ComplianceFramework] = Field(default_factory=lambda: [f for f in ComplianceFramework])
+    frameworks: list[ComplianceFramework] = Field(
+        default_factory=lambda: [f for f in ComplianceFramework]
+    )
     dry_run: bool = False
+
 
 class EvidenceExportFormat(str, Enum):
     JSON = "json"

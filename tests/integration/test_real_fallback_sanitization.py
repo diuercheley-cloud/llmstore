@@ -11,6 +11,7 @@ from app.services.routing.smart_router import SmartRouter
 @pytest.fixture(autouse=True)
 def clear_settings_cache():
     from app.core.config import get_settings
+
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()
@@ -46,12 +47,14 @@ def test_no_key_in_simulate():
         strategy=RoutingStrategy.local_first,
     )
     decision, strategies, states, snapshot = router.simulate(inp)
-    sanitized = json.dumps({
-        "decision": decision.model_dump(),
-        "strategies": strategies,
-        "states": states,
-        "snapshot": snapshot,
-    })
+    sanitized = json.dumps(
+        {
+            "decision": decision.model_dump(),
+            "strategies": strategies,
+            "states": states,
+            "snapshot": snapshot,
+        }
+    )
     for pat in KEY_PATTERNS:
         assert not pat.search(sanitized), f"Key pattern found in simulate: {pat}"
 

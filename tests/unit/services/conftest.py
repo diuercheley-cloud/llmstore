@@ -1,8 +1,7 @@
-import pytest_asyncio
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-
-from app.db.base import Base
 import app.models  # noqa: F401
+import pytest_asyncio
+from app.db.base import Base
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 
 @pytest_asyncio.fixture

@@ -65,8 +65,15 @@ async def quarantine_lifecycle_model(
         db,
         action="model_lifecycle_quarantined",
         status="success",
-        payload={"lifecycle_record_id": str(lifecycle_record_id), "model_name": record.model_name, "reason": reason},
-        result={"quarantined_by": quarantined_by, "previous_state": record.previous_lifecycle_state},
+        payload={
+            "lifecycle_record_id": str(lifecycle_record_id),
+            "model_name": record.model_name,
+            "reason": reason,
+        },
+        result={
+            "quarantined_by": quarantined_by,
+            "previous_state": record.previous_lifecycle_state,
+        },
     )
     return record
 
@@ -143,7 +150,9 @@ async def rollback_model(
     checksum_verified = False
     if predecessor_checksum and record.checksum_sha256:
         checksum_verified = predecessor_checksum == record.checksum_sha256
-    sanitized_chain = sanitize_report_payload(chain_of_custody_json) if chain_of_custody_json else None
+    sanitized_chain = (
+        sanitize_report_payload(chain_of_custody_json) if chain_of_custody_json else None
+    )
     rollback = CommercialModelRollbackRecord(
         lifecycle_record_id=lifecycle_record_id,
         promotion_request_id=promotion_request_id,
@@ -226,7 +235,9 @@ async def list_rollback_records(
     lifecycle_record_id: UUID | None = None,
     limit: int = 100,
 ) -> list[CommercialModelRollbackRecord]:
-    stmt = select(CommercialModelRollbackRecord).order_by(desc(CommercialModelRollbackRecord.created_at))
+    stmt = select(CommercialModelRollbackRecord).order_by(
+        desc(CommercialModelRollbackRecord.created_at)
+    )
     if lifecycle_record_id:
         stmt = stmt.where(CommercialModelRollbackRecord.lifecycle_record_id == lifecycle_record_id)
     stmt = stmt.limit(min(max(limit, 1), 500))
@@ -244,19 +255,23 @@ def serialize_rollback_record(
             return None
         return value if sensitive else value[:12]
 
-    return sanitize_report_payload({
-        "id": str(rollback.id),
-        "lifecycle_record_id": str(rollback.lifecycle_record_id),
-        "promotion_request_id": str(rollback.promotion_request_id) if rollback.promotion_request_id else None,
-        "rollback_from_state": rollback.rollback_from_state,
-        "rollback_to_state": rollback.rollback_to_state,
-        "rollback_reason": rollback.rollback_reason,
-        "rolled_back_by": rollback.rolled_back_by,
-        "verification_hash": _short(rollback.verification_hash),
-        "predecessor_checksum": _short(rollback.predecessor_checksum),
-        "checksum_verified": rollback.checksum_verified,
-        "lineage_valid": rollback.lineage_valid,
-        "attestation_valid": rollback.attestation_valid,
-        "immutable_receipt_hash": _short(rollback.immutable_receipt_hash),
-        "created_at": rollback.created_at.isoformat(),
-    })
+    return sanitize_report_payload(
+        {
+            "id": str(rollback.id),
+            "lifecycle_record_id": str(rollback.lifecycle_record_id),
+            "promotion_request_id": str(rollback.promotion_request_id)
+            if rollback.promotion_request_id
+            else None,
+            "rollback_from_state": rollback.rollback_from_state,
+            "rollback_to_state": rollback.rollback_to_state,
+            "rollback_reason": rollback.rollback_reason,
+            "rolled_back_by": rollback.rolled_back_by,
+            "verification_hash": _short(rollback.verification_hash),
+            "predecessor_checksum": _short(rollback.predecessor_checksum),
+            "checksum_verified": rollback.checksum_verified,
+            "lineage_valid": rollback.lineage_valid,
+            "attestation_valid": rollback.attestation_valid,
+            "immutable_receipt_hash": _short(rollback.immutable_receipt_hash),
+            "created_at": rollback.created_at.isoformat(),
+        }
+    )

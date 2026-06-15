@@ -12,7 +12,6 @@ ARTIFACTS_DIR = ROOT / "artifacts" / "hybrid-platform-e2e"
 
 
 class TestHybridPlatformE2EReport:
-
     def _find_latest_report(self) -> Path | None:
         if not ARTIFACTS_DIR.exists():
             return None
@@ -75,17 +74,13 @@ class TestHybridPlatformE2EReport:
         latest = self._find_latest_report()
         if latest is None:
             pytest.skip("No report directories found")
-        assert (latest / "hybrid-e2e.json").exists(), (
-            f"hybrid-e2e.json not in {latest}"
-        )
+        assert (latest / "hybrid-e2e.json").exists(), f"hybrid-e2e.json not in {latest}"
 
     def test_latest_report_has_md(self):
         latest = self._find_latest_report()
         if latest is None:
             pytest.skip("No report directories found")
-        assert (latest / "hybrid-e2e.md").exists(), (
-            f"hybrid-e2e.md not in {latest}"
-        )
+        assert (latest / "hybrid-e2e.md").exists(), f"hybrid-e2e.md not in {latest}"
 
     def test_report_json_is_valid(self):
         data = self._get_report_json()
@@ -114,9 +109,9 @@ class TestHybridPlatformE2EReport:
         for result in data.get("results", []):
             assert "step" in result, f"Result missing 'step': {result}"
             assert "status" in result, f"Result missing 'status': {result}"
-            assert result["status"] in (
-                "PASS", "FAIL", "WARN"
-            ), f"Invalid status: {result['status']}"
+            assert result["status"] in ("PASS", "FAIL", "WARN"), (
+                f"Invalid status: {result['status']}"
+            )
 
     def test_report_json_no_secrets(self):
         data = self._get_report_json()
@@ -125,69 +120,51 @@ class TestHybridPlatformE2EReport:
         text = json.dumps(data).lower()
         dangerous = re.findall(r"sk-[a-z0-9]{20,}", text)
         dangerous = [
-            s
-            for s in dangerous
-            if "demo" not in s and "example" not in s and "test" not in s
+            s for s in dangerous if "demo" not in s and "example" not in s and "test" not in s
         ]
-        assert len(dangerous) == 0, (
-            f"Potential secrets found in report: {dangerous}"
-        )
+        assert len(dangerous) == 0, f"Potential secrets found in report: {dangerous}"
 
     def test_report_md_has_status_line(self):
         md = self._get_report_md()
         if md is None:
             pytest.skip("No report MD found")
-        assert "HYBRID_READY" in md or "HYBRID_FAILED" in md, (
-            "Report MD must contain status line"
-        )
+        assert "HYBRID_READY" in md or "HYBRID_FAILED" in md, "Report MD must contain status line"
 
     def test_report_md_mentions_providers(self):
         md = self._get_report_md()
         if md is None:
             pytest.skip("No report MD found")
-        assert re.search(r"provider", md, re.IGNORECASE), (
-            "Report MD must mention providers"
-        )
+        assert re.search(r"provider", md, re.IGNORECASE), "Report MD must mention providers"
 
     def test_report_md_mentions_billing(self):
         md = self._get_report_md()
         if md is None:
             pytest.skip("No report MD found")
-        assert re.search(r"billing", md, re.IGNORECASE), (
-            "Report MD must mention billing"
-        )
+        assert re.search(r"billing", md, re.IGNORECASE), "Report MD must mention billing"
 
     def test_report_md_mentions_wallet(self):
         md = self._get_report_md()
         if md is None:
             pytest.skip("No report MD found")
-        assert re.search(r"wallet", md, re.IGNORECASE), (
-            "Report MD must mention wallet"
-        )
+        assert re.search(r"wallet", md, re.IGNORECASE), "Report MD must mention wallet"
 
     def test_report_md_mentions_cache(self):
         md = self._get_report_md()
         if md is None:
             pytest.skip("No report MD found")
-        assert re.search(r"cache", md, re.IGNORECASE), (
-            "Report MD must mention cache"
-        )
+        assert re.search(r"cache", md, re.IGNORECASE), "Report MD must mention cache"
 
     def test_report_md_mentions_rag(self):
         md = self._get_report_md()
         if md is None:
             pytest.skip("No report MD found")
-        assert re.search(r"rag", md, re.IGNORECASE), (
-            "Report MD must mention RAG"
-        )
+        assert re.search(r"rag", md, re.IGNORECASE), "Report MD must mention RAG"
 
     def test_report_md_mentions_pix_out_of_scope(self):
         md = self._get_report_md()
         if md is None:
             pytest.skip("No report MD found")
-        assert "pix" in md.lower(), (
-            "Report MD must mention PIX is out of scope"
-        )
+        assert "pix" in md.lower(), "Report MD must mention PIX is out of scope"
 
     def test_report_md_summary_table(self):
         md = self._get_report_md()
@@ -227,6 +204,4 @@ class TestHybridPlatformE2EReport:
         if data is None:
             pytest.skip("No report JSON found")
         platform = data.get("platform", "")
-        assert "v1.8.0" in platform, (
-            f"Platform version mismatch: {platform}"
-        )
+        assert "v1.8.0" in platform, f"Platform version mismatch: {platform}"

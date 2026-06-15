@@ -26,8 +26,7 @@ def test_script_has_shebang():
 
 def test_dry_run_merged_only_exit_zero():
     result = subprocess.run(
-        [str(SCRIPT), "--dry-run", "--merged-only"],
-        capture_output=True, text=True
+        [str(SCRIPT), "--dry-run", "--merged-only"], capture_output=True, text=True
     )
     assert result.returncode == 0, f"stderr: {result.stderr}"
     assert "DRY" in result.stdout or "dry" in result.stdout
@@ -35,8 +34,7 @@ def test_dry_run_merged_only_exit_zero():
 
 def test_dry_run_produces_report():
     result = subprocess.run(
-        [str(SCRIPT), "--dry-run", "--merged-only"],
-        capture_output=True, text=True
+        [str(SCRIPT), "--dry-run", "--merged-only"], capture_output=True, text=True
     )
     assert result.returncode == 0
     assert "Report:" in result.stdout
@@ -46,8 +44,7 @@ def test_dry_run_produces_report():
 
 def test_report_json_valid():
     result = subprocess.run(
-        [str(SCRIPT), "--dry-run", "--merged-only"],
-        capture_output=True, text=True
+        [str(SCRIPT), "--dry-run", "--merged-only"], capture_output=True, text=True
     )
     assert result.returncode == 0
     report_dir = _latest_report_dir()
@@ -64,8 +61,7 @@ def test_report_json_valid():
 
 def test_report_md_exists():
     result = subprocess.run(
-        [str(SCRIPT), "--dry-run", "--merged-only"],
-        capture_output=True, text=True
+        [str(SCRIPT), "--dry-run", "--merged-only"], capture_output=True, text=True
     )
     assert result.returncode == 0
     report_dir = _latest_report_dir()
@@ -78,13 +74,9 @@ def test_report_md_exists():
 
 def test_current_branch_is_protected():
     current = subprocess.run(
-        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-        capture_output=True, text=True
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"], capture_output=True, text=True
     ).stdout.strip()
-    result = subprocess.run(
-        [str(SCRIPT), "--dry-run"],
-        capture_output=True, text=True
-    )
+    result = subprocess.run([str(SCRIPT), "--dry-run"], capture_output=True, text=True)
     assert result.returncode == 0
     assert current in result.stdout
     report_dir = _latest_report_dir()
@@ -97,10 +89,7 @@ def test_current_branch_is_protected():
 
 
 def test_main_is_protected():
-    result = subprocess.run(
-        [str(SCRIPT), "--dry-run"],
-        capture_output=True, text=True
-    )
+    result = subprocess.run([str(SCRIPT), "--dry-run"], capture_output=True, text=True)
     report_dir = _latest_report_dir()
     assert report_dir is not None
     report_json = Path(report_dir) / "branches-cleanup-report.json"
@@ -111,13 +100,12 @@ def test_main_is_protected():
 
 
 def test_stable_branches_protected_by_default():
-    result = subprocess.run(
-        [str(SCRIPT), "--dry-run"],
-        capture_output=True, text=True
-    )
+    result = subprocess.run([str(SCRIPT), "--dry-run"], capture_output=True, text=True)
     report_dir = _latest_report_dir()
     report_json = Path(report_dir) / "branches-cleanup-report.json"
     data = json.loads(report_json.read_text())
     stable_branches = [e for e in data if e["branch"].startswith("stable/")]
     for entry in stable_branches:
-        assert entry["recommendation"] == "keep", f"{entry['branch']} should be protected by default"
+        assert entry["recommendation"] == "keep", (
+            f"{entry['branch']} should be protected by default"
+        )

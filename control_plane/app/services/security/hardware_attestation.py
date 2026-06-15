@@ -6,7 +6,9 @@ from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.commercial.commercial_sovereign_governance import CommercialHardwareAttestationRecord
+from app.models.commercial.commercial_sovereign_governance import (
+    CommercialHardwareAttestationRecord,
+)
 from app.services.routing.commercial_report_export import sanitize_report_payload
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,7 +16,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 def _evidence_hash(payload: dict[str, Any]) -> str:
     return hashlib.sha256(
-        json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str).encode("utf-8")
+        json.dumps(
+            payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+        ).encode("utf-8")
     ).hexdigest()
 
 
@@ -105,7 +109,9 @@ async def enforce_attestation_policy(
             raise ValueError("Attestation enforcement blocked: expired attestation present")
         for record in records:
             if record.attestation_type == "placeholder":
-                raise ValueError("Attestation enforcement blocked: placeholder attestation not allowed in enforce mode")
+                raise ValueError(
+                    "Attestation enforcement blocked: placeholder attestation not allowed in enforce mode"
+                )
 
     if not records:
         if effective_mode == "enforce":
@@ -115,15 +121,21 @@ async def enforce_attestation_policy(
     statuses = {record.status for record in records}
     return {
         "allowed": True,
-        "status": "untrusted" if "untrusted" in statuses else ("expired" if "expired" in statuses else "trusted"),
+        "status": "untrusted"
+        if "untrusted" in statuses
+        else ("expired" if "expired" in statuses else "trusted"),
         "records": len(records),
     }
 
 
 async def summarize_attestation_status(db: AsyncSession) -> dict[str, Any]:
-    total = (await db.execute(select(func.count(CommercialHardwareAttestationRecord.id)))).scalar() or 0
+    total = (
+        await db.execute(select(func.count(CommercialHardwareAttestationRecord.id)))
+    ).scalar() or 0
     recent = await db.execute(
-        select(CommercialHardwareAttestationRecord).order_by(CommercialHardwareAttestationRecord.created_at.desc()).limit(20)
+        select(CommercialHardwareAttestationRecord)
+        .order_by(CommercialHardwareAttestationRecord.created_at.desc())
+        .limit(20)
     )
     items = recent.scalars().all()
     by_status: dict[str, int] = {}

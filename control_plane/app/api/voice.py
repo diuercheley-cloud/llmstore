@@ -2,18 +2,17 @@
 import json
 import logging
 import uuid
-from typing import Optional
 
 from app.core.config import get_settings
-from app.services.runtime_dependencies import SessionLocal, get_db_session
 from app.models.core.client import Client
 from app.services.auth import require_client
+from app.services.runtime_dependencies import SessionLocal, get_db_session
 from app.services.voice.stt_stream_service import STTStreamService
 from app.services.voice.tts_stream_service import TTSStreamService
 from app.services.voice.turn_detection import TurnDetectionService
 from app.services.voice.voice_agent_bridge import VoiceAgentBridge
-from app.services.voice.voice_turn_service import VoiceTurnService
 from app.services.voice.voice_session_service import VoiceSessionService
+from app.services.voice.voice_turn_service import VoiceTurnService
 from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,6 +23,7 @@ router = APIRouter(prefix="/v1/voice", tags=["voice-agent"])
 
 
 # ── Pydantic schemas ──────────────────────────────────────────────
+
 
 class VoiceSessionCreate(BaseModel):
     agent_id: uuid.UUID
@@ -41,6 +41,7 @@ class WebRTCOffer(BaseModel):
 
 # ── Feature flag checks ───────────────────────────────────────────
 
+
 def _check_voice_agent():
     if not settings.voice_agent_enabled:
         raise HTTPException(status_code=403, detail="Voice Agent is disabled")
@@ -52,6 +53,7 @@ def _check_webrtc():
 
 
 # ── REST Endpoints ────────────────────────────────────────────────
+
 
 @router.post("/sessions")
 async def create_voice_session(
@@ -172,11 +174,12 @@ async def webrtc_offer(
 
 # ── WebSocket Stream ──────────────────────────────────────────────
 
+
 @router.websocket("/sessions/{session_id}/stream")
 async def voice_websocket_stream(
     websocket: WebSocket,
     session_id: str,
-    token: Optional[str] = Query(None),
+    token: str | None = Query(None),
 ):
     """
     WebSocket endpoint for real-time voice streaming.
@@ -221,6 +224,7 @@ async def voice_websocket_stream(
         # Token-based auth (simplified for WebSocket)
         if token:
             from app.services.agents.streaming.stream_auth import StreamAuthService
+
             try:
                 client = await StreamAuthService.authenticate_websocket(websocket, db)
             except Exception:
@@ -257,12 +261,14 @@ async def voice_websocket_stream(
         current_turn = None
 
         try:
-            await websocket.send_json({
-                "type": "session_ready",
-                "session_id": str(session_uuid),
-                "stt_provider": voice_session.stt_provider,
-                "tts_provider": voice_session.tts_provider,
-            })
+            await websocket.send_json(
+                {
+                    "type": "session_ready",
+                    "session_id": str(session_uuid),
+                    "stt_provider": voice_session.stt_provider,
+                    "tts_provider": voice_session.tts_provider,
+                }
+            )
 
             while True:
                 data = await websocket.receive()
@@ -285,12 +291,14 @@ async def voice_websocket_stream(
                             )
                             await db.commit()
 
-                        await websocket.send_json({
-                            "type": "transcript",
-                            "text": transcript_text,
-                            "speaker": "user",
-                            "turn_number": turn_number,
-                        })
+                        await websocket.send_json(
+                            {
+                                "type": "transcript",
+                                "text": transcript_text,
+                                "speaker": "user",
+                                "turn_number": turn_number,
+                            }
+                        )
 
                     # Turn boundary detection
                     if current_turn and current_turn.status == "processing":
@@ -301,27 +309,30 @@ async def voice_websocket_stream(
 
                             # Real implementation calling agent_runtime via VoiceTurnService
                             from app.core.request_context import get_correlation_id
+
                             correlation_id = get_correlation_id() or str(uuid.uuid4())
 
                             turn_result = await turn_svc.process_turn(
                                 voice_session=voice_session,
                                 turn_number=turn_number,
                                 transcript_text=current_turn.user_text,
-                                correlation_id=correlation_id
+                                correlation_id=correlation_id,
                             )
-                            
+
                             agent_text = turn_result["text"]
                             agent_run_id = turn_result["agent_run_id"]
 
-                            await websocket.send_json({
-                                "type": "agent_response",
-                                "text": agent_text,
-                                "turn_number": turn_number,
-                                "agent_run_id": agent_run_id,
-                                "correlation_id": correlation_id,
-                                "trace_id": correlation_id,
-                                "fallback": turn_result["fallback"]
-                            })
+                            await websocket.send_json(
+                                {
+                                    "type": "agent_response",
+                                    "text": agent_text,
+                                    "turn_number": turn_number,
+                                    "agent_run_id": agent_run_id,
+                                    "correlation_id": correlation_id,
+                                    "trace_id": correlation_id,
+                                    "fallback": turn_result["fallback"],
+                                }
+                            )
 
                             # TTS streaming
                             if settings.voice_tts_streaming_enabled:
@@ -333,10 +344,12 @@ async def voice_websocket_stream(
                                     await websocket.send_bytes(audio_chunk)
                                 await websocket.send_json({"type": "tts_audio_end"})
 
-                            await websocket.send_json({
-                                "type": "turn_complete",
-                                "turn_number": turn_number,
-                            })
+                            await websocket.send_json(
+                                {
+                                    "type": "turn_complete",
+                                    "turn_number": turn_number,
+                                }
+                            )
 
                             # Reset for next turn
                             vad.reset()
@@ -355,7 +368,9 @@ async def voice_websocket_stream(
 
                     if msg_type == "cancel":
                         if current_turn and current_turn.status == "processing":
-                            current_turn = await bridge.error_turn(current_turn, "Cancelled by user")
+                            current_turn = await bridge.error_turn(
+                                current_turn, "Cancelled by user"
+                            )
                             await db.commit()
                         vad.reset()
                         stt.reset()
@@ -367,29 +382,39 @@ async def voice_websocket_stream(
                         if current_turn and current_turn.status == "processing":
                             user_text = current_turn.user_text or ""
                             agent_text = f"Processando: '{user_text}'"
-                            current_turn = await bridge.complete_agent_turn(current_turn, agent_text)
+                            current_turn = await bridge.complete_agent_turn(
+                                current_turn, agent_text
+                            )
                             await db.commit()
 
-                            await websocket.send_json({
-                                "type": "agent_response",
-                                "text": agent_text,
-                                "turn_number": turn_number,
-                            })
+                            await websocket.send_json(
+                                {
+                                    "type": "agent_response",
+                                    "text": agent_text,
+                                    "turn_number": turn_number,
+                                }
+                            )
 
                             if settings.voice_tts_streaming_enabled:
                                 await websocket.send_json({"type": "tts_audio_start"})
-                                async for audio_chunk in tts.synthesize(agent_text, tenant_id=str(client.id)):
+                                async for audio_chunk in tts.synthesize(
+                                    agent_text, tenant_id=str(client.id)
+                                ):
                                     await websocket.send_bytes(audio_chunk)
                                 await websocket.send_json({"type": "tts_audio_end"})
 
-                            await websocket.send_json({"type": "turn_complete", "turn_number": turn_number})
+                            await websocket.send_json(
+                                {"type": "turn_complete", "turn_number": turn_number}
+                            )
 
                         vad.reset()
                         stt.reset()
                         current_turn = None
 
                     else:
-                        await websocket.send_json({"type": "error", "message": f"Unknown message type: {msg_type}"})
+                        await websocket.send_json(
+                            {"type": "error", "message": f"Unknown message type: {msg_type}"}
+                        )
 
         except WebSocketDisconnect:
             logger.info(f"Voice session {session_id} disconnected")

@@ -3,11 +3,13 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+
 class TokenCounter:
     """
     Counts tokens for different providers and models.
     Supports tiktoken if installed, otherwise falls back to character-based approximation.
     """
+
     def __init__(self, method: str = "auto"):
         self.method = method
         self._tiktoken_encoding = None
@@ -15,6 +17,7 @@ class TokenCounter:
         if method in ("auto", "tiktoken"):
             try:
                 import tiktoken
+
                 self._tiktoken_encoding = tiktoken.get_encoding("cl100k_base")
                 self.method = "tiktoken"
                 logger.debug("Using tiktoken for token counting")
@@ -54,10 +57,7 @@ class TokenCounter:
         return tokens
 
     def estimate_budget(
-        self,
-        messages: list[dict[str, Any]],
-        max_tokens: int,
-        reserved_output: int = 1024
+        self, messages: list[dict[str, Any]], max_tokens: int, reserved_output: int = 1024
     ) -> bool:
         """
         Check if the messages fit within the max_tokens budget,

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 async def test_calculate_risk(session: AsyncSession):
     engine = GovernanceRiskEngine(session)
     score = await engine.calculate_risk()
-    
+
     assert score is not None
     assert score.overall_risk_score > 0
     assert score.financial_risk > 0

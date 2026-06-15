@@ -1,5 +1,3 @@
-from typing import Optional
-
 from app.models.agents.agent_routing import AgentModelCapability
 
 
@@ -15,7 +13,7 @@ class RoutingExplainer:
         policy_name: str,
         candidates_count: int,
         fallback_happened: bool = False,
-        failure_reason: Optional[str] = None
+        failure_reason: str | None = None,
     ) -> str:
         explanation = (
             f"Selected model '{chosen_model.model_id}' (tier {chosen_model.quality_tier}) "

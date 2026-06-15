@@ -1,6 +1,6 @@
 # Owner: agent-platform
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.services.agents.provider_validation import (
     ALLOWED_PROVIDERS,
@@ -23,11 +23,13 @@ router = APIRouter(
 
 @router.post("/run")
 async def run_provider_validation(
-    providers: Optional[str] = Query(None, description="Comma-separated list of providers to validate"),
+    providers: str | None = Query(
+        None, description="Comma-separated list of providers to validate"
+    ),
     allow_paid: bool = Query(False, description="Allow paid provider calls"),
     budget_brl: float = Query(1.00, description="Maximum budget in BRL", ge=0.01, le=10.00),
     timeout_seconds: int = Query(60, description="Per-request timeout in seconds", ge=1, le=300),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     import os
 
     # Set env overrides for this request
@@ -46,8 +48,13 @@ async def run_provider_validation(
                 detail=f"Invalid providers: {invalid}. Allowed: {ALLOWED_PROVIDERS}",
             )
 
-    logger.info("Admin triggered provider validation: providers=%s allow_paid=%s budget=%.2f timeout=%d",
-                provider_list or "all", allow_paid, budget_brl, timeout_seconds)
+    logger.info(
+        "Admin triggered provider validation: providers=%s allow_paid=%s budget=%.2f timeout=%d",
+        provider_list or "all",
+        allow_paid,
+        budget_brl,
+        timeout_seconds,
+    )
 
     try:
         result = await run_validation_suite(provider_list)
@@ -58,20 +65,23 @@ async def run_provider_validation(
 
 
 @router.get("/latest")
-async def get_latest_validation_results() -> Dict[str, Any]:
+async def get_latest_validation_results() -> dict[str, Any]:
     result = await get_latest_results()
     if result.get("status") == "not_generated":
-        raise HTTPException(status_code=404, detail="No validation results found. Run POST /admin/agents/provider-validation/run first.")
+        raise HTTPException(
+            status_code=404,
+            detail="No validation results found. Run POST /admin/agents/provider-validation/run first.",
+        )
     return result
 
 
 @router.get("/providers")
-async def list_available_providers() -> List[Dict[str, Any]]:
+async def list_available_providers() -> list[dict[str, Any]]:
     return get_provider_matrix()
 
 
 @router.get("/check")
-async def check_validation_recency() -> Dict[str, Any]:
+async def check_validation_recency() -> dict[str, Any]:
     recent = is_recent_validation_available(max_age_hours=24)
     return {
         "recent_validation_available": recent,

@@ -12,10 +12,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/support", tags=["Support"])
 
+
 @router.post("/bundle", status_code=status.HTTP_201_CREATED)
 async def create_support_bundle(
-    admin_token: str = Depends(get_admin_token),
-    db: AsyncSession = Depends(get_db_session)
+    admin_token: str = Depends(get_admin_token), db: AsyncSession = Depends(get_db_session)
 ):
     """
     Generate a new support bundle for diagnostic purposes.
@@ -24,17 +24,20 @@ async def create_support_bundle(
     service = SupportBundleService(db)
     try:
         bundle_path = await service.generate_bundle()
-        return {"message": "Support bundle generated successfully", "path": bundle_path, "filename": os.path.basename(bundle_path)}
+        return {
+            "message": "Support bundle generated successfully",
+            "path": bundle_path,
+            "filename": os.path.basename(bundle_path),
+        }
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate support bundle: {str(e)}"
+            detail=f"Failed to generate support bundle: {str(e)}",
         )
 
+
 @router.get("/bundle/latest")
-async def get_latest_support_bundle(
-    admin_token: str = Depends(get_admin_token)
-):
+async def get_latest_support_bundle(admin_token: str = Depends(get_admin_token)):
     """
     Retrieve the latest generated support bundle.
     """
@@ -43,11 +46,9 @@ async def get_latest_support_bundle(
     if not bundle_path or not os.path.exists(bundle_path):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="No support bundle found. Please generate one first."
+            detail="No support bundle found. Please generate one first.",
         )
-    
+
     return FileResponse(
-        path=bundle_path,
-        filename=os.path.basename(bundle_path),
-        media_type="application/gzip"
+        path=bundle_path, filename=os.path.basename(bundle_path), media_type="application/gzip"
     )

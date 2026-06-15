@@ -3,11 +3,19 @@ from pathlib import Path
 import sqlalchemy as sa
 
 ROOT = Path(__file__).resolve().parents[3]
-MIGRATION_PATH = ROOT / "control_plane" / "alembic" / "versions" / "phase80_plugin_supply_chain_provenance_sbom.py"
+MIGRATION_PATH = (
+    ROOT
+    / "control_plane"
+    / "alembic"
+    / "versions"
+    / "phase80_plugin_supply_chain_provenance_sbom.py"
+)
 
 
 def test_phase_80_validation_script_present():
-    content = (ROOT / "scripts" / "validate_phase_80_plugin_supply_chain.py").read_text(encoding="utf-8")
+    content = (ROOT / "scripts" / "validate_phase_80_plugin_supply_chain.py").read_text(
+        encoding="utf-8"
+    )
     assert "Phase 80 plugin supply-chain validation passed." in content
     assert "placeholder SBOM only" in content
 

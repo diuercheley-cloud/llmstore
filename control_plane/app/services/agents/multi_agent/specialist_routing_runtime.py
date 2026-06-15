@@ -1,14 +1,12 @@
 import asyncio
 import logging
 import uuid
-from typing import Dict, List
 
-from app.models.agents.multi_agent import AgentTeam, AgentTeamMember
+from app.models.agents.multi_agent import AgentTeamMember
 from app.services.agents.multi_agent.arbitration_engine import ArbitrationEngine
 from app.services.agents.multi_agent.delegation_policy import DelegationPolicy
 from app.services.agents.multi_agent.governance_policy import MultiAgentPolicyService
 from app.services.agents.multi_agent.team_runtime import TeamRuntime
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
@@ -33,6 +31,7 @@ class SpecialistRoutingRuntime(TeamRuntime):
     def agent_runtime(self):
         if self._agent_runtime is None:
             from app.services.agents import agent_runtime as ar
+
             self._agent_runtime = ar
         return self._agent_runtime
 
@@ -53,7 +52,10 @@ class SpecialistRoutingRuntime(TeamRuntime):
         try:
             logger.info(
                 "SpecialistRouting: team=%s goal=%s dispatcher=%s specialists=%d",
-                team_id, goal[:80], dispatcher.agent_id, len(specialists),
+                team_id,
+                goal[:80],
+                dispatcher.agent_id,
+                len(specialists),
             )
 
             selected = await self._select_specialists(dispatcher, specialists, goal)
@@ -61,7 +63,10 @@ class SpecialistRoutingRuntime(TeamRuntime):
                 return await self._fallback(dispatcher, goal, run.id)
 
             outputs = await self._delegate_to_specialists(
-                selected, goal, team.tenant_id, run.id,
+                selected,
+                goal,
+                team.tenant_id,
+                run.id,
             )
 
             synthesis = await self.arbitrator.arbitrate(
@@ -80,9 +85,9 @@ class SpecialistRoutingRuntime(TeamRuntime):
     async def _select_specialists(
         self,
         dispatcher: AgentTeamMember,
-        specialists: List[AgentTeamMember],
+        specialists: list[AgentTeamMember],
         goal: str,
-    ) -> List[AgentTeamMember]:
+    ) -> list[AgentTeamMember]:
         selected = []
         for spec in specialists:
             allowed = await self.delegation.can_delegate(
@@ -94,12 +99,12 @@ class SpecialistRoutingRuntime(TeamRuntime):
 
     async def _delegate_to_specialists(
         self,
-        specialists: List[AgentTeamMember],
+        specialists: list[AgentTeamMember],
         goal: str,
         tenant_id: str,
         parent_run_id: uuid.UUID,
-    ) -> List[Dict]:
-        async def _run_specialist(spec: AgentTeamMember) -> Dict:
+    ) -> list[dict]:
+        async def _run_specialist(spec: AgentTeamMember) -> dict:
             try:
                 allowed, reason = await self.policy.validate_delegation(
                     parent_run_id, specialists[0].agent_id, spec.agent_id
@@ -144,9 +149,7 @@ class SpecialistRoutingRuntime(TeamRuntime):
         tasks = [_run_specialist(spec) for spec in specialists]
         return await asyncio.gather(*tasks)
 
-    async def _fallback(
-        self, dispatcher: AgentTeamMember, goal: str, run_id: uuid.UUID
-    ) -> str:
+    async def _fallback(self, dispatcher: AgentTeamMember, goal: str, run_id: uuid.UUID) -> str:
         fallback = await self.agent_runtime.start_run(
             db=self.db,
             agent_id=dispatcher.agent_id,

@@ -7,9 +7,13 @@ from scripts.llm_harness.reporter import Reporter
 def test_template_exists():
     template_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-        "scripts", "llm_harness", "templates", "report.md.jinja"
+        "scripts",
+        "llm_harness",
+        "templates",
+        "report.md.jinja",
     )
     assert os.path.exists(template_path)
+
 
 def test_markdown_report_rendering(tmp_path):
     reporter = Reporter(output_dir=str(tmp_path))
@@ -35,13 +39,13 @@ def test_markdown_report_rendering(tmp_path):
                 "action_type": "run_shell",
                 "status": "completed",
                 "duration_ms": 500,
-                "message": "Command success"
+                "message": "Command success",
             }
-        ]
+        ],
     )
-    
+
     report = reporter.generate_markdown_report(result, blocked_actions=["rm -rf /"])
-    
+
     assert "# Agent Execution Report" in report
     assert "- **Status**: SUCCESS" in report
     assert "- **Trace ID**: trace-1" in report
@@ -55,23 +59,22 @@ def test_markdown_report_rendering(tmp_path):
     assert "Time To Final" in report
     assert "4500ms" in report
 
+
 def test_json_summary_unchanged(tmp_path):
     reporter = Reporter(output_dir=str(tmp_path))
-    result = ExecutionResult(
-        success=True,
-        message="Success message",
-        duration=5.0
-    )
-    
+    result = ExecutionResult(success=True, message="Success message", duration=5.0)
+
     filename = reporter.generate_summary(result, trace=[{"step": 1}])
     assert filename.endswith(".json")
-    
-    with open(os.path.join(str(tmp_path), filename), "r") as f:
+
+    with open(os.path.join(str(tmp_path), filename)) as f:
         import json
+
         data = json.load(f)
         assert data["success"] is True
         assert data["message"] == "Success message"
         assert data["duration"] == 5.0
+
 
 def test_secrets_redaction_in_report(tmp_path):
     reporter = Reporter(output_dir=str(tmp_path))
@@ -87,13 +90,13 @@ def test_secrets_redaction_in_report(tmp_path):
                 "action_type": "run_shell",
                 "status": "failed",
                 "duration_ms": 100,
-                "message": "Error with password=mypass"
+                "message": "Error with password=mypass",
             }
-        ]
+        ],
     )
-    
+
     report = reporter.generate_markdown_report(result)
-    
+
     assert "secret123" not in report
     assert "sk-123456" not in report
     assert "mypass" not in report

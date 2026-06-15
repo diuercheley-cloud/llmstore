@@ -9,11 +9,12 @@ logger = logging.getLogger("redis_rate_limiter")
 
 class LocalRateLimiterFallback:
     """In-memory fallback rate limiter for development or when Redis is disabled."""
-    _requests = {}      # (tenant, agent, bucket) -> count
-    _concurrent = {}    # (tenant, agent) -> count
-    _tools = {}         # (tenant, agent, bucket) -> count
-    _cost_hour = {}     # (tenant, agent, bucket) -> cost
-    _cost_run = {}      # (tenant, agent, run_id) -> cost
+
+    _requests = {}  # (tenant, agent, bucket) -> count
+    _concurrent = {}  # (tenant, agent) -> count
+    _tools = {}  # (tenant, agent, bucket) -> count
+    _cost_hour = {}  # (tenant, agent, bucket) -> cost
+    _cost_run = {}  # (tenant, agent, run_id) -> cost
 
     @classmethod
     def reset(cls):
@@ -70,7 +71,9 @@ class LocalRateLimiterFallback:
         return True
 
     @classmethod
-    def check_cost_run(cls, tenant_id: str, agent_id: str, run_id: str, cost: float, limit: float) -> bool:
+    def check_cost_run(
+        cls, tenant_id: str, agent_id: str, run_id: str, cost: float, limit: float
+    ) -> bool:
         key = (tenant_id, agent_id, run_id)
         current = cls._cost_run.get(key, 0.0)
         if current + cost > limit:
@@ -98,17 +101,17 @@ class RedisRateLimiter:
         cls.is_fallback_active = False
         bucket = int(time.time() / 60)
         key = f"rl:req:{tenant_id}:{agent_id}:{bucket}"
-        
+
         try:
             current = await redis_client.get(key)
             if current and int(current) >= limit:
                 return False
-            
+
             # Increment and set TTL
             val = await redis_client.incr(key)
             if val == 1:
                 await redis_client.expire(key, 120)
-            
+
             if val > limit:
                 return False
             return True
@@ -192,7 +195,9 @@ class RedisRateLimiter:
             return LocalRateLimiterFallback.check_tool_rate(tenant_id, agent_id, limit)
 
     @classmethod
-    async def check_cost_hour(cls, tenant_id: str, agent_id: str, cost: float, limit: float) -> bool:
+    async def check_cost_hour(
+        cls, tenant_id: str, agent_id: str, cost: float, limit: float
+    ) -> bool:
         """Rate limit: cost/hour."""
         if cls._use_fallback():
             cls.is_fallback_active = True
@@ -223,7 +228,9 @@ class RedisRateLimiter:
             return LocalRateLimiterFallback.check_cost_hour(tenant_id, agent_id, cost, limit)
 
     @classmethod
-    async def check_cost_run(cls, tenant_id: str, agent_id: str, run_id: str, cost: float, limit: float) -> bool:
+    async def check_cost_run(
+        cls, tenant_id: str, agent_id: str, run_id: str, cost: float, limit: float
+    ) -> bool:
         """Rate limit: cost/run."""
         if cls._use_fallback():
             cls.is_fallback_active = True

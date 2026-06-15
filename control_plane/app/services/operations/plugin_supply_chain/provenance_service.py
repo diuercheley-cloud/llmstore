@@ -27,7 +27,9 @@ class PluginProvenanceService:
             "replay_safe": payload.get("replay_safe", True),
         }
         provenance_hash = compute_provenance_hash(logical_payload)
-        immutable_hash = sha256_hex({"kind": "plugin_supply_chain_provenance_immutable", "provenance_hash": provenance_hash})
+        immutable_hash = sha256_hex(
+            {"kind": "plugin_supply_chain_provenance_immutable", "provenance_hash": provenance_hash}
+        )
         record = PluginProvenanceRecord(
             id=sha256_hex({"kind": "plugin_supply_chain_provenance_id", **logical_payload}),
             client_id=payload["client_id"],
@@ -63,7 +65,9 @@ class PluginProvenanceService:
             "status": record.provenance_status,
         }
 
-    def revoke_provenance(self, record: PluginProvenanceRecord, reason: str = "manual revoke") -> dict[str, Any]:
+    def revoke_provenance(
+        self, record: PluginProvenanceRecord, reason: str = "manual revoke"
+    ) -> dict[str, Any]:
         record.provenance_status = "revoked"
         return {
             "status": record.provenance_status,

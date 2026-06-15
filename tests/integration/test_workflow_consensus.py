@@ -99,7 +99,9 @@ async def test_consensus_quorum_validation(session):
     )
     peer.execution_hash = fed.execution_hash
 
-    result = await FederatedWorkflowConsensusService().validate_consensus(session, federated_execution_id=fed.id)
+    result = await FederatedWorkflowConsensusService().validate_consensus(
+        session, federated_execution_id=fed.id
+    )
 
     assert result["consensus_status"] == "verified"
     assert result["canonical_hash"] == fed.execution_hash

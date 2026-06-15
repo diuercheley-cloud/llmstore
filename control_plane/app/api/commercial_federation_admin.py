@@ -4,7 +4,6 @@ from __future__ import annotations
 from typing import Any
 
 from app.core.config import get_settings
-from app.services.runtime_dependencies import get_db_session
 from app.services.auth import require_admin
 from app.services.routing.commercial_cluster_registry import list_clusters, register_cluster
 from app.services.routing.commercial_federation import (
@@ -17,6 +16,7 @@ from app.services.routing.commercial_federation import (
     summarize_federated_overview,
     sync_federation_clusters,
 )
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Body, Depends, Header, HTTPException, Query, Response, status
 from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,7 +30,9 @@ def _require_federation_token(x_federation_token: str | None) -> None:
         return
     expected = settings.commercial_federation_shared_token or ""
     if not expected or x_federation_token != expected:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid federation token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid federation token"
+        )
 
 
 @router.get("/clusters", dependencies=[Depends(require_admin)])

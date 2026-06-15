@@ -6,7 +6,9 @@ from pathlib import Path
 SCRIPT_PATH = Path("scripts/validators/validate-security-cleanup-v1.5.4.sh")
 
 
-def _write_report(tmp_path: Path, score: str, critical_failures: int, warn: int = 0, fail: int = 0) -> Path:
+def _write_report(
+    tmp_path: Path, score: str, critical_failures: int, warn: int = 0, fail: int = 0
+) -> Path:
     report = {
         "score": score,
         "totals": {
@@ -34,11 +36,16 @@ def test_validation_script_references_required_commands():
     assert "./scripts/validators/validate-key-files-local.sh" in content
     assert "./scripts/validators/validate-local-permissions.sh" in content
     assert "./scripts/validators/validate-release-artifacts-security.sh" in content
-    assert "./scripts/validators/security-report-local.sh --output-dir artifacts/security-reports" in content
+    assert (
+        "./scripts/validators/security-report-local.sh --output-dir artifacts/security-reports"
+        in content
+    )
 
 
 def test_validation_script_accepts_pass_with_warnings(tmp_path):
-    report_path = _write_report(tmp_path, score="PASS_WITH_WARNINGS", critical_failures=0, warn=2, fail=0)
+    report_path = _write_report(
+        tmp_path, score="PASS_WITH_WARNINGS", critical_failures=0, warn=2, fail=0
+    )
     result = subprocess.run(
         ["bash", str(SCRIPT_PATH)],
         env={
@@ -70,7 +77,9 @@ def test_validation_script_rejects_fail_score(tmp_path):
 
 
 def test_validation_script_rejects_critical_failures(tmp_path):
-    report_path = _write_report(tmp_path, score="PASS_WITH_WARNINGS", critical_failures=1, warn=1, fail=0)
+    report_path = _write_report(
+        tmp_path, score="PASS_WITH_WARNINGS", critical_failures=1, warn=1, fail=0
+    )
     result = subprocess.run(
         ["bash", str(SCRIPT_PATH)],
         env={

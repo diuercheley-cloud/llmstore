@@ -67,8 +67,20 @@ class TestPromptTemplateRenderer:
 
     def test_render_with_default_variables(self, renderer):
         declared = [
-            {"name": "name", "type": "string", "required": True, "default": None, "description": ""},
-            {"name": "greeting", "type": "string", "required": False, "default": "Hello", "description": ""},
+            {
+                "name": "name",
+                "type": "string",
+                "required": True,
+                "default": None,
+                "description": "",
+            },
+            {
+                "name": "greeting",
+                "type": "string",
+                "required": False,
+                "default": "Hello",
+                "description": "",
+            },
         ]
         result = renderer.render(
             "{{ greeting }}, {{ name }}!",
@@ -80,7 +92,13 @@ class TestPromptTemplateRenderer:
 
     def test_missing_required_variable_fails(self, renderer):
         declared = [
-            {"name": "name", "type": "string", "required": True, "default": None, "description": ""},
+            {
+                "name": "name",
+                "type": "string",
+                "required": True,
+                "default": None,
+                "description": "",
+            },
         ]
         with pytest.raises(ValueError, match="Required variable"):
             renderer.render(
@@ -159,7 +177,13 @@ class TestPromptTemplateRenderer:
 
     def test_resolve_instructions_with_declared_vars(self, renderer):
         declared = [
-            {"name": "input", "type": "string", "required": True, "default": None, "description": ""},
+            {
+                "name": "input",
+                "type": "string",
+                "required": True,
+                "default": None,
+                "description": "",
+            },
         ]
         rendered, hashes = renderer.resolve_instructions(
             template_str="User said: {{ input }}",
@@ -420,8 +444,20 @@ class TestPromptTemplatePlaygroundService:
         mock_db.execute.return_value = mock_result
 
         declared = [
-            {"name": "greeting", "type": "string", "required": False, "default": "Hello", "description": ""},
-            {"name": "name", "type": "string", "required": True, "default": None, "description": ""},
+            {
+                "name": "greeting",
+                "type": "string",
+                "required": False,
+                "default": "Hello",
+                "description": "",
+            },
+            {
+                "name": "name",
+                "type": "string",
+                "required": True,
+                "default": None,
+                "description": "",
+            },
         ]
 
         result = await playground_service.render_only(
@@ -497,9 +533,7 @@ class TestTemplateRenderingWithAgentExecutor:
     @patch("app.services.agents.agent_executor.PromptTemplateRenderer")
     @patch("app.services.agents.agent_executor.PromptTemplateRegistryService")
     @pytest.mark.asyncio
-    async def test_template_resolved_in_executor(
-        self, mock_registry_cls, mock_renderer_cls
-    ):
+    async def test_template_resolved_in_executor(self, mock_registry_cls, mock_renderer_cls):
         mock_agent = MagicMock()
         mock_agent.prompt_template_id = uuid.uuid4()
         mock_agent.prompt_template_version_id = uuid.uuid4()

@@ -70,7 +70,9 @@ async def create_mcp_oauth_client(
 
 
 async def list_mcp_oauth_clients(db: AsyncSession, tenant_id: str) -> list[AgentMCPOAuthClient]:
-    result = await db.execute(select(AgentMCPOAuthClient).where(AgentMCPOAuthClient.tenant_id == tenant_id))
+    result = await db.execute(
+        select(AgentMCPOAuthClient).where(AgentMCPOAuthClient.tenant_id == tenant_id)
+    )
     return list(result.scalars().all())
 
 
@@ -101,16 +103,19 @@ async def create_mcp_delegated_grant(
     return grant
 
 
-async def list_mcp_delegated_grants(db: AsyncSession, tenant_id: str) -> list[AgentMCPDelegatedGrant]:
-    result = await db.execute(select(AgentMCPDelegatedGrant).where(AgentMCPDelegatedGrant.tenant_id == tenant_id))
+async def list_mcp_delegated_grants(
+    db: AsyncSession, tenant_id: str
+) -> list[AgentMCPDelegatedGrant]:
+    result = await db.execute(
+        select(AgentMCPDelegatedGrant).where(AgentMCPDelegatedGrant.tenant_id == tenant_id)
+    )
     return list(result.scalars().all())
 
 
 async def delete_mcp_delegated_grant(db: AsyncSession, grant_id: uuid.UUID, tenant_id: str) -> bool:
     result = await db.execute(
         select(AgentMCPDelegatedGrant).where(
-            AgentMCPDelegatedGrant.id == grant_id,
-            AgentMCPDelegatedGrant.tenant_id == tenant_id
+            AgentMCPDelegatedGrant.id == grant_id, AgentMCPDelegatedGrant.tenant_id == tenant_id
         )
     )
     grant = result.scalar_one_or_none()

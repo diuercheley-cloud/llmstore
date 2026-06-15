@@ -100,7 +100,12 @@ def validate_docs() -> list[dict[str, str]]:
     content = DOC_PATH.read_text(encoding="utf-8")
     for fragment in REQUIRED_DOC_FRAGMENTS:
         if fragment not in content:
-            failures.append({"path": str(DOC_PATH.relative_to(REPO_ROOT)), "issue": f"missing fragment: {fragment}"})
+            failures.append(
+                {
+                    "path": str(DOC_PATH.relative_to(REPO_ROOT)),
+                    "issue": f"missing fragment: {fragment}",
+                }
+            )
     return failures
 
 
@@ -114,9 +119,16 @@ def validate_behaviors() -> list[dict[str, str]]:
             continue
         result = function(payload)
         if getattr(result, "severity", None) != "advisory":
-            failures.append({"path": f"{module_name}.{function_name}", "issue": "severity must be advisory"})
+            failures.append(
+                {"path": f"{module_name}.{function_name}", "issue": "severity must be advisory"}
+            )
         if getattr(result, "passed", None) is not True:
-            failures.append({"path": f"{module_name}.{function_name}", "issue": "expected passing sample payload"})
+            failures.append(
+                {
+                    "path": f"{module_name}.{function_name}",
+                    "issue": "expected passing sample payload",
+                }
+            )
     return failures
 
 
@@ -143,4 +155,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

@@ -26,7 +26,9 @@ class DeprecationLifecycleService:
         )
 
     def _validate_replacement(self, contract: Any) -> None:
-        if self._get(contract, "migration_required") and not self._get(contract, "replacement_contract"):
+        if self._get(contract, "migration_required") and not self._get(
+            contract, "replacement_contract"
+        ):
             raise ValueError("replacement_contract is required when migration_required=True")
 
     def _transition(self, contract: Any, status: str) -> dict[str, Any]:

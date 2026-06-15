@@ -2,7 +2,7 @@
 import hashlib
 import hmac
 import json
-from typing import Any, Dict
+from typing import Any
 
 from app.core.config import get_settings
 from app.models.agents.agents import AgentA2ARegistration
@@ -13,9 +13,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 X_A2A_TOKEN_HEADER = APIKeyHeader(name="X-Agent-A2A-Token", auto_error=False)
 
+
 class A2ASecurityService:
     @staticmethod
-    def verify_signature(payload_dict: Dict[str, Any], secret_key: str, signature: str) -> bool:
+    def verify_signature(payload_dict: dict[str, Any], secret_key: str, signature: str) -> bool:
         # Ensure we exclude 'signature' key itself from signature verification
         payload_copy = {k: v for k, v in payload_dict.items() if k != "signature"}
         serialized = json.dumps(payload_copy, sort_keys=True)
@@ -23,7 +24,7 @@ class A2ASecurityService:
         return hmac.compare_digest(expected, signature)
 
     @staticmethod
-    def generate_signature(payload_dict: Dict[str, Any], secret_key: str) -> str:
+    def generate_signature(payload_dict: dict[str, Any], secret_key: str) -> str:
         payload_copy = {k: v for k, v in payload_dict.items() if k != "signature"}
         serialized = json.dumps(payload_copy, sort_keys=True)
         return hmac.new(secret_key.encode(), serialized.encode(), hashlib.sha256).hexdigest()

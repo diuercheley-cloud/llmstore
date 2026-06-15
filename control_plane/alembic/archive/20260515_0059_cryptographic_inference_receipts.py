@@ -45,7 +45,9 @@ def upgrade() -> None:
         sa.Column("timestamp_token", sa.Text(), nullable=True),
         sa.Column("signed_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("verified_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("verification_status", sa.String(length=32), nullable=False, server_default="pending"),
+        sa.Column(
+            "verification_status", sa.String(length=32), nullable=False, server_default="pending"
+        ),
         sa.Column("tamper_reason", sa.Text(), nullable=True),
         sa.Column("metadata_json", sa.JSON(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),

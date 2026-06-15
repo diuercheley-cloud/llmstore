@@ -18,7 +18,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-admin_router = APIRouter(prefix="/admin/agents/knowledge-graph", tags=["agent-knowledge-graph-admin"])
+admin_router = APIRouter(
+    prefix="/admin/agents/knowledge-graph", tags=["agent-knowledge-graph-admin"]
+)
 public_router = APIRouter(prefix="/agents", tags=["agent-knowledge-graph"])
 
 
@@ -45,12 +47,16 @@ async def extract_knowledge(
 
     store = GraphStore(db)
     source_id = await store.create_source(req.tenant_id, req.source_uri, req.text)
-    entities, relations = graph_extractor.extract_entities_and_relations(req.text, tenant_id=req.tenant_id, source_id=str(source_id))
+    entities, relations = graph_extractor.extract_entities_and_relations(
+        req.text, tenant_id=req.tenant_id, source_id=str(source_id)
+    )
     created_entities: list[Entity] = []
     entity_id_map: dict[str, str] = {}
     created_relations: list[Relation] = []
     for entity in entities:
-        persisted = await store.add_entity(req.tenant_id, entity.name, entity.type, source_id=source_id)
+        persisted = await store.add_entity(
+            req.tenant_id, entity.name, entity.type, source_id=source_id
+        )
         created_entities.append(persisted)
         entity_id_map[entity.id] = persisted.id
     for relation in relations:

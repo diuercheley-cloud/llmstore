@@ -17,18 +17,18 @@ class TestAdapterRegistryAllowlistBlocklist:
             manifest_hash="hash_abc",
             registry_hash="rhash",
             signature="sig",
-            immutable_hash="imm_h"
+            immutable_hash="imm_h",
         )
-        
+
         service = AdapterRegistryListService(session)
-        
+
         assert await service.is_allowed(entry) is False
         assert await service.is_blocked(entry) is False
-        
+
         await service.add_to_allowlist(entry, reason="trusted")
         assert await service.is_allowed(entry) is True
         assert "explicitly allowed" in await service.explain_list_status(entry)
-        
+
         await service.add_to_blocklist(entry, reason="malicious")
         assert await service.is_blocked(entry) is True
         assert "explicitly blocked" in await service.explain_list_status(entry)

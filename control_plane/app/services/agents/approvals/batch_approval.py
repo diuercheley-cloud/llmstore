@@ -1,21 +1,28 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import List
 
 from app.services.agents.human_approval import AdminRole, approve_approval_request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class BatchApprovalService:
     """
     Handles batch approval of low-risk HITL requests.
     """
+
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def approve_batch(self, request_ids: List[uuid.UUID], decided_by: str, caller_role: AdminRole, reason: str = "Batch approval"):
+    async def approve_batch(
+        self,
+        request_ids: list[uuid.UUID],
+        decided_by: str,
+        caller_role: AdminRole,
+        reason: str = "Batch approval",
+    ):
         """
         Approves multiple requests at once.
         Only allows batching if requests are batch-eligible (low risk).
@@ -29,5 +36,5 @@ class BatchApprovalService:
             except Exception as e:
                 logger.error(f"Failed to approve {rid} in batch: {e}")
                 results.append({"id": str(rid), "status": "failed", "error": str(e)})
-        
+
         return results

@@ -5,7 +5,7 @@ import os
 import re
 import subprocess
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +24,9 @@ _ALLOWED_DOCKER_SERVICES = {
     "data-plane-mock",
     "data-plane-ollama",
 }
-_QUANTIZATION_RE = re.compile(r"(Q\d(?:_[0-9A-Z]+)+|IQ\d(?:_[0-9A-Z]+)+|FP16|F16|BF16)", re.IGNORECASE)
+_QUANTIZATION_RE = re.compile(
+    r"(Q\d(?:_[0-9A-Z]+)+|IQ\d(?:_[0-9A-Z]+)+|FP16|F16|BF16)", re.IGNORECASE
+)
 
 
 @dataclass(slots=True)
@@ -71,7 +73,9 @@ def resolve_models_dir() -> Path:
             return candidate
     if configured:
         configured_path = Path(configured)
-        return configured_path if configured_path.is_absolute() else (project_root() / configured_path)
+        return (
+            configured_path if configured_path.is_absolute() else (project_root() / configured_path)
+        )
     return Path("/models")
 
 
@@ -113,7 +117,9 @@ def reasoning_defaults_for_model(model: ModelRegistry) -> dict[str, bool | None]
     include_reasoning_default = metadata.get("include_reasoning_default")
     return {
         "allow_reasoning": allow_reasoning if isinstance(allow_reasoning, bool) else None,
-        "include_reasoning_default": include_reasoning_default if isinstance(include_reasoning_default, bool) else None,
+        "include_reasoning_default": include_reasoning_default
+        if isinstance(include_reasoning_default, bool)
+        else None,
     }
 
 
@@ -136,19 +142,22 @@ def prompt_template_for_payload(
 ) -> str | None:
     if prompt_template and prompt_template != "auto":
         return prompt_template
-    return detect_prompt_template(
-        model_id=model_id,
-        model_file=model_file,
-        model_alias=model_alias,
-        metadata_json=metadata_json,
-    ) or "auto"
+    return (
+        detect_prompt_template(
+            model_id=model_id,
+            model_file=model_file,
+            model_alias=model_alias,
+            metadata_json=metadata_json,
+        )
+        or "auto"
+    )
 
 
 def sanitize_model_filename(filename: str, *, provider: str) -> str:
     value = (filename or "").strip()
     if not value:
         raise ValueError("model file is required")
-    
+
     # Remote/API-based providers use identifiers that might contain slashes
     if provider in ["openai_compatible", "ollama", "openai", "anthropic", "deepseek", "vllm"]:
         return value
@@ -168,7 +177,11 @@ def ensure_model_file_exists(filename: str, *, provider: str) -> Path:
     normalized = sanitize_model_filename(filename, provider=provider)
     models_dir = resolve_models_dir()
     candidate = (models_dir / normalized).resolve()
-    if models_dir.exists() and models_dir.resolve() not in candidate.parents and candidate != models_dir.resolve():
+    if (
+        models_dir.exists()
+        and models_dir.resolve() not in candidate.parents
+        and candidate != models_dir.resolve()
+    ):
         raise ValueError("model file must stay inside /models")
     if not candidate.exists() or not candidate.is_file():
         raise FileNotFoundError(f"model file not found in {models_dir}")
@@ -184,13 +197,9 @@ async def list_model_files(session: AsyncSession) -> list[dict[str, Any]]:
     models_dir = resolve_models_dir()
     if not models_dir.exists() or not models_dir.is_dir():
         return []
-    rows = (
-        await session.execute(select(ModelRegistry.model_file, ModelRegistry.status))
-    ).all()
+    rows = (await session.execute(select(ModelRegistry.model_file, ModelRegistry.status))).all()
     registered_files = {
-        str(model_file): str(status or "")
-        for model_file, status in rows
-        if model_file
+        str(model_file): str(status or "") for model_file, status in rows if model_file
     }
     files = []
     for entry in sorted(models_dir.iterdir(), key=lambda item: item.name.lower()):
@@ -208,7 +217,7 @@ async def list_model_files(session: AsyncSession) -> list[dict[str, Any]]:
                 "filename": entry.name,
                 "relative_path": entry.name,
                 "size_bytes": stat.st_size,
-                "modified_at": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
+                "modified_at": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
                 "detected_architecture": architecture,
                 "quantization": detect_quantization(entry.name),
                 "already_registered": entry.name in registered_files,
@@ -244,7 +253,9 @@ def backend_runtime_capabilities(backend: InferenceBackend) -> dict[str, Any]:
     }
 
 
-def run_backend_docker_command(backend: InferenceBackend, *compose_args: str, timeout_seconds: int = 30) -> DockerCommandResult:
+def run_backend_docker_command(
+    backend: InferenceBackend, *compose_args: str, timeout_seconds: int = 30
+) -> DockerCommandResult:
     capabilities = backend_runtime_capabilities(backend)
     if not capabilities["docker_actions_allowed"]:
         return DockerCommandResult(
@@ -345,7 +356,9 @@ def backend_container_snapshot(backend: InferenceBackend) -> dict[str, Any]:
         snapshot["detail"] = "service not present in docker compose ps"
         return snapshot
     snapshot["container_found"] = True
-    snapshot["status"] = str(service_row.get("State") or service_row.get("Status") or "unknown").lower()
+    snapshot["status"] = str(
+        service_row.get("State") or service_row.get("Status") or "unknown"
+    ).lower()
     snapshot["raw"] = service_row
     return snapshot
 
@@ -386,10 +399,14 @@ async def sync_allowed_plans(
 
 async def remove_model_routes(session: AsyncSession, model: ModelRegistry) -> int:
     rows = (
-        await session.execute(
-            select(ModelBackendRoute).where(ModelBackendRoute.model_registry_id == model.id)
+        (
+            await session.execute(
+                select(ModelBackendRoute).where(ModelBackendRoute.model_registry_id == model.id)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     for row in rows:
         await session.delete(row)
     return len(rows)

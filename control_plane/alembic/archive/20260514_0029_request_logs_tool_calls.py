@@ -15,7 +15,10 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column("request_logs", sa.Column("tool_call_count", sa.Integer(), nullable=False, server_default="0"))
+    op.add_column(
+        "request_logs",
+        sa.Column("tool_call_count", sa.Integer(), nullable=False, server_default="0"),
+    )
     op.add_column("request_logs", sa.Column("tool_calls_json", sa.Text(), nullable=True))
 
 

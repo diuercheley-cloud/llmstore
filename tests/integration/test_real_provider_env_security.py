@@ -52,9 +52,8 @@ def _scan_file_for_secrets(filepath: Path) -> list:
 def test_no_real_keys_in_env_example():
     env_example = PROJECT_ROOT / ".env.example"
     findings = _scan_file_for_secrets(env_example)
-    assert not findings, (
-        "Real-looking keys in .env.example:\n" +
-        "\n".join(f"  {f[0]}:{f[1]} {f[2]}" for f in findings)
+    assert not findings, "Real-looking keys in .env.example:\n" + "\n".join(
+        f"  {f[0]}:{f[1]} {f[2]}" for f in findings
     )
 
 
@@ -82,9 +81,8 @@ def test_no_real_keys_in_versioned_files():
             if f.name.startswith(".") and f.suffix == "":
                 continue
             findings.extend(_scan_file_for_secrets(f))
-    assert not findings, (
-        "Real-looking keys in versioned files:\n" +
-        "\n".join(f"  {f[0]}:{f[1]} {f[2]}" for f in findings[:20])
+    assert not findings, "Real-looking keys in versioned files:\n" + "\n".join(
+        f"  {f[0]}:{f[1]} {f[2]}" for f in findings[:20]
     )
 
 
@@ -112,13 +110,14 @@ def test_env_example_keys_are_empty():
     for line in content.split("\n"):
         for var in key_vars:
             if line.startswith(var):
-                value = line[len(var):].strip()
+                value = line[len(var) :].strip()
                 assert value == "", f"{var} in .env.example must be empty, got: '{value}'"
 
 
 def test_mask_provider_key_masks_middle():
     from scripts.lib.real_provider_env import mask_provider_key
-    key = "sk-" "proj-abcdefghijklmnopqrstuvwxyz123456"
+
+    key = "sk-proj-abcdefghijklmnopqrstuvwxyz123456"
     masked = mask_provider_key(key)
     assert masked.startswith("sk-p")
     assert masked.endswith("3456")
@@ -128,9 +127,11 @@ def test_mask_provider_key_masks_middle():
 
 def test_mask_provider_key_short():
     from scripts.lib.real_provider_env import mask_provider_key
+
     assert mask_provider_key("abc") == "********"
 
 
 def test_mask_provider_key_empty():
     from scripts.lib.real_provider_env import mask_provider_key
+
     assert mask_provider_key("") == "********"

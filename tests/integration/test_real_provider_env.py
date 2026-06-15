@@ -84,7 +84,11 @@ def test_optional_vars():
 
 
 def test_provider_opt_in_safety():
-    for var in ("OPENAI_PROVIDER_ENABLED", "DEEPSEEK_PROVIDER_ENABLED", "ANTHROPIC_PROVIDER_ENABLED"):
+    for var in (
+        "OPENAI_PROVIDER_ENABLED",
+        "DEEPSEEK_PROVIDER_ENABLED",
+        "ANTHROPIC_PROVIDER_ENABLED",
+    ):
         val = os.environ.get(var, "false")
         assert val.lower() in ("true", "false", "1", "0"), f"{var} must be boolean"
 

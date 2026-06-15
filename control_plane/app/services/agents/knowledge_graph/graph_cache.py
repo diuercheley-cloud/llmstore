@@ -11,6 +11,7 @@ Design:
 - Max-size cap per tenant to bound memory usage
 - hit/miss counters for observability
 """
+
 from __future__ import annotations
 
 import threading
@@ -31,6 +32,7 @@ class _CacheEntry:
 @dataclass
 class _TenantCache:
     """LRU store per tenant with TTL and max-size bounds."""
+
     max_size: int
     ttl_seconds: float
     _store: OrderedDict = field(default_factory=OrderedDict)
@@ -91,10 +93,10 @@ class AdjacencyCache:
     pollution is impossible at the data layer.
     """
 
-    _instance: "AdjacencyCache | None" = None
+    _instance: AdjacencyCache | None = None
     _lock: threading.Lock = threading.Lock()
 
-    def __new__(cls) -> "AdjacencyCache":
+    def __new__(cls) -> AdjacencyCache:
         with cls._lock:
             if cls._instance is None:
                 cls._instance = super().__new__(cls)

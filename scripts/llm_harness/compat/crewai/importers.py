@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any
 
 from ..base import BaseImporter, ImportResult
 from .adapters import Agent, Crew, Task
@@ -9,19 +9,37 @@ logger = logging.getLogger(__name__)
 
 MAX_CODE_LENGTH = 100_000
 BLOCKED_PATTERNS = [
-    "__import__", "os.", "subprocess", "sys.", "import ",
-    "open(", "eval(", "exec(", "__builtins__", "globals()",
-    "locals()", "getattr", "setattr", "delattr", "compile",
-    ".write(", ".read(", "socket", "ctypes", "threading",
-    "multiprocessing", "signal", "shutil",
+    "__import__",
+    "os.",
+    "subprocess",
+    "sys.",
+    "import ",
+    "open(",
+    "eval(",
+    "exec(",
+    "__builtins__",
+    "globals()",
+    "locals()",
+    "getattr",
+    "setattr",
+    "delattr",
+    "compile",
+    ".write(",
+    ".read(",
+    "socket",
+    "ctypes",
+    "threading",
+    "multiprocessing",
+    "signal",
+    "shutil",
 ]
 
 
 class CrewAIImporter(BaseImporter[Crew]):
-    def __init__(self, extra_globals: Optional[Dict[str, Any]] = None):
+    def __init__(self, extra_globals: dict[str, Any] | None = None):
         self.extra_globals = extra_globals or {}
 
-    def _build_globals(self) -> Dict[str, Any]:
+    def _build_globals(self) -> dict[str, Any]:
         return {
             "Agent": Agent,
             "Task": Task,
@@ -42,7 +60,7 @@ class CrewAIImporter(BaseImporter[Crew]):
         target_variable: str = "crew",
     ) -> ImportResult[Crew]:
         self._validate_source(source_code)
-        local_vars: Dict[str, Any] = {}
+        local_vars: dict[str, Any] = {}
         global_vars = self._build_globals()
 
         logger.info("Executing CrewAI source code (len=%d)", len(source_code))
@@ -59,7 +77,9 @@ class CrewAIImporter(BaseImporter[Crew]):
 
         for val in local_vars.values():
             if isinstance(val, Crew):
-                warnings = [f"Target variable '{target_variable}' not found; using first Crew instance."]
+                warnings = [
+                    f"Target variable '{target_variable}' not found; using first Crew instance."
+                ]
                 return ImportResult(success=True, data=val, warnings=warnings)
 
         return ImportResult(

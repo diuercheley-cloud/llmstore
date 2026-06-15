@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Any
 
 from app.models.commercial.commercial_operations_center import (
@@ -20,7 +20,9 @@ from .trust_graph import TrustGraphService
 
 
 def _canonical_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+    )
 
 
 def _sha256(payload: Any) -> str:
@@ -34,7 +36,9 @@ class TrustSnapshottingService:
         self.trust_graph_service = TrustGraphService()
         self.topology_service = CryptographicTopologyService()
 
-    async def _get_latest_snapshot(self, db: AsyncSession) -> CommercialCryptographicTrustSnapshot | None:
+    async def _get_latest_snapshot(
+        self, db: AsyncSession
+    ) -> CommercialCryptographicTrustSnapshot | None:
         try:
             return (
                 await db.execute(
@@ -106,7 +110,9 @@ class TrustSnapshottingService:
                 "graph_hash": graph["graph_hash"],
                 "merkle_root": graph["merkle_root"],
                 "node_count": graph["summary"]["node_count"],
-                "previous_snapshot_hash": latest_snapshot.immutable_hash if latest_snapshot else None,
+                "previous_snapshot_hash": latest_snapshot.immutable_hash
+                if latest_snapshot
+                else None,
                 "tenant_id": tenant_id,
                 "topology": topology,
             },

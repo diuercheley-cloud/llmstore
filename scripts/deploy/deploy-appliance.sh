@@ -109,7 +109,7 @@ done
 
 # 2. Run migrations
 log_report "### Database Migrations"
-dc run --rm control-plane alembic upgrade head
+dc run --rm control-plane alembic upgrade heads
 log_report "- [x] Migrations applied successfully"
 
 # 3. Start stack

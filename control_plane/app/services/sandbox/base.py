@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -16,28 +17,28 @@ class SandboxPolicy(BaseModel):
     required_level: SandboxLevel = SandboxLevel.NONE
     allow_network: bool = False
     allow_filesystem: bool = False
-    read_only_paths: List[str] = Field(default_factory=list)
-    write_paths: List[str] = Field(default_factory=list)
+    read_only_paths: list[str] = Field(default_factory=list)
+    write_paths: list[str] = Field(default_factory=list)
     timeout_seconds: int = 30
     memory_limit_mb: int = 128
     cpu_limit_cores: float = 1.0
 
 
 class SandboxExecutionRequest(BaseModel):
-    command: List[str]
-    env: Dict[str, str] = Field(default_factory=dict)
-    input_data: Optional[bytes] = None
+    command: list[str]
+    env: dict[str, str] = Field(default_factory=dict)
+    input_data: bytes | None = None
     policy: SandboxPolicy
 
 
 class SandboxExecutionResult(BaseModel):
     status: str  # success, failure, timeout, blocked
-    reason: Optional[str] = None
+    reason: str | None = None
     exit_code: int = 0
     stdout: bytes = b""
     stderr: bytes = b""
     execution_time: float = 0.0
-    resource_usage: Dict[str, Any] = Field(default_factory=dict)
+    resource_usage: dict[str, Any] = Field(default_factory=dict)
     provider_name: str
 
 

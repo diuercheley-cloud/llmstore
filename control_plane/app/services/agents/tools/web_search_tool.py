@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Dict
+from typing import Any
 
 from app.db.session import SessionLocal
 from app.services.agents.tool_adapter_contract import ToolAdapterContract
@@ -20,7 +20,7 @@ class WebSearchToolAdapter(ToolAdapterContract):
         return "1.0.0"
 
     @property
-    def input_schema(self) -> Dict[str, Any]:
+    def input_schema(self) -> dict[str, Any]:
         return {
             "type": "object",
             "properties": {
@@ -40,7 +40,7 @@ class WebSearchToolAdapter(ToolAdapterContract):
         }
 
     @property
-    def output_schema(self) -> Dict[str, Any]:
+    def output_schema(self) -> dict[str, Any]:
         return {
             "type": "object",
             "properties": {
@@ -69,14 +69,14 @@ class WebSearchToolAdapter(ToolAdapterContract):
     def side_effect_level(self) -> str:
         return "external_read"
 
-    def to_registry_dict(self) -> Dict[str, Any]:
+    def to_registry_dict(self) -> dict[str, Any]:
         data = super().to_registry_dict()
         data["risk_level"] = "medium"
         data["category"] = "external_api"
         data["data_boundary"] = "internet"
         return data
 
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    async def execute(self, **kwargs) -> dict[str, Any]:
         query = kwargs["query"]
         limit = int(kwargs.get("limit", 5))
         provider_name = kwargs.get("provider", "mock")
@@ -101,15 +101,13 @@ class WebSearchToolAdapter(ToolAdapterContract):
 
     async def _execute_with_db(
         self, db, query, limit, provider_name, tenant_id, agent_id, run_id
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         policy_service = SearchPolicyService()
         cache_service = SearchCacheService()
         audit_service = SearchAuditService()
 
         # 1. Enforce query policy limits/checks
-        await policy_service.check_search_allowed(
-            db, tenant_id, agent_id, query
-        )
+        await policy_service.check_search_allowed(db, tenant_id, agent_id, query)
 
         # 2. Check Cache
         query_hash = audit_service.get_query_hash(query)
@@ -156,10 +154,10 @@ class WebSearchToolAdapter(ToolAdapterContract):
             "result_ids": [str(r.get("id", "")) for r in results],
         }
 
-    async def dry_run(self, **kwargs) -> Dict[str, Any]:
+    async def dry_run(self, **kwargs) -> dict[str, Any]:
         return await self.execute(**kwargs)
 
-    async def rollback(self, invocation_id: str, **kwargs) -> Dict[str, Any]:
+    async def rollback(self, invocation_id: str, **kwargs) -> dict[str, Any]:
         return {
             "status": "success",
             "message": "Read-only search tools do not require rollback.",

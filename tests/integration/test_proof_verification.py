@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
@@ -26,10 +26,13 @@ async def test_admin_timelines_list_requires_auth(admin_client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_admin_timelines_build_requires_auth(admin_client: AsyncClient):
-    res = await admin_client.post("/admin/inference/proofs/timelines/build", json={
-        "timeline_type": "inference_receipts",
-        "window_minutes": 60,
-    })
+    res = await admin_client.post(
+        "/admin/inference/proofs/timelines/build",
+        json={
+            "timeline_type": "inference_receipts",
+            "window_minutes": 60,
+        },
+    )
     assert res.status_code in (401, 403)
 
 
@@ -102,13 +105,13 @@ async def test_timeline_seal_prevents_modification(session):
     timeline = CommercialMerkleTimeline(
         id=uuid4(),
         timeline_type="inference_receipts",
-        period_start=datetime.now(timezone.utc),
-        period_end=datetime.now(timezone.utc),
+        period_start=datetime.now(UTC),
+        period_end=datetime.now(UTC),
         leaf_count=2,
         merkle_root=hashlib.sha256(b"root").hexdigest(),
         timeline_hash=hashlib.sha256(b"root").hexdigest(),
         status="sealed",
-        sealed_at=datetime.now(timezone.utc),
+        sealed_at=datetime.now(UTC),
     )
     session.add(timeline)
     await session.commit()
@@ -125,14 +128,14 @@ async def test_timeline_chain_detects_tamper(session):
     timeline = CommercialMerkleTimeline(
         id=uuid4(),
         timeline_type="inference_receipts",
-        period_start=datetime.now(timezone.utc),
-        period_end=datetime.now(timezone.utc),
+        period_start=datetime.now(UTC),
+        period_end=datetime.now(UTC),
         leaf_count=1,
         merkle_root=hashlib.sha256(b"root").hexdigest(),
         previous_timeline_root=prev_root,
         timeline_hash=hashlib.sha256(b"wrong").hexdigest(),  # intentionally wrong
         status="sealed",
-        sealed_at=datetime.now(timezone.utc),
+        sealed_at=datetime.now(UTC),
     )
     session.add(timeline)
     await session.commit()

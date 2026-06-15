@@ -9,12 +9,12 @@ from app.core.security import generate_api_key, hash_secret, short_prefix
 from app.core.time import utc_now
 from app.db.base import Base
 from app.db.session import get_db_session, get_redis
-from app.models.core.api_key import ApiKey
 from app.models.billing.billing_invoice import BillingInvoice
-from app.models.core.client import Client
 from app.models.billing.request_financial import RequestFinancial
-from app.models.core.request_log import RequestLog
 from app.models.commercial.sales_lead import SalesLead
+from app.models.core.api_key import ApiKey
+from app.models.core.client import Client
+from app.models.core.request_log import RequestLog
 from app.services.billing.wallet_service import credit_manual
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -176,11 +176,17 @@ async def test_portal_usage_wallet_invoices_examples_are_isolated_and_sanitized(
             due_at=now + timedelta(days=3),
         )
         session.add_all([invoice_a, invoice_b])
-        await credit_manual(session, client_a.id, Decimal("50.00"), reason="portal seed", created_by="test")
-        await credit_manual(session, client_b.id, Decimal("10.00"), reason="portal other", created_by="test")
+        await credit_manual(
+            session, client_a.id, Decimal("50.00"), reason="portal seed", created_by="test"
+        )
+        await credit_manual(
+            session, client_b.id, Decimal("10.00"), reason="portal other", created_by="test"
+        )
         await session.commit()
 
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         client.headers = {"Authorization": f"Bearer {key_a}"}
 
         usage_resp = await client.get("/portal/usage")
@@ -240,7 +246,9 @@ async def test_portal_api_key_lifecycle_and_wallet_recharge_request(portal_app):
     async with session_local() as session:
         client_obj, api_key = await _create_client_with_key(session, "portal-lifecycle")
 
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         client.headers = {"Authorization": f"Bearer {api_key}"}
 
         listed = await client.get("/portal/api-keys")
@@ -264,7 +272,9 @@ async def test_portal_api_key_lifecycle_and_wallet_recharge_request(portal_app):
         revoked = await client.delete(f"/portal/api-keys/{new_key_id}")
         assert revoked.status_code == 200
 
-        revoked_probe = await client.get("/portal/me", headers={"Authorization": f"Bearer {new_key}"})
+        revoked_probe = await client.get(
+            "/portal/me", headers={"Authorization": f"Bearer {new_key}"}
+        )
         assert revoked_probe.status_code == 401
 
         recharge = await client.post(
@@ -276,7 +286,15 @@ async def test_portal_api_key_lifecycle_and_wallet_recharge_request(portal_app):
         assert payload["status"] == "created"
 
     async with session_local() as session:
-        leads = (await session.execute(select(SalesLead).where(SalesLead.source == "portal_wallet_recharge"))).scalars().all()
+        leads = (
+            (
+                await session.execute(
+                    select(SalesLead).where(SalesLead.source == "portal_wallet_recharge")
+                )
+            )
+            .scalars()
+            .all()
+        )
         assert len(leads) == 1
         assert leads[0].company_name == "portal-lifecycle"
         assert "125.5" in (leads[0].notes or "")

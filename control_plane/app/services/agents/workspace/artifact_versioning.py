@@ -1,10 +1,14 @@
 import hashlib
 import re
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.core.time import utc_now
-from app.models.agents.agent_workspace import AgentArtifactEvent, AgentArtifactVersion, AgentSharedArtifact
+from app.models.agents.agent_workspace import (
+    AgentArtifactEvent,
+    AgentArtifactVersion,
+    AgentSharedArtifact,
+)
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -14,31 +18,31 @@ class ArtifactVersioningManager:
     @staticmethod
     def calculate_hash(content: str) -> str:
         """Helper to calculate SHA-256 hash of the content to ensure integrity."""
-        return hashlib.sha256(content.encode('utf-8')).hexdigest()
+        return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
     @staticmethod
     def sanitize_content(content: str, artifact_type: str) -> str:
         """Sanitizes sensitive information from content before export (e.g. API keys, secrets)."""
         # Match typical API Keys/Secrets, OpenAI keys, password fields, etc.
         sanitized = content
-        
+
         # 1. Mask OpenAI API keys
-        sanitized = re.sub(r'sk-[a-zA-Z0-9]{32,}', 'sk-***[REDACTED_API_KEY]***', sanitized)
-        
+        sanitized = re.sub(r"sk-[a-zA-Z0-9]{32,}", "sk-***[REDACTED_API_KEY]***", sanitized)
+
         # 2. Mask JSON-like key-value pairs (quoted keys)
         sanitized = re.sub(
             r'(?i)"(api_key|apikey|secret|password|passwd|token|private_key)"\s*:\s*"[^"]+"',
             r'"\1": "***[REDACTED_SECRET]***"',
-            sanitized
+            sanitized,
         )
-        
+
         # 3. Mask unquoted config/env key-value pairs (excluding "token" to avoid text sentence conflicts)
         sanitized = re.sub(
             r'(?i)\b(api_key|apikey|secret|password|passwd|private_key)\s*[:=]\s*["\']([^"\']+)["\']',
             r'\1: "***[REDACTED_SECRET]***"',
-            sanitized
+            sanitized,
         )
-            
+
         return sanitized
 
     @staticmethod
@@ -47,15 +51,17 @@ class ArtifactVersioningManager:
         artifact: AgentSharedArtifact,
         content: str,
         creator_id: str,
-        creator_type: str, # human|agent
-        run_id: Optional[uuid.UUID] = None,
-        step_id: Optional[uuid.UUID] = None,
-        change_summary: Optional[str] = None,
-        version_metadata: Optional[Dict[str, Any]] = None
+        creator_type: str,  # human|agent
+        run_id: uuid.UUID | None = None,
+        step_id: uuid.UUID | None = None,
+        change_summary: str | None = None,
+        version_metadata: dict[str, Any] | None = None,
     ) -> AgentArtifactVersion:
         """Creates a new immutable version of the artifact, updating the artifact's current version pointers."""
         # Calculate new version number
-        stmt = select(func.max(AgentArtifactVersion.version_number)).where(AgentArtifactVersion.artifact_id == artifact.id)
+        stmt = select(func.max(AgentArtifactVersion.version_number)).where(
+            AgentArtifactVersion.artifact_id == artifact.id
+        )
         result = await db.execute(stmt)
         max_version = result.scalar() or 0
         new_version_number = max_version + 1
@@ -77,10 +83,10 @@ class ArtifactVersioningManager:
             step_id=step_id,
             change_summary=change_summary,
             version_metadata=version_metadata,
-            created_at=utc_now()
+            created_at=utc_now(),
         )
         db.add(version)
-        await db.flush() # Populate version.id
+        await db.flush()  # Populate version.id
 
         # Update current version in the artifact
         artifact.current_version_id = version.id
@@ -98,7 +104,7 @@ class ArtifactVersioningManager:
                 "run_id": str(run_id) if run_id else None,
                 "step_id": str(step_id) if step_id else None,
             },
-            created_at=utc_now()
+            created_at=utc_now(),
         )
         db.add(event)
 

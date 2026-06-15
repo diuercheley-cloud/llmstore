@@ -1,39 +1,41 @@
 import json
-import pytest
-import pytest_asyncio
 from pathlib import Path
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-import httpx
 
 import app.db.session
+import httpx
+import pytest
+import pytest_asyncio
 from app.db.base import Base
+from app.main import app as fastapi_app
 from app.models.agents.immutable_audit import ImmutableAuditLog
 from app.services.security.immutable_audit import ImmutableAuditStore
-from app.main import app as fastapi_app
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 TEST_DB_FILE = Path("/tmp/test-immutable-audit.db")
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def test_db():
     db_url = f"sqlite+aiosqlite:///{TEST_DB_FILE}"
     engine = create_async_engine(db_url, pool_pre_ping=True)
     session_factory = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-    
+
     app.db.session.engine = engine
     app.db.session.SessionLocal = session_factory
-    
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     yield session_factory
-    
+
     await engine.dispose()
     if TEST_DB_FILE.exists():
         try:
             TEST_DB_FILE.unlink()
         except Exception:
             pass
+
 
 @pytest.mark.asyncio
 async def test_immutable_audit_store_hashing_and_signing(test_db):
@@ -45,7 +47,7 @@ async def test_immutable_audit_store_hashing_and_signing(test_db):
             action="create_agent",
             actor="admin@company.com",
             payload={"name": "Assistant", "model": "gpt-4"},
-            tenant_id="t1"
+            tenant_id="t1",
         )
         assert entry1.previous_hash is None
         assert entry1.hash is not None
@@ -57,7 +59,7 @@ async def test_immutable_audit_store_hashing_and_signing(test_db):
             action="update_policy",
             actor="ops@company.com",
             payload={"policy_id": "policy-01", "rules": ["no_shell"]},
-            tenant_id="t1"
+            tenant_id="t1",
         )
         assert entry2.previous_hash == entry1.hash
         assert entry2.hash is not None
@@ -73,6 +75,7 @@ async def test_immutable_audit_store_hashing_and_signing(test_db):
         assert len(exported) == 2
         assert exported[0]["action"] == "create_agent"
         assert exported[1]["previous_hash"] == exported[0]["hash"]
+
 
 @pytest.mark.asyncio
 async def test_immutable_audit_store_tamper_detection(test_db):
@@ -98,17 +101,20 @@ async def test_immutable_audit_store_tamper_detection(test_db):
         assert failed_id == entry2.id
         assert "Hash mismatch" in reason
 
+
 @pytest.mark.asyncio
 async def test_api_audit_verify_endpoint(test_db):
     session_factory = test_db
-    
+
     # Pre-populate some logs
     async with session_factory() as db:
         await ImmutableAuditStore.write_entry(db, "action_a", "system", {"status": "ok"}, "t1")
         await ImmutableAuditStore.write_entry(db, "action_b", "system", {"status": "error"}, "t1")
 
     # Use HTTP client to test verify endpoint
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=fastapi_app), base_url="http://test") as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=fastapi_app), base_url="http://test"
+    ) as client:
         # Test verify
         response = await client.post("/api/audit/verify")
         assert response.status_code == 200

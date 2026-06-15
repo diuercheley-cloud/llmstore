@@ -66,13 +66,18 @@ def validate_contract_classes() -> list[dict[str, str]]:
         module = importlib.import_module(f"app.domains.{domain}.contracts")
         contract = getattr(module, class_name, None)
         if contract is None:
-            failures.append({"path": f"app.domains.{domain}.contracts", "issue": f"missing class {class_name}"})
+            failures.append(
+                {"path": f"app.domains.{domain}.contracts", "issue": f"missing class {class_name}"}
+            )
             continue
         for field_name in REQUIRED_FIELDS:
             value = getattr(contract, field_name, None)
             if not value:
                 failures.append(
-                    {"path": f"app.domains.{domain}.contracts.{class_name}", "issue": f"missing field {field_name}"}
+                    {
+                        "path": f"app.domains.{domain}.contracts.{class_name}",
+                        "issue": f"missing field {field_name}",
+                    }
                 )
                 continue
             if not isinstance(value, tuple):
@@ -100,7 +105,12 @@ def validate_documentation() -> list[dict[str, str]]:
     content = DOC_PATH.read_text(encoding="utf-8")
     for fragment in REQUIRED_DOC_FRAGMENTS:
         if fragment not in content:
-            failures.append({"path": str(DOC_PATH.relative_to(REPO_ROOT)), "issue": f"missing fragment: {fragment}"})
+            failures.append(
+                {
+                    "path": str(DOC_PATH.relative_to(REPO_ROOT)),
+                    "issue": f"missing fragment: {fragment}",
+                }
+            )
     return failures
 
 

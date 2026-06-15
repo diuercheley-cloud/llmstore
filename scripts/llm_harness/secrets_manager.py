@@ -1,6 +1,5 @@
 import logging
 import os
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +28,7 @@ class Secret:
         return f"Secret(name='{self._name}')"
 
 
-def get_secret(name: str, default: Optional[str] = None) -> Optional[Secret]:
+def get_secret(name: str, default: str | None = None) -> Secret | None:
     value = os.environ.get(name)
     if value is not None:
         return Secret(value, name=name)

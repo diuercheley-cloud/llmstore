@@ -1,7 +1,6 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import Optional
 
 from app.models.agents.prompts import PromptTemplateVersion
 from app.services.prompts.prompt_template_validator import PromptTemplateValidator
@@ -24,10 +23,8 @@ class PromptTemplateVersioningService:
         self.db = db
         self.validator = PromptTemplateValidator()
 
-    async def get_version(self, version_id: uuid.UUID) -> Optional[PromptTemplateVersion]:
-        stmt = select(PromptTemplateVersion).where(
-            PromptTemplateVersion.id == version_id
-        )
+    async def get_version(self, version_id: uuid.UUID) -> PromptTemplateVersion | None:
+        stmt = select(PromptTemplateVersion).where(PromptTemplateVersion.id == version_id)
         res = await self.db.execute(stmt)
         return res.scalar_one_or_none()
 
@@ -36,19 +33,13 @@ class PromptTemplateVersioningService:
         if not version:
             return False
 
-        validation = self.validator.validate_version_promotion(
-            version, "staging"
-        )
+        validation = self.validator.validate_version_promotion(version, "staging")
         if not validation.valid:
-            logger.warning(
-                f"Promotion to staging blocked for {version_id}: {validation.errors}"
-            )
+            logger.warning(f"Promotion to staging blocked for {version_id}: {validation.errors}")
             return False
 
         if version.status == "production":
-            raise VersionAlreadyPromotedError(
-                "Cannot demote a production version to staging"
-            )
+            raise VersionAlreadyPromotedError("Cannot demote a production version to staging")
 
         version.status = "staging"
         await self.db.flush()
@@ -60,13 +51,9 @@ class PromptTemplateVersioningService:
         if not version:
             return False
 
-        validation = self.validator.validate_version_promotion(
-            version, "production"
-        )
+        validation = self.validator.validate_version_promotion(version, "production")
         if not validation.valid:
-            logger.warning(
-                f"Promotion to production blocked for {version_id}: {validation.errors}"
-            )
+            logger.warning(f"Promotion to production blocked for {version_id}: {validation.errors}")
             return False
 
         version.status = "production"
@@ -74,9 +61,7 @@ class PromptTemplateVersioningService:
         logger.info(f"Promoted version {version_id} to production")
         return True
 
-    async def rollback(
-        self, template_id: uuid.UUID, to_version_id: uuid.UUID
-    ) -> bool:
+    async def rollback(self, template_id: uuid.UUID, to_version_id: uuid.UUID) -> bool:
         from app.services.prompts.prompt_template_registry import (
             PromptTemplateRegistryService,
         )
@@ -92,9 +77,7 @@ class PromptTemplateVersioningService:
 
         template.active_version_id = to_version_id
         await self.db.flush()
-        logger.info(
-            f"Rolled back template {template_id} to version {to_version_id}"
-        )
+        logger.info(f"Rolled back template {template_id} to version {to_version_id}")
         return True
 
     async def archive_version(self, version_id: uuid.UUID) -> bool:

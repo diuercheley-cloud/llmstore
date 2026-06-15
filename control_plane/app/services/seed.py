@@ -56,7 +56,7 @@ async def seed_defaults(session: AsyncSession) -> None:
                 name="Cluster São Paulo (Default)",
                 cluster_type="remote",
                 base_url="https://sp-demo.kleber.ai",
-                location="sa-east-1"
+                location="sa-east-1",
             )
             logger.info("Seeded default cluster for multi-cluster management.")
 
@@ -87,9 +87,11 @@ async def seed_defaults(session: AsyncSession) -> None:
         client.monthly_token_quota = settings.demo_monthly_token_quota
         client.max_context_tokens = settings.inference_max_context_tokens
         client.max_output_tokens = settings.inference_max_completion_tokens
-        client.billing_plan_id=demo_plan.id
+        client.billing_plan_id = demo_plan.id
 
-    key_result = await session.execute(select(ApiKey).where(ApiKey.client_id == client.id, ApiKey.name == "demo-default"))
+    key_result = await session.execute(
+        select(ApiKey).where(ApiKey.client_id == client.id, ApiKey.name == "demo-default")
+    )
     existing_key = key_result.scalar_one_or_none()
     if existing_key is None:
         plaintext = generate_api_key()
@@ -102,5 +104,7 @@ async def seed_defaults(session: AsyncSession) -> None:
         session.add(api_key)
         logger.warning(
             "demo api key generated for seeded client; plaintext is intentionally not logged",
-            extra={"extra_data": {"demo_client": client.name, "key_prefix": short_prefix(plaintext)}},
+            extra={
+                "extra_data": {"demo_client": client.name, "key_prefix": short_prefix(plaintext)}
+            },
         )

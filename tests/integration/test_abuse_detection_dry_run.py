@@ -39,7 +39,8 @@ async def test_dry_run_does_not_suspend(dry_run_env):
 
     async with sessionmaker() as session:
         event, action = await record_abuse_event(
-            session, fake_redis,
+            session,
+            fake_redis,
             signal="repeated_auth_errors",
             title="Dry run auth error test",
             client_id=client_id,
@@ -81,7 +82,8 @@ async def test_auto_suspend_disabled_by_default(dry_run_env):
 
     async with sessionmaker() as session:
         event, action = await record_abuse_event(
-            session, fake_redis,
+            session,
+            fake_redis,
             signal="high_estimated_cost",
             title="Cost spike test",
             client_id=client_id,

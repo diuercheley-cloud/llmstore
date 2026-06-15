@@ -18,4 +18,3 @@ __all__ = [
     "import_vscode_config",
     "get_ide_config",
 ]
-

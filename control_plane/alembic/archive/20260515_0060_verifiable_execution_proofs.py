@@ -37,11 +37,25 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("timeline_hash"),
     )
-    op.create_index("ix_commercial_merkle_timelines_type", "commercial_merkle_timelines", ["timeline_type"])
-    op.create_index("ix_commercial_merkle_timelines_status", "commercial_merkle_timelines", ["status"])
-    op.create_index("ix_commercial_merkle_timelines_root", "commercial_merkle_timelines", ["merkle_root"])
-    op.create_index("ix_commercial_merkle_timelines_prev_root", "commercial_merkle_timelines", ["previous_timeline_root"])
-    op.create_index("ix_commercial_merkle_timelines_period", "commercial_merkle_timelines", ["period_start", "period_end"])
+    op.create_index(
+        "ix_commercial_merkle_timelines_type", "commercial_merkle_timelines", ["timeline_type"]
+    )
+    op.create_index(
+        "ix_commercial_merkle_timelines_status", "commercial_merkle_timelines", ["status"]
+    )
+    op.create_index(
+        "ix_commercial_merkle_timelines_root", "commercial_merkle_timelines", ["merkle_root"]
+    )
+    op.create_index(
+        "ix_commercial_merkle_timelines_prev_root",
+        "commercial_merkle_timelines",
+        ["previous_timeline_root"],
+    )
+    op.create_index(
+        "ix_commercial_merkle_timelines_period",
+        "commercial_merkle_timelines",
+        ["period_start", "period_end"],
+    )
 
     # CommercialMerkleLeaf
     op.create_table(
@@ -57,9 +71,17 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["timeline_id"], ["commercial_merkle_timelines.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_commercial_merkle_leaves_timeline_id", "commercial_merkle_leaves", ["timeline_id"])
-    op.create_index("ix_commercial_merkle_leaves_source", "commercial_merkle_leaves", ["source_type", "source_id"])
-    op.create_index("ix_commercial_merkle_leaves_leaf_hash", "commercial_merkle_leaves", ["leaf_hash"])
+    op.create_index(
+        "ix_commercial_merkle_leaves_timeline_id", "commercial_merkle_leaves", ["timeline_id"]
+    )
+    op.create_index(
+        "ix_commercial_merkle_leaves_source",
+        "commercial_merkle_leaves",
+        ["source_type", "source_id"],
+    )
+    op.create_index(
+        "ix_commercial_merkle_leaves_leaf_hash", "commercial_merkle_leaves", ["leaf_hash"]
+    )
 
     # CommercialExecutionProof
     op.create_table(
@@ -70,7 +92,9 @@ def upgrade() -> None:
         sa.Column("proof_type", sa.String(length=32), nullable=False),
         sa.Column("proof_json", sa.JSON(), nullable=False),
         sa.Column("proof_hash", sa.String(length=128), nullable=False),
-        sa.Column("verification_status", sa.String(length=32), nullable=False, server_default="pending"),
+        sa.Column(
+            "verification_status", sa.String(length=32), nullable=False, server_default="pending"
+        ),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("verified_at", sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(["receipt_id"], ["commercial_inference_receipts.id"]),
@@ -78,10 +102,20 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("proof_hash"),
     )
-    op.create_index("ix_commercial_execution_proofs_receipt_id", "commercial_execution_proofs", ["receipt_id"])
-    op.create_index("ix_commercial_execution_proofs_timeline_id", "commercial_execution_proofs", ["timeline_id"])
-    op.create_index("ix_commercial_execution_proofs_type", "commercial_execution_proofs", ["proof_type"])
-    op.create_index("ix_commercial_execution_proofs_status", "commercial_execution_proofs", ["verification_status"])
+    op.create_index(
+        "ix_commercial_execution_proofs_receipt_id", "commercial_execution_proofs", ["receipt_id"]
+    )
+    op.create_index(
+        "ix_commercial_execution_proofs_timeline_id", "commercial_execution_proofs", ["timeline_id"]
+    )
+    op.create_index(
+        "ix_commercial_execution_proofs_type", "commercial_execution_proofs", ["proof_type"]
+    )
+    op.create_index(
+        "ix_commercial_execution_proofs_status",
+        "commercial_execution_proofs",
+        ["verification_status"],
+    )
 
 
 def downgrade() -> None:

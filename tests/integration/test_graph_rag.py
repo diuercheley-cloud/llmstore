@@ -28,6 +28,7 @@ def kg_service(mock_db):
 def mock_llm():
     async def fake_complete(ctx: str) -> str:
         return "Mocked answer based on context."
+
     return fake_complete
 
 
@@ -81,7 +82,9 @@ class TestKnowledgeGraphRAGService:
     @pytest.mark.asyncio
     async def test_build_expanded_queries_no_relationships(self, kg_service):
         queries = await kg_service._build_expanded_queries(
-            "Hello", [{"name": "World"}], [],
+            "Hello",
+            [{"name": "World"}],
+            [],
         )
         assert len(queries) == 1
         assert "World" in queries[0]
@@ -100,16 +103,20 @@ class TestKnowledgeGraphRAGService:
     @pytest.mark.asyncio
     async def test_vector_search_fallback(self, kg_service):
         kg_service.db.execute = AsyncMock(side_effect=Exception("no pgvector"))
-        with patch.object(kg_service, '_vector_search', wraps=kg_service._vector_search):
+        with patch.object(kg_service, "_vector_search", wraps=kg_service._vector_search):
             results = await kg_service._vector_search("test", "tenant-1", limit=5)
             assert isinstance(results, list)
 
     @pytest.mark.asyncio
     async def test_graph_enhanced_retrieval(self, kg_service):
-        kg_service._extract_entities = AsyncMock(return_value=[{"name": "Test", "type": "extracted"}])
+        kg_service._extract_entities = AsyncMock(
+            return_value=[{"name": "Test", "type": "extracted"}]
+        )
         kg_service._find_related_entities = AsyncMock(return_value=[])
         kg_service._build_expanded_queries = AsyncMock(return_value=["test query"])
-        kg_service._vector_search = AsyncMock(return_value=[{"id": "1", "content": "test chunk", "content_hash": "abc"}])
+        kg_service._vector_search = AsyncMock(
+            return_value=[{"id": "1", "content": "test chunk", "content_hash": "abc"}]
+        )
         ctx = await kg_service.graph_enhanced_retrieval("test query", "tenant-1")
         assert isinstance(ctx, GraphRAGContext)
         assert ctx.query == "test query"
@@ -118,7 +125,9 @@ class TestKnowledgeGraphRAGService:
     @pytest.mark.asyncio
     async def test_graph_enhanced_retrieval_no_entities(self, kg_service):
         kg_service._extract_entities = AsyncMock(return_value=[])
-        kg_service._vector_search = AsyncMock(return_value=[{"id": "1", "content": "fallback", "content_hash": "abc"}])
+        kg_service._vector_search = AsyncMock(
+            return_value=[{"id": "1", "content": "fallback", "content_hash": "abc"}]
+        )
         ctx = await kg_service.graph_enhanced_retrieval("fallback query", "tenant-1")
         assert len(ctx.chunks) == 1
         assert ctx.chunks[0]["content"] == "fallback"
@@ -193,9 +202,14 @@ class TestAgenticRAGService:
     @pytest.mark.asyncio
     async def test_retrieve_with_iteration_basic(self, mock_db, mock_llm):
         agentic = AgenticRAGService(mock_db, llm_complete_fn=mock_llm)
-        agentic._basic_retrieve = AsyncMock(return_value=[{"content": "AI is transforming industries.", "content_hash": "a"}])
+        agentic._basic_retrieve = AsyncMock(
+            return_value=[{"content": "AI is transforming industries.", "content_hash": "a"}]
+        )
         result = await agentic.retrieve_with_iteration(
-            "Tell me about AI", "tenant-1", max_iterations=3, use_graph=False,
+            "Tell me about AI",
+            "tenant-1",
+            max_iterations=3,
+            use_graph=False,
         )
         assert isinstance(result, AgenticRAGResult)
         assert result.answer is not None
@@ -205,7 +219,9 @@ class TestAgenticRAGService:
     async def test_retrieve_with_iteration_zero_max(self, mock_db):
         agentic = AgenticRAGService(mock_db)
         result = await agentic.retrieve_with_iteration(
-            "test", "tenant-1", max_iterations=0,
+            "test",
+            "tenant-1",
+            max_iterations=0,
         )
         assert result.iterations == 0
         assert result.answer != ""
@@ -222,8 +238,14 @@ class TestAgenticRAGService:
     @pytest.mark.asyncio
     async def test_retrieve_with_iteration_graph_mode(self, mock_db):
         agentic = AgenticRAGService(mock_db)
-        with patch.object(agentic.graph_rag, 'graph_enhanced_retrieval', AsyncMock(return_value=GraphRAGContext(chunks=[], query="test"))):
-            result = await agentic.retrieve_with_iteration("test", "tenant-1", max_iterations=1, use_graph=True)
+        with patch.object(
+            agentic.graph_rag,
+            "graph_enhanced_retrieval",
+            AsyncMock(return_value=GraphRAGContext(chunks=[], query="test")),
+        ):
+            result = await agentic.retrieve_with_iteration(
+                "test", "tenant-1", max_iterations=1, use_graph=True
+            )
             assert result.iterations == 1
 
 
@@ -231,9 +253,19 @@ class TestGraphRAGRouter:
     @pytest.mark.asyncio
     async def test_search_graph_mode(self, mock_db):
         router = GraphRAGRouter(mock_db)
-        with patch.object(router.service, 'graph_enhanced_retrieval', AsyncMock(return_value=GraphRAGContext(
-            entities=[], relationships=[], chunks=[], query="test", expanded_queries=["test"],
-        ))):
+        with patch.object(
+            router.service,
+            "graph_enhanced_retrieval",
+            AsyncMock(
+                return_value=GraphRAGContext(
+                    entities=[],
+                    relationships=[],
+                    chunks=[],
+                    query="test",
+                    expanded_queries=["test"],
+                )
+            ),
+        ):
             result = await router.search("test query", "tenant-1", mode="graph")
             assert "entities" in result
             assert "relationships" in result
@@ -242,9 +274,19 @@ class TestGraphRAGRouter:
     @pytest.mark.asyncio
     async def test_search_agentic_mode(self, mock_db):
         router = GraphRAGRouter(mock_db)
-        with patch.object(router.agentic, 'retrieve_with_iteration', AsyncMock(return_value=AgenticRAGResult(
-            answer="test answer", sources=[], iterations=2, confidence=0.8, reasoning=[],
-        ))):
+        with patch.object(
+            router.agentic,
+            "retrieve_with_iteration",
+            AsyncMock(
+                return_value=AgenticRAGResult(
+                    answer="test answer",
+                    sources=[],
+                    iterations=2,
+                    confidence=0.8,
+                    reasoning=[],
+                )
+            ),
+        ):
             result = await router.search("test query", "tenant-1", mode="agentic")
             assert result["answer"] == "test answer"
             assert result["iterations"] == 2

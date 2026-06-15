@@ -1,6 +1,6 @@
 import logging
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.models.agents.agent_marketplace import MarketplaceItem
 from sqlalchemy import asc, desc, func, or_, select
@@ -8,32 +8,35 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class MarketplaceSearchService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
     async def search(
         self,
-        query: Optional[str] = None,
-        category: Optional[str] = None,
-        tags: Optional[List[str]] = None,
-        capabilities: Optional[List[str]] = None,
-        risk_level: Optional[str] = None,
+        query: str | None = None,
+        category: str | None = None,
+        tags: list[str] | None = None,
+        capabilities: list[str] | None = None,
+        risk_level: str | None = None,
         min_rating: float = 0.0,
-        publisher_id: Optional[uuid.UUID] = None,
+        publisher_id: uuid.UUID | None = None,
         sort_by: str = "created_at",
         sort_order: str = "desc",
         limit: int = 20,
         offset: int = 0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         stmt = select(MarketplaceItem).where(MarketplaceItem.is_public == True)
 
         if query:
-            stmt = stmt.where(or_(
-                MarketplaceItem.name.ilike(f"%{query}%"),
-                MarketplaceItem.category.ilike(f"%{query}%"),
-                MarketplaceItem.tags[query].as_string().ilike(f"%{query}%"),
-            ))
+            stmt = stmt.where(
+                or_(
+                    MarketplaceItem.name.ilike(f"%{query}%"),
+                    MarketplaceItem.category.ilike(f"%{query}%"),
+                    MarketplaceItem.tags[query].as_string().ilike(f"%{query}%"),
+                )
+            )
 
         if category:
             stmt = stmt.where(MarketplaceItem.category == category)
@@ -68,7 +71,11 @@ class MarketplaceSearchService:
             items = [item for item in items if all(tag in (item.tags or []) for tag in tags)]
 
         if capabilities:
-            items = [item for item in items if all(cap in (item.capabilities or []) for cap in capabilities)]
+            items = [
+                item
+                for item in items
+                if all(cap in (item.capabilities or []) for cap in capabilities)
+            ]
 
         return {
             "items": items,
@@ -77,12 +84,12 @@ class MarketplaceSearchService:
             "offset": offset,
         }
 
-    async def get_categories(self) -> List[str]:
+    async def get_categories(self) -> list[str]:
         stmt = select(MarketplaceItem.category).where(MarketplaceItem.is_public == True).distinct()
         res = await self.db.execute(stmt)
         return [row[0] for row in res.all() if row[0]]
 
-    async def get_item(self, item_id: uuid.UUID) -> Optional[MarketplaceItem]:
+    async def get_item(self, item_id: uuid.UUID) -> MarketplaceItem | None:
         stmt = select(MarketplaceItem).where(
             MarketplaceItem.id == item_id,
             MarketplaceItem.is_public == True,

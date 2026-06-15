@@ -1,25 +1,24 @@
 # Owner: agent-platform
 import logging
 import uuid
-from datetime import datetime
-from typing import Any, Dict, List, Optional
-
-from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any
 
 from app.core.time import utc_now
+from app.domains.auth.repositories import SqlAlchemyAuthRepository
 from app.models.agents.agents import (
-    AgentTool,
     AgentApprovalRequest,
-    AgentRun,
     AgentDefinition,
     AgentMemoryQuarantine,
     AgentQueueThrottle,
+    AgentRun,
+    AgentTool,
 )
-from app.services.admin_rbac import record_admin_audit_event, is_rbac_admin_enabled
-from app.domains.auth.repositories import SqlAlchemyAuthRepository
+from app.services.admin_rbac import is_rbac_admin_enabled, record_admin_audit_event
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
+
 
 class IncidentActionExecutor:
     def __init__(self, db: AsyncSession):
@@ -49,9 +48,17 @@ class IncidentActionExecutor:
             roles = set(user_data.roles)
             is_super = "superadmin:all" in permissions or "superadmin" in roles
             if not (is_super or "governance:write" in permissions):
-                raise ValueError(f"User {performed_by} does not have required 'governance:write' permission")
+                raise ValueError(
+                    f"User {performed_by} does not have required 'governance:write' permission"
+                )
         else:
-            allowed_roles = {"admin_write", "super_admin", "admin", "legacy-bootstrap-admin", "superadmin"}
+            allowed_roles = {
+                "admin_write",
+                "super_admin",
+                "admin",
+                "legacy-bootstrap-admin",
+                "superadmin",
+            }
             if performed_by not in allowed_roles:
                 # Allow username lookups as a fallback to see if they exist in the DB
                 repo = SqlAlchemyAuthRepository(self.db)
@@ -59,7 +66,11 @@ class IncidentActionExecutor:
                 if user_data:
                     roles = set(user_data.roles)
                     permissions = set(user_data.permissions)
-                    if not (roles.intersection(allowed_roles) or "governance:write" in permissions or "superadmin:all" in permissions):
+                    if not (
+                        roles.intersection(allowed_roles)
+                        or "governance:write" in permissions
+                        or "superadmin:all" in permissions
+                    ):
                         raise ValueError(f"User {performed_by} does not have required permissions")
                 else:
                     raise ValueError(f"User {performed_by} does not have permission")
@@ -67,10 +78,10 @@ class IncidentActionExecutor:
     async def disable_tool(
         self,
         tool_id: str,
-        scope: Optional[str] = None,
+        scope: str | None = None,
         performed_by: str = "system",
         dry_run: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Disables an AgentTool by setting enabled = False.
         """
@@ -112,7 +123,7 @@ class IncidentActionExecutor:
                 "rollback_data": {
                     "tool_id": str(tool.id),
                     "previous_state": False,
-                }
+                },
             }
 
         if not dry_run:
@@ -131,7 +142,7 @@ class IncidentActionExecutor:
                 "tool_name": tool.name,
                 "scope": tool.scope,
                 "dry_run": dry_run,
-            }
+            },
         )
 
         return {
@@ -146,16 +157,16 @@ class IncidentActionExecutor:
             "rollback_data": {
                 "tool_id": str(tool.id),
                 "previous_state": previous_state,
-            }
+            },
         }
 
     async def quarantine_memory(
         self,
         target_id: str,
-        reason: Optional[str] = None,
+        reason: str | None = None,
         performed_by: str = "system",
         dry_run: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Puts agent memory or a specific memory/collection in quarantine.
         """
@@ -186,7 +197,7 @@ class IncidentActionExecutor:
                 "changed": False,
                 "rollback_data": {
                     "target_id": target_id,
-                }
+                },
             }
 
         if not dry_run:
@@ -210,7 +221,7 @@ class IncidentActionExecutor:
             metadata={
                 "reason": reason,
                 "dry_run": dry_run,
-            }
+            },
         )
 
         return {
@@ -222,7 +233,7 @@ class IncidentActionExecutor:
             "changed": not dry_run,
             "rollback_data": {
                 "target_id": target_id,
-            }
+            },
         }
 
     async def expire_approvals(
@@ -230,7 +241,7 @@ class IncidentActionExecutor:
         agent_id_or_scope: str,
         performed_by: str = "system",
         dry_run: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Immediately expires pending approval requests for an agent or scope.
         """
@@ -249,15 +260,12 @@ class IncidentActionExecutor:
             stmt = (
                 select(AgentApprovalRequest)
                 .join(AgentRun, AgentApprovalRequest.agent_run_id == AgentRun.id)
-                .where(
-                    AgentApprovalRequest.status == "pending",
-                    AgentRun.agent_id == parsed_uuid
-                )
+                .where(AgentApprovalRequest.status == "pending", AgentRun.agent_id == parsed_uuid)
             )
         else:
             stmt = select(AgentApprovalRequest).where(
                 AgentApprovalRequest.status == "pending",
-                AgentApprovalRequest.reviewer_role == agent_id_or_scope
+                AgentApprovalRequest.reviewer_role == agent_id_or_scope,
             )
 
         res = await self.db.execute(stmt)
@@ -273,7 +281,7 @@ class IncidentActionExecutor:
                 "changed": False,
                 "rollback_data": {
                     "expired_ids": [],
-                }
+                },
             }
 
         expired_ids = [str(a.id) for a in approvals]
@@ -299,7 +307,7 @@ class IncidentActionExecutor:
                 "expired_count": len(approvals),
                 "expired_ids": expired_ids,
                 "dry_run": dry_run,
-            }
+            },
         )
 
         return {
@@ -310,7 +318,7 @@ class IncidentActionExecutor:
             "changed": not dry_run,
             "rollback_data": {
                 "expired_ids": expired_ids if not dry_run else [],
-            }
+            },
         }
 
     async def throttle_queue(
@@ -319,7 +327,7 @@ class IncidentActionExecutor:
         limit: int,
         performed_by: str = "system",
         dry_run: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Sets a queue throttle limit for an agent or queue.
         """
@@ -336,8 +344,7 @@ class IncidentActionExecutor:
 
         # Idempotency check: look up active throttle
         stmt = select(AgentQueueThrottle).where(
-            AgentQueueThrottle.target_id == target_id,
-            AgentQueueThrottle.is_active == True
+            AgentQueueThrottle.target_id == target_id, AgentQueueThrottle.is_active == True
         )
         res = await self.db.execute(stmt)
         existing = res.scalar_one_or_none()
@@ -360,9 +367,9 @@ class IncidentActionExecutor:
                     "rollback_data": {
                         "target_id": target_id,
                         "previous_limit": previous_limit,
-                    }
+                    },
                 }
-            
+
             if not dry_run:
                 existing.rate_limit = limit
                 existing.throttled_by = performed_by
@@ -396,7 +403,7 @@ class IncidentActionExecutor:
                 "limit": limit,
                 "previous_limit": previous_limit,
                 "dry_run": dry_run,
-            }
+            },
         )
 
         return {
@@ -410,15 +417,15 @@ class IncidentActionExecutor:
             "rollback_data": {
                 "target_id": target_id,
                 "previous_limit": previous_limit,
-            }
+            },
         }
 
     async def rollback(
         self,
         action_type: str,
-        rollback_data: Dict[str, Any],
+        rollback_data: dict[str, Any],
         performed_by: str = "system",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Undoes/reverts a containment action.
         """
@@ -427,7 +434,7 @@ class IncidentActionExecutor:
         report = {
             "action": f"rollback_{action_type}",
             "rollback_data": rollback_data,
-            "status": "success"
+            "status": "success",
         }
 
         if action_type == "disable_tool":
@@ -451,14 +458,18 @@ class IncidentActionExecutor:
                     tool.enabled = previous_state
                     self.db.add(tool)
                     await self.db.commit()
-                    report["details"] = f"Restored tool {tool_id} enabled status to {previous_state}"
+                    report["details"] = (
+                        f"Restored tool {tool_id} enabled status to {previous_state}"
+                    )
                 else:
                     raise ValueError(f"Tool {tool_id} not found during rollback")
 
         elif action_type == "quarantine_memory":
             target_id = rollback_data.get("target_id")
             if target_id:
-                stmt = select(AgentMemoryQuarantine).where(AgentMemoryQuarantine.target_id == target_id)
+                stmt = select(AgentMemoryQuarantine).where(
+                    AgentMemoryQuarantine.target_id == target_id
+                )
                 res = await self.db.execute(stmt)
                 quarantine = res.scalar_one_or_none()
                 if quarantine:
@@ -477,11 +488,10 @@ class IncidentActionExecutor:
                         uuids.append(uuid.UUID(eid))
                     except ValueError:
                         pass
-                
+
                 if uuids:
                     stmt = select(AgentApprovalRequest).where(
-                        AgentApprovalRequest.id.in_(uuids),
-                        AgentApprovalRequest.status == "expired"
+                        AgentApprovalRequest.id.in_(uuids), AgentApprovalRequest.status == "expired"
                     )
                     res = await self.db.execute(stmt)
                     approvals = res.scalars().all()
@@ -492,7 +502,9 @@ class IncidentActionExecutor:
                         approval.updated_at = utc_now()
                         self.db.add(approval)
                     await self.db.commit()
-                    report["details"] = f"Restored {len(approvals)} expired approvals back to pending status"
+                    report["details"] = (
+                        f"Restored {len(approvals)} expired approvals back to pending status"
+                    )
                 else:
                     report["details"] = "No valid approval IDs provided for rollback"
 
@@ -501,8 +513,7 @@ class IncidentActionExecutor:
             previous_limit = rollback_data.get("previous_limit")
             if target_id:
                 stmt = select(AgentQueueThrottle).where(
-                    AgentQueueThrottle.target_id == target_id,
-                    AgentQueueThrottle.is_active == True
+                    AgentQueueThrottle.target_id == target_id, AgentQueueThrottle.is_active == True
                 )
                 res = await self.db.execute(stmt)
                 throttle = res.scalar_one_or_none()
@@ -515,7 +526,9 @@ class IncidentActionExecutor:
                     else:
                         throttle.rate_limit = previous_limit
                         self.db.add(throttle)
-                        report["details"] = f"Restored queue throttle limit for {target_id} to {previous_limit}"
+                        report["details"] = (
+                            f"Restored queue throttle limit for {target_id} to {previous_limit}"
+                        )
                     await self.db.commit()
                 else:
                     report["details"] = f"No active queue throttle found for {target_id}"
@@ -532,7 +545,7 @@ class IncidentActionExecutor:
             target_id=action_type,
             metadata={
                 "rollback_data": rollback_data,
-            }
+            },
         )
 
         return report

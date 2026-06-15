@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from enum import Enum
-from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass
+from enum import Enum
+from typing import Any
 
 
 class MultimodalInputType(str, Enum):
@@ -23,18 +23,18 @@ class MultimodalCapability(str, Enum):
 @dataclass
 class MultimodalResult:
     text: str
-    detected_objects: List[Dict[str, Any]]
-    ocr_text: Optional[str] = None
+    detected_objects: list[dict[str, Any]]
+    ocr_text: str | None = None
     confidence: float = 0.0
     model_used: str = "unknown"
     backend_used: str = "unknown"
-    audit_metadata: Dict[str, Any] = None
+    audit_metadata: dict[str, Any] = None
 
 
 class MultimodalAdapterBase(ABC):
     @property
     @abstractmethod
-    def capabilities(self) -> List[MultimodalCapability]:
+    def capabilities(self) -> list[MultimodalCapability]:
         """List capabilities supported by this adapter."""
         pass
 
@@ -46,11 +46,7 @@ class MultimodalAdapterBase(ABC):
 
     @abstractmethod
     async def analyze(
-        self, 
-        input_type: MultimodalInputType, 
-        file_path: str, 
-        prompt: Optional[str] = None,
-        **kwargs
+        self, input_type: MultimodalInputType, file_path: str, prompt: str | None = None, **kwargs
     ) -> MultimodalResult:
         """Perform multimodal analysis."""
         pass

@@ -1,7 +1,7 @@
 import functools
 import importlib
 import logging
-from typing import List, Union
+from typing import Union
 
 from app.contracts.token_accounting import (
     TokenAccountingCapabilities,
@@ -27,6 +27,7 @@ def _load_hf_tokenizer_cls():
     except (ImportError, AttributeError):
         return None
 
+
 class TokenizerService(TokenAccountingContract):
     def __init__(self):
         self.settings = get_settings()
@@ -39,14 +40,18 @@ class TokenizerService(TokenAccountingContract):
             else:
                 try:
                     self._hf_tokenizer = tokenizer_cls.from_file(self.settings.tokenizer_model_path)
-                    logger.info(f"Loaded HuggingFace tokenizer from {self.settings.tokenizer_model_path}")
+                    logger.info(
+                        f"Loaded HuggingFace tokenizer from {self.settings.tokenizer_model_path}"
+                    )
                 except Exception as e:
-                    logger.error(f"Failed to load HF tokenizer from {self.settings.tokenizer_model_path}: {e}")
+                    logger.error(
+                        f"Failed to load HF tokenizer from {self.settings.tokenizer_model_path}: {e}"
+                    )
 
     def capabilities(self) -> TokenAccountingCapabilities:
         return TokenAccountingCapabilities(
             native_tiktoken=_load_tiktoken() is not None,
-            hf_tokenizers=self._hf_tokenizer is not None
+            hf_tokenizers=self._hf_tokenizer is not None,
         )
 
     def validate_contract(self) -> bool:
@@ -71,26 +76,34 @@ class TokenizerService(TokenAccountingContract):
 
     async def count_text_tokens(self, text: str, model: str | None = None) -> TokenCountResult:
         openai_like_model = bool(
-            model and (model.startswith("gpt-") or "claude" in model.lower() or "deepseek" in model.lower())
+            model
+            and (
+                model.startswith("gpt-") or "claude" in model.lower() or "deepseek" in model.lower()
+            )
         )
         real_counter_available = not openai_like_model or _load_tiktoken() is not None
         if self.settings.token_counting_real_enabled and real_counter_available:
             from app.services.token_counting.token_counter import TokenCounter
+
             tc = TokenCounter()
             res = tc.count_tokens(prompt=text, completion="", model=model or "gpt-3.5-turbo")
             if self.settings.tokenizer_strict and res.fallback_used:
-                raise RuntimeError(f"Strict tokenization enabled but real tokenizer failed for model {model}")
+                raise RuntimeError(
+                    f"Strict tokenization enabled but real tokenizer failed for model {model}"
+                )
             return TokenCountResult(
                 input_tokens=res.prompt_tokens,
                 output_tokens=res.completion_tokens,
                 total_tokens=res.total_tokens,
                 method=res.tokenizer_used,
                 model=model,
-                is_estimated=res.fallback_used
+                is_estimated=res.fallback_used,
             )
 
         if not text:
-            return TokenCountResult(input_tokens=0, total_tokens=0, method="estimated", is_estimated=True)
+            return TokenCountResult(
+                input_tokens=0, total_tokens=0, method="estimated", is_estimated=True
+            )
 
         # HF Tokenizer priority if configured
         if self._hf_tokenizer:
@@ -102,7 +115,7 @@ class TokenizerService(TokenAccountingContract):
                     total_tokens=count,
                     method="hf_tokenizer",
                     model=model,
-                    is_estimated=False
+                    is_estimated=False,
                 )
             except Exception as e:
                 logger.warning(f"HF tokenizer failed: {e}")
@@ -119,7 +132,7 @@ class TokenizerService(TokenAccountingContract):
                     total_tokens=count,
                     method="tiktoken",
                     model=model,
-                    is_estimated=False
+                    is_estimated=False,
                 )
             except Exception as e:
                 logger.warning(f"Tiktoken failed for model {model}: {e}")
@@ -128,7 +141,9 @@ class TokenizerService(TokenAccountingContract):
 
         # Fallback to estimation
         if self.settings.tokenizer_strict:
-            raise RuntimeError(f"Strict tokenization enabled but no real tokenizer found for model {model}")
+            raise RuntimeError(
+                f"Strict tokenization enabled but no real tokenizer found for model {model}"
+            )
 
         count = estimate_tokens_from_text(text)
         return TokenCountResult(
@@ -136,27 +151,34 @@ class TokenizerService(TokenAccountingContract):
             total_tokens=count,
             method="estimated",
             model=model,
-            is_estimated=True
+            is_estimated=True,
         )
 
-    async def count_chat_tokens(self, messages: list[dict], model: str | None = None) -> TokenCountResult:
+    async def count_chat_tokens(
+        self, messages: list[dict], model: str | None = None
+    ) -> TokenCountResult:
         if self.settings.token_counting_real_enabled:
             from app.services.token_counting.token_counter import TokenCounter
+
             tc = TokenCounter()
             res = tc.count_tokens(prompt=messages, completion="", model=model or "gpt-3.5-turbo")
             if self.settings.tokenizer_strict and res.fallback_used:
-                raise RuntimeError(f"Strict tokenization enabled but real tokenizer failed for chat model {model}")
+                raise RuntimeError(
+                    f"Strict tokenization enabled but real tokenizer failed for chat model {model}"
+                )
             return TokenCountResult(
                 input_tokens=res.prompt_tokens,
                 output_tokens=res.completion_tokens,
                 total_tokens=res.total_tokens,
                 method=res.tokenizer_used,
                 model=model,
-                is_estimated=res.fallback_used
+                is_estimated=res.fallback_used,
             )
 
         if not messages:
-            return TokenCountResult(input_tokens=0, total_tokens=0, method="estimated", is_estimated=True)
+            return TokenCountResult(
+                input_tokens=0, total_tokens=0, method="estimated", is_estimated=True
+            )
 
         # Try to use tiktoken for chat if model is known
         if model and model.startswith("gpt-"):
@@ -164,7 +186,9 @@ class TokenizerService(TokenAccountingContract):
                 encoding = self._get_tiktoken_encoding(model)
                 num_tokens = 0
                 for message in messages:
-                    num_tokens += 4  # every message follows <im_start>{role/name}\n{content}<im_end>\n
+                    num_tokens += (
+                        4  # every message follows <im_start>{role/name}\n{content}<im_end>\n
+                    )
                     for key, value in message.items():
                         num_tokens += len(encoding.encode(str(value)))
                         if key == "name":  # if there's a name, the role is omitted
@@ -175,7 +199,7 @@ class TokenizerService(TokenAccountingContract):
                     total_tokens=num_tokens,
                     method="tiktoken",
                     model=model,
-                    is_estimated=False
+                    is_estimated=False,
                 )
             except Exception as e:
                 logger.warning(f"Tiktoken chat counting failed: {e}")
@@ -195,7 +219,7 @@ class TokenizerService(TokenAccountingContract):
                     total_tokens=count,
                     method="hf_tokenizer",
                     model=model,
-                    is_estimated=False
+                    is_estimated=False,
                 )
             except Exception as e:
                 logger.warning(f"HF tokenizer chat failed: {e}")
@@ -204,7 +228,9 @@ class TokenizerService(TokenAccountingContract):
 
         # Fallback
         if self.settings.tokenizer_strict:
-            raise RuntimeError(f"Strict tokenization enabled but no real tokenizer found for chat model {model}")
+            raise RuntimeError(
+                f"Strict tokenization enabled but no real tokenizer found for chat model {model}"
+            )
 
         count = estimate_prompt_tokens(messages=messages)
         return TokenCountResult(
@@ -212,10 +238,12 @@ class TokenizerService(TokenAccountingContract):
             total_tokens=count,
             method="estimated",
             model=model,
-            is_estimated=True
+            is_estimated=True,
         )
 
-    async def count_embedding_tokens(self, input: Union[str, List[str]], model: str | None = None) -> TokenCountResult:
+    async def count_embedding_tokens(
+        self, input: Union[str, list[str]], model: str | None = None
+    ) -> TokenCountResult:
         if self.settings.token_counting_real_enabled:
             if isinstance(input, str):
                 texts = [input]
@@ -225,9 +253,12 @@ class TokenizerService(TokenAccountingContract):
             method = "estimated"
             is_estimated = True
             from app.services.token_counting.token_counter import TokenCounter
+
             tc = TokenCounter()
             for text in texts:
-                res = tc.count_tokens(prompt=text, completion="", model=model or "text-embedding-3-small")
+                res = tc.count_tokens(
+                    prompt=text, completion="", model=model or "text-embedding-3-small"
+                )
                 if self.settings.tokenizer_strict and res.fallback_used:
                     raise RuntimeError(
                         f"Strict tokenization enabled but real tokenizer failed for embedding model {model}"
@@ -240,14 +271,14 @@ class TokenizerService(TokenAccountingContract):
                 total_tokens=total_count,
                 method=method,
                 model=model,
-                is_estimated=is_estimated
+                is_estimated=is_estimated,
             )
 
         if isinstance(input, str):
             texts = [input]
         else:
             texts = input
-        
+
         total_count = 0
         method = "estimated"
         is_estimated = True
@@ -263,9 +294,10 @@ class TokenizerService(TokenAccountingContract):
             total_tokens=total_count,
             method=method,
             model=model,
-            is_estimated=is_estimated
+            is_estimated=is_estimated,
         )
 
-@functools.lru_cache()
+
+@functools.lru_cache
 def get_tokenizer_service() -> TokenizerService:
     return TokenizerService()

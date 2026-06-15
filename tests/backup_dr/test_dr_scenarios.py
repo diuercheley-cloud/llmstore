@@ -1,23 +1,25 @@
 from __future__ import annotations
 
 import asyncio
-import json
-import os
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 import pytest
 import yaml
-from fastapi import HTTPException
-
 from app.core.config import get_settings
 from app.schemas.backup import BackupCreateRequest, BackupRestoreRequest
-from app.services.backup.backup_service import BackupService, _sha256_bytes
-from app.services.backup.database_providers import SQLiteBackupProvider, PostgresBackupProvider
+from app.services.backup.backup_service import BackupService
+from app.services.backup.database_providers import SQLiteBackupProvider
 from app.services.backup.restore_staging_service import RestoreStagingService
-from tests.backup_dr.fixtures import collect_recovery_state, mutate_recovery_state, seed_recovery_state
+
+from tests.backup_dr.fixtures import (
+    collect_recovery_state,
+    mutate_recovery_state,
+    seed_recovery_state,
+)
 
 pytestmark = [pytest.mark.backup_dr]
+
 
 def _configure_settings(database_url: str, backup_store_root: Path) -> None:
     settings = get_settings()
@@ -26,9 +28,11 @@ def _configure_settings(database_url: str, backup_store_root: Path) -> None:
     settings.backup_restore_enabled = True
     settings.deployment_mode = "local"
 
+
 def _backup_paths(backup_store_root: Path, backup_id: str) -> tuple[Path, Path]:
     backup_dir = backup_store_root / "system" / backup_id
     return backup_dir / "manifest.json", backup_dir / "payload.tar.gz.enc"
+
 
 def _write_dr_report(engine: str, scenario: str, status: str, details: dict | None = None):
     report_dir = Path("artifacts/dr-reports")
@@ -39,10 +43,11 @@ def _write_dr_report(engine: str, scenario: str, status: str, details: dict | No
         "scenario": scenario,
         "status": status,
         "timestamp": datetime.now().isoformat(),
-        "details": details or {}
+        "details": details or {},
     }
     with open(report_file, "w") as f:
         yaml.dump(report, f)
+
 
 @pytest.mark.asyncio
 async def test_sqlite_full_dr_restore(
@@ -59,7 +64,9 @@ async def test_sqlite_full_dr_restore(
         async with sqlite_session_factory() as session:
             ids = await seed_recovery_state(session, backup_repo_root)
             expected = await collect_recovery_state(session, backup_repo_root, ids)
-            manifest = await BackupService(session).create_backup(BackupCreateRequest(scope="full"), actor="dr-bot")
+            manifest = await BackupService(session).create_backup(
+                BackupCreateRequest(scope="full"), actor="dr-bot"
+            )
             backup_id = manifest.backup_id
 
         async with sqlite_session_factory() as session:
@@ -78,6 +85,7 @@ async def test_sqlite_full_dr_restore(
     except Exception as e:
         _write_dr_report(engine, scenario, "failed", {"error": str(e)})
         raise
+
 
 @pytest.mark.asyncio
 async def test_postgres_full_dr_restore(
@@ -94,7 +102,9 @@ async def test_postgres_full_dr_restore(
         async with postgres_session_factory() as session:
             ids = await seed_recovery_state(session, backup_repo_root)
             expected = await collect_recovery_state(session, backup_repo_root, ids)
-            manifest = await BackupService(session).create_backup(BackupCreateRequest(scope="full"), actor="dr-bot")
+            manifest = await BackupService(session).create_backup(
+                BackupCreateRequest(scope="full"), actor="dr-bot"
+            )
             backup_id = manifest.backup_id
 
         async with postgres_session_factory() as session:
@@ -114,6 +124,7 @@ async def test_postgres_full_dr_restore(
         _write_dr_report(engine, scenario, "failed", {"error": str(e)})
         raise
 
+
 @pytest.mark.asyncio
 async def test_dr_manifest_corruption(
     sqlite_session_factory,
@@ -127,16 +138,23 @@ async def test_dr_manifest_corruption(
 
     async with sqlite_session_factory() as session:
         await seed_recovery_state(session, backup_repo_root)
-        backup_id = (await BackupService(session).create_backup(BackupCreateRequest(scope="full"))).backup_id
+        backup_id = (
+            await BackupService(session).create_backup(BackupCreateRequest(scope="full"))
+        ).backup_id
 
     manifest_path, _ = _backup_paths(backup_store_root, backup_id)
     manifest_path.write_text("{corrupted-json", encoding="utf-8")
 
     async with sqlite_session_factory() as session:
-        with pytest.raises(Exception): # Should fail during manifest load/parse
-            await RestoreStagingService(session).restore_with_staging(backup_id, BackupRestoreRequest(dry_run=False))
-    
-    _write_dr_report(engine, scenario, "success", {"note": "Restore correctly blocked by corrupted manifest"})
+        with pytest.raises(Exception):  # Should fail during manifest load/parse
+            await RestoreStagingService(session).restore_with_staging(
+                backup_id, BackupRestoreRequest(dry_run=False)
+            )
+
+    _write_dr_report(
+        engine, scenario, "success", {"note": "Restore correctly blocked by corrupted manifest"}
+    )
+
 
 @pytest.mark.asyncio
 async def test_dr_payload_corruption(
@@ -151,19 +169,26 @@ async def test_dr_payload_corruption(
 
     async with sqlite_session_factory() as session:
         await seed_recovery_state(session, backup_repo_root)
-        backup_id = (await BackupService(session).create_backup(BackupCreateRequest(scope="full"))).backup_id
+        backup_id = (
+            await BackupService(session).create_backup(BackupCreateRequest(scope="full"))
+        ).backup_id
 
     _, payload_path = _backup_paths(backup_store_root, backup_id)
     payload = bytearray(payload_path.read_bytes())
-    payload[len(payload)//2] = (payload[len(payload)//2] + 1) % 255
+    payload[len(payload) // 2] = (payload[len(payload) // 2] + 1) % 255
     payload_path.write_bytes(payload)
 
     async with sqlite_session_factory() as session:
-        result = await RestoreStagingService(session).restore_with_staging(backup_id, BackupRestoreRequest(dry_run=False))
+        result = await RestoreStagingService(session).restore_with_staging(
+            backup_id, BackupRestoreRequest(dry_run=False)
+        )
         assert result.status == "blocked"
         assert "verification failed" in result.details.get("reason", "").lower()
 
-    _write_dr_report(engine, scenario, "success", {"note": "Restore correctly blocked by corrupted payload"})
+    _write_dr_report(
+        engine, scenario, "success", {"note": "Restore correctly blocked by corrupted payload"}
+    )
+
 
 @pytest.mark.asyncio
 async def test_dr_path_traversal_protection(
@@ -180,16 +205,20 @@ async def test_dr_path_traversal_protection(
         await seed_recovery_state(session, backup_repo_root)
         service = BackupService(session)
         backup_id = (await service.create_backup(BackupCreateRequest(scope="full"))).backup_id
-        
+
         # Manually corrupt payload with path traversal
         from tests.backup_dr.fixtures import _rewrite_backup_for_path_traversal as rewrite
+
         rewrite(service, backup_store_root, backup_id)
 
     async with sqlite_session_factory() as session:
         with pytest.raises(ValueError, match="Directory traversal sequence"):
-            await RestoreStagingService(session).restore_with_staging(backup_id, BackupRestoreRequest(dry_run=False))
+            await RestoreStagingService(session).restore_with_staging(
+                backup_id, BackupRestoreRequest(dry_run=False)
+            )
 
     _write_dr_report(engine, scenario, "success", {"note": "Path traversal attempt blocked"})
+
 
 @pytest.mark.asyncio
 async def test_dr_key_rotation_failure(
@@ -205,16 +234,21 @@ async def test_dr_key_rotation_failure(
 
     async with sqlite_session_factory() as session:
         await seed_recovery_state(session, backup_repo_root)
-        backup_id = (await BackupService(session).create_backup(BackupCreateRequest(scope="full"))).backup_id
+        backup_id = (
+            await BackupService(session).create_backup(BackupCreateRequest(scope="full"))
+        ).backup_id
 
     # Change keys
     monkeypatch.setenv("BACKUP_ENCRYPTION_KEY", "wrong-key" * 8)
-    
+
     async with sqlite_session_factory() as session:
-        result = await RestoreStagingService(session).restore_with_staging(backup_id, BackupRestoreRequest(dry_run=False))
+        result = await RestoreStagingService(session).restore_with_staging(
+            backup_id, BackupRestoreRequest(dry_run=False)
+        )
         assert result.status == "blocked"
 
     _write_dr_report(engine, scenario, "success", {"note": "Restore blocked after key loss"})
+
 
 @pytest.mark.asyncio
 async def test_dr_rollback_on_failure(
@@ -230,7 +264,9 @@ async def test_dr_rollback_on_failure(
 
     async with sqlite_session_factory() as session:
         ids = await seed_recovery_state(session, backup_repo_root)
-        backup_id = (await BackupService(session).create_backup(BackupCreateRequest(scope="full"))).backup_id
+        backup_id = (
+            await BackupService(session).create_backup(BackupCreateRequest(scope="full"))
+        ).backup_id
 
     async with sqlite_session_factory() as session:
         await mutate_recovery_state(session, backup_repo_root, ids)
@@ -238,19 +274,26 @@ async def test_dr_rollback_on_failure(
 
     # Force failure during promotion
     from app.services.backup.promotion import RestorePromotionService
+
     async def fail_promotion(*args, **kwargs):
         raise RuntimeError("DR simulated promotion failure")
+
     monkeypatch.setattr(RestorePromotionService, "promote_database", fail_promotion)
 
     async with sqlite_session_factory() as session:
-        result = await RestoreStagingService(session).restore_with_staging(backup_id, BackupRestoreRequest(dry_run=False))
+        result = await RestoreStagingService(session).restore_with_staging(
+            backup_id, BackupRestoreRequest(dry_run=False)
+        )
         assert result.status == "failed"
-        
+
         # Verify rollback - state should be what it was before restore (which was mutated_state because restore failed)
         actual = await collect_recovery_state(session, backup_repo_root, ids)
         assert actual == mutated_state
 
-    _write_dr_report(engine, scenario, "success", {"note": "Rollback verified after promotion failure"})
+    _write_dr_report(
+        engine, scenario, "success", {"note": "Rollback verified after promotion failure"}
+    )
+
 
 @pytest.mark.asyncio
 async def test_dr_concurrency_control(
@@ -265,31 +308,38 @@ async def test_dr_concurrency_control(
 
     async with sqlite_session_factory() as session:
         await seed_recovery_state(session, backup_repo_root)
-        backup_id = (await BackupService(session).create_backup(BackupCreateRequest(scope="full"))).backup_id
+        backup_id = (
+            await BackupService(session).create_backup(BackupCreateRequest(scope="full"))
+        ).backup_id
 
     # Mock restore to block
     entered = asyncio.Event()
     release = asyncio.Event()
-    
-    from app.services.backup.database_providers import SQLiteBackupProvider
+
     original_restore = SQLiteBackupProvider.restore_database
+
     async def slow_restore(self, src_file):
         entered.set()
         await release.wait()
         await original_restore(self, src_file)
 
     import unittest.mock
+
     with unittest.mock.patch.object(SQLiteBackupProvider, "restore_database", slow_restore):
         task1 = asyncio.create_task(
-            RestoreStagingService(await sqlite_session_factory().__aenter__()).restore_with_staging(backup_id, BackupRestoreRequest(dry_run=False))
+            RestoreStagingService(await sqlite_session_factory().__aenter__()).restore_with_staging(
+                backup_id, BackupRestoreRequest(dry_run=False)
+            )
         )
         await entered.wait()
-        
+
         # Second attempt should be blocked
         async with sqlite_session_factory() as session:
             with pytest.raises(Exception, match="already in progress"):
-                await RestoreStagingService(session).restore_with_staging(backup_id, BackupRestoreRequest(dry_run=False))
-        
+                await RestoreStagingService(session).restore_with_staging(
+                    backup_id, BackupRestoreRequest(dry_run=False)
+                )
+
         release.set()
         await task1
 

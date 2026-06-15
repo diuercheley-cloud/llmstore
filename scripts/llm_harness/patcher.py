@@ -28,8 +28,9 @@ class Patcher:
             return "Empty diff content"
 
         # Verify that the payload looks like a unified diff.
-        if not re.search(r"^--- ", diff_content, re.MULTILINE) or \
-           not re.search(r"^\+\+\+ ", diff_content, re.MULTILINE):
+        if not re.search(r"^--- ", diff_content, re.MULTILINE) or not re.search(
+            r"^\+\+\+ ", diff_content, re.MULTILINE
+        ):
             return "Invalid unified diff format"
 
         # Policy engine check for blocked files and dangerous patterns.
@@ -73,12 +74,7 @@ class Patcher:
 
             cmd.append(full_patch_path)
 
-            result = subprocess.run(
-                cmd,
-                cwd=self.workspace.path,
-                capture_output=True,
-                text=True
-            )
+            result = subprocess.run(cmd, cwd=self.workspace.path, capture_output=True, text=True)
 
             # Clean up the temporary patch file.
             if os.path.exists(full_patch_path):
@@ -99,8 +95,7 @@ class Patcher:
                     success=False,
                     error=f"git apply failed with exit code {result.returncode}",
                     stderr=stderr_clean,
-                    mode=mode
-                    ,
+                    mode=mode,
                     diff_sha256=diff_sha256,
                 )
 

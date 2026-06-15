@@ -4,7 +4,6 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from app.services.runtime_dependencies import get_db_session
 from app.models.commercial.commercial_workflows import (
     CommercialWorkflowApproval,
     CommercialWorkflowCheckpoint,
@@ -19,6 +18,7 @@ from app.models.commercial.commercial_workflows import (
 )
 from app.services.auth import require_admin
 from app.services.inference import workflow_determinism
+from app.services.runtime_dependencies import get_db_session
 from app.services.workflows.checkpoint_replay import WorkflowCheckpointReplayService
 from app.services.workflows.deterministic_orchestrator import DeterministicWorkflowOrchestrator
 from app.services.workflows.workflow_approval_chain import WorkflowApprovalChainService
@@ -165,16 +165,24 @@ async def get_status(db: AsyncSession = Depends(get_db_session)):
 @router.get("/admin/workflows/definitions")
 async def list_definitions(db: AsyncSession = Depends(get_db_session)):
     rows = (
-        await db.execute(
-            select(CommercialWorkflowDefinition).order_by(desc(CommercialWorkflowDefinition.created_at)).limit(200)
+        (
+            await db.execute(
+                select(CommercialWorkflowDefinition)
+                .order_by(desc(CommercialWorkflowDefinition.created_at))
+                .limit(200)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {"items": [_definition_summary(row) for row in rows]}
 
 
 @router.post("/admin/inference/workflows/definitions")
 @router.post("/admin/workflows/definitions")
-async def create_definition(payload: WorkflowDefinitionPayload, db: AsyncSession = Depends(get_db_session)):
+async def create_definition(
+    payload: WorkflowDefinitionPayload, db: AsyncSession = Depends(get_db_session)
+):
     dag_or_steps = payload.dag_json or payload.steps_config or []
     row = await _orchestrator.create_definition(
         db,
@@ -195,7 +203,11 @@ async def list_executions(
     tenant_id: str | None = None,
     db: AsyncSession = Depends(get_db_session),
 ):
-    stmt = select(CommercialWorkflowExecution).order_by(desc(CommercialWorkflowExecution.started_at)).limit(200)
+    stmt = (
+        select(CommercialWorkflowExecution)
+        .order_by(desc(CommercialWorkflowExecution.started_at))
+        .limit(200)
+    )
     if tenant_id:
         stmt = stmt.where(CommercialWorkflowExecution.tenant_id == tenant_id)
     rows = (await db.execute(stmt)).scalars().all()
@@ -203,7 +215,9 @@ async def list_executions(
 
 
 @router.post("/admin/workflows/executions")
-async def create_execution(payload: WorkflowExecutionPayload, db: AsyncSession = Depends(get_db_session)):
+async def create_execution(
+    payload: WorkflowExecutionPayload, db: AsyncSession = Depends(get_db_session)
+):
     row = await _orchestrator.start_execution(
         db,
         definition_id=payload.definition_id,
@@ -223,12 +237,16 @@ async def get_execution(execution_id: uuid.UUID, db: AsyncSession = Depends(get_
     if row is None:
         raise HTTPException(status_code=404, detail="workflow_execution_not_found")
     stages = (
-        await db.execute(
-            select(CommercialWorkflowStage)
-            .where(CommercialWorkflowStage.execution_id == execution_id)
-            .order_by(CommercialWorkflowStage.stage_order.asc())
+        (
+            await db.execute(
+                select(CommercialWorkflowStage)
+                .where(CommercialWorkflowStage.execution_id == execution_id)
+                .order_by(CommercialWorkflowStage.stage_order.asc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {
         **_execution_summary(row),
         "stages": [_stage_summary(stage) for stage in stages],
@@ -284,12 +302,16 @@ async def rollback_execution(
     execution = await db.get(CommercialWorkflowExecution, execution_id)
     if execution is None:
         raise HTTPException(status_code=404, detail="workflow_execution_not_found")
-    result = await _replay.rollback_to_checkpoint(db, execution=execution, checkpoint_id=payload.checkpoint_id)
+    result = await _replay.rollback_to_checkpoint(
+        db, execution=execution, checkpoint_id=payload.checkpoint_id
+    )
     await db.commit()
     return result
 
 
-@router.post("/admin/workflows/governance/executions/{execution_id}/stages/{stage_key}/rollback-policy")
+@router.post(
+    "/admin/workflows/governance/executions/{execution_id}/stages/{stage_key}/rollback-policy"
+)
 async def rollback_stage_policy(
     execution_id: uuid.UUID,
     stage_key: str,
@@ -309,9 +331,15 @@ async def rollback_stage_policy(
     ).scalar_one_or_none()
     if stage is None:
         raise HTTPException(status_code=404, detail="workflow_stage_not_found")
-    row = await _policy.rollback_stage_policy(db, execution=execution, stage=stage, actor_id=payload.actor_id)
+    row = await _policy.rollback_stage_policy(
+        db, execution=execution, stage=stage, actor_id=payload.actor_id
+    )
     await db.commit()
-    return {"binding_id": str(row.id), "rollback_from_binding_id": str(row.rollback_from_binding_id), "stage_key": stage_key}
+    return {
+        "binding_id": str(row.id),
+        "rollback_from_binding_id": str(row.rollback_from_binding_id),
+        "stage_key": stage_key,
+    }
 
 
 @router.get("/admin/workflows/executions/{execution_id}/provenance")
@@ -323,7 +351,9 @@ async def get_provenance(execution_id: uuid.UUID, db: AsyncSession = Depends(get
 
 
 @router.get("/admin/workflows/governance/executions/{execution_id}")
-async def get_governance_execution(execution_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
+async def get_governance_execution(
+    execution_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)
+):
     execution = await db.get(CommercialWorkflowExecution, execution_id)
     if execution is None:
         raise HTTPException(status_code=404, detail="workflow_execution_not_found")
@@ -349,7 +379,9 @@ async def get_governance_execution(execution_id: uuid.UUID, db: AsyncSession = D
 
 
 @router.get("/admin/workflows/governance/executions/{execution_id}/ledger")
-async def get_governance_ledger(execution_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
+async def get_governance_ledger(
+    execution_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)
+):
     execution = await db.get(CommercialWorkflowExecution, execution_id)
     if execution is None:
         raise HTTPException(status_code=404, detail="workflow_execution_not_found")
@@ -384,12 +416,19 @@ async def get_policy_snapshots(execution_id: uuid.UUID, db: AsyncSession = Depen
 @router.get("/admin/workflows/executions/{execution_id}/checkpoints")
 async def list_checkpoints(execution_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
     rows = (
-        await db.execute(
-            select(CommercialWorkflowCheckpoint)
-            .where(CommercialWorkflowCheckpoint.execution_id == execution_id)
-            .order_by(CommercialWorkflowCheckpoint.step_index.asc(), CommercialWorkflowCheckpoint.created_at.asc())
+        (
+            await db.execute(
+                select(CommercialWorkflowCheckpoint)
+                .where(CommercialWorkflowCheckpoint.execution_id == execution_id)
+                .order_by(
+                    CommercialWorkflowCheckpoint.step_index.asc(),
+                    CommercialWorkflowCheckpoint.created_at.asc(),
+                )
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {
         "items": [
             {
@@ -410,7 +449,11 @@ async def list_workflow_approvals(
     execution_id: uuid.UUID | None = None,
     db: AsyncSession = Depends(get_db_session),
 ):
-    stmt = select(CommercialWorkflowApproval).order_by(desc(CommercialWorkflowApproval.created_at)).limit(200)
+    stmt = (
+        select(CommercialWorkflowApproval)
+        .order_by(desc(CommercialWorkflowApproval.created_at))
+        .limit(200)
+    )
     if execution_id:
         stmt = stmt.where(CommercialWorkflowApproval.execution_id == execution_id)
     rows = (await db.execute(stmt)).scalars().all()
@@ -454,7 +497,11 @@ async def request_stage_approval(
     ).scalar_one_or_none()
     if stage is None:
         raise HTTPException(status_code=404, detail="workflow_stage_not_found")
-    snapshot = await db.get(CommercialWorkflowPolicySnapshot, stage.active_policy_snapshot_id) if stage.active_policy_snapshot_id else None
+    snapshot = (
+        await db.get(CommercialWorkflowPolicySnapshot, stage.active_policy_snapshot_id)
+        if stage.active_policy_snapshot_id
+        else None
+    )
     rows = await _approvals.request_approval(
         db,
         execution=execution,
@@ -506,7 +553,11 @@ async def list_replay_sessions(
     execution_id: uuid.UUID | None = None,
     db: AsyncSession = Depends(get_db_session),
 ):
-    stmt = select(CommercialWorkflowReplaySession).order_by(desc(CommercialWorkflowReplaySession.created_at)).limit(100)
+    stmt = (
+        select(CommercialWorkflowReplaySession)
+        .order_by(desc(CommercialWorkflowReplaySession.created_at))
+        .limit(100)
+    )
     if execution_id:
         stmt = stmt.where(CommercialWorkflowReplaySession.original_execution_id == execution_id)
     rows = (await db.execute(stmt)).scalars().all()
@@ -515,7 +566,9 @@ async def list_replay_sessions(
             {
                 "id": str(row.id),
                 "original_execution_id": str(row.original_execution_id),
-                "replay_execution_id": str(row.replay_execution_id) if row.replay_execution_id else None,
+                "replay_execution_id": str(row.replay_execution_id)
+                if row.replay_execution_id
+                else None,
                 "tenant_id": row.tenant_id,
                 "session_status": row.session_status,
                 "policy_mismatch_detected": row.policy_mismatch_detected,
@@ -530,7 +583,9 @@ async def list_replay_sessions(
 
 
 @router.post("/admin/workflows/replay-sessions")
-async def create_replay_session(payload: WorkflowReplaySessionPayload, db: AsyncSession = Depends(get_db_session)):
+async def create_replay_session(
+    payload: WorkflowReplaySessionPayload, db: AsyncSession = Depends(get_db_session)
+):
     try:
         row = await _orchestrator.create_replay_session(
             db,
@@ -543,11 +598,17 @@ async def create_replay_session(payload: WorkflowReplaySessionPayload, db: Async
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     await db.commit()
-    return {"id": str(row.id), "session_status": row.session_status, "deterministic_snapshot_hash": row.deterministic_snapshot_hash}
+    return {
+        "id": str(row.id),
+        "session_status": row.session_status,
+        "deterministic_snapshot_hash": row.deterministic_snapshot_hash,
+    }
 
 
 @router.post("/admin/workflows/replay-sessions/{session_id}/complete")
-async def complete_replay_session(session_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
+async def complete_replay_session(
+    session_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)
+):
     try:
         row = await _orchestrator.finalize_replay_session(db, session_id)
     except ValueError as exc:
@@ -566,14 +627,24 @@ async def complete_replay_session(session_id: uuid.UUID, db: AsyncSession = Depe
 @router.get("/admin/workflows/replays")
 async def list_replays(db: AsyncSession = Depends(get_db_session)):
     rows = (
-        await db.execute(select(CommercialWorkflowReplay).order_by(desc(CommercialWorkflowReplay.created_at)).limit(200))
-    ).scalars().all()
+        (
+            await db.execute(
+                select(CommercialWorkflowReplay)
+                .order_by(desc(CommercialWorkflowReplay.created_at))
+                .limit(200)
+            )
+        )
+        .scalars()
+        .all()
+    )
     return {
         "items": [
             {
                 "id": str(row.id),
                 "original_execution_id": str(row.original_execution_id),
-                "replay_execution_id": str(row.replay_execution_id) if row.replay_execution_id else None,
+                "replay_execution_id": str(row.replay_execution_id)
+                if row.replay_execution_id
+                else None,
                 "status": row.status,
                 "mismatched_step_index": row.mismatched_step_index,
                 "replay_report": row.replay_report,
@@ -628,12 +699,16 @@ async def verify_replay(replay_id: uuid.UUID, db: AsyncSession = Depends(get_db_
 @router.get("/admin/workflows/reports")
 async def list_reports(db: AsyncSession = Depends(get_db_session)):
     rows = (
-        await db.execute(
-            select(CommercialWorkflowDeterminismReport)
-            .order_by(desc(CommercialWorkflowDeterminismReport.created_at))
-            .limit(200)
+        (
+            await db.execute(
+                select(CommercialWorkflowDeterminismReport)
+                .order_by(desc(CommercialWorkflowDeterminismReport.created_at))
+                .limit(200)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {
         "items": [
             {
@@ -651,8 +726,16 @@ async def list_reports(db: AsyncSession = Depends(get_db_session)):
 @router.get("/admin/workflows/receipts")
 async def list_workflow_receipts(db: AsyncSession = Depends(get_db_session)):
     rows = (
-        await db.execute(select(CommercialWorkflowReceipt).order_by(desc(CommercialWorkflowReceipt.created_at)).limit(200))
-    ).scalars().all()
+        (
+            await db.execute(
+                select(CommercialWorkflowReceipt)
+                .order_by(desc(CommercialWorkflowReceipt.created_at))
+                .limit(200)
+            )
+        )
+        .scalars()
+        .all()
+    )
     return {
         "items": [
             {
@@ -669,7 +752,9 @@ async def list_workflow_receipts(db: AsyncSession = Depends(get_db_session)):
 
 
 @router.post("/admin/workflows/receipts/{execution_id}")
-async def create_workflow_receipt(execution_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
+async def create_workflow_receipt(
+    execution_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)
+):
     row = await _orchestrator.finalize_receipt(db, execution_id)
     await db.commit()
     await db.refresh(row)
@@ -677,7 +762,9 @@ async def create_workflow_receipt(execution_id: uuid.UUID, db: AsyncSession = De
 
 
 @router.post("/admin/workflows/receipts/{receipt_id}/verify")
-async def verify_workflow_receipt(receipt_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
+async def verify_workflow_receipt(
+    receipt_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)
+):
     row = await db.get(CommercialWorkflowReceipt, receipt_id)
     if row is None:
         raise HTTPException(status_code=404, detail="workflow_receipt_not_found")
@@ -687,7 +774,9 @@ async def verify_workflow_receipt(receipt_id: uuid.UUID, db: AsyncSession = Depe
 
 
 @router.post("/admin/workflows/receipts/{receipt_id}/export")
-async def export_workflow_receipt(receipt_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
+async def export_workflow_receipt(
+    receipt_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)
+):
     row = await db.get(CommercialWorkflowReceipt, receipt_id)
     if row is None:
         raise HTTPException(status_code=404, detail="workflow_receipt_not_found")

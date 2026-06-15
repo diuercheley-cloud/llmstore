@@ -95,16 +95,12 @@ async def test_rollback_from_invalid_state_raises(session):
     record = await discover_model(session, model_name="bad-rollback")
     await session.flush()
     with pytest.raises(ValueError, match="Cannot rollback"):
-        await rollback_model(
-            session, record.id, rollback_to_state="staged", rollback_reason="test"
-        )
+        await rollback_model(session, record.id, rollback_to_state="staged", rollback_reason="test")
 
 
 @pytest.mark.asyncio
 async def test_rollback_with_predecessor_checksum(session):
-    record = await discover_model(
-        session, model_name="rollback-checksum", checksum_sha256="x" * 64
-    )
+    record = await discover_model(session, model_name="rollback-checksum", checksum_sha256="x" * 64)
     await session.flush()
     await stage_model(session, record.id)
     await session.flush()

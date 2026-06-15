@@ -6,12 +6,12 @@ from uuid import UUID
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.core.admin_action_log import AdminActionLog
 from app.models.commercial.commercial_model_lifecycle import (
     VALID_LIFECYCLE_STATES,
     CommercialModelLifecycleRecord,
     CommercialOfflineModelVerification,
 )
+from app.models.core.admin_action_log import AdminActionLog
 from app.services.routing.commercial_report_export import sanitize_report_payload
 from app.services.security.offline_crl import is_bundle_revoked, is_peer_revoked
 from sqlalchemy import desc, select
@@ -31,7 +31,9 @@ STATE_TRANSITIONS: dict[str, set[str]] = {
 
 
 def _canonical_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+    )
 
 
 def _sanitize_text(value: str | None, *, max_length: int = 255) -> str | None:
@@ -95,7 +97,9 @@ async def discover_model(
         checksum_sha256=checksum_sha256,
         manifest_hash=manifest_hash,
         lifecycle_state="discovered",
-        tenant_scope_json=sanitize_report_payload(tenant_scope_json) if tenant_scope_json is not None else None,
+        tenant_scope_json=sanitize_report_payload(tenant_scope_json)
+        if tenant_scope_json is not None
+        else None,
         provenance_id=provenance_id,
         attestation_bound=False,
         checksum_verified=False,
@@ -171,8 +175,16 @@ async def transition_lifecycle_state(
         db,
         action=f"model_lifecycle_{target_state}",
         status="success",
-        payload={"lifecycle_record_id": str(record.id), "model_name": record.model_name, "changed_by": changed_by},
-        result={"from_state": record.previous_lifecycle_state, "to_state": target_state, "reason": reason},
+        payload={
+            "lifecycle_record_id": str(record.id),
+            "model_name": record.model_name,
+            "changed_by": changed_by,
+        },
+        result={
+            "from_state": record.previous_lifecycle_state,
+            "to_state": target_state,
+            "reason": reason,
+        },
     )
     return record
 
@@ -194,7 +206,10 @@ async def enforce_lifecycle_gates(
     if require_attestation:
         gates["attestation"] = record.attestation_bound
     if require_approval:
-        gates["approval"] = not record.approval_required or record.lifecycle_state in {"approved", "promoted"}
+        gates["approval"] = not record.approval_required or record.lifecycle_state in {
+            "approved",
+            "promoted",
+        }
     if require_lineage:
         gates["lineage"] = record.lineage_validated
     if require_checksum:
@@ -256,7 +271,14 @@ async def verify_offline_model(
     if source_cluster_id and await is_peer_revoked(db, source_cluster_id):
         crl_valid = False
 
-    overall_valid = signature_valid and checksum_valid and provenance_valid and crl_valid and attestation_valid and lineage_valid
+    overall_valid = (
+        signature_valid
+        and checksum_valid
+        and provenance_valid
+        and crl_valid
+        and attestation_valid
+        and lineage_valid
+    )
 
     details: dict[str, Any] = {
         "signature_valid": signature_valid,
@@ -333,7 +355,9 @@ async def list_lifecycle_records(
     cluster_id: str | None = None,
     limit: int = 100,
 ) -> list[CommercialModelLifecycleRecord]:
-    stmt = select(CommercialModelLifecycleRecord).order_by(desc(CommercialModelLifecycleRecord.updated_at))
+    stmt = select(CommercialModelLifecycleRecord).order_by(
+        desc(CommercialModelLifecycleRecord.updated_at)
+    )
     if lifecycle_state:
         stmt = stmt.where(CommercialModelLifecycleRecord.lifecycle_state == lifecycle_state)
     if cluster_id:
@@ -351,16 +375,20 @@ async def summarize_lifecycle_status(db: AsyncSession) -> dict[str, Any]:
         state_counts[record.lifecycle_state] = state_counts.get(record.lifecycle_state, 0) + 1
     sovereign_count = sum(1 for r in records if r.sovereign_restricted)
     export_restricted_count = sum(1 for r in records if r.export_restricted)
-    verified_count = sum(1 for r in records if r.checksum_verified and r.signature_verified and r.lineage_validated)
-    return sanitize_report_payload({
-        "total": len(records),
-        "state_counts": state_counts,
-        "sovereign_restricted": sovereign_count,
-        "export_restricted": export_restricted_count,
-        "fully_verified": verified_count,
-        "pending_approval": state_counts.get("pending_approval", 0),
-        "quarantined": state_counts.get("quarantined", 0),
-    })
+    verified_count = sum(
+        1 for r in records if r.checksum_verified and r.signature_verified and r.lineage_validated
+    )
+    return sanitize_report_payload(
+        {
+            "total": len(records),
+            "state_counts": state_counts,
+            "sovereign_restricted": sovereign_count,
+            "export_restricted": export_restricted_count,
+            "fully_verified": verified_count,
+            "pending_approval": state_counts.get("pending_approval", 0),
+            "quarantined": state_counts.get("quarantined", 0),
+        }
+    )
 
 
 def serialize_lifecycle_record(
@@ -373,31 +401,37 @@ def serialize_lifecycle_record(
             return None
         return value if sensitive else value[:12]
 
-    return sanitize_report_payload({
-        "id": str(record.id),
-        "registry_entry_id": str(record.registry_entry_id) if record.registry_entry_id else None,
-        "model_name": record.model_name,
-        "model_alias": record.model_alias,
-        "model_version": record.model_version,
-        "provider": record.provider,
-        "checksum_sha256": _short(record.checksum_sha256),
-        "manifest_hash": _short(record.manifest_hash),
-        "lifecycle_state": record.lifecycle_state,
-        "previous_lifecycle_state": record.previous_lifecycle_state,
-        "provenance_id": str(record.provenance_id) if record.provenance_id else None,
-        "attestation_bound": record.attestation_bound,
-        "checksum_verified": record.checksum_verified,
-        "signature_verified": record.signature_verified,
-        "lineage_validated": record.lineage_validated,
-        "approval_required": record.approval_required,
-        "sovereign_restricted": record.sovereign_restricted,
-        "export_restricted": record.export_restricted,
-        "cluster_id": record.cluster_id,
-        "node_id": record.node_id,
-        "state_changed_at": record.state_changed_at.isoformat() if record.state_changed_at else None,
-        "created_at": record.created_at.isoformat(),
-        "updated_at": record.updated_at.isoformat(),
-    })
+    return sanitize_report_payload(
+        {
+            "id": str(record.id),
+            "registry_entry_id": str(record.registry_entry_id)
+            if record.registry_entry_id
+            else None,
+            "model_name": record.model_name,
+            "model_alias": record.model_alias,
+            "model_version": record.model_version,
+            "provider": record.provider,
+            "checksum_sha256": _short(record.checksum_sha256),
+            "manifest_hash": _short(record.manifest_hash),
+            "lifecycle_state": record.lifecycle_state,
+            "previous_lifecycle_state": record.previous_lifecycle_state,
+            "provenance_id": str(record.provenance_id) if record.provenance_id else None,
+            "attestation_bound": record.attestation_bound,
+            "checksum_verified": record.checksum_verified,
+            "signature_verified": record.signature_verified,
+            "lineage_validated": record.lineage_validated,
+            "approval_required": record.approval_required,
+            "sovereign_restricted": record.sovereign_restricted,
+            "export_restricted": record.export_restricted,
+            "cluster_id": record.cluster_id,
+            "node_id": record.node_id,
+            "state_changed_at": record.state_changed_at.isoformat()
+            if record.state_changed_at
+            else None,
+            "created_at": record.created_at.isoformat(),
+            "updated_at": record.updated_at.isoformat(),
+        }
+    )
 
 
 def serialize_offline_verification(
@@ -410,24 +444,30 @@ def serialize_offline_verification(
             return None
         return value if sensitive else value[:12]
 
-    return sanitize_report_payload({
-        "id": str(verification.id),
-        "lifecycle_record_id": str(verification.lifecycle_record_id) if verification.lifecycle_record_id else None,
-        "verification_type": verification.verification_type,
-        "model_name": verification.model_name,
-        "checksum_sha256": _short(verification.checksum_sha256),
-        "manifest_hash": _short(verification.manifest_hash),
-        "signature_valid": verification.signature_valid,
-        "checksum_valid": verification.checksum_valid,
-        "provenance_valid": verification.provenance_valid,
-        "crl_valid": verification.crl_valid,
-        "attestation_valid": verification.attestation_valid,
-        "lineage_valid": verification.lineage_valid,
-        "overall_valid": verification.overall_valid,
-        "media_ref": verification.media_ref,
-        "media_uuid": verification.media_uuid,
-        "source_cluster_id": verification.source_cluster_id,
-        "verified_by": verification.verified_by,
-        "verified_at": verification.verified_at.isoformat() if verification.verified_at else None,
-        "created_at": verification.created_at.isoformat(),
-    })
+    return sanitize_report_payload(
+        {
+            "id": str(verification.id),
+            "lifecycle_record_id": str(verification.lifecycle_record_id)
+            if verification.lifecycle_record_id
+            else None,
+            "verification_type": verification.verification_type,
+            "model_name": verification.model_name,
+            "checksum_sha256": _short(verification.checksum_sha256),
+            "manifest_hash": _short(verification.manifest_hash),
+            "signature_valid": verification.signature_valid,
+            "checksum_valid": verification.checksum_valid,
+            "provenance_valid": verification.provenance_valid,
+            "crl_valid": verification.crl_valid,
+            "attestation_valid": verification.attestation_valid,
+            "lineage_valid": verification.lineage_valid,
+            "overall_valid": verification.overall_valid,
+            "media_ref": verification.media_ref,
+            "media_uuid": verification.media_uuid,
+            "source_cluster_id": verification.source_cluster_id,
+            "verified_by": verification.verified_by,
+            "verified_at": verification.verified_at.isoformat()
+            if verification.verified_at
+            else None,
+            "created_at": verification.created_at.isoformat(),
+        }
+    )

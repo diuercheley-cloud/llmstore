@@ -554,6 +554,15 @@ class APIClient {
   createRestoreRequest = (backupId: string, dryRun: boolean) => this.request<any>('POST', '/admin/backup/restore-requests', { backup_id: backupId, dry_run: dryRun })
   approveRestoreRequest = (id: string) => this.request<any>('POST', `/admin/backup/restore-requests/${id}/approve`)
   executeRestoreRequest = (id: string, token: string) => this.request<any>('POST', `/admin/backup/restore-requests/${id}/execute`, { token })
+
+  // Admin - Sales & CRM
+  listLeads = (status?: string) => this.request<any[]>('GET', '/admin/sales/leads', undefined, status ? { status } : undefined)
+  createLead = (lead: any) => this.request<any>('POST', '/admin/sales/leads', lead)
+  updateLead = (id: string, lead: any) => this.request<any>('PATCH', `/admin/sales/leads/${id}`, lead)
+  deleteLead = (id: string) => this.request<void>('DELETE', `/admin/sales/leads/${id}`)
+  addLeadNote = (id: string, content: string) => this.request<any>('POST', `/admin/sales/leads/${id}/notes`, { content })
+  advanceLeadStage = (id: string, newStatus: string, note?: string) => this.request<any>('POST', `/admin/sales/leads/${id}/advance-stage`, { new_status: newStatus, note })
+  quotePreview = (data: any) => this.request<any>('POST', '/admin/sales/quote-preview', data)
 }
 
 const api = new APIClient()

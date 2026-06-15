@@ -28,7 +28,16 @@ def test_report_has_required_keys():
     report = _get_latest_report()
     with open(report) as f:
         data = json.load(f)
-    required = ["report_type", "version", "timestamp", "base_url", "mode", "status", "counts", "results"]
+    required = [
+        "report_type",
+        "version",
+        "timestamp",
+        "base_url",
+        "mode",
+        "status",
+        "counts",
+        "results",
+    ]
     for key in required:
         assert key in data, f"Chave obrigatoria '{key}' ausente no relatorio"
 
@@ -51,9 +60,9 @@ def test_report_no_secrets():
         content = f.read()
     # Check for potential secrets
     patterns = [
-        r'sk-[a-zA-Z0-9]{20,}',
-        r'ADMIN_TOKEN=[a-zA-Z0-9._-]{12,}',
-        r'ghp_[a-zA-Z0-9]{36}',
+        r"sk-[a-zA-Z0-9]{20,}",
+        r"ADMIN_TOKEN=[a-zA-Z0-9._-]{12,}",
+        r"ghp_[a-zA-Z0-9]{36}",
     ]
     for pattern in patterns:
         matches = re.findall(pattern, content)
@@ -71,7 +80,7 @@ def test_report_status_valid():
     assert data["status"] in (
         "CUSTOMER_DEMO_READY",
         "CUSTOMER_DEMO_READY_WITH_WARNINGS",
-        "CUSTOMER_DEMO_FAILED"
+        "CUSTOMER_DEMO_FAILED",
     ), f"Status invalido: {data['status']}"
 
 
@@ -94,9 +103,9 @@ def test_report_md_no_secrets():
     with open(reports[-1]) as f:
         content = f.read()
     patterns = [
-        r'sk-[a-zA-Z0-9]{20,}',
-        r'ADMIN_TOKEN=[a-zA-Z0-9._-]{12,}',
-        r'ghp_[a-zA-Z0-9]{36}',
+        r"sk-[a-zA-Z0-9]{20,}",
+        r"ADMIN_TOKEN=[a-zA-Z0-9._-]{12,}",
+        r"ghp_[a-zA-Z0-9]{36}",
     ]
     for pattern in patterns:
         matches = re.findall(pattern, content)

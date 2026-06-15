@@ -1,5 +1,6 @@
 import asyncio
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import Any
 
 from ..base import BaseAdapter
 
@@ -7,11 +8,11 @@ from ..base import BaseAdapter
 class StateGraph(BaseAdapter):
     def __init__(self, state_schema: Any):
         self.state_schema = state_schema
-        self.nodes: Dict[str, Callable] = {}
-        self.edges: List[tuple[str, str]] = []
-        self.conditional_edges: List[tuple[str, Callable, Dict[str, str]]] = []
-        self.entry_point: Optional[str] = None
-        self.finish_point: Optional[str] = None
+        self.nodes: dict[str, Callable] = {}
+        self.edges: list[tuple[str, str]] = []
+        self.conditional_edges: list[tuple[str, Callable, dict[str, str]]] = []
+        self.entry_point: str | None = None
+        self.finish_point: str | None = None
 
     def add_node(self, name: str, action: Callable) -> "StateGraph":
         self.nodes[name] = action
@@ -25,7 +26,7 @@ class StateGraph(BaseAdapter):
         self,
         from_node: str,
         condition: Callable,
-        mapping: Dict[str, str],
+        mapping: dict[str, str],
     ) -> "StateGraph":
         self.conditional_edges.append((from_node, condition, mapping))
         return self
@@ -41,7 +42,7 @@ class StateGraph(BaseAdapter):
     def compile(self) -> "CompiledStateGraph":
         return CompiledStateGraph(self)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "entry_point": self.entry_point,
             "finish_point": self.finish_point,
@@ -58,7 +59,7 @@ class CompiledStateGraph(BaseAdapter):
     def __init__(self, graph: StateGraph):
         self.graph = graph
 
-    async def invoke(self, state: Dict[str, Any]) -> Dict[str, Any]:
+    async def invoke(self, state: dict[str, Any]) -> dict[str, Any]:
         current_node = self.graph.entry_point
         current_state = dict(state)
         visited: set[str] = set()
@@ -80,7 +81,7 @@ class CompiledStateGraph(BaseAdapter):
             if current_node == self.graph.finish_point:
                 break
 
-            next_node: Optional[str] = None
+            next_node: str | None = None
             for from_n, to_n in self.graph.edges:
                 if from_n == current_node:
                     next_node = to_n
@@ -97,7 +98,7 @@ class CompiledStateGraph(BaseAdapter):
 
         return current_state
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "type": "CompiledStateGraph",
             "graph": self.graph.to_dict(),

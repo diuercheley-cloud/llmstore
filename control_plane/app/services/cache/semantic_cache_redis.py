@@ -4,7 +4,7 @@ import hashlib
 import json
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.metrics import record_semantic_cache_result
@@ -13,6 +13,7 @@ from redis.asyncio import Redis
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
+
 
 class SemanticCacheRedis:
     def __init__(self, redis: Redis):
@@ -33,23 +34,19 @@ class SemanticCacheRedis:
         return hashlib.sha256(prompt.encode("utf-8")).hexdigest()
 
     async def get(
-        self, 
-        tenant_id: str, 
-        client_id: str, 
-        model: str, 
-        prompt: str
-    ) -> Optional[Dict[str, Any]]:
+        self, tenant_id: str, client_id: str, model: str, prompt: str
+    ) -> dict[str, Any] | None:
         if not settings.semantic_cache_enabled:
             return None
 
         start_time = time.perf_counter()
         prefix = self._get_key_prefix(tenant_id, client_id, model)
         entries_key = f"{prefix}:entries"
-        
+
         try:
             # 1. Get embedding for the prompt
             query_vector = await self.embedding_service.embed_text(prompt)
-            
+
             # 2. Fetch all entries for this model/client
             # Note: For large scale, use Redis Vector Similarity Search (RediSearch)
             # Fetching all entries and computing similarity in-memory for now
@@ -67,7 +64,7 @@ class SemanticCacheRedis:
             for entry_id, entry_json in all_entries.items():
                 try:
                     entry = json.loads(entry_json)
-                    
+
                     # Invalidation by model version
                     if entry.get("emb_model") != embedding_model:
                         continue
@@ -97,12 +94,7 @@ class SemanticCacheRedis:
             return None
 
     async def set(
-        self, 
-        tenant_id: str, 
-        client_id: str, 
-        model: str, 
-        prompt: str, 
-        response: Dict[str, Any]
+        self, tenant_id: str, client_id: str, model: str, prompt: str, response: dict[str, Any]
     ) -> None:
         if not settings.semantic_cache_enabled:
             return
@@ -115,7 +107,7 @@ class SemanticCacheRedis:
             embedding = await self.embedding_service.embed_text(prompt)
             entry_id = self._generate_id(prompt)
             now = time.time()
-            
+
             entry = {
                 "p": prompt,
                 "resp": response,
@@ -148,8 +140,9 @@ class SemanticCacheRedis:
                 entry_ids = [e[0] for e in old_entries]
                 await self.redis.hdel(entries_key, *entry_ids)
 
-    def _cosine_similarity(self, a: List[float], b: List[float]) -> float:
+    def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
         import math
+
         dot = sum(x * y for x, y in zip(a, b))
         norm_a = math.sqrt(sum(x * x for x in a))
         norm_b = math.sqrt(sum(y * y for y in b))
@@ -163,7 +156,7 @@ class SemanticCacheRedis:
             model=model,
             tenant_id=tenant_id,
             client_id=client_id,
-            latency_seconds=time.perf_counter() - start_time
+            latency_seconds=time.perf_counter() - start_time,
         )
 
     def _record_miss(self, model, tenant_id, client_id, start_time):
@@ -172,10 +165,12 @@ class SemanticCacheRedis:
             model=model,
             tenant_id=tenant_id,
             client_id=client_id,
-            latency_seconds=time.perf_counter() - start_time
+            latency_seconds=time.perf_counter() - start_time,
         )
 
+
 _semantic_cache = None
+
 
 def get_semantic_cache(redis: Redis) -> SemanticCacheRedis:
     global _semantic_cache

@@ -1,7 +1,7 @@
 # Owner: agent-platform
 import time
 import uuid
-from typing import Any, Dict
+from typing import Any
 
 from app.models.agents.prompts import PromptPlaygroundRun, PromptTemplateVersion
 from app.services.prompts.prompt_template_engine import PromptTemplateEngine
@@ -13,11 +13,14 @@ class PromptPlayground:
     """
     Executes prompts for testing and iteration.
     """
+
     def __init__(self, db: AsyncSession):
         self.db = db
         self.engine = PromptTemplateEngine()
 
-    async def run_playground(self, version_id: uuid.UUID, variables: Dict[str, Any], created_by: str) -> PromptPlaygroundRun:
+    async def run_playground(
+        self, version_id: uuid.UUID, variables: dict[str, Any], created_by: str
+    ) -> PromptPlaygroundRun:
         stmt = select(PromptTemplateVersion).where(PromptTemplateVersion.id == version_id)
         res = await self.db.execute(stmt)
         version = res.scalar_one_or_none()
@@ -39,7 +42,7 @@ class PromptPlayground:
             output=output,
             latency_ms=latency_ms,
             token_usage={"total": 100},
-            created_by=created_by
+            created_by=created_by,
         )
         self.db.add(run)
         await self.db.flush()

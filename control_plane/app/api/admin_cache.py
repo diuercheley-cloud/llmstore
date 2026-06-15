@@ -1,22 +1,17 @@
-import json
-import uuid
-
-from app.core.config import get_settings
-from app.core.time import utc_now
-from app.services.runtime_dependencies import get_db_session, get_redis
 from app.services.auth import require_admin
 from app.services.cache.intelligent_cache import (
     cache_stats as intelligent_cache_stats,
+)
+from app.services.cache.intelligent_cache import (
     ensure_cache_policy,
     get_cache_policies,
     invalidate_client_cache,
     list_cache_entries,
 )
 from app.services.response_cache import clear_response_cache
-from fastapi import APIRouter, Depends, HTTPException, status
+from app.services.runtime_dependencies import get_db_session
+from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
-from redis.asyncio import Redis
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin", tags=["admin-cache"], dependencies=[Depends(require_admin)])
@@ -46,7 +41,9 @@ async def cache_entries(
     offset: int = 0,
     session: AsyncSession = Depends(get_db_session),
 ):
-    return await list_cache_entries(session, client_id=client_id, cache_type=cache_type, limit=limit, offset=offset)
+    return await list_cache_entries(
+        session, client_id=client_id, cache_type=cache_type, limit=limit, offset=offset
+    )
 
 
 @router.post("/cache/invalidate")
@@ -56,7 +53,9 @@ async def cache_invalidate(
     model: str | None = None,
     session: AsyncSession = Depends(get_db_session),
 ):
-    result = await invalidate_client_cache(session, client_id=client_id, endpoint_type=endpoint_type, model=model)
+    result = await invalidate_client_cache(
+        session, client_id=client_id, endpoint_type=endpoint_type, model=model
+    )
     await session.commit()
     return result
 
@@ -67,7 +66,9 @@ async def cache_policies(session: AsyncSession = Depends(get_db_session)):
 
 
 @router.post("/cache/policies", status_code=status.HTTP_201_CREATED)
-async def create_cache_policy(payload: CachePolicyCreate, session: AsyncSession = Depends(get_db_session)):
+async def create_cache_policy(
+    payload: CachePolicyCreate, session: AsyncSession = Depends(get_db_session)
+):
     policy = await ensure_cache_policy(
         session,
         client_id=payload.client_id,

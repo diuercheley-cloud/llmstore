@@ -1,5 +1,8 @@
 import pytest
-from app.models.commercial.commercial_workflows import CommercialWorkflowReceipt, CommercialWorkflowStage
+from app.models.commercial.commercial_workflows import (
+    CommercialWorkflowReceipt,
+    CommercialWorkflowStage,
+)
 from app.services.workflows.deterministic_orchestrator import DeterministicWorkflowOrchestrator
 from sqlalchemy import select
 
@@ -13,7 +16,11 @@ async def test_dag_execution_produces_deterministic_stage_chain(session):
         dag_or_steps={
             "stages": [
                 {"stage_key": "summarize", "dependencies": [], "config": {"model": "local"}},
-                {"stage_key": "classify", "dependencies": ["summarize"], "config": {"model": "local"}},
+                {
+                    "stage_key": "classify",
+                    "dependencies": ["summarize"],
+                    "config": {"model": "local"},
+                },
             ]
         },
         client_id="tenant-a",
@@ -43,15 +50,21 @@ async def test_dag_execution_produces_deterministic_stage_chain(session):
     await session.commit()
 
     stages = (
-        await session.execute(
-            select(CommercialWorkflowStage)
-            .where(CommercialWorkflowStage.execution_id == execution.id)
-            .order_by(CommercialWorkflowStage.stage_order.asc())
+        (
+            await session.execute(
+                select(CommercialWorkflowStage)
+                .where(CommercialWorkflowStage.execution_id == execution.id)
+                .order_by(CommercialWorkflowStage.stage_order.asc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     receipt = (
         await session.execute(
-            select(CommercialWorkflowReceipt).where(CommercialWorkflowReceipt.execution_id == execution.id)
+            select(CommercialWorkflowReceipt).where(
+                CommercialWorkflowReceipt.execution_id == execution.id
+            )
         )
     ).scalar_one()
 

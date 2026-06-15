@@ -19,7 +19,9 @@ async def test_llm_cache_hit_and_miss(tmp_path):
 
     async def fake_completion(messages):
         calls["count"] += 1
-        return {"choices": [{"message": {"role": "assistant", "content": '{"action_type":"final"}'}}]}
+        return {
+            "choices": [{"message": {"role": "assistant", "content": '{"action_type":"final"}'}}]
+        }
 
     client._provider_inst.chat_completion = AsyncMock(side_effect=fake_completion)
 
@@ -65,7 +67,9 @@ async def test_cache_does_not_leak_secrets(tmp_path):
 async def test_mutable_shell_command_is_not_cached(tmp_path):
     async with Workspace() as ws:
         cache = LocalCache(mode="read-only", cache_dir=str(tmp_path / "cache"))
-        policy = PolicyEngine(config={"allowed_tools": ["python3"], "max_tokens": 1, "max_cost": 1.0})
+        policy = PolicyEngine(
+            config={"allowed_tools": ["python3"], "max_tokens": 1, "max_cost": 1.0}
+        )
         sandbox = SandboxRunner(workspace=ws)
         shell_tools = ShellTools(sandbox_runner=sandbox, policy_engine=policy, cache=cache)
         ws.write_file(

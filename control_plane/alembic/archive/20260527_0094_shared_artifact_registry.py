@@ -5,13 +5,15 @@ Revises: phase93_agent_optimization
 Create Date: 2026-05-27 20:30:00.000000
 
 """
-from typing import Sequence, Union
+
+from collections.abc import Sequence
+from typing import Union
 
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = '20260527_0094'
-down_revision: Union[str, Sequence[str], None] = 'phase93_agent_optimization'
+revision: str = "20260527_0094"
+down_revision: Union[str, Sequence[str], None] = "phase93_agent_optimization"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -27,6 +29,7 @@ def upgrade() -> None:
         AgentSharedArtifact,
         AgentWorkspace,
     )
+
     bind = op.get_bind()
     tables = [
         AgentWorkspace.__table__,
@@ -41,10 +44,10 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_table('agent_artifact_events')
-    op.drop_table('agent_artifact_comments')
-    op.drop_table('agent_artifact_reviews')
-    op.drop_table('agent_artifact_locks')
-    op.drop_table('agent_artifact_versions')
-    op.drop_table('agent_shared_artifacts')
-    op.drop_table('agent_workspaces')
+    op.drop_table("agent_artifact_events")
+    op.drop_table("agent_artifact_comments")
+    op.drop_table("agent_artifact_reviews")
+    op.drop_table("agent_artifact_locks")
+    op.drop_table("agent_artifact_versions")
+    op.drop_table("agent_shared_artifacts")
+    op.drop_table("agent_workspaces")

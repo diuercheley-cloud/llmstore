@@ -15,6 +15,7 @@ async def test_supervisor_cycle(session: AsyncSession):
     assert "decisions_made" in result
     assert result["status"] == "completed"
 
+
 @pytest.mark.asyncio
 async def test_process_incident(session: AsyncSession):
     # Setup test policy
@@ -22,19 +23,19 @@ async def test_process_incident(session: AsyncSession):
         name="test_financial_policy",
         policy_type="financial",
         mode="advisory",
-        approval_required=False
+        approval_required=False,
     )
     session.add(policy)
     await session.commit()
     await session.refresh(policy)
-    
+
     incident = CommercialGovernanceSupervisorIncident(
         incident_type="financial_risk_breach",
         severity="critical",
         title="Test Incident",
         description="A test incident",
         triggering_signals={"financial_risk": 0.9},
-        status="open"
+        status="open",
     )
     session.add(incident)
     await session.commit()
@@ -42,7 +43,7 @@ async def test_process_incident(session: AsyncSession):
 
     supervisor = GovernanceSupervisor(session)
     decision = await supervisor.process_incident(incident)
-    
+
     assert decision is not None
     assert decision.incident_id == incident.id
     assert decision.policy_id == policy.id

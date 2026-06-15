@@ -1,11 +1,11 @@
 import json
 
 import pytest
-from app.models.core.client import Client
 from app.models.commercial.commercial_inference_reproducibility import (
     CommercialInferenceReproducibilityRecord,
     CommercialInferenceRuntimeSnapshot,
 )
+from app.models.core.client import Client
 from app.services.audit import log_request
 from sqlalchemy import select
 
@@ -162,5 +162,7 @@ async def test_reproducibility_endpoints_require_admin_auth(admin_client, admin_
     unauthorized = await admin_client.get("/admin/inference/reproducibility/status")
     assert unauthorized.status_code == 401
 
-    authorized = await admin_client.get("/admin/inference/reproducibility/status", headers=admin_token_headers)
+    authorized = await admin_client.get(
+        "/admin/inference/reproducibility/status", headers=admin_token_headers
+    )
     assert authorized.status_code == 200

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Awaitable, Callable
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 from app.core.time import utc_now
 from app.models.commercial.commercial_inference_reproducibility import (
@@ -56,11 +57,15 @@ def calculate_similarity(
 ) -> float:
     if original_hash == replay_hash:
         return 1.0
-    normalized_match = " ".join(original_text.lower().split()) == " ".join(replay_text.lower().split())
+    normalized_match = " ".join(original_text.lower().split()) == " ".join(
+        replay_text.lower().split()
+    )
     if normalized_match:
         return 0.99
     overlap = token_overlap if token_overlap is not None else 0.0
-    edit_distance = distance if distance is not None else calculate_distance(original_text, replay_text)
+    edit_distance = (
+        distance if distance is not None else calculate_distance(original_text, replay_text)
+    )
     similarity = max(overlap, round(1.0 - edit_distance, 4))
     return round(min(max(similarity, 0.0), 1.0), 4)
 
@@ -85,21 +90,39 @@ async def replay_inference(
     record: CommercialInferenceReproducibilityRecord,
     *,
     replay_type: str,
-    inference_callable: Callable[[CommercialInferenceReproducibilityRecord], Awaitable[dict[str, Any] | str | None]] | None = None,
+    inference_callable: Callable[
+        [CommercialInferenceReproducibilityRecord], Awaitable[dict[str, Any] | str | None]
+    ]
+    | None = None,
 ) -> dict[str, Any]:
     metadata = record.metadata_json or {}
     if not record.replay_supported:
         return {"ok": False, "reason": "replay_disabled", "output": None, "runtime_snapshot": None}
     if inference_callable is not None:
         output = await inference_callable(record)
-        return {"ok": True, "reason": None, "output": output, "runtime_snapshot": metadata.get("replay_runtime_snapshot")}
+        return {
+            "ok": True,
+            "reason": None,
+            "output": output,
+            "runtime_snapshot": metadata.get("replay_runtime_snapshot"),
+        }
     candidate_output = metadata.get("replay_candidate_output") or metadata.get("response_text")
     if not candidate_output:
-        return {"ok": False, "reason": "prompt_or_output_not_retained", "output": None, "runtime_snapshot": None}
+        return {
+            "ok": False,
+            "reason": "prompt_or_output_not_retained",
+            "output": None,
+            "runtime_snapshot": None,
+        }
     runtime_snapshot = metadata.get("replay_runtime_snapshot")
     if isinstance(runtime_snapshot, dict) and "snapshot_hash" not in runtime_snapshot:
         runtime_snapshot["snapshot_hash"] = calculate_runtime_hash(runtime_snapshot)
-    return {"ok": True, "reason": None, "output": candidate_output, "runtime_snapshot": runtime_snapshot}
+    return {
+        "ok": True,
+        "reason": None,
+        "output": candidate_output,
+        "runtime_snapshot": runtime_snapshot,
+    }
 
 
 async def verify_replay(
@@ -107,9 +130,14 @@ async def verify_replay(
     *,
     record: CommercialInferenceReproducibilityRecord,
     replay_type: str,
-    inference_callable: Callable[[CommercialInferenceReproducibilityRecord], Awaitable[dict[str, Any] | str | None]] | None = None,
+    inference_callable: Callable[
+        [CommercialInferenceReproducibilityRecord], Awaitable[dict[str, Any] | str | None]
+    ]
+    | None = None,
 ) -> dict[str, Any]:
-    replay = await replay_inference(record, replay_type=replay_type, inference_callable=inference_callable)
+    replay = await replay_inference(
+        record, replay_type=replay_type, inference_callable=inference_callable
+    )
     current_snapshot = (
         await session.execute(
             select(CommercialInferenceRuntimeSnapshot)
@@ -166,7 +194,11 @@ async def verify_replay(
         similarity_score=output_comparison["similarity"],
         distance_score=output_comparison["distance"],
         replay_output_hash=hash_response(replay["output"]),
-        replay_runtime_hash=calculate_runtime_hash(replay["runtime_snapshot"] or current_snapshot_dict) if (replay["runtime_snapshot"] or current_snapshot_dict) else None,
+        replay_runtime_hash=calculate_runtime_hash(
+            replay["runtime_snapshot"] or current_snapshot_dict
+        )
+        if (replay["runtime_snapshot"] or current_snapshot_dict)
+        else None,
         summary=str(
             sanitize_report_payload(
                 {
@@ -199,5 +231,9 @@ async def verify_replay(
             "quantization_drift": runtime_comparison["quantization_drift"],
             "limitations": "best-effort reproducibility only",
         },
-        "replay_output_preview": _extract_response_text({"choices": [{"message": {"content": replay["output"]}}]})[:200] if isinstance(replay["output"], str) else _extract_response_text(replay["output"])[:200],
+        "replay_output_preview": _extract_response_text(
+            {"choices": [{"message": {"content": replay["output"]}}]}
+        )[:200]
+        if isinstance(replay["output"], str)
+        else _extract_response_text(replay["output"])[:200],
     }

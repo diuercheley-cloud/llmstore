@@ -10,6 +10,7 @@ async def test_health_basic(admin_client: AsyncClient):
     assert data["status"] == "ok"
     assert data["process"] == "alive"
 
+
 @pytest.mark.asyncio
 async def test_ready_structure(admin_client: AsyncClient):
     response = await admin_client.get("/ready")

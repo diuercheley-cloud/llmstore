@@ -33,8 +33,16 @@ OPENROUTER_TOOL_PARAMETERS = {"tools", "tool_choice", "parallel_tool_calls"}
 def provider_tool_capability(provider: str | None) -> str:
     normalized = (provider or "").strip().lower()
     if normalized in {
-        "openai_compatible", "openrouter", "openai", "deepseek", 
-        "anthropic", "gemini", "bedrock", "mistral", "groq", "together"
+        "openai_compatible",
+        "openrouter",
+        "openai",
+        "deepseek",
+        "anthropic",
+        "gemini",
+        "bedrock",
+        "mistral",
+        "groq",
+        "together",
     }:
         return "supported"
     if normalized in {"ollama", "vllm", "llama.cpp"}:
@@ -59,7 +67,9 @@ def model_supports_native_tools(
     metadata = _coerce_metadata(metadata_json)
     supported_parameters = metadata.get("supported_parameters")
     if isinstance(supported_parameters, list):
-        normalized_parameters = {str(item).strip() for item in supported_parameters if str(item).strip()}
+        normalized_parameters = {
+            str(item).strip() for item in supported_parameters if str(item).strip()
+        }
         # For OpenRouter, 'tools' is the minimum required to support native tool calling
         return "tools" in normalized_parameters
 
@@ -83,7 +93,7 @@ def filter_unsupported_tooling_parameters(
 
     metadata = _coerce_metadata(metadata_json)
     supported_parameters = metadata.get("supported_parameters")
-    
+
     updated = dict(payload)
     removed = []
 
@@ -107,7 +117,7 @@ def filter_unsupported_tooling_parameters(
         logger.warning(
             f"Removed unsupported or risky OpenRouter tooling parameters from request: {', '.join(removed)}"
         )
-        
+
     return updated
 
 
@@ -162,13 +172,19 @@ def validate_tool_definitions(tools: list[Any]) -> None:
 
     for idx, tool in enumerate(tools):
         if not isinstance(tool, dict):
-            raise _tool_request_error("invalid_tool_definition", f"tool at index {idx} must be an object")
+            raise _tool_request_error(
+                "invalid_tool_definition", f"tool at index {idx} must be an object"
+            )
         if tool.get("type") != "function":
-            raise _tool_request_error("invalid_tool_type", f"tool at index {idx} must have type=function")
+            raise _tool_request_error(
+                "invalid_tool_type", f"tool at index {idx} must have type=function"
+            )
 
         function = tool.get("function")
         if not isinstance(function, dict):
-            raise _tool_request_error("invalid_tool_definition", f"tool at index {idx} must include function object")
+            raise _tool_request_error(
+                "invalid_tool_definition", f"tool at index {idx} must include function object"
+            )
 
         name = function.get("name")
         if not isinstance(name, str) or not TOOL_NAME_RE.match(name):
@@ -182,30 +198,35 @@ def validate_tool_definitions(tools: list[Any]) -> None:
             validate_tool_schema(parameters, tool_name=name)
 
 
-def validate_tool_choice(*, tool_choice: str | dict[str, Any] | None, tools: list[dict[str, Any]]) -> None:
+def validate_tool_choice(
+    *, tool_choice: str | dict[str, Any] | None, tools: list[dict[str, Any]]
+) -> None:
     if tool_choice is None:
         return
     if isinstance(tool_choice, str):
         if tool_choice not in {"none", "auto", "required"}:
-            raise _tool_request_error("invalid_tool_choice", "tool_choice must be one of none, auto, required, or function object")
+            raise _tool_request_error(
+                "invalid_tool_choice",
+                "tool_choice must be one of none, auto, required, or function object",
+            )
         return
     if not isinstance(tool_choice, dict):
         raise _tool_request_error("invalid_tool_choice", "tool_choice must be a string or object")
     if tool_choice.get("type") != "function":
-        raise _tool_request_error("invalid_tool_choice", "tool_choice object must have type=function")
+        raise _tool_request_error(
+            "invalid_tool_choice", "tool_choice object must have type=function"
+        )
     function = tool_choice.get("function")
     if not isinstance(function, dict) or not isinstance(function.get("name"), str):
         raise _tool_request_error("invalid_tool_choice", "tool_choice.function.name is required")
     name = function["name"]
     if not TOOL_NAME_RE.match(name):
         raise _tool_request_error("invalid_tool_choice", "tool_choice.function.name is invalid")
-    tool_names = {
-        item.get("function", {}).get("name")
-        for item in tools
-        if isinstance(item, dict)
-    }
+    tool_names = {item.get("function", {}).get("name") for item in tools if isinstance(item, dict)}
     if tools and name not in tool_names:
-        raise _tool_request_error("invalid_tool_choice", f"tool_choice references unknown tool '{name}'")
+        raise _tool_request_error(
+            "invalid_tool_choice", f"tool_choice references unknown tool '{name}'"
+        )
 
 
 def validate_response_format(response_format: dict[str, Any] | None) -> None:
@@ -217,7 +238,9 @@ def validate_response_format(response_format: dict[str, Any] | None) -> None:
 
 def validate_tool_schema(schema: Any, *, tool_name: str) -> None:
     if not isinstance(schema, dict):
-        raise _tool_request_error("invalid_tool_schema", f"tool '{tool_name}' parameters must be an object schema")
+        raise _tool_request_error(
+            "invalid_tool_schema", f"tool '{tool_name}' parameters must be an object schema"
+        )
     serialized = _safe_json_dumps(schema)
     if len(serialized.encode("utf-8")) > settings.max_tool_schema_bytes:
         raise _tool_request_error(
@@ -308,7 +331,9 @@ def _schema_stats(schema: Any, *, depth: int = 1) -> dict[str, int]:
     if isinstance(schema, dict):
         for key in schema:
             if key in DISALLOWED_SCHEMA_KEYS:
-                raise _tool_request_error("tool_schema_not_allowed", f"schema keyword '{key}' is not allowed")
+                raise _tool_request_error(
+                    "tool_schema_not_allowed", f"schema keyword '{key}' is not allowed"
+                )
 
         properties = schema.get("properties")
         if isinstance(properties, dict):
@@ -345,21 +370,37 @@ def _schema_stats(schema: Any, *, depth: int = 1) -> dict[str, int]:
 
 def _validate_schema_shape(schema: dict[str, Any], *, tool_name: str) -> None:
     schema_type = schema.get("type")
-    if schema_type is not None and schema_type not in {"object", "array", "string", "number", "integer", "boolean", "null"}:
-        raise _tool_request_error("invalid_tool_schema", f"tool '{tool_name}' has unsupported schema type '{schema_type}'")
+    if schema_type is not None and schema_type not in {
+        "object",
+        "array",
+        "string",
+        "number",
+        "integer",
+        "boolean",
+        "null",
+    }:
+        raise _tool_request_error(
+            "invalid_tool_schema", f"tool '{tool_name}' has unsupported schema type '{schema_type}'"
+        )
 
     properties = schema.get("properties")
     if properties is not None and not isinstance(properties, dict):
-        raise _tool_request_error("invalid_tool_schema", f"tool '{tool_name}' properties must be an object")
+        raise _tool_request_error(
+            "invalid_tool_schema", f"tool '{tool_name}' properties must be an object"
+        )
 
     required = schema.get("required")
     if required is not None:
         if not isinstance(required, list) or not all(isinstance(item, str) for item in required):
-            raise _tool_request_error("invalid_tool_schema", f"tool '{tool_name}' required must be a list of strings")
+            raise _tool_request_error(
+                "invalid_tool_schema", f"tool '{tool_name}' required must be a list of strings"
+            )
 
     items = schema.get("items")
     if items is not None and not isinstance(items, (dict, list)):
-        raise _tool_request_error("invalid_tool_schema", f"tool '{tool_name}' items must be an object or list")
+        raise _tool_request_error(
+            "invalid_tool_schema", f"tool '{tool_name}' items must be an object or list"
+        )
 
 
 def _serialize_arguments(arguments: Any) -> str:
@@ -380,7 +421,9 @@ def _redacted_arguments_preview(arguments: Any) -> str:
         keys = sorted(str(key) for key in parsed.keys())
         return _truncate_preview(json.dumps({"shape": "object", "keys": keys}, ensure_ascii=True))
     if isinstance(parsed, list):
-        return _truncate_preview(json.dumps({"shape": "array", "items": len(parsed)}, ensure_ascii=True))
+        return _truncate_preview(
+            json.dumps({"shape": "array", "items": len(parsed)}, ensure_ascii=True)
+        )
     return _truncate_preview(json.dumps({"shape": type(parsed).__name__}, ensure_ascii=True))
 
 

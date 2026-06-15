@@ -2,7 +2,6 @@ import logging
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Optional
 
 from app.models.core.client import Client
 from app.models.core.client_feature_block import ClientFeatureBlock
@@ -21,12 +20,12 @@ ALLOWED_FILE_TYPES_DEFAULT = [".txt", ".md", ".pdf", ".docx", ".xlsx", ".csv"]
 @dataclass
 class EnterpriseRagPolicy:
     rag_enabled: bool = True
-    max_documents: Optional[int] = None
-    max_storage_mb: Optional[int] = None
-    max_pages_per_month: Optional[int] = None
-    allowed_file_types: List[str] = None
+    max_documents: int | None = None
+    max_storage_mb: int | None = None
+    max_pages_per_month: int | None = None
+    allowed_file_types: list[str] = None
     cloud_embeddings_allowed: bool = False
-    retention_days: Optional[int] = None
+    retention_days: int | None = None
 
     def __post_init__(self):
         if self.allowed_file_types is None:
@@ -41,8 +40,7 @@ async def resolve_enterprise_rag_policy(
 
     block_result = await session.execute(
         select(ClientFeatureBlock).where(
-            ClientFeatureBlock.client_id == client.id,
-            ClientFeatureBlock.feature == "rag"
+            ClientFeatureBlock.client_id == client.id, ClientFeatureBlock.feature == "rag"
         )
     )
     block = block_result.scalar_one_or_none()
@@ -68,7 +66,7 @@ async def check_quota_documents(
     session: AsyncSession,
     client_id: uuid.UUID,
     policy: EnterpriseRagPolicy,
-) -> tuple[bool, Optional[str]]:
+) -> tuple[bool, str | None]:
     if policy.max_documents is None:
         return True, None
 
@@ -88,7 +86,7 @@ async def check_quota_storage(
     client_id: uuid.UUID,
     policy: EnterpriseRagPolicy,
     additional_bytes: int = 0,
-) -> tuple[bool, Optional[str]]:
+) -> tuple[bool, str | None]:
     if policy.max_storage_mb is None:
         return True, None
 
@@ -109,7 +107,7 @@ async def check_quota_pages(
     client_id: uuid.UUID,
     policy: EnterpriseRagPolicy,
     additional_pages: int = 0,
-) -> tuple[bool, Optional[str]]:
+) -> tuple[bool, str | None]:
     if policy.max_pages_per_month is None:
         return True, None
 
@@ -133,11 +131,15 @@ async def check_quota_pages(
 async def check_file_type_allowed(
     filename: str,
     policy: EnterpriseRagPolicy,
-) -> tuple[bool, Optional[str]]:
+) -> tuple[bool, str | None]:
     import os
+
     ext = os.path.splitext(filename)[1].lower()
     if ext not in policy.allowed_file_types:
-        return False, f"File type '{ext}' is not allowed. Allowed: {', '.join(policy.allowed_file_types)}"
+        return (
+            False,
+            f"File type '{ext}' is not allowed. Allowed: {', '.join(policy.allowed_file_types)}",
+        )
     return True, None
 
 

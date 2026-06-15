@@ -27,5 +27,7 @@ def test_environment_policy_blocks_dynamic_installers():
             "constraint_scope": "plugin",
         }
     )
-    determinism = service.enforce_determinism_constraints(constraint, {"blocked_markers": ["dynamic dependency install"]})
+    determinism = service.enforce_determinism_constraints(
+        constraint, {"blocked_markers": ["dynamic dependency install"]}
+    )
     assert determinism["verification_status"] == "blocked"

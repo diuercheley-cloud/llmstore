@@ -19,7 +19,12 @@ def upgrade() -> None:
     op.create_table(
         "commercial_routing_events",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.Column("client_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("request_id", sa.String(length=64), nullable=True),
         sa.Column("correlation_id", sa.String(length=64), nullable=True),
@@ -52,16 +57,34 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_commercial_routing_events_client_id", "commercial_routing_events", ["client_id"])
-    op.create_index("ix_commercial_routing_events_created_at", "commercial_routing_events", ["created_at"])
-    op.create_index("ix_commercial_routing_events_request_id", "commercial_routing_events", ["request_id"])
-    op.create_index("ix_commercial_routing_events_correlation_id", "commercial_routing_events", ["correlation_id"])
-    op.create_index("ix_commercial_routing_events_selected_provider", "commercial_routing_events", ["selected_provider"])
+    op.create_index(
+        "ix_commercial_routing_events_client_id", "commercial_routing_events", ["client_id"]
+    )
+    op.create_index(
+        "ix_commercial_routing_events_created_at", "commercial_routing_events", ["created_at"]
+    )
+    op.create_index(
+        "ix_commercial_routing_events_request_id", "commercial_routing_events", ["request_id"]
+    )
+    op.create_index(
+        "ix_commercial_routing_events_correlation_id",
+        "commercial_routing_events",
+        ["correlation_id"],
+    )
+    op.create_index(
+        "ix_commercial_routing_events_selected_provider",
+        "commercial_routing_events",
+        ["selected_provider"],
+    )
 
 
 def downgrade() -> None:
-    op.drop_index("ix_commercial_routing_events_selected_provider", table_name="commercial_routing_events")
-    op.drop_index("ix_commercial_routing_events_correlation_id", table_name="commercial_routing_events")
+    op.drop_index(
+        "ix_commercial_routing_events_selected_provider", table_name="commercial_routing_events"
+    )
+    op.drop_index(
+        "ix_commercial_routing_events_correlation_id", table_name="commercial_routing_events"
+    )
     op.drop_index("ix_commercial_routing_events_request_id", table_name="commercial_routing_events")
     op.drop_index("ix_commercial_routing_events_created_at", table_name="commercial_routing_events")
     op.drop_index("ix_commercial_routing_events_client_id", table_name="commercial_routing_events")

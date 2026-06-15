@@ -3,7 +3,6 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from app.services.agents.agent_compatibility import AgentCompatibilityService
 
 

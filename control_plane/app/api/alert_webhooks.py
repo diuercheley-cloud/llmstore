@@ -35,7 +35,11 @@ async def grafana_alert_webhook(request: Request):
         labels = alert.get("labels", {})
         annotations = alert.get("annotations", {})
 
-        summary = annotations.get("summary") or annotations.get("message") or labels.get("alertname", "Grafana Alert")
+        summary = (
+            annotations.get("summary")
+            or annotations.get("message")
+            or labels.get("alertname", "Grafana Alert")
+        )
         severity = labels.get("severity", "warning")
 
         event = PagerDutyEvent(

@@ -1,14 +1,14 @@
 from calendar import monthrange
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
 from app.core.time import utc_now
 from app.models.billing.billing_invoice import BillingInvoice
 from app.models.billing.billing_plan import BillingPlan
-from app.models.core.client import Client
 from app.models.billing.customer_payment import CustomerPayment
 from app.models.billing.pricing_rule import PricingRule
+from app.models.core.client import Client
 from app.models.core.quota_counter import QuotaCounter
 from app.services.quota import month_start
 from sqlalchemy import select
@@ -224,8 +224,7 @@ MANUAL_PIX_PAYMENT_METHOD = "manual_pix"
 
 async def ensure_default_billing_plans(session: AsyncSession) -> dict[str, BillingPlan]:
     existing = {
-        plan.code: plan
-        for plan in (await session.execute(select(BillingPlan))).scalars().all()
+        plan.code: plan for plan in (await session.execute(select(BillingPlan))).scalars().all()
     }
     for payload in DEFAULT_BILLING_PLANS:
         plan = existing.get(payload["code"])
@@ -240,10 +239,16 @@ async def ensure_default_billing_plans(session: AsyncSession) -> dict[str, Billi
     return existing
 
 
-async def ensure_default_pricing_rules(session: AsyncSession, plans: dict[str, BillingPlan]) -> dict[str, PricingRule]:
+async def ensure_default_pricing_rules(
+    session: AsyncSession, plans: dict[str, BillingPlan]
+) -> dict[str, PricingRule]:
     existing = {
         row.billing_plan_id: row
-        for row in (await session.execute(select(PricingRule).where(PricingRule.is_active.is_(True)))).scalars().all()
+        for row in (
+            await session.execute(select(PricingRule).where(PricingRule.is_active.is_(True)))
+        )
+        .scalars()
+        .all()
     }
     created_or_updated: dict[str, PricingRule] = {}
     for code, payload in DEFAULT_PRICING_RULES.items():
@@ -276,7 +281,9 @@ def should_generate_monthly_invoices(reference_date: date, invoice_day: int) -> 
     return reference_date.day == invoice_day
 
 
-def normalize_invoice_status(status: str, due_at: datetime | None, *, now: datetime | None = None) -> str:
+def normalize_invoice_status(
+    status: str, due_at: datetime | None, *, now: datetime | None = None
+) -> str:
     if status != "pending" or due_at is None:
         return status
     current = now or utc_now()
@@ -314,15 +321,21 @@ def resolve_effective_plan(client: Client) -> EffectivePlan:
         return EffectivePlan(
             code=plan.code,
             name=plan.name,
-            rate_limit_per_minute=_min_quota(plan.rate_limit_per_minute, client.rate_limit_per_minute),
+            rate_limit_per_minute=_min_quota(
+                plan.rate_limit_per_minute, client.rate_limit_per_minute
+            ),
             daily_token_quota=_min_quota(plan.daily_token_quota, client.daily_token_quota),
             weekly_token_quota=_min_quota(plan.weekly_token_quota, client.weekly_token_quota),
             monthly_token_quota=_min_quota(plan.monthly_token_quota, client.monthly_token_quota),
             max_output_tokens=_min_quota(plan.max_output_tokens, client.max_output_tokens),
-            max_context_tokens=_min_quota(getattr(plan, "max_context_tokens", 4096), client.max_context_tokens),
+            max_context_tokens=_min_quota(
+                getattr(plan, "max_context_tokens", 4096), client.max_context_tokens
+            ),
             allow_streaming=plan.allow_streaming,
             monthly_price=pricing_rule.monthly_price if pricing_rule else Decimal("0"),
-            overage_price_per_1k_tokens=pricing_rule.overage_price_per_1k_tokens if pricing_rule else Decimal("0"),
+            overage_price_per_1k_tokens=pricing_rule.overage_price_per_1k_tokens
+            if pricing_rule
+            else Decimal("0"),
             currency=pricing_rule.currency if pricing_rule else "USD",
             requests_per_day=getattr(plan, "requests_per_day", 0),
             requests_per_month=getattr(plan, "requests_per_month", 0),
@@ -342,7 +355,9 @@ def resolve_effective_plan(client: Client) -> EffectivePlan:
             embeddings_enabled=getattr(plan, "embeddings_enabled", False),
             embeddings_requests_per_month=getattr(plan, "embeddings_requests_per_month", 0),
             embeddings_tokens_per_month=getattr(plan, "embeddings_tokens_per_month", 0),
-            embeddings_max_inputs_per_request=getattr(plan, "embeddings_max_inputs_per_request", 16),
+            embeddings_max_inputs_per_request=getattr(
+                plan, "embeddings_max_inputs_per_request", 16
+            ),
             # Feature Gates
             responses_enabled=getattr(plan, "responses_enabled", True),
             tools_enabled=getattr(plan, "tools_enabled", False),
@@ -384,7 +399,9 @@ def resolve_effective_plan(client: Client) -> EffectivePlan:
     )
 
 
-async def resolve_effective_plan_for_session(session: AsyncSession, client: Client) -> EffectivePlan:
+async def resolve_effective_plan_for_session(
+    session: AsyncSession, client: Client
+) -> EffectivePlan:
     """
     Resolves the effective plan after eagerly loading billing_plan and pricing_rules.
     This avoids async lazy-loading failures in request/runtime paths.
@@ -403,7 +420,9 @@ async def resolve_effective_plan_for_session(session: AsyncSession, client: Clie
             allow_streaming=True,
         )
 
-    if "billing_plan" not in client.__dict__ or "pricing_rules" not in getattr(client.billing_plan, "__dict__", {}):
+    if "billing_plan" not in client.__dict__ or "pricing_rules" not in getattr(
+        client.billing_plan, "__dict__", {}
+    ):
         result = await session.execute(
             select(Client)
             .options(selectinload(Client.billing_plan).selectinload(BillingPlan.pricing_rules))
@@ -421,7 +440,11 @@ async def list_client_billing_snapshots(
     client_id=None,
     usage_reference_date: date | None = None,
 ) -> list[dict]:
-    query = select(Client).options(selectinload(Client.billing_plan).selectinload(BillingPlan.pricing_rules)).order_by(Client.created_at.desc())
+    query = (
+        select(Client)
+        .options(selectinload(Client.billing_plan).selectinload(BillingPlan.pricing_rules))
+        .order_by(Client.created_at.desc())
+    )
     if client_id is not None:
         query = query.where(Client.id == client_id)
     clients = (await session.execute(query)).scalars().all()
@@ -433,18 +456,24 @@ async def list_client_billing_snapshots(
         daily_used = int(counters["daily"].used_tokens) if counters["daily"] else 0
         weekly_used = int(counters["weekly"].used_tokens) if counters["weekly"] else 0
         monthly_used = int(counters["monthly"].used_tokens) if counters["monthly"] else 0
-        
+
         # TTS usage
         daily_tts_used = int(counters["daily"].used_tts_chars) if counters["daily"] else 0
         monthly_tts_used = int(counters["monthly"].used_tts_chars) if counters["monthly"] else 0
 
         # Embeddings usage
-        monthly_embeddings_requests = int(counters["monthly"].used_embeddings_requests) if counters["monthly"] else 0
-        monthly_embeddings_tokens = int(counters["monthly"].used_embeddings_tokens) if counters["monthly"] else 0
+        monthly_embeddings_requests = (
+            int(counters["monthly"].used_embeddings_requests) if counters["monthly"] else 0
+        )
+        monthly_embeddings_tokens = (
+            int(counters["monthly"].used_embeddings_tokens) if counters["monthly"] else 0
+        )
 
         pricing_rule = None
         if client.billing_plan is not None:
-            pricing_rule = next((item for item in client.billing_plan.pricing_rules if item.is_active), None)
+            pricing_rule = next(
+                (item for item in client.billing_plan.pricing_rules if item.is_active), None
+            )
         snapshots.append(
             {
                 "client": client,
@@ -469,8 +498,11 @@ async def list_client_billing_snapshots(
     return snapshots
 
 
-async def get_usage_snapshot_for_date(session: AsyncSession, client_id, reference_date: date) -> dict[str, QuotaCounter | None]:
+async def get_usage_snapshot_for_date(
+    session: AsyncSession, client_id, reference_date: date
+) -> dict[str, QuotaCounter | None]:
     from app.services.quota import week_start
+
     period_pairs = {
         "daily": reference_date,
         "weekly": week_start(reference_date),
@@ -489,11 +521,18 @@ async def get_usage_snapshot_for_date(session: AsyncSession, client_id, referenc
     return snapshot
 
 
-async def get_current_usage_snapshot(session: AsyncSession, client_id) -> dict[str, QuotaCounter | None]:
+async def get_current_usage_snapshot(
+    session: AsyncSession, client_id
+) -> dict[str, QuotaCounter | None]:
     return await get_usage_snapshot_for_date(session, client_id, date.today())
 
 
-def estimate_request_cost(monthly_tokens_used_before: int, request_tokens: int, included_monthly_tokens: int, overage_price_per_1k_tokens: Decimal) -> Decimal:
+def estimate_request_cost(
+    monthly_tokens_used_before: int,
+    request_tokens: int,
+    included_monthly_tokens: int,
+    overage_price_per_1k_tokens: Decimal,
+) -> Decimal:
     if included_monthly_tokens <= 0:
         return Decimal("0")
     before_overage = max(monthly_tokens_used_before - included_monthly_tokens, 0)
@@ -501,23 +540,30 @@ def estimate_request_cost(monthly_tokens_used_before: int, request_tokens: int, 
     marginal_overage_tokens = max(after_overage - before_overage, 0)
     if marginal_overage_tokens <= 0:
         return Decimal("0")
-    return ((Decimal(marginal_overage_tokens) / Decimal(1000)) * overage_price_per_1k_tokens).quantize(
-        Decimal("0.000001"), rounding=ROUND_HALF_UP
-    )
+    return (
+        (Decimal(marginal_overage_tokens) / Decimal(1000)) * overage_price_per_1k_tokens
+    ).quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP)
 
 
-def build_invoice_preview(*, effective_plan: EffectivePlan, monthly_used_tokens: int, monthly_used_tts_chars: int = 0, monthly_used_embeddings_requests: int = 0, monthly_used_embeddings_tokens: int = 0) -> dict:
+def build_invoice_preview(
+    *,
+    effective_plan: EffectivePlan,
+    monthly_used_tokens: int,
+    monthly_used_tts_chars: int = 0,
+    monthly_used_embeddings_requests: int = 0,
+    monthly_used_embeddings_tokens: int = 0,
+) -> dict:
     included_tokens = effective_plan.monthly_token_quota
     tokens_unlimited = included_tokens <= 0
     overage_tokens = max(monthly_used_tokens - included_tokens, 0) if not tokens_unlimited else 0
     overage_cost = (
-        ((Decimal(overage_tokens) / Decimal(1000)) * effective_plan.overage_price_per_1k_tokens).quantize(
-            Decimal("0.000001"), rounding=ROUND_HALF_UP
-        )
+        (
+            (Decimal(overage_tokens) / Decimal(1000)) * effective_plan.overage_price_per_1k_tokens
+        ).quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP)
         if not tokens_unlimited
         else Decimal("0")
     )
-    
+
     # Simulated TTS overage (just for show in preview for now)
     tts_included = effective_plan.tts_chars_per_month
     tts_overage = max(monthly_used_tts_chars - tts_included, 0)
@@ -527,8 +573,10 @@ def build_invoice_preview(*, effective_plan: EffectivePlan, monthly_used_tokens:
     emb_tokens_included = effective_plan.embeddings_tokens_per_month
     emb_req_overage = max(monthly_used_embeddings_requests - emb_req_included, 0)
     emb_tokens_overage = max(monthly_used_embeddings_tokens - emb_tokens_included, 0)
-    
-    total_estimated = (effective_plan.monthly_price + overage_cost).quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP)
+
+    total_estimated = (effective_plan.monthly_price + overage_cost).quantize(
+        Decimal("0.000001"), rounding=ROUND_HALF_UP
+    )
     return {
         "currency": effective_plan.currency,
         "monthly_price": float(effective_plan.monthly_price),
@@ -568,7 +616,7 @@ def build_invoice_record_data(
 ) -> dict:
     period_start, period_end = month_window(period_reference)
     preview = build_invoice_preview(
-        effective_plan=effective_plan, 
+        effective_plan=effective_plan,
         monthly_used_tokens=monthly_used_tokens,
         monthly_used_tts_chars=monthly_used_tts_chars,
         monthly_used_embeddings_requests=monthly_used_embeddings_requests,
@@ -608,16 +656,20 @@ async def refresh_billing_statuses(
     current_time = now or utc_now()
     updated_invoices = 0
     overdue_invoices = (
-        await session.execute(
-            select(BillingInvoice)
-            .options(selectinload(BillingInvoice.payments))
-            .where(
-                BillingInvoice.status == "pending",
-                BillingInvoice.due_at.is_not(None),
-                BillingInvoice.due_at < current_time,
+        (
+            await session.execute(
+                select(BillingInvoice)
+                .options(selectinload(BillingInvoice.payments))
+                .where(
+                    BillingInvoice.status == "pending",
+                    BillingInvoice.due_at.is_not(None),
+                    BillingInvoice.due_at < current_time,
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     for invoice in overdue_invoices:
         invoice.status = "overdue"
         invoice.updated_at = current_time
@@ -628,10 +680,14 @@ async def refresh_billing_statuses(
         updated_invoices += 1
 
     client_rows = (
-        await session.execute(
-            select(Client).options(selectinload(Client.invoices), selectinload(Client.payments))
+        (
+            await session.execute(
+                select(Client).options(selectinload(Client.invoices), selectinload(Client.payments))
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     updated_clients = 0
     for client in client_rows:
         overdue_invoices_for_client = [item for item in client.invoices if item.status == "overdue"]
@@ -641,7 +697,7 @@ async def refresh_billing_statuses(
             if item.due_at is not None:
                 due_at = item.due_at
                 if due_at.tzinfo is None:
-                    due_at = due_at.replace(tzinfo=timezone.utc)
+                    due_at = due_at.replace(tzinfo=UTC)
                 if due_at + timedelta(days=suspend_after_days) < current_time:
                     should_suspend = True
                     break
@@ -732,12 +788,20 @@ async def generate_monthly_invoices(
             created.append(invoice)
             continue
         if existing.status in {"paid", "cancelled"}:
-            skipped.append({"invoice_id": str(existing.id), "client_id": str(client.id), "status": existing.status})
+            skipped.append(
+                {
+                    "invoice_id": str(existing.id),
+                    "client_id": str(client.id),
+                    "status": existing.status,
+                }
+            )
             continue
         for key, value in invoice_data.items():
             if key not in {"client_id", "period_start", "period_end"}:
                 setattr(existing, key, value)
-        pending_payment = next((item for item in existing.payments if item.status in {"pending", "overdue"}), None)
+        pending_payment = next(
+            (item for item in existing.payments if item.status in {"pending", "overdue"}), None
+        )
         if pending_payment is None:
             session.add(
                 CustomerPayment(
@@ -790,11 +854,11 @@ def serialize_invoice(invoice: BillingInvoice) -> dict:
         "overage_price_per_1k_tokens": float(invoice.overage_price_per_1k_tokens),
         "overage_cost": float(invoice.overage_cost),
         "total_amount": float(invoice.total_amount),
-        "amount": float(invoice.total_amount), # Alias for frontend
+        "amount": float(invoice.total_amount),  # Alias for frontend
         "payment_method": invoice.payment_method,
         "payment_instructions": invoice.payment_instructions,
         "due_at": invoice.due_at.isoformat() if invoice.due_at else None,
-        "due_date": invoice.due_at.isoformat() if invoice.due_at else None, # Alias for frontend
+        "due_date": invoice.due_at.isoformat() if invoice.due_at else None,  # Alias for frontend
         "paid_at": invoice.paid_at.isoformat() if invoice.paid_at else None,
         "cancelled_at": invoice.cancelled_at.isoformat() if invoice.cancelled_at else None,
         "created_at": invoice.created_at.isoformat(),

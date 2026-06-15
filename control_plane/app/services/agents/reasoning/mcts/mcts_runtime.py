@@ -2,7 +2,7 @@
 import logging
 import random
 import time
-from typing import Any, Dict, List
+from typing import Any
 
 from app.core.config import get_settings
 
@@ -13,6 +13,7 @@ from .value_estimator import ValueEstimator
 
 logger = logging.getLogger(__name__)
 
+
 class MCTSRuntime:
     def __init__(self):
         self.settings = get_settings()
@@ -21,12 +22,12 @@ class MCTSRuntime:
         self.sandbox = SimulationSandbox(self.settings)
 
     async def run_search(
-        self, 
-        initial_state: Dict[str, Any], 
-        possible_actions: List[str],
+        self,
+        initial_state: dict[str, Any],
+        possible_actions: list[str],
         max_rollouts: int = 50,
         max_depth: int = 10,
-        max_time_seconds: float = 5.0
+        max_time_seconds: float = 5.0,
     ) -> str:
         """
         Executes Monte Carlo Tree Search to find the best next action.
@@ -36,21 +37,21 @@ class MCTSRuntime:
 
         root = StateNode(initial_state)
         root.untried_actions = possible_actions
-        
+
         start_time = time.time()
-        
+
         for i in range(max_rollouts):
             if (time.time() - start_time) > max_time_seconds:
                 logger.warning("MCTS Search timed out.")
                 break
-                
+
             # 1. Selection
             node = root
             depth = 0
             while not node.untried_actions and node.children and depth < max_depth:
                 node = node.select_child()
                 depth += 1
-                
+
             # 2. Expansion
             if node.untried_actions and depth < max_depth:
                 action = node.untried_actions.pop()
@@ -59,7 +60,7 @@ class MCTSRuntime:
                 child.untried_actions = next_possible_actions
                 node.children.append(child)
                 node = child
-                
+
             # 3. Simulation (Rollout)
             rollout_state = node.state
             rollout_depth = depth
@@ -72,7 +73,7 @@ class MCTSRuntime:
                     break
                 rollout_state, _ = await self.sandbox.step(rollout_state, action)
                 rollout_depth += 1
-                
+
             # 4. Backpropagation
             reward = self.value_estimator.estimate(rollout_state, initial_state)
             while node:
@@ -81,9 +82,11 @@ class MCTSRuntime:
 
         # Return the action of the child with most visits
         if not root.children:
-             return random.choice(possible_actions) if possible_actions else "stop"
-             
+            return random.choice(possible_actions) if possible_actions else "stop"
+
         best_child = max(root.children, key=lambda c: c.visits)
-        logger.info(f"MCTS selected action {best_child.action} after {i+1} rollouts. Score: {best_child.avg_value}")
-        
+        logger.info(
+            f"MCTS selected action {best_child.action} after {i + 1} rollouts. Score: {best_child.avg_value}"
+        )
+
         return best_child.action

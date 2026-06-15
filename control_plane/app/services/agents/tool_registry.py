@@ -1,7 +1,7 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.models.agents.agents import (
     AgentTool,
@@ -25,7 +25,7 @@ VALID_CATEGORIES = {
     "support",
     "compliance",
     "external_api",
-    "shell_command"
+    "shell_command",
 }
 
 VALID_RISK_LEVELS = {"low", "medium", "high", "critical"}
@@ -35,7 +35,7 @@ VALID_SIDE_EFFECTS = {"none", "read", "write", "destructive", "external", "exter
 def bump_patch_version(version_str: str) -> str:
     """Safely increments the patch number of a semantic version string."""
     try:
-        parts = version_str.split('.')
+        parts = version_str.split(".")
         if len(parts) >= 3:
             patch = int(parts[2])
             return f"{parts[0]}.{parts[1]}.{patch + 1}"
@@ -49,13 +49,13 @@ def bump_patch_version(version_str: str) -> str:
         return version_str + ".1"
 
 
-async def get_tool(db: AsyncSession, tool_id: uuid.UUID) -> Optional[AgentTool]:
+async def get_tool(db: AsyncSession, tool_id: uuid.UUID) -> AgentTool | None:
     """Fetches a single AgentTool by database ID."""
     result = await db.execute(select(AgentTool).where(AgentTool.id == tool_id))
     return result.scalars().first()
 
 
-async def get_tool_by_name(db: AsyncSession, name: str) -> Optional[AgentTool]:
+async def get_tool_by_name(db: AsyncSession, name: str) -> AgentTool | None:
     """Fetches a single AgentTool by its name."""
     result = await db.execute(select(AgentTool).where(AgentTool.name == name))
     return result.scalars().first()
@@ -65,22 +65,22 @@ async def list_tools(
     db: AsyncSession,
     limit: int = 100,
     offset: int = 0,
-    category: Optional[str] = None,
-    enabled: Optional[bool] = None
-) -> List[AgentTool]:
+    category: str | None = None,
+    enabled: bool | None = None,
+) -> list[AgentTool]:
     """Lists registered tools with optional filters."""
     query = select(AgentTool)
     if category:
         query = query.where(AgentTool.category == category)
     if enabled is not None:
         query = query.where(AgentTool.enabled == enabled)
-    
+
     query = query.offset(offset).limit(limit)
     result = await db.execute(query)
     return list(result.scalars().all())
 
 
-async def list_tool_versions(db: AsyncSession, tool_id: uuid.UUID) -> List[AgentToolVersion]:
+async def list_tool_versions(db: AsyncSession, tool_id: uuid.UUID) -> list[AgentToolVersion]:
     """Retrieves all version snapshots registered for a given tool."""
     result = await db.execute(
         select(AgentToolVersion)
@@ -90,7 +90,7 @@ async def list_tool_versions(db: AsyncSession, tool_id: uuid.UUID) -> List[Agent
     return list(result.scalars().all())
 
 
-def validate_tool_data(data: Dict[str, Any]) -> None:
+def validate_tool_data(data: dict[str, Any]) -> None:
     """Enforces governance and structural constraints on tool data."""
     # 1. Tool MUST have input and output schemas
     input_schema = data.get("input_schema_json")
@@ -113,7 +113,9 @@ def validate_tool_data(data: Dict[str, Any]) -> None:
     # Validate side effect level
     side_effect_level = data.get("side_effect_level", "none")
     if side_effect_level not in VALID_SIDE_EFFECTS:
-        raise ValueError(f"Invalid side_effect_level '{side_effect_level}'. Must be one of {VALID_SIDE_EFFECTS}")
+        raise ValueError(
+            f"Invalid side_effect_level '{side_effect_level}'. Must be one of {VALID_SIDE_EFFECTS}"
+        )
 
     # 3. Tool external_api or side_effect external/external_read must declare data_boundary
     if category == "external_api" or side_effect_level in ("external", "external_read"):
@@ -124,7 +126,9 @@ def validate_tool_data(data: Dict[str, Any]) -> None:
     # 3.1 Write/destructive exige approval policy
     if side_effect_level in ("write", "destructive"):
         if not data.get("approval_policy"):
-             raise ValueError(f"Tools with side_effect '{side_effect_level}' must define an 'approval_policy'.")
+            raise ValueError(
+                f"Tools with side_effect '{side_effect_level}' must define an 'approval_policy'."
+            )
 
     # 7. Timeout is mandatory
     timeout = data.get("timeout_seconds")
@@ -132,13 +136,16 @@ def validate_tool_data(data: Dict[str, Any]) -> None:
         raise ValueError("Tool must define a positive integer timeout_seconds.")
 
 
-async def create_tool(db: AsyncSession, data: Dict[str, Any]) -> AgentTool:
+async def create_tool(db: AsyncSession, data: dict[str, Any]) -> AgentTool:
     """Registers a new tool in the catalog, enforces defaults, and creates version snapshot."""
-    
+
     # Defaults for new fields if missing
-    if "scope" not in data: data["scope"] = "tenant"
-    if "max_cost_brl" not in data: data["max_cost_brl"] = 0.5  # Conservative default
-    if "max_calls_per_run" not in data: data["max_calls_per_run"] = 5
+    if "scope" not in data:
+        data["scope"] = "tenant"
+    if "max_cost_brl" not in data:
+        data["max_cost_brl"] = 0.5  # Conservative default
+    if "max_calls_per_run" not in data:
+        data["max_calls_per_run"] = 5
 
     # Enforce default rules
     validate_tool_data(data)
@@ -178,7 +185,7 @@ async def create_tool(db: AsyncSession, data: Dict[str, Any]) -> AgentTool:
         scope=tool.scope,
         max_cost_brl=tool.max_cost_brl,
         max_calls_per_run=tool.max_calls_per_run,
-        approval_policy=tool.approval_policy
+        approval_policy=tool.approval_policy,
     )
     db.add(version_snapshot)
     await db.commit()
@@ -186,7 +193,9 @@ async def create_tool(db: AsyncSession, data: Dict[str, Any]) -> AgentTool:
     return tool
 
 
-async def update_tool(db: AsyncSession, tool_id: uuid.UUID, update_data: Dict[str, Any]) -> AgentTool:
+async def update_tool(
+    db: AsyncSession, tool_id: uuid.UUID, update_data: dict[str, Any]
+) -> AgentTool:
     """Updates metadata and creates a new version history snapshot if definition properties change."""
     tool = await get_tool(db, tool_id)
     if not tool:
@@ -208,13 +217,25 @@ async def update_tool(db: AsyncSession, tool_id: uuid.UUID, update_data: Dict[st
 
     # Detect version-impacting changes
     has_changes = (
-        ("description" in update_data and update_data["description"] != tool.description) or
-        ("input_schema_json" in update_data and update_data["input_schema_json"] != tool.input_schema_json) or
-        ("output_schema_json" in update_data and update_data["output_schema_json"] != tool.output_schema_json) or
-        ("risk_level" in update_data and update_data["risk_level"] != tool.risk_level) or
-        ("side_effect_level" in update_data and update_data["side_effect_level"] != tool.side_effect_level) or
-        ("timeout_seconds" in update_data and update_data["timeout_seconds"] != tool.timeout_seconds) or
-        ("retry_policy" in update_data and update_data["retry_policy"] != tool.retry_policy)
+        ("description" in update_data and update_data["description"] != tool.description)
+        or (
+            "input_schema_json" in update_data
+            and update_data["input_schema_json"] != tool.input_schema_json
+        )
+        or (
+            "output_schema_json" in update_data
+            and update_data["output_schema_json"] != tool.output_schema_json
+        )
+        or ("risk_level" in update_data and update_data["risk_level"] != tool.risk_level)
+        or (
+            "side_effect_level" in update_data
+            and update_data["side_effect_level"] != tool.side_effect_level
+        )
+        or (
+            "timeout_seconds" in update_data
+            and update_data["timeout_seconds"] != tool.timeout_seconds
+        )
+        or ("retry_policy" in update_data and update_data["retry_policy"] != tool.retry_policy)
     )
 
     old_version = tool.version
@@ -225,7 +246,10 @@ async def update_tool(db: AsyncSession, tool_id: uuid.UUID, update_data: Dict[st
         update_data["version"] = new_version
 
     # Enforce category write/destructive requires_approval on changes
-    if "side_effect_level" in update_data and update_data["side_effect_level"] in ("write", "destructive"):
+    if "side_effect_level" in update_data and update_data["side_effect_level"] in (
+        "write",
+        "destructive",
+    ):
         update_data["requires_approval"] = True
 
     # Enforce category shell_command default disabled when category changes to it
@@ -247,7 +271,7 @@ async def update_tool(db: AsyncSession, tool_id: uuid.UUID, update_data: Dict[st
             risk_level=tool.risk_level,
             side_effect_level=tool.side_effect_level,
             timeout_seconds=tool.timeout_seconds,
-            retry_policy=tool.retry_policy
+            retry_policy=tool.retry_policy,
         )
         db.add(version_snapshot)
 
@@ -281,9 +305,9 @@ async def disable_tool(db: AsyncSession, tool_id: uuid.UUID) -> AgentTool:
 async def grant_permission(
     db: AsyncSession,
     tool_id: uuid.UUID,
-    agent_id: Optional[uuid.UUID],
-    tenant_id: Optional[str],
-    granted_by: str
+    agent_id: uuid.UUID | None,
+    tenant_id: str | None,
+    granted_by: str,
 ) -> AgentToolPermission:
     """Grants tool execution permission for a tenant and/or agent."""
     tool = await get_tool(db, tool_id)
@@ -291,10 +315,7 @@ async def grant_permission(
         raise ValueError(f"AgentTool not found: {tool_id}")
 
     permission = AgentToolPermission(
-        agent_tool_id=tool_id,
-        agent_id=agent_id,
-        tenant_id=tenant_id,
-        granted_by=granted_by
+        agent_tool_id=tool_id, agent_id=agent_id, tenant_id=tenant_id, granted_by=granted_by
     )
     db.add(permission)
     await db.commit()
@@ -302,11 +323,7 @@ async def grant_permission(
 
 
 async def add_safety_review(
-    db: AsyncSession,
-    tool_id: uuid.UUID,
-    reviewer: str,
-    decision: str,
-    notes: Optional[str] = None
+    db: AsyncSession, tool_id: uuid.UUID, reviewer: str, decision: str, notes: str | None = None
 ) -> AgentToolSafetyReview:
     """Registers a safety review decision for the tool. If approved, resets requires_approval."""
     tool = await get_tool(db, tool_id)
@@ -317,10 +334,7 @@ async def add_safety_review(
         raise ValueError("Decision must be either 'approved' or 'rejected'.")
 
     review = AgentToolSafetyReview(
-        agent_tool_id=tool_id,
-        reviewer=reviewer,
-        decision=decision,
-        notes=notes
+        agent_tool_id=tool_id, reviewer=reviewer, decision=decision, notes=notes
     )
     db.add(review)
 

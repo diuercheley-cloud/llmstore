@@ -4,7 +4,6 @@ from __future__ import annotations
 import uuid
 
 from app.core.security import hash_secret, short_prefix
-from app.services.runtime_dependencies import get_db_session
 from app.models.core.admin_rbac import (
     AdminAuditEvent,
     AdminPermission,
@@ -34,12 +33,15 @@ from app.services.admin_rbac import (
     sync_role_permissions,
 )
 from app.services.auth import require_superadmin
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-router = APIRouter(prefix="/admin/rbac", tags=["admin_rbac"], dependencies=[Depends(require_superadmin)])
+router = APIRouter(
+    prefix="/admin/rbac", tags=["admin_rbac"], dependencies=[Depends(require_superadmin)]
+)
 
 
 @router.get("/users", response_model=list[AdminUserRead])
@@ -62,7 +64,9 @@ async def create_admin_user(
     session: AsyncSession = Depends(get_db_session),
     admin=Depends(require_superadmin),
 ):
-    existing = await session.execute(select(AdminUser).where(AdminUser.username == payload.username))
+    existing = await session.execute(
+        select(AdminUser).where(AdminUser.username == payload.username)
+    )
     if existing.scalar_one_or_none() is not None:
         raise HTTPException(status_code=409, detail="admin user already exists")
 
@@ -77,7 +81,9 @@ async def create_admin_user(
     )
     session.add(user)
     await session.flush()
-    await assign_roles_to_user(session, user=user, role_ids=payload.role_ids, role_names=payload.role_names)
+    await assign_roles_to_user(
+        session, user=user, role_ids=payload.role_ids, role_names=payload.role_names
+    )
     await session.commit()
     await record_admin_audit_event(
         session,
@@ -187,7 +193,9 @@ async def create_admin_role(
     session: AsyncSession = Depends(get_db_session),
     admin=Depends(require_superadmin),
 ):
-    existing = await session.execute(select(AdminRoleModel).where(AdminRoleModel.name == payload.name))
+    existing = await session.execute(
+        select(AdminRoleModel).where(AdminRoleModel.name == payload.name)
+    )
     if existing.scalar_one_or_none() is not None:
         raise HTTPException(status_code=409, detail="admin role already exists")
     role = AdminRoleModel(name=payload.name, description=payload.description, is_system=False)
@@ -249,7 +257,9 @@ async def create_admin_permission(
     session: AsyncSession = Depends(get_db_session),
     admin=Depends(require_superadmin),
 ):
-    existing = await session.execute(select(AdminPermission).where(AdminPermission.code == payload.code))
+    existing = await session.execute(
+        select(AdminPermission).where(AdminPermission.code == payload.code)
+    )
     if existing.scalar_one_or_none() is not None:
         raise HTTPException(status_code=409, detail="admin permission already exists")
     permission = AdminPermission(code=payload.code, description=payload.description)
@@ -274,9 +284,7 @@ async def list_admin_audit_events(
     limit: int = Query(default=100, ge=1, le=1000),
 ):
     result = await session.execute(
-        select(AdminAuditEvent)
-        .order_by(AdminAuditEvent.created_at.desc())
-        .limit(limit)
+        select(AdminAuditEvent).order_by(AdminAuditEvent.created_at.desc()).limit(limit)
     )
     events = result.scalars().all()
     return [
@@ -304,7 +312,9 @@ async def assign_admin_user_roles(
     user = await session.get(AdminUser, user_id)
     if user is None:
         raise HTTPException(status_code=404, detail="admin user not found")
-    await assign_roles_to_user(session, user=user, role_ids=payload.role_ids, role_names=payload.role_names)
+    await assign_roles_to_user(
+        session, user=user, role_ids=payload.role_ids, role_names=payload.role_names
+    )
     await session.commit()
     await record_admin_audit_event(
         session,
@@ -313,7 +323,10 @@ async def assign_admin_user_roles(
         admin=admin,
         target_type="admin_user",
         target_id=str(user_id),
-        metadata={"role_ids": [str(role_id) for role_id in payload.role_ids], "role_names": payload.role_names},
+        metadata={
+            "role_ids": [str(role_id) for role_id in payload.role_ids],
+            "role_names": payload.role_names,
+        },
     )
     return AdminUserRead(**await serialize_admin_user(session, user))
 
@@ -329,11 +342,15 @@ async def remove_admin_user_role(
     role = await session.get(AdminRoleModel, role_id)
     if user is None or role is None:
         raise HTTPException(status_code=404, detail="admin user or role not found")
-    existing_links = await session.execute(select(AdminUserRole).where(AdminUserRole.user_id == user.id))
+    existing_links = await session.execute(
+        select(AdminUserRole).where(AdminUserRole.user_id == user.id)
+    )
     await assign_roles_to_user(
         session,
         user=user,
-        role_ids=[link.role_id for link in existing_links.scalars().all() if link.role_id != role_id],
+        role_ids=[
+            link.role_id for link in existing_links.scalars().all() if link.role_id != role_id
+        ],
         role_names=[],
     )
     await session.commit()

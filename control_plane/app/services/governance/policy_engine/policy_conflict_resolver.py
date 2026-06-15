@@ -24,9 +24,15 @@ def detect_policy_conflicts(policy_dsl: dict) -> list[dict]:
 
 
 def resolve_decision(actions: list[str]) -> str:
-    ordered = ["block_if", "deny_if", "require_approval_if", "require_dry_run_if", "warn_if", "allow_if"]
+    ordered = [
+        "block_if",
+        "deny_if",
+        "require_approval_if",
+        "require_dry_run_if",
+        "warn_if",
+        "allow_if",
+    ]
     for action in ordered:
         if action in actions:
             return action.replace("_if", "")
     return "no_match"
-

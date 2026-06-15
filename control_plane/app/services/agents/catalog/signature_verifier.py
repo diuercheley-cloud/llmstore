@@ -1,6 +1,5 @@
 import hashlib
 import logging
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -8,6 +7,7 @@ try:
     from cryptography.exceptions import InvalidSignature
     from cryptography.hazmat.primitives import hashes, serialization
     from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
+
     HAS_CRYPTOGRAPHY = True
 except ImportError:
     HAS_CRYPTOGRAPHY = False
@@ -49,7 +49,7 @@ class SignatureVerifier:
             return False
 
     @staticmethod
-    def sign_data(data: str, private_key: str, algorithm: str = "ecdsa-p256") -> Optional[str]:
+    def sign_data(data: str, private_key: str, algorithm: str = "ecdsa-p256") -> str | None:
         if not HAS_CRYPTOGRAPHY:
             logger.warning("cryptography library not installed; cannot sign")
             return None
@@ -102,4 +102,4 @@ def _verify_rsa(data: str, signature_hex: str, public_key_pem: str) -> bool:
 def _degraded_verify(data: str, signature: str, public_key: str) -> bool:
     """Fallback verification using SHA-256 hash comparison when cryptography is unavailable."""
     expected = hashlib.sha256((data + public_key).encode()).hexdigest()
-    return signature == expected[:len(signature)] if len(signature) <= 64 else False
+    return signature == expected[: len(signature)] if len(signature) <= 64 else False

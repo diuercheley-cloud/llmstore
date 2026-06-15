@@ -1,7 +1,7 @@
 import logging
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.time import utc_now
 from app.models.agents.web_search import AgentWebSearchCache
@@ -14,10 +14,8 @@ logger = logging.getLogger(__name__)
 class SearchCacheService:
     async def get_cached_results(
         self, db: AsyncSession, query_hash: str
-    ) -> Optional[List[Dict[str, Any]]]:
-        stmt = select(AgentWebSearchCache).where(
-            AgentWebSearchCache.query_hash == query_hash
-        )
+    ) -> list[dict[str, Any]] | None:
+        stmt = select(AgentWebSearchCache).where(AgentWebSearchCache.query_hash == query_hash)
         res = await db.execute(stmt)
         cache_entry = res.scalar_one_or_none()
 
@@ -25,9 +23,7 @@ class SearchCacheService:
             return None
 
         # Check TTL expiration
-        expires_at = cache_entry.created_at + timedelta(
-            seconds=cache_entry.ttl_seconds
-        )
+        expires_at = cache_entry.created_at + timedelta(seconds=cache_entry.ttl_seconds)
         now = utc_now()
         if expires_at.tzinfo is None and now.tzinfo is not None:
             now = now.replace(tzinfo=None)
@@ -51,13 +47,11 @@ class SearchCacheService:
         self,
         db: AsyncSession,
         query_hash: str,
-        results: List[Dict[str, Any]],
+        results: list[dict[str, Any]],
         ttl_seconds: int = 3600,
     ) -> None:
         # Clear existing cached results for the hash first
-        stmt = select(AgentWebSearchCache).where(
-            AgentWebSearchCache.query_hash == query_hash
-        )
+        stmt = select(AgentWebSearchCache).where(AgentWebSearchCache.query_hash == query_hash)
         res = await db.execute(stmt)
         existing = res.scalar_one_or_none()
         if existing:
@@ -82,7 +76,7 @@ class SearchCacheService:
         db.add(cache_entry)
         await db.commit()
 
-    async def list_cache_entries(self, db: AsyncSession) -> List[Dict[str, Any]]:
+    async def list_cache_entries(self, db: AsyncSession) -> list[dict[str, Any]]:
         stmt = select(AgentWebSearchCache)
         res = await db.execute(stmt)
         entries = res.scalars().all()

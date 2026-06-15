@@ -27,9 +27,13 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
     )
     op.create_index("ix_billing_plans_code", "billing_plans", ["code"])
-    op.add_column("clients", sa.Column("billing_plan_id", postgresql.UUID(as_uuid=True), nullable=True))
+    op.add_column(
+        "clients", sa.Column("billing_plan_id", postgresql.UUID(as_uuid=True), nullable=True)
+    )
     op.create_index("ix_clients_billing_plan_id", "clients", ["billing_plan_id"])
-    op.create_foreign_key("fk_clients_billing_plan_id", "clients", "billing_plans", ["billing_plan_id"], ["id"])
+    op.create_foreign_key(
+        "fk_clients_billing_plan_id", "clients", "billing_plans", ["billing_plan_id"], ["id"]
+    )
 
 
 def downgrade() -> None:

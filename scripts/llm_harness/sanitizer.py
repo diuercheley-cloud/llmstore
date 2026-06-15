@@ -49,7 +49,6 @@ class Sanitizer:
                 ),
                 "[REDACTED_PEM_KEY]",
             ),
-
             (
                 re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b"),
                 "[REDACTED_JWT]",
@@ -58,7 +57,6 @@ class Sanitizer:
                 re.compile(r"(?i)authorization\s*:\s*bearer\s+[^\s,;]+"),
                 "Authorization: Bearer [REDACTED]",
             ),
-
             (
                 re.compile(r"(?i)\bbearer\s+[a-z0-9._\-~=+/]+\b"),
                 "Bearer [REDACTED]",
@@ -69,7 +67,6 @@ class Sanitizer:
                 ),
                 r"\1[REDACTED]",
             ),
-
             (
                 re.compile(r"(?i)(https?://)([^/@:\s]+):([^/@\s]+)@"),
                 r"\1[REDACTED]:[REDACTED]@",
@@ -102,4 +99,3 @@ class Sanitizer:
         if isinstance(value, str):
             return cls.sanitize_text(value)
         return value
-

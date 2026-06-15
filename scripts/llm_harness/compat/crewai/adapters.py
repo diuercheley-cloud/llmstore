@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..base import BaseAdapter
 
@@ -10,12 +10,12 @@ class Agent(BaseAdapter):
         role: str,
         goal: str,
         backstory: str,
-        llm: Optional[Any] = None,
-        tools: Optional[List[Any]] = None,
+        llm: Any | None = None,
+        tools: list[Any] | None = None,
         verbose: bool = False,
         allow_delegation: bool = True,
         max_iter: int = 15,
-        max_rpm: Optional[int] = None,
+        max_rpm: int | None = None,
     ):
         self.role = role
         self.goal = goal
@@ -28,7 +28,7 @@ class Agent(BaseAdapter):
         self.max_rpm = max_rpm
         self.id = uuid.uuid4()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "role": self.role,
             "goal": self.goal,
@@ -45,9 +45,9 @@ class Task(BaseAdapter):
         self,
         description: str,
         expected_output: str,
-        agent: Optional[Agent] = None,
-        tools: Optional[List[Any]] = None,
-        context: Optional[List["Task"]] = None,
+        agent: Agent | None = None,
+        tools: list[Any] | None = None,
+        context: list["Task"] | None = None,
     ):
         self.description = description
         self.expected_output = expected_output
@@ -56,7 +56,7 @@ class Task(BaseAdapter):
         self.context = context or []
         self.id = uuid.uuid4()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "description": self.description,
             "expected_output": self.expected_output,
@@ -69,17 +69,17 @@ class Task(BaseAdapter):
 class Crew(BaseAdapter):
     def __init__(
         self,
-        agents: List[Agent],
-        tasks: List[Task],
+        agents: list[Agent],
+        tasks: list[Task],
         verbose: int = 0,
-        process: Optional[str] = "sequential",
+        process: str | None = "sequential",
     ):
         self.agents = agents
         self.tasks = tasks
         self.verbose = verbose
         self.process = process
 
-    def kickoff(self, inputs: Optional[Dict[str, Any]] = None) -> str:
+    def kickoff(self, inputs: dict[str, Any] | None = None) -> str:
         results = []
         for i, task in enumerate(self.tasks):
             agent = task.agent or (self.agents[0] if self.agents else None)
@@ -96,7 +96,7 @@ class Crew(BaseAdapter):
             results.append(result)
         return "\n\n".join(results)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "process": self.process,
             "agents": [a.to_dict() for a in self.agents],

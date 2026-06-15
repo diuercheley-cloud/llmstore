@@ -6,8 +6,8 @@ from app.core.security import hash_secret, short_prefix
 from app.db.base import Base
 from app.db.session import get_db_session, get_redis
 from app.main import app
-from app.models.core.api_key import ApiKey
 from app.models.billing.billing_plan import BillingPlan
+from app.models.core.api_key import ApiKey
 from app.models.core.client import Client
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -28,11 +28,17 @@ async def abuse_mt_env(isolated_db_url, fake_redis):
     app.dependency_overrides[get_db_session] = override_get_db_session
     app.dependency_overrides[get_redis] = lambda: fake_redis
 
-    with patch("app.db.session.SessionLocal", testing_session_local), \
-         patch("app.services.backend_slot_manager.SessionLocal", testing_session_local), \
-         patch("app.services.backend_slot_manager.BackendSlotManager.try_acquire", return_value=True), \
-         patch("app.services.backend_slot_manager.BackendSlotManager.release", return_value=None):
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
+    with (
+        patch("app.db.session.SessionLocal", testing_session_local),
+        patch("app.services.backend_slot_manager.SessionLocal", testing_session_local),
+        patch(
+            "app.services.backend_slot_manager.BackendSlotManager.try_acquire", return_value=True
+        ),
+        patch("app.services.backend_slot_manager.BackendSlotManager.release", return_value=None),
+    ):
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://testserver"
+        ) as ac:
             yield ac, testing_session_local
 
     app.dependency_overrides.clear()

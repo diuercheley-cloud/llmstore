@@ -30,7 +30,9 @@ async def test_block_untrusted_report_only(session: AsyncSession):
         cluster_id="cluster-report",
         node_id="node-unknown",
     )
-    result = await block_untrusted_runtimes(session, cluster_id="cluster-report", mode="report_only")
+    result = await block_untrusted_runtimes(
+        session, cluster_id="cluster-report", mode="report_only"
+    )
     assert result["allowed"] is True
 
 
@@ -44,6 +46,7 @@ async def test_block_untrusted_disabled(session: AsyncSession):
 async def test_sovereign_attestation_requirement(session: AsyncSession):
     with pytest.MonkeyPatch().context() as mp:
         from app.core.config import get_settings
+
         get_settings.cache_clear()
         mp.setenv("COMMERCIAL_RUNTIME_ATTESTATION_REQUIRE_FOR_SOVEREIGN", "true")
         mp.setenv("COMMERCIAL_RUNTIME_ATTESTATION_ENABLED", "true")
@@ -58,6 +61,7 @@ async def test_sovereign_attestation_requirement(session: AsyncSession):
 async def test_sensitive_tenant_attestation_flow(session: AsyncSession):
     with pytest.MonkeyPatch().context() as mp:
         from app.core.config import get_settings
+
         get_settings.cache_clear()
         mp.setenv("COMMERCIAL_RUNTIME_ATTESTATION_REQUIRE_FOR_SENSITIVE_TENANTS", "true")
         mp.setenv("COMMERCIAL_RUNTIME_ATTESTATION_ENABLED", "true")
@@ -103,6 +107,7 @@ async def test_untrusted_runtime_detection_via_policy(session: AsyncSession):
 
     with pytest.MonkeyPatch().context() as mp:
         from app.core.config import get_settings
+
         get_settings.cache_clear()
         mp.setenv("COMMERCIAL_RUNTIME_ATTESTATION_MODE", "enforce")
         mp.setenv("COMMERCIAL_RUNTIME_ATTESTATION_ENABLED", "true")
@@ -128,6 +133,7 @@ async def test_evidence_replay_protection(session: AsyncSession):
     from datetime import timedelta
 
     from app.core.time import utc_now
+
     challenge.expires_at = utc_now() - timedelta(seconds=1)
     await session.flush()
     with pytest.raises(ValueError, match="Challenge has expired"):

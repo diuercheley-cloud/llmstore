@@ -58,7 +58,9 @@ class MemoryProviderV1(AdapterABI):
         pass
 
     @abstractmethod
-    async def retrieve(self, agent_id: uuid.UUID, query: str, limit: int = 5) -> List[Dict[str, Any]]:
+    async def retrieve(
+        self, agent_id: uuid.UUID, query: str, limit: int = 5
+    ) -> List[Dict[str, Any]]:
         """Retrieves memory items."""
         pass
 
@@ -76,6 +78,8 @@ class PlannerProviderV1(AdapterABI):
     """Stable ABI for Planners."""
 
     @abstractmethod
-    async def plan(self, goal: str, available_tools: List[str], history: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def plan(
+        self, goal: str, available_tools: List[str], history: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """Generates an execution plan."""
         pass

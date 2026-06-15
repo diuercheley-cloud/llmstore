@@ -1,0 +1,26 @@
+# Maintainers
+* @owner1 @owner2
+
+# Backend
+/control_plane/ @owner1 @owner2
+/scripts/llm_harness/ @owner1 @owner2
+
+# Frontend
+/frontend/admin/ @owner1
+/frontend/client/ @owner2
+
+# SDK
+/sdk/ @owner1 @owner2
+
+# Infrastructure & CI
+/.github/ @owner1 @owner2
+/.gitlab/ @owner1 @owner2
+/docker/ @owner1 @owner2
+/deploy/ @owner1 @owner2
+/scripts/release/ @owner1 @owner2
+
+# Security & Compliance
+/compliance/ @owner1
+/scripts/validators/ @owner1
+/bandit.yaml @owner1
+/.semgrep.yml @owner1

@@ -12,32 +12,36 @@ def test_approval_provider_auto():
     assert approved is True
     assert action["action_type"] == "run_shell"
 
+
 def test_approval_provider_deny():
     ap = ApprovalProvider(mode="deny")
     approved, _ = ap.request_approval({"action_type": "run_shell"})
     assert approved is False
 
+
 def test_approval_provider_non_interactive():
     ap = ApprovalProvider(mode="non_interactive", default_policy="allow")
     approved, _ = ap.request_approval({"action_type": "run_shell"})
     assert approved is True
-    
+
     ap = ApprovalProvider(mode="non_interactive", default_policy="deny")
     approved, _ = ap.request_approval({"action_type": "run_shell"})
     assert approved is False
+
 
 @patch("sys.stdin.isatty", return_value=True)
 @patch("builtins.input", side_effect=["y", "n"])
 def test_approval_provider_interactive(mock_input, mock_isatty):
     ap = ApprovalProvider(mode="interactive")
-    
+
     # First call: user says 'y'
     approved, _ = ap.request_approval({"action_type": "run_shell", "command": "ls"})
     assert approved is True
-    
+
     # Second call: user says 'n'
     approved, _ = ap.request_approval({"action_type": "run_shell", "command": "rm -rf /"})
     assert approved is False
+
 
 @patch("sys.stdin.isatty", return_value=True)
 @patch("builtins.input", side_effect=["a"])
@@ -45,6 +49,7 @@ def test_approval_provider_abort(mock_input, mock_isatty):
     ap = ApprovalProvider(mode="interactive")
     with pytest.raises(InterruptedError, match="User aborted execution"):
         ap.request_approval({"action_type": "run_shell"})
+
 
 @patch("sys.stdin.isatty", return_value=True)
 @patch("builtins.input", side_effect=["e", "y"])
@@ -64,15 +69,17 @@ def test_approval_provider_edit(mock_input, mock_isatty, tmp_path, monkeypatch):
         )
 
     ap = ApprovalProvider(mode="interactive", edit_action_before_run=True)
-    with patch("tempfile.NamedTemporaryFile", side_effect=fake_named_tempfile), patch(
-        "subprocess.run",
-        side_effect=fake_run,
+    with (
+        patch("tempfile.NamedTemporaryFile", side_effect=fake_named_tempfile),
+        patch(
+            "subprocess.run",
+            side_effect=fake_run,
+        ),
     ):
-        approved, action = ap.request_approval(
-            {"action_type": "run_shell", "command": "echo old"}
-        )
+        approved, action = ap.request_approval({"action_type": "run_shell", "command": "echo old"})
     assert approved is True
     assert action["command"] == "echo edited"
+
 
 @patch("sys.stdin.isatty", return_value=False)
 def test_approval_provider_interactive_non_tty_requires_default(mock_isatty):

@@ -62,7 +62,9 @@ async def test_admin_providers_health(admin_client: AsyncClient):
 @pytest.mark.asyncio
 async def test_admin_providers_capabilities(admin_client: AsyncClient):
     token = os.environ.get("ADMIN_TOKEN", "test-admin-token")
-    resp = await admin_client.get("/admin/providers/capabilities/all", headers={"X-Admin-Token": token})
+    resp = await admin_client.get(
+        "/admin/providers/capabilities/all", headers={"X-Admin-Token": token}
+    )
     assert resp.status_code == 200
     data = resp.json()
     assert "local" in data

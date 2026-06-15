@@ -6,10 +6,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class DelegationPolicy:
     """
     Enforces governance for agent-to-agent delegation.
     """
+
     def __init__(self, db: AsyncSession):
         self.db = db
 

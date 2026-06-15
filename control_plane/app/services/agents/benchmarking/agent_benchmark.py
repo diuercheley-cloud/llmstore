@@ -1,8 +1,9 @@
 import logging
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from app.core.time import utc_now
 from app.models.agents.agent_benchmarks import AgentBenchmarkResult, AgentBenchmarkRun
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 class BenchmarkScenario:
     name: str
     input_text: str
-    expected_keywords: Optional[List[str]] = None
+    expected_keywords: list[str] | None = None
     max_latency_ms: int = 30000
     weight: float = 1.0
     category: str = "general"
@@ -36,9 +37,9 @@ class BenchmarkResult:
     latency_ms: float
     output_length: int
     passed: bool
-    error: Optional[str] = None
-    output: Optional[str] = None
-    keyword_matches: List[str] = field(default_factory=list)
+    error: str | None = None
+    output: str | None = None
+    keyword_matches: list[str] = field(default_factory=list)
     tokens_per_second: float = 0.0
 
 
@@ -47,30 +48,36 @@ class BenchmarkReport:
     benchmark_id: str
     agent_id: str
     agent_version: str
-    scenarios: List[BenchmarkScenario]
-    results: List[BenchmarkResult]
+    scenarios: list[BenchmarkScenario]
+    results: list[BenchmarkResult]
     started_at: float
     completed_at: float
-    summary: Dict[str, Any] = field(default_factory=dict)
+    summary: dict[str, Any] = field(default_factory=dict)
 
     def compute_summary(self):
         if not self.results:
             self.summary = {"error": "no_results"}
             return
 
-        by_provider: Dict[str, List[BenchmarkResult]] = {}
+        by_provider: dict[str, list[BenchmarkResult]] = {}
         for r in self.results:
             by_provider.setdefault(r.provider, []).append(r)
 
         per_provider = {}
         for provider, results in by_provider.items():
             avg_latency = sum(r.latency_ms for r in results) / len(results)
-            total_tokens_per_sec = sum(r.tokens_per_second for r in results if r.tokens_per_second > 0)
+            total_tokens_per_sec = sum(
+                r.tokens_per_second for r in results if r.tokens_per_second > 0
+            )
             pass_count = sum(1 for r in results if r.passed)
             per_provider[provider] = {
                 "avg_latency_ms": round(avg_latency, 2),
-                "p50_latency_ms": round(sorted(r.latency_ms for r in results)[len(results) // 2], 2),
-                "p95_latency_ms": round(sorted(r.latency_ms for r in results)[int(len(results) * 0.95)], 2),
+                "p50_latency_ms": round(
+                    sorted(r.latency_ms for r in results)[len(results) // 2], 2
+                ),
+                "p95_latency_ms": round(
+                    sorted(r.latency_ms for r in results)[int(len(results) * 0.95)], 2
+                ),
                 "avg_tokens_per_sec": round(total_tokens_per_sec / max(len(results), 1), 2),
                 "pass_rate": round(pass_count / len(results), 3),
                 "total_scenarios": len(results),
@@ -99,7 +106,7 @@ class BenchmarkReport:
         }
 
 
-SCENARIOS: List[BenchmarkScenario] = [
+SCENARIOS: list[BenchmarkScenario] = [
     BenchmarkScenario(
         name="basic_qa",
         input_text="What is the capital of France?",
@@ -169,7 +176,7 @@ class AgentBenchmark:
         self.db = db
         self.run_agent_fn = run_agent_fn
 
-    def list_scenarios(self, category: Optional[str] = None) -> List[BenchmarkScenario]:
+    def list_scenarios(self, category: str | None = None) -> list[BenchmarkScenario]:
         if category:
             return [s for s in SCENARIOS if s.category == category]
         return SCENARIOS
@@ -178,8 +185,8 @@ class AgentBenchmark:
         self,
         agent_id: uuid.UUID,
         agent_version: str,
-        providers: List[BenchmarkProviderConfig],
-        scenarios: Optional[List[BenchmarkScenario]] = None,
+        providers: list[BenchmarkProviderConfig],
+        scenarios: list[BenchmarkScenario] | None = None,
     ) -> BenchmarkReport:
         if scenarios is None:
             scenarios = SCENARIOS
@@ -199,9 +206,7 @@ class AgentBenchmark:
         results = []
         for scenario in scenarios:
             for prov in providers:
-                result = await self._run_scenario(
-                    agent_id, agent_version, scenario, prov
-                )
+                result = await self._run_scenario(agent_id, agent_version, scenario, prov)
                 results.append(result)
                 db_result = AgentBenchmarkResult(
                     run_id=benchmark.id,

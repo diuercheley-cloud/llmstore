@@ -26,7 +26,14 @@ OFFICIAL_DOMAINS = (
     "disaster_recovery",
 )
 
-REQUIRED_FILES = ("__init__.py", "README.md", "contracts.py", "events.py", "schemas.py", "ownership.md")
+REQUIRED_FILES = (
+    "__init__.py",
+    "README.md",
+    "contracts.py",
+    "events.py",
+    "schemas.py",
+    "ownership.md",
+)
 PUBLIC_MODULES = {"contracts", "events"}
 SHARED_KERNEL_PREFIXES = ("app.core", "app.db")
 
@@ -38,7 +45,9 @@ def domain_dir(domain: str) -> Path:
 def iter_python_files() -> list[Path]:
     files: list[Path] = []
     for domain in OFFICIAL_DOMAINS:
-        files.extend(sorted(path for path in domain_dir(domain).glob("*.py") if path.name != "__pycache__"))
+        files.extend(
+            sorted(path for path in domain_dir(domain).glob("*.py") if path.name != "__pycache__")
+        )
     return files
 
 
@@ -62,7 +71,7 @@ def classify_domain(import_name: str) -> str | None:
     prefix = "app.domains."
     if not import_name.startswith(prefix):
         return None
-    remainder = import_name[len(prefix):]
+    remainder = import_name[len(prefix) :]
     return remainder.split(".", 1)[0]
 
 
@@ -118,12 +127,21 @@ def validate_dependencies() -> list[str]:
                     f"{path.relative_to(REPO_ROOT)} -> {imported}"
                 )
             if imported.endswith(".schemas"):
-                errors.append(f"cross-domain schema import forbidden: {path.relative_to(REPO_ROOT)} -> {imported}")
+                errors.append(
+                    f"cross-domain schema import forbidden: {path.relative_to(REPO_ROOT)} -> {imported}"
+                )
             if imported.endswith(".models") or ".models." in imported:
-                errors.append(f"cross-domain model access forbidden: {path.relative_to(REPO_ROOT)} -> {imported}")
+                errors.append(
+                    f"cross-domain model access forbidden: {path.relative_to(REPO_ROOT)} -> {imported}"
+                )
         if path.name not in {"contracts.py", "events.py"}:
             text = path.read_text(encoding="utf-8")
-            if "app.core" not in text and "app.db" not in text and "PUBLIC_" not in text and "DOMAIN_" not in text:
+            if (
+                "app.core" not in text
+                and "app.db" not in text
+                and "PUBLIC_" not in text
+                and "DOMAIN_" not in text
+            ):
                 continue
     for source, targets in adjacency.items():
         for target in targets:

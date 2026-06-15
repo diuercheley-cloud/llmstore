@@ -23,9 +23,19 @@ def check_top_level_dirs(rules):
     if not rules.get("forbid_new_top_level_dirs"):
         return True
     allowed = set(rules.get("allowed_top_level_dirs", [])) | _exceptions(rules)
-    ignored = {".idea", ".vscode", ".venv", "venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache"}
+    ignored = {
+        ".idea",
+        ".vscode",
+        ".venv",
+        "venv",
+        "node_modules",
+        "__pycache__",
+        ".pytest_cache",
+        ".ruff_cache",
+    }
     violations = [
-        name for name in os.listdir(".")
+        name
+        for name in os.listdir(".")
         if os.path.isdir(name) and name not in allowed and name not in ignored
     ]
     if violations:
@@ -41,7 +51,8 @@ def check_bounded_contexts(rules):
         return True
     allowed = set(rules.get("allowed_bounded_contexts", [])) | _exceptions(rules)
     violations = [
-        name for name in os.listdir(root)
+        name
+        for name in os.listdir(root)
         if os.path.isdir(os.path.join(root, name)) and name != "__pycache__" and name not in allowed
     ]
     if violations:
@@ -104,7 +115,11 @@ def check_new_services(rules):
                 content = handle.read()
             if relative not in exceptions:
                 violations.append(f"New service '{relative}' is not approved.")
-            if '"""' not in content and "'''" not in content and not re.search(r"#\s*Owner:", content, re.I):
+            if (
+                '"""' not in content
+                and "'''" not in content
+                and not re.search(r"#\s*Owner:", content, re.I)
+            ):
                 violations.append(f"New service '{relative}' has no documentation or owner.")
     for violation in violations:
         print(f"FAIL: {violation}")
@@ -128,7 +143,7 @@ def check_feature_flags(rules):
         name = match.group(1)
         if name in allowed:
             continue
-        context = "".join(lines[max(0, index - 5): index + 1])
+        context = "".join(lines[max(0, index - 5) : index + 1])
         if name not in exceptions:
             violations.append(f"New feature flag '{name}' is not approved.")
         if "Owner:" not in context or "Status:" not in context:
@@ -177,10 +192,13 @@ def check_new_endpoints(rules):
     if not rules.get("require_supported_surface_classification"):
         return True
     try:
-        base = subprocess.run(["git", "rev-parse", "--verify", "v1.9.7-compliance-readiness"], capture_output=True)
+        base = subprocess.run(
+            ["git", "rev-parse", "--verify", "v1.9.7-compliance-readiness"], capture_output=True
+        )
         diff = subprocess.run(
             ["git", "diff", "v1.9.7-compliance-readiness", "--", "control_plane/app/api/"],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         )
     except Exception:
         return True
@@ -195,7 +213,9 @@ def check_new_endpoints(rules):
             if current_file and os.path.exists(current_file):
                 content = open(current_file, encoding="utf-8").read()
                 if not _has_surface(content):
-                    violations.append(f"New endpoint in '{current_file}' has no surface classification.")
+                    violations.append(
+                        f"New endpoint in '{current_file}' has no surface classification."
+                    )
     for violation in violations:
         print(f"FAIL: {violation}")
     return not violations

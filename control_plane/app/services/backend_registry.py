@@ -45,12 +45,14 @@ async def ensure_default_backends(session: AsyncSession) -> dict[str, InferenceB
             "is_default": settings.lmstudio_enabled,
             "status": "configured" if settings.lmstudio_enabled else "optional-disabled",
             "max_parallel_requests": 8,
-            "metadata_json": json.dumps({
-                "service_name": "data-plane-lmstudio", 
-                "api_key": settings.lmstudio_api_key,
-                "chat_model": settings.lmstudio_chat_model,
-                "timeout": settings.lmstudio_timeout
-            }),
+            "metadata_json": json.dumps(
+                {
+                    "service_name": "data-plane-lmstudio",
+                    "api_key": settings.lmstudio_api_key,
+                    "chat_model": settings.lmstudio_chat_model,
+                    "timeout": settings.lmstudio_timeout,
+                }
+            ),
         },
         {
             "name": "vllm-local",
@@ -61,7 +63,9 @@ async def ensure_default_backends(session: AsyncSession) -> dict[str, InferenceB
             "is_default": False,
             "status": "configured" if settings.vllm_backend_enabled else "optional-disabled",
             "max_parallel_requests": settings.vllm_max_concurrent_requests,
-            "metadata_json": json.dumps({"service_name": "data-plane-vllm", "api_key": settings.vllm_api_key}),
+            "metadata_json": json.dumps(
+                {"service_name": "data-plane-vllm", "api_key": settings.vllm_api_key}
+            ),
         },
         {
             "name": "tgi-local",
@@ -116,4 +120,3 @@ async def ensure_default_backends(session: AsyncSession) -> dict[str, InferenceB
         for item in created_or_updated.values():
             item.is_default = item.id == default_backend.id
     return created_or_updated
-

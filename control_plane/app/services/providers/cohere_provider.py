@@ -26,21 +26,35 @@ class CohereProvider(ProviderAdapter):
         )
 
     async def _client(self) -> httpx.AsyncClient:
-        headers = {
-            "Authorization": f"Bearer {self._api_key}",
-            "accept": "application/json",
-        } if self._api_key else {}
+        headers = (
+            {
+                "Authorization": f"Bearer {self._api_key}",
+                "accept": "application/json",
+            }
+            if self._api_key
+            else {}
+        )
         return httpx.AsyncClient(base_url=self._base_url, timeout=self._timeout, headers=headers)
 
     async def health_check(self) -> dict[str, Any]:
         if not self.enabled:
             return {"provider_id": "cohere", "healthy": None, "latency_ms": 0, "error": "disabled"}
         if not self.configured:
-            return {"provider_id": "cohere", "healthy": None, "latency_ms": 0, "error": "not configured"}
+            return {
+                "provider_id": "cohere",
+                "healthy": None,
+                "latency_ms": 0,
+                "error": "not configured",
+            }
         try:
             async with await self._client() as client:
                 resp = await client.get("/models")
-                return {"provider_id": "cohere", "healthy": resp.is_success, "latency_ms": 0, "error": None}
+                return {
+                    "provider_id": "cohere",
+                    "healthy": resp.is_success,
+                    "latency_ms": 0,
+                    "error": None,
+                }
         except Exception as e:
             return {"provider_id": "cohere", "healthy": False, "latency_ms": 0, "error": str(e)}
 

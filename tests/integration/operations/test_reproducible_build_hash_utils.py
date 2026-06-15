@@ -15,7 +15,9 @@ def test_canonical_json_ignores_timestamps():
 
 def test_deterministic_hashes_stable():
     payload = {"client_id": "tenant-a", "artifact": {"name": "bundle", "version": "1.0.0"}}
-    assert compute_build_manifest_hash(payload) == compute_build_manifest_hash(dict(reversed(list(payload.items()))))
+    assert compute_build_manifest_hash(payload) == compute_build_manifest_hash(
+        dict(reversed(list(payload.items())))
+    )
     assert compute_artifact_hash(payload) == compute_artifact_hash(payload)
     assert compute_lineage_hash(payload) == compute_lineage_hash(payload)
     assert compute_replay_hash(payload) == compute_replay_hash(payload)

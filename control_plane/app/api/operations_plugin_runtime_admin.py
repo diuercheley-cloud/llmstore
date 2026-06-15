@@ -285,7 +285,9 @@ async def _get_contract(db: AsyncSession, contract_id: str, client_id: UUID) -> 
     return item
 
 
-async def _get_load_plan(db: AsyncSession, load_plan_id: str, client_id: UUID) -> DeterministicExtensionLoadPlan:
+async def _get_load_plan(
+    db: AsyncSession, load_plan_id: str, client_id: UUID
+) -> DeterministicExtensionLoadPlan:
     item = (
         await db.execute(
             select(DeterministicExtensionLoadPlan).where(
@@ -299,7 +301,9 @@ async def _get_load_plan(db: AsyncSession, load_plan_id: str, client_id: UUID) -
     return item
 
 
-async def _get_activation(db: AsyncSession, activation_id: str, client_id: UUID) -> PluginRuntimeActivation:
+async def _get_activation(
+    db: AsyncSession, activation_id: str, client_id: UUID
+) -> PluginRuntimeActivation:
     item = (
         await db.execute(
             select(PluginRuntimeActivation).where(
@@ -349,12 +353,18 @@ async def list_contracts(
     _admin: Any = Depends(get_current_admin),
 ):
     rows = (
-        await db.execute(
-            select(PluginABIContract)
-            .where(PluginABIContract.client_id == client_id)
-            .order_by(PluginABIContract.plugin_name.asc(), PluginABIContract.plugin_version.asc())
+        (
+            await db.execute(
+                select(PluginABIContract)
+                .where(PluginABIContract.client_id == client_id)
+                .order_by(
+                    PluginABIContract.plugin_name.asc(), PluginABIContract.plugin_version.asc()
+                )
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return [_serialize_contract(item) for item in rows]
 
 
@@ -366,7 +376,10 @@ async def get_contract(
     _admin: Any = Depends(get_current_admin),
 ):
     contract = await _get_contract(db, contract_id, client_id)
-    return {"contract": _serialize_contract(contract), "explanation": CONTRACT_SERVICE.explain_contract(contract)}
+    return {
+        "contract": _serialize_contract(contract),
+        "explanation": CONTRACT_SERVICE.explain_contract(contract),
+    }
 
 
 @router.post("/admin/operations/plugin-runtime/contracts/{contract_id}/capabilities")
@@ -377,7 +390,9 @@ async def evaluate_capabilities(
     _admin: Any = Depends(get_current_admin),
 ):
     contract = await _get_contract(db, contract_id, request.client_id)
-    boundary = BOUNDARY_SERVICE.build_boundary({**request.model_dump(), "abi_contract_id": contract.id})
+    boundary = BOUNDARY_SERVICE.build_boundary(
+        {**request.model_dump(), "abi_contract_id": contract.id}
+    )
     db.add(boundary)
     await db.commit()
     return {
@@ -420,29 +435,39 @@ async def create_load_plan(
     _admin: Any = Depends(get_current_admin),
 ):
     contracts = (
-        await db.execute(
-            select(PluginABIContract)
-            .where(
-                PluginABIContract.client_id == request.client_id,
-                PluginABIContract.id.in_(request.contract_ids),
+        (
+            await db.execute(
+                select(PluginABIContract)
+                .where(
+                    PluginABIContract.client_id == request.client_id,
+                    PluginABIContract.id.in_(request.contract_ids),
+                )
+                .order_by(
+                    PluginABIContract.plugin_name.asc(), PluginABIContract.plugin_version.asc()
+                )
             )
-            .order_by(PluginABIContract.plugin_name.asc(), PluginABIContract.plugin_version.asc())
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     if len(contracts) != len(request.contract_ids):
         raise HTTPException(status_code=404, detail="One or more contracts not found")
     plans = LOADER.build_load_plan(contracts)
     for plan in plans:
         last_check = (
-            await db.execute(
-                select(PluginRuntimeCompatibilityCheck)
-                .where(
-                    PluginRuntimeCompatibilityCheck.client_id == request.client_id,
-                    PluginRuntimeCompatibilityCheck.abi_contract_id == plan.abi_contract_id,
+            (
+                await db.execute(
+                    select(PluginRuntimeCompatibilityCheck)
+                    .where(
+                        PluginRuntimeCompatibilityCheck.client_id == request.client_id,
+                        PluginRuntimeCompatibilityCheck.abi_contract_id == plan.abi_contract_id,
+                    )
+                    .order_by(PluginRuntimeCompatibilityCheck.created_at.desc())
                 )
-                .order_by(PluginRuntimeCompatibilityCheck.created_at.desc())
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         if last_check and last_check.compatibility_status in {"incompatible", "blocked"}:
             plan.load_status = "blocked"
         db.add(plan)
@@ -490,7 +515,9 @@ async def activate_plugin_runtime(
     if request.load_plan_id:
         load_plan = await _get_load_plan(db, request.load_plan_id, request.client_id)
         if load_plan.abi_contract_id != contract.id:
-            raise HTTPException(status_code=400, detail="Load plan does not belong to requested contract")
+            raise HTTPException(
+                status_code=400, detail="Load plan does not belong to requested contract"
+            )
     runtime = EXECUTION_RUNTIME(db)
     try:
         activation = await runtime.activate(contract, load_plan)
@@ -520,7 +547,9 @@ async def execute_plugin_runtime(
     if request.activation_id:
         activation = await _get_activation(db, request.activation_id, request.client_id)
         if activation.abi_contract_id != contract.id:
-            raise HTTPException(status_code=400, detail="Activation does not belong to requested contract")
+            raise HTTPException(
+                status_code=400, detail="Activation does not belong to requested contract"
+            )
     else:
         try:
             activation = await runtime.activate(contract)
@@ -542,7 +571,11 @@ async def execute_plugin_runtime(
         "audit_event": build_plugin_runtime_audit_event(
             "plugin_runtime_executed",
             str(contract.client_id),
-            {"contract_id": contract.id, "activation_id": activation.id, "execution_id": execution.id},
+            {
+                "contract_id": contract.id,
+                "activation_id": activation.id,
+                "execution_id": execution.id,
+            },
         ),
     }
 
@@ -565,13 +598,27 @@ async def record_lifecycle(
         "revoked": lambda: LIFECYCLE_SERVICE.revoke_plugin(contract, request.reason),
         "blocked": lambda: LIFECYCLE_SERVICE.block_plugin(contract, request.reason),
         "activated": lambda: PluginLifecycleEvent(
-            id=sha256_hex({"kind": "plugin_lifecycle_event_id", "client_id": str(contract.client_id), "abi_contract_id": contract.id, "lifecycle_event_type": "activated"}),
+            id=sha256_hex(
+                {
+                    "kind": "plugin_lifecycle_event_id",
+                    "client_id": str(contract.client_id),
+                    "abi_contract_id": contract.id,
+                    "lifecycle_event_type": "activated",
+                }
+            ),
             client_id=contract.client_id,
             abi_contract_id=contract.id,
             lifecycle_event_type="activated",
             lifecycle_status="warning",
             reason="activation recorded without real plugin execution",
-            immutable_hash=sha256_hex({"kind": "plugin_lifecycle_event", "client_id": str(contract.client_id), "abi_contract_id": contract.id, "lifecycle_event_type": "activated"}),
+            immutable_hash=sha256_hex(
+                {
+                    "kind": "plugin_lifecycle_event",
+                    "client_id": str(contract.client_id),
+                    "abi_contract_id": contract.id,
+                    "lifecycle_event_type": "activated",
+                }
+            ),
         ),
     }
     if request.lifecycle_event_type not in lifecycle_map:
@@ -598,16 +645,32 @@ async def replay_verify(
 ):
     contract = await _get_contract(db, contract_id, request.client_id)
     replay = REPLAY_VERIFIER.replay_contract(contract)
-    replay_hash = compute_replay_hash({"contract_hash": contract.contract_hash, "replayed": replay["replayed"]})
+    replay_hash = compute_replay_hash(
+        {"contract_hash": contract.contract_hash, "replayed": replay["replayed"]}
+    )
     result = PluginReplayVerificationResult(
-        id=sha256_hex({"kind": "plugin_replay_verification_result_id", "client_id": str(contract.client_id), "abi_contract_id": contract.id, "replay_hash": replay_hash}),
+        id=sha256_hex(
+            {
+                "kind": "plugin_replay_verification_result_id",
+                "client_id": str(contract.client_id),
+                "abi_contract_id": contract.id,
+                "replay_hash": replay_hash,
+            }
+        ),
         client_id=contract.client_id,
         abi_contract_id=contract.id,
         verification_status="passed" if replay["match"] else "failed",
         replay_hash=replay_hash,
         replay_safe=replay["match"],
         deterministic_summary=f"contract replay match={replay['match']}",
-        immutable_hash=sha256_hex({"kind": "plugin_replay_verification_result", "client_id": str(contract.client_id), "abi_contract_id": contract.id, "replay_hash": replay_hash}),
+        immutable_hash=sha256_hex(
+            {
+                "kind": "plugin_replay_verification_result",
+                "client_id": str(contract.client_id),
+                "abi_contract_id": contract.id,
+                "replay_hash": replay_hash,
+            }
+        ),
     )
     db.add(result)
     await db.commit()
@@ -629,7 +692,9 @@ async def federation_compatibility(
     _admin: Any = Depends(get_current_admin),
 ):
     contract = await _get_contract(db, contract_id, request.client_id)
-    result = FEDERATION_SERVICE.evaluate_federation_compatibility(contract, request.source_environment, request.target_environment)
+    result = FEDERATION_SERVICE.evaluate_federation_compatibility(
+        contract, request.source_environment, request.target_environment
+    )
     db.add(result)
     await db.commit()
     return {
@@ -655,64 +720,88 @@ async def generate_receipt(
         receipt_payload = build_abi_contract_receipt(contract)
     elif request.receipt_type == "compatibility_receipt":
         compatibility = (
-            await db.execute(
-                select(PluginRuntimeCompatibilityCheck)
-                .where(
-                    PluginRuntimeCompatibilityCheck.client_id == request.client_id,
-                    PluginRuntimeCompatibilityCheck.abi_contract_id == contract.id,
+            (
+                await db.execute(
+                    select(PluginRuntimeCompatibilityCheck)
+                    .where(
+                        PluginRuntimeCompatibilityCheck.client_id == request.client_id,
+                        PluginRuntimeCompatibilityCheck.abi_contract_id == contract.id,
+                    )
+                    .order_by(PluginRuntimeCompatibilityCheck.created_at.desc())
                 )
-                .order_by(PluginRuntimeCompatibilityCheck.created_at.desc())
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         if compatibility is None:
             raise HTTPException(status_code=404, detail="Compatibility result not found")
         receipt_payload = build_compatibility_receipt(compatibility)
     elif request.receipt_type == "replay_verification_receipt":
         replay = (
-            await db.execute(
-                select(PluginReplayVerificationResult)
-                .where(
-                    PluginReplayVerificationResult.client_id == request.client_id,
-                    PluginReplayVerificationResult.abi_contract_id == contract.id,
+            (
+                await db.execute(
+                    select(PluginReplayVerificationResult)
+                    .where(
+                        PluginReplayVerificationResult.client_id == request.client_id,
+                        PluginReplayVerificationResult.abi_contract_id == contract.id,
+                    )
+                    .order_by(PluginReplayVerificationResult.created_at.desc())
                 )
-                .order_by(PluginReplayVerificationResult.created_at.desc())
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         if replay is None:
             raise HTTPException(status_code=404, detail="Replay verification result not found")
         receipt_payload = build_replay_verification_receipt(replay)
     elif request.receipt_type == "federation_compatibility_receipt":
         federation = (
-            await db.execute(
-                select(PluginFederationCompatibility)
-                .where(
-                    PluginFederationCompatibility.client_id == request.client_id,
-                    PluginFederationCompatibility.abi_contract_id == contract.id,
+            (
+                await db.execute(
+                    select(PluginFederationCompatibility)
+                    .where(
+                        PluginFederationCompatibility.client_id == request.client_id,
+                        PluginFederationCompatibility.abi_contract_id == contract.id,
+                    )
+                    .order_by(PluginFederationCompatibility.created_at.desc())
                 )
-                .order_by(PluginFederationCompatibility.created_at.desc())
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         if federation is None:
             raise HTTPException(status_code=404, detail="Federation compatibility result not found")
         receipt_payload = build_federation_compatibility_receipt(federation)
     elif request.receipt_type == "load_plan_receipt":
         load_plan = (
-            await db.execute(
-                select(DeterministicExtensionLoadPlan)
-                .where(
-                    DeterministicExtensionLoadPlan.client_id == request.client_id,
-                    DeterministicExtensionLoadPlan.abi_contract_id == contract.id,
+            (
+                await db.execute(
+                    select(DeterministicExtensionLoadPlan)
+                    .where(
+                        DeterministicExtensionLoadPlan.client_id == request.client_id,
+                        DeterministicExtensionLoadPlan.abi_contract_id == contract.id,
+                    )
+                    .order_by(DeterministicExtensionLoadPlan.created_at.desc())
                 )
-                .order_by(DeterministicExtensionLoadPlan.created_at.desc())
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         if load_plan is None:
             raise HTTPException(status_code=404, detail="Load plan not found")
         receipt_payload = build_load_plan_receipt(load_plan)
     else:
         raise HTTPException(status_code=400, detail="Unsupported receipt type")
     receipt = PluginRuntimeReceipt(
-        id=sha256_hex({"kind": "plugin_runtime_receipt_id", "client_id": str(contract.client_id), "abi_contract_id": contract.id, "receipt_type": receipt_payload["receipt_type"], "payload_hash": receipt_payload["payload_hash"]}),
+        id=sha256_hex(
+            {
+                "kind": "plugin_runtime_receipt_id",
+                "client_id": str(contract.client_id),
+                "abi_contract_id": contract.id,
+                "receipt_type": receipt_payload["receipt_type"],
+                "payload_hash": receipt_payload["payload_hash"],
+            }
+        ),
         client_id=contract.client_id,
         abi_contract_id=contract.id,
         receipt_type=receipt_payload["receipt_type"],
@@ -746,8 +835,14 @@ async def plugin_runtime_summary(
             .group_by(PluginABIContract.contract_status)
         )
     ).all()
+
     async def _count(model: Any) -> int:
-        return (await db.execute(select(func.count()).select_from(model).where(model.client_id == client_id))).scalar_one()
+        return (
+            await db.execute(
+                select(func.count()).select_from(model).where(model.client_id == client_id)
+            )
+        ).scalar_one()
+
     compatibility_count = await _count(PluginRuntimeCompatibilityCheck)
     load_plan_count = await _count(DeterministicExtensionLoadPlan)
     activation_count = await _count(PluginRuntimeActivation)
@@ -757,10 +852,16 @@ async def plugin_runtime_summary(
     receipt_count = await _count(PluginRuntimeReceipt)
     lifecycle_count = await _count(PluginLifecycleEvent)
     policy = (
-        await db.execute(
-            select(PluginIsolationPolicy).where(PluginIsolationPolicy.client_id == client_id).order_by(PluginIsolationPolicy.created_at.desc())
+        (
+            await db.execute(
+                select(PluginIsolationPolicy)
+                .where(PluginIsolationPolicy.client_id == client_id)
+                .order_by(PluginIsolationPolicy.created_at.desc())
+            )
         )
-    ).scalars().first()
+        .scalars()
+        .first()
+    )
     return {
         "contract_statuses": {status: count for status, count in contract_counts},
         "compatibility_checks": compatibility_count,
@@ -771,7 +872,9 @@ async def plugin_runtime_summary(
         "federation_compatibility": federation_count,
         "receipts": receipt_count,
         "lifecycle_events": lifecycle_count,
-        "isolation_policy_status": ISOLATION_SERVICE.validate_policy(policy) if policy else {"valid": False},
+        "isolation_policy_status": ISOLATION_SERVICE.validate_policy(policy)
+        if policy
+        else {"valid": False},
         "notice": {
             "no_real_plugin_execution": execution_count == 0,
             "sandboxed_plugin_execution_available": True,

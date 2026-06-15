@@ -11,16 +11,20 @@ from app.core.config import get_settings
 from app.core.security import hash_secret, short_prefix
 from app.db.session import get_db_session, get_redis
 from app.main import app
-from app.models.core.api_key import ApiKey
-from app.models.core.client import Client
 from app.models.commercial.commercial_compliance import (
     CommercialControlAttestation,
     CommercialControlException,
     CommercialControlPolicy,
 )
-from app.models.commercial.commercial_financial_reconciliation import CommercialFinancialReconciliation
+from app.models.commercial.commercial_financial_reconciliation import (
+    CommercialFinancialReconciliation,
+)
 from app.models.commercial.commercial_revenue_alert_delivery import CommercialRevenueAlertDelivery
-from app.models.commercial.commercial_revenue_escalation_policy import CommercialRevenueEscalationPolicy
+from app.models.commercial.commercial_revenue_escalation_policy import (
+    CommercialRevenueEscalationPolicy,
+)
+from app.models.core.api_key import ApiKey
+from app.models.core.client import Client
 from app.services.compliance.operational_controls import (
     add_operational_evidence,
     calculate_effectiveness_score,
@@ -59,7 +63,9 @@ async def operational_portal_client(session, fake_redis) -> AsyncIterator[httpx.
 
     app.dependency_overrides[get_db_session] = override_get_db_session
     app.dependency_overrides[get_redis] = lambda: fake_redis
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         yield client
     app.dependency_overrides.clear()
 
@@ -69,7 +75,12 @@ async def _create_portal_client(session) -> tuple[Client, str]:
         name="Operational Portal Client",
         billing_status="active",
         is_blocked=False,
-        metadata_json=json.dumps({"contact_email": "portal@example.com", "enterprise_portal_roles": ["enterprise_auditor"]}),
+        metadata_json=json.dumps(
+            {
+                "contact_email": "portal@example.com",
+                "enterprise_portal_roles": ["enterprise_auditor"],
+            }
+        ),
     )
     session.add(client)
     await session.flush()
@@ -126,7 +137,12 @@ async def test_effectiveness_score_and_status(session):
     )
     session.add(policy)
     await session.flush()
-    await link_exception(session, control_id=control.id, exception_id=exception.id, linkage_reason="Customer-visible gap")
+    await link_exception(
+        session,
+        control_id=control.id,
+        exception_id=exception.id,
+        linkage_reason="Customer-visible gap",
+    )
 
     attestation = CommercialControlAttestation(
         control_policy_id=policy.id,
@@ -150,7 +166,9 @@ async def test_effectiveness_score_and_status(session):
     )
     await session.commit()
 
-    await detect_overdue_reviews(session, control_id=control.id, as_of=evidence.created_at + timedelta(days=120))
+    await detect_overdue_reviews(
+        session, control_id=control.id, as_of=evidence.created_at + timedelta(days=120)
+    )
     scored = await evaluate_control_effectiveness(session, control.id)
     await session.commit()
 
@@ -165,7 +183,12 @@ async def test_escalation_integration(session):
             name="operational overdue",
             enabled=True,
             severity_threshold="high",
-            trigger_types_json=["overdue_review", "stale_evidence", "ineffective_control", "repeated_exceptions"],
+            trigger_types_json=[
+                "overdue_review",
+                "stale_evidence",
+                "ineffective_control",
+                "repeated_exceptions",
+            ],
             allowed_delivery_types_json=["webhook", "email"],
             escalation_order_json=["webhook", "email"],
             cooldown_minutes=0,
@@ -235,26 +258,41 @@ async def test_portal_visibility_is_tenant_scoped(session, operational_portal_cl
     )
     session.add_all([tenant_exception, other_exception])
     await session.flush()
-    await link_exception(session, control_id=control.id, exception_id=tenant_exception.id, linkage_reason="tenant")
-    await link_exception(session, control_id=control.id, exception_id=other_exception.id, linkage_reason="other")
+    await link_exception(
+        session, control_id=control.id, exception_id=tenant_exception.id, linkage_reason="tenant"
+    )
+    await link_exception(
+        session, control_id=control.id, exception_id=other_exception.id, linkage_reason="other"
+    )
     await session.commit()
 
     controls_resp = await operational_portal_client.get(
         "/portal/audit/operational-controls",
-        headers={"Authorization": f"Bearer {api_key}", "X-Portal-Actor-Email": "portal@example.com"},
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "X-Portal-Actor-Email": "portal@example.com",
+        },
     )
     evidence_resp = await operational_portal_client.get(
         "/portal/audit/operational-evidence",
-        headers={"Authorization": f"Bearer {api_key}", "X-Portal-Actor-Email": "portal@example.com"},
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "X-Portal-Actor-Email": "portal@example.com",
+        },
     )
     reviews_resp = await operational_portal_client.get(
         "/portal/audit/operational-reviews",
-        headers={"Authorization": f"Bearer {api_key}", "X-Portal-Actor-Email": "portal@example.com"},
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "X-Portal-Actor-Email": "portal@example.com",
+        },
     )
     assert controls_resp.status_code == 200
     assert evidence_resp.status_code == 200
     assert reviews_resp.status_code == 200
     assert len(controls_resp.json()["items"]) == 1
-    assert controls_resp.json()["items"][0]["linked_exceptions"][0]["exception_id"] == str(tenant_exception.id)
+    assert controls_resp.json()["items"][0]["linked_exceptions"][0]["exception_id"] == str(
+        tenant_exception.id
+    )
     assert len(evidence_resp.json()["items"]) == 1
     assert len(reviews_resp.json()["items"]) == 1

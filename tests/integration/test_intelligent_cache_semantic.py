@@ -1,6 +1,6 @@
 import json
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 import pytest
@@ -84,7 +84,7 @@ async def test_semantic_cache_miss_below_threshold(isolated_db_url):
         await conn.run_sync(Base.metadata.create_all)
 
     client_id = uuid.uuid4()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     different_hash = "different-hash"
     different_vector = _entry_to_embedding_vector(different_hash)
@@ -103,7 +103,9 @@ async def test_semantic_cache_miss_below_threshold(isolated_db_url):
             ttl_seconds=3600,
             expires_at=now + timedelta(hours=1),
             is_active=True,
-            metadata_json=json.dumps({"embedding_vector": low_vector, "embedding_dimensions": len(low_vector)}),
+            metadata_json=json.dumps(
+                {"embedding_vector": low_vector, "embedding_dimensions": len(low_vector)}
+            ),
             created_at=now,
             updated_at=now,
         )

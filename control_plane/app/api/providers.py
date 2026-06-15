@@ -23,7 +23,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin/providers", tags=["admin"], dependencies=[Depends(require_admin)])
 
-COSTS_ARTIFACTS_DIR = Path(__file__).resolve().parents[3] / "artifacts" / "real-provider-validation" / "costs"
+COSTS_ARTIFACTS_DIR = (
+    Path(__file__).resolve().parents[3] / "artifacts" / "real-provider-validation" / "costs"
+)
 
 
 class ProviderGlobalConfig(BaseModel):
@@ -69,8 +71,7 @@ def _sanitize_cost_report(report: dict) -> dict:
             sanitized[key] = _sanitize_cost_report(value)
         elif isinstance(value, list):
             sanitized[key] = [
-                _sanitize_cost_report(item) if isinstance(item, dict) else item
-                for item in value
+                _sanitize_cost_report(item) if isinstance(item, dict) else item for item in value
             ]
         else:
             sanitized[key] = value
@@ -159,7 +160,4 @@ async def get_latest_cost_validation():
 @router.get("/capabilities/all")
 async def list_all_capabilities():
     providers = get_providers()
-    return {
-        pid: p.capabilities().model_dump()
-        for pid, p in providers.items()
-    }
+    return {pid: p.capabilities().model_dump() for pid, p in providers.items()}

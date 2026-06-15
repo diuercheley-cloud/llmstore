@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.models.agents.agent_routing import AgentStepRoutingDecision
 from app.services.agents.routing.cost_quality_policy import CostQualityPolicy, PolicyType
@@ -25,13 +25,13 @@ class AgenticRouterV2:
         self,
         run_id: uuid.UUID,
         step_type: str,
-        input_text: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        step_id: Optional[uuid.UUID] = None,
+        input_text: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        step_id: uuid.UUID | None = None,
         policy_name: str = PolicyType.BALANCED,
-        profile_name: Optional[str] = None,
-        fallback_from_model_id: Optional[str] = None,
-        failure_reason: Optional[str] = None
+        profile_name: str | None = None,
+        fallback_from_model_id: str | None = None,
+        failure_reason: str | None = None,
     ) -> str:
         # 1. Classify Step
         step_class = self.classifier.classify(step_type, input_text, metadata)
@@ -40,11 +40,11 @@ class AgenticRouterV2:
         # Extract requirements from metadata
         requires_tool_calling = metadata.get("requires_tool_calling", False) if metadata else False
         requires_json_mode = metadata.get("requires_json_mode", False) if metadata else False
-        
+
         candidates = await self.registry.find_suitable_models(
             step_class=step_class,
             requires_tool_calling=requires_tool_calling,
-            requires_json_mode=requires_json_mode
+            requires_json_mode=requires_json_mode,
         )
 
         if not candidates:
@@ -52,9 +52,7 @@ class AgenticRouterV2:
 
         # 3. Apply Policy/Budget
         ranked_models = await self.policy_engine.apply_policy(
-            models=candidates,
-            policy_name=policy_name,
-            profile_name=profile_name
+            models=candidates, policy_name=policy_name, profile_name=profile_name
         )
 
         if not ranked_models:
@@ -78,7 +76,7 @@ class AgenticRouterV2:
             policy_name=policy_name,
             candidates_count=len(ranked_models),
             fallback_happened=fallback_from_model_id is not None,
-            failure_reason=failure_reason
+            failure_reason=failure_reason,
         )
 
         # 6. Record Decision
@@ -89,8 +87,8 @@ class AgenticRouterV2:
             chosen_model_id=chosen_model.model_id,
             policy_applied=policy_name,
             explanation=explanation,
-            budget_spent=0.0, # Will be updated after execution
-            routing_metadata=metadata
+            budget_spent=0.0,  # Will be updated after execution
+            routing_metadata=metadata,
         )
         self.db.add(decision)
         await self.db.commit()

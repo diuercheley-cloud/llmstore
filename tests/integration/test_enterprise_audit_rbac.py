@@ -10,9 +10,9 @@ from app.core.config import get_settings
 from app.core.security import hash_secret, short_prefix
 from app.db.session import get_db_session, get_redis
 from app.main import app
+from app.models.commercial.commercial_compliance import CommercialControlPolicy
 from app.models.core.api_key import ApiKey
 from app.models.core.client import Client
-from app.models.commercial.commercial_compliance import CommercialControlPolicy
 from app.services.compliance.financial_controls import (
     create_evidence_package,
     open_exception,
@@ -37,13 +37,20 @@ async def portal_http_client(session, fake_redis) -> AsyncIterator[httpx.AsyncCl
 
     app.dependency_overrides[get_db_session] = override_get_db_session
     app.dependency_overrides[get_redis] = lambda: fake_redis
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         yield client
     app.dependency_overrides.clear()
 
 
 async def _make_client_key(session, *, name: str, scopes: list[str]) -> tuple[Client, str]:
-    client = Client(name=name, billing_status="active", is_blocked=False, metadata_json=json.dumps({"contact_email": f"{name}@example.com"}))
+    client = Client(
+        name=name,
+        billing_status="active",
+        is_blocked=False,
+        metadata_json=json.dumps({"contact_email": f"{name}@example.com"}),
+    )
     session.add(client)
     await session.flush()
     plaintext = f"sk-{name}-key"
@@ -108,29 +115,47 @@ async def test_readonly_cannot_export_but_can_view(portal_http_client, session):
     client, key = await _make_client_key(session, name="readonly", scopes=["enterprise_readonly"])
     await _seed(session, client)
 
-    list_resp = await portal_http_client.get("/portal/audit/exceptions", headers={"Authorization": f"Bearer {key}"})
+    list_resp = await portal_http_client.get(
+        "/portal/audit/exceptions", headers={"Authorization": f"Bearer {key}"}
+    )
     assert list_resp.status_code == 200
     assert len(list_resp.json()["items"]) == 1
 
     export_resp = await portal_http_client.post(
         "/portal/audit/reports/generate",
         headers={"Authorization": f"Bearer {key}"},
-        json={"report_type": "audit", "period_start": "2026-01-01", "period_end": "2026-12-31", "export_format": "json"},
+        json={
+            "report_type": "audit",
+            "period_start": "2026-01-01",
+            "period_end": "2026-12-31",
+            "export_format": "json",
+        },
     )
     assert export_resp.status_code == 403
 
 
 @pytest.mark.asyncio
-async def test_auditor_can_export_audit_and_finance_cannot_view_audit_items(portal_http_client, session):
-    client_auditor, auditor_key = await _make_client_key(session, name="auditor", scopes=["enterprise_auditor"])
+async def test_auditor_can_export_audit_and_finance_cannot_view_audit_items(
+    portal_http_client, session
+):
+    client_auditor, auditor_key = await _make_client_key(
+        session, name="auditor", scopes=["enterprise_auditor"]
+    )
     await _seed(session, client_auditor)
-    client_finance, finance_key = await _make_client_key(session, name="finance", scopes=["enterprise_finance"])
+    client_finance, finance_key = await _make_client_key(
+        session, name="finance", scopes=["enterprise_finance"]
+    )
     await _seed(session, client_finance)
 
     auditor_export = await portal_http_client.post(
         "/portal/audit/reports/generate",
         headers={"Authorization": f"Bearer {auditor_key}"},
-        json={"report_type": "audit", "period_start": "2026-01-01", "period_end": "2026-12-31", "export_format": "json"},
+        json={
+            "report_type": "audit",
+            "period_start": "2026-01-01",
+            "period_end": "2026-12-31",
+            "export_format": "json",
+        },
     )
     assert auditor_export.status_code == 201
 
@@ -143,13 +168,20 @@ async def test_auditor_can_export_audit_and_finance_cannot_view_audit_items(port
 
 @pytest.mark.asyncio
 async def test_finance_can_export_financial_summary(portal_http_client, session):
-    client, key = await _make_client_key(session, name="finance-summary", scopes=["enterprise_finance"])
+    client, key = await _make_client_key(
+        session, name="finance-summary", scopes=["enterprise_finance"]
+    )
     await _seed(session, client)
 
     resp = await portal_http_client.post(
         "/portal/audit/reports/generate",
         headers={"Authorization": f"Bearer {key}"},
-        json={"report_type": "financial_summary", "period_start": "2026-01-01", "period_end": "2026-12-31", "export_format": "json"},
+        json={
+            "report_type": "financial_summary",
+            "period_start": "2026-01-01",
+            "period_end": "2026-12-31",
+            "export_format": "json",
+        },
     )
     assert resp.status_code == 201
 

@@ -1,7 +1,6 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import List, Optional
 
 from app.core.time import utc_now
 from app.models.agents.multi_agent import AgentTeam, AgentTeamMember, AgentTeamRun
@@ -12,10 +11,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class TeamRuntime:
     """
     Base runtime for multi-agent team execution.
     """
+
     def __init__(self, db: AsyncSession):
         self.db = db
         self.obs = TeamObservability(db)
@@ -28,21 +29,16 @@ class TeamRuntime:
             raise ValueError("Team not found")
         return team
 
-    async def get_members(self, team_id: uuid.UUID) -> List[AgentTeamMember]:
+    async def get_members(self, team_id: uuid.UUID) -> list[AgentTeamMember]:
         stmt = select(AgentTeamMember).where(AgentTeamMember.team_id == team_id)
         res = await self.db.execute(stmt)
         return list(res.scalars().all())
 
     async def start_run(self, team_id: uuid.UUID, tenant_id: str, goal: str) -> AgentTeamRun:
-        run = AgentTeamRun(
-            team_id=team_id,
-            tenant_id=tenant_id,
-            input_goal=goal,
-            status="running"
-        )
+        run = AgentTeamRun(team_id=team_id, tenant_id=tenant_id, input_goal=goal, status="running")
         self.db.add(run)
         await self.db.flush()
-        
+
         await self.obs.record_trace(run.id, "run_started", {"goal": goal})
         return run
 
@@ -52,8 +48,8 @@ class TeamRuntime:
     async def record_handoff(
         self,
         run_id: uuid.UUID,
-        sender_id: Optional[uuid.UUID],
-        recipient_id: Optional[uuid.UUID],
+        sender_id: uuid.UUID | None,
+        recipient_id: uuid.UUID | None,
         task_description: str,
         message_type: str = "instruction",
     ) -> None:
@@ -79,11 +75,11 @@ class TeamRuntime:
         stmt = select(AgentTeamRun).where(AgentTeamRun.id == run_id)
         res = await self.db.execute(stmt)
         run = res.scalar_one()
-        
+
         run.status = "completed"
         run.output_result = result
         run.completed_at = utc_now()
-        
+
         await self.obs.record_trace(run.id, "run_completed", {"result_summary": result[:100]})
         await self.db.commit()
 
@@ -91,7 +87,7 @@ class TeamRuntime:
         stmt = select(AgentTeamRun).where(AgentTeamRun.id == run_id)
         res = await self.db.execute(stmt)
         run = res.scalar_one()
-        
+
         run.status = "failed"
         await self.obs.record_trace(run.id, "run_failed", {"reason": reason})
         await self.db.commit()

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 import pytest_asyncio
@@ -20,31 +20,32 @@ async def session(isolated_db_url):
         yield s
     await engine.dispose()
 
+
 @pytest.mark.asyncio
 async def test_detect_split_view_manual(session: AsyncSession):
-    start = datetime.now(timezone.utc) - timedelta(days=2)
-    end = datetime.now(timezone.utc) - timedelta(days=1)
-    
+    start = datetime.now(UTC) - timedelta(days=2)
+    end = datetime.now(UTC) - timedelta(days=1)
+
     cp_local = CommercialConsistencyCheckpoint(
         checkpoint_type="merkle_timeline",
         period_start=start,
         period_end=end,
-        root_hash="local_root"
+        root_hash="local_root",
     )
     session.add(cp_local)
     await session.commit()
-    
+
     cp_remote = CommercialConsistencyCheckpoint(
         checkpoint_type="merkle_timeline",
         period_start=start,
         period_end=end,
-        root_hash="remote_root"
+        root_hash="remote_root",
     )
     session.add(cp_remote)
     await session.commit()
-    
+
     alert = await transparency_gossip.detect_split_view(session, cp_remote)
     assert alert is not None
     assert alert.alert_type == "checkpoint_conflict"
-    assert "remote_root" == alert.observed_hash
-    assert "local_root" == alert.expected_hash
+    assert alert.observed_hash == "remote_root"
+    assert alert.expected_hash == "local_root"

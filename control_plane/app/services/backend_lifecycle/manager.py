@@ -1,7 +1,6 @@
-import json
 import logging
-from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from datetime import UTC, datetime
+from typing import Callable
 from uuid import UUID
 
 from app.contracts.backend_lifecycle import (
@@ -26,7 +25,7 @@ class BackendLifecycleManager:
         self,
         db: AsyncSession,
         provider: BackendLifecycleContract,
-        audit_callback: Optional[callable] = None,
+        audit_callback: Callable | None = None,
     ):
         self._db = db
         self._provider = provider
@@ -92,7 +91,10 @@ class BackendLifecycleManager:
         desired = await self.get_desired_state(backend_id)
         if desired is None:
             return LifecycleActionResult(
-                success=False, action="start", backend_id=backend_id, message="backend not found",
+                success=False,
+                action="start",
+                backend_id=backend_id,
+                message="backend not found",
             )
         caps = self._provider.capabilities()
         if not caps.can_start:
@@ -107,7 +109,10 @@ class BackendLifecycleManager:
         desired = await self.get_desired_state(backend_id)
         if desired is None:
             return LifecycleActionResult(
-                success=False, action="stop", backend_id=backend_id, message="backend not found",
+                success=False,
+                action="stop",
+                backend_id=backend_id,
+                message="backend not found",
             )
         caps = self._provider.capabilities()
         if not caps.can_stop:
@@ -122,7 +127,10 @@ class BackendLifecycleManager:
         desired = await self.get_desired_state(backend_id)
         if desired is None:
             return LifecycleActionResult(
-                success=False, action="restart", backend_id=backend_id, message="backend not found",
+                success=False,
+                action="restart",
+                backend_id=backend_id,
+                message="backend not found",
             )
         caps = self._provider.capabilities()
         if not caps.can_restart:
@@ -138,14 +146,17 @@ class BackendLifecycleManager:
         if backend:
             backend.status = status
             backend.is_active = is_active
-            backend.updated_at = datetime.now(timezone.utc)
+            backend.updated_at = datetime.now(UTC)
             await self._db.commit()
 
     def _on_drift(self, drift: DriftRecord) -> None:
         self._drift_history.append(drift)
         logger.warning(
             "drift detected: backend=%s type=%s desired=%s observed=%s",
-            drift.backend_name, drift.drift_type, drift.desired, drift.observed,
+            drift.backend_name,
+            drift.drift_type,
+            drift.desired,
+            drift.observed,
         )
 
     async def _audit(self, action: str, details: dict) -> None:
@@ -162,6 +173,7 @@ class BackendLifecycleManager:
     def _record_metric(self, action: str, details: dict) -> None:
         try:
             from app.core.metrics import SECURITY_EVENT_COUNTER
+
             SECURITY_EVENT_COUNTER.labels(
                 event_type=f"backend_lifecycle_{action}",
                 severity="info",

@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Dict, List
+from typing import Any
 
 from app.contracts.agents.base import AgentContract, CompatibilityPolicy
 from pydantic import BaseModel, Field
@@ -11,10 +11,12 @@ class AgentMemoryCitationV1(BaseModel):
     source: str
     relevance_score: float
 
+
 class AgentMemoryContextV1(BaseModel):
     context_block: str
-    citations: List[AgentMemoryCitationV1] = Field(default_factory=list)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    citations: list[AgentMemoryCitationV1] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
 
 class MemoryInjectionContractV1(AgentContract[BaseModel, AgentMemoryContextV1]):
     contract_name = "agent_memory_injection"

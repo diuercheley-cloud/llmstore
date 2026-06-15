@@ -1,11 +1,11 @@
-from typing import Any, Dict, List
+from typing import Any
 
 from ...mas.schemas import AgentTeam, TeamMember
 from ..base import BaseConverter, ConvertResult
 from .adapters import ConversableAgent, GroupChat
 
 
-def _extract_model_from_llm_config(llm_config: Dict[str, Any]) -> str:
+def _extract_model_from_llm_config(llm_config: dict[str, Any]) -> str:
     config_list = llm_config.get("config_list", [])
     if config_list and isinstance(config_list, list):
         first = config_list[0]
@@ -22,7 +22,7 @@ class AutoGenConverter(BaseConverter[Any, AgentTeam]):
         topology: str = "mesh",
         **kwargs: Any,
     ) -> ConvertResult[AgentTeam]:
-        warnings: List[str] = []
+        warnings: list[str] = []
 
         if isinstance(source, GroupChat):
             return self._convert_group_chat(source, team_name, topology, warnings)
@@ -38,7 +38,7 @@ class AutoGenConverter(BaseConverter[Any, AgentTeam]):
         self,
         agent: ConversableAgent,
         team_name: str,
-        warnings: List[str],
+        warnings: list[str],
     ) -> ConvertResult[AgentTeam]:
         if agent.code_execution_config:
             warnings.append(
@@ -61,21 +61,22 @@ class AutoGenConverter(BaseConverter[Any, AgentTeam]):
         group_chat: GroupChat,
         team_name: str,
         topology: str,
-        warnings: List[str],
+        warnings: list[str],
     ) -> ConvertResult[AgentTeam]:
         if len(group_chat.agents) < 2:
             warnings.append("GroupChat has fewer than 2 agents.")
 
         members = []
         for agent in group_chat.agents:
-            members.append(TeamMember(
-                agent_id=agent.name,
-                role=agent.name,
-            ))
+            members.append(
+                TeamMember(
+                    agent_id=agent.name,
+                    role=agent.name,
+                )
+            )
             if agent.code_execution_config:
                 warnings.append(
-                    f"Agent '{agent.name}' has code_execution_config. "
-                    "Map to native sandbox tools."
+                    f"Agent '{agent.name}' has code_execution_config. Map to native sandbox tools."
                 )
 
         description = (
@@ -94,9 +95,9 @@ class AutoGenConverter(BaseConverter[Any, AgentTeam]):
 
     def convert_batch(
         self,
-        sources: List[Any],
+        sources: list[Any],
         **kwargs: Any,
-    ) -> List[ConvertResult[AgentTeam]]:
+    ) -> list[ConvertResult[AgentTeam]]:
         return [
             self.convert(source, team_name=kwargs.get("team_name", f"autogen_{i}"), **kwargs)
             for i, source in enumerate(sources)

@@ -11,13 +11,51 @@ REPORT_PATH = "artifacts/service-test-coverage-report.json"
 MAINTENANCE_BUDGETS_PATH = "config/maintenance-budgets.json"
 
 # Priority classification mapping
-P0_KEYWORDS = ["runtime", "workflows", "agents", "security", "auth", "rbac", "plugins", "rag", "memory", "context", "connector", "iam"]
-P1_KEYWORDS = ["observability", "readiness", "operator", "operations", "platform", "monitoring", "metrics"]
-P2_KEYWORDS = ["admin", "support", "docs", "billing", "compliance", "governance", "payment", "notifications", "providers", "models", "inference", "routing", "mesh", "cache", "invariants"]
+P0_KEYWORDS = [
+    "runtime",
+    "workflows",
+    "agents",
+    "security",
+    "auth",
+    "rbac",
+    "plugins",
+    "rag",
+    "memory",
+    "context",
+    "connector",
+    "iam",
+]
+P1_KEYWORDS = [
+    "observability",
+    "readiness",
+    "operator",
+    "operations",
+    "platform",
+    "monitoring",
+    "metrics",
+]
+P2_KEYWORDS = [
+    "admin",
+    "support",
+    "docs",
+    "billing",
+    "compliance",
+    "governance",
+    "payment",
+    "notifications",
+    "providers",
+    "models",
+    "inference",
+    "routing",
+    "mesh",
+    "cache",
+    "invariants",
+]
+
 
 def get_priority(path):
     path_lower = path.lower()
-    
+
     filename = os.path.basename(path_lower)
     if filename in ["auth.py", "admin_rbac.py", "context_manager.py"]:
         return "P0"
@@ -34,8 +72,9 @@ def get_priority(path):
             return "P1"
         if any(k in part for k in P2_KEYWORDS):
             return "P2"
-            
+
     return "P2"
+
 
 def list_services():
     services = []
@@ -45,6 +84,7 @@ def list_services():
                 full_path = os.path.join(root, file)
                 services.append(full_path)
     return services
+
 
 def list_changed_services():
     try:
@@ -66,17 +106,18 @@ def list_changed_services():
             changed.append(path)
     return sorted(set(changed))
 
+
 def find_test(service_path):
     service_name = os.path.basename(service_path).replace(".py", "")
     module_hint = service_path.replace("/", ".").replace(".py", "")
-    
+
     patterns = [
         f"test_{service_name}.py",
         f"test_{service_name}_api.py",
         f"test_{service_name}_service.py",
-        f"test_{service_name}_endpoint.py"
+        f"test_{service_name}_endpoint.py",
     ]
-    
+
     for test_root in TEST_ROOTS:
         if not os.path.isdir(test_root):
             continue
@@ -91,14 +132,15 @@ def find_test(service_path):
                 if not file.endswith(".py"):
                     continue
                 try:
-                    with open(test_path, "r", encoding="utf-8") as handle:
+                    with open(test_path, encoding="utf-8") as handle:
                         content = handle.read()
                 except OSError:
                     continue
                 if module_hint in content or service_name in content:
                     return test_path
-                
+
     return None
+
 
 def main():
     services = list_services()
@@ -106,20 +148,20 @@ def main():
     results = {
         "P0": {"total": 0, "tested": 0, "untested": []},
         "P1": {"total": 0, "tested": 0, "untested": []},
-        "P2": {"total": 0, "tested": 0, "untested": []}
+        "P2": {"total": 0, "tested": 0, "untested": []},
     }
     changed_results = {
         "P0": {"total": 0, "tested": 0, "untested": []},
         "P1": {"total": 0, "tested": 0, "untested": []},
-        "P2": {"total": 0, "tested": 0, "untested": []}
+        "P2": {"total": 0, "tested": 0, "untested": []},
     }
-    
+
     service_test_map = {}
-    
+
     for service in services:
         priority = get_priority(service)
         test = find_test(service)
-        
+
         results[priority]["total"] += 1
         if test:
             results[priority]["tested"] += 1
@@ -134,7 +176,7 @@ def main():
                 changed_results[priority]["tested"] += 1
             else:
                 changed_results[priority]["untested"].append(service)
-            
+
     # Save report
     report = {
         "timestamp": datetime.now().isoformat(),
@@ -148,29 +190,31 @@ def main():
         },
         "by_priority": results,
         "changed_by_priority": changed_results,
-        "mapping": service_test_map
+        "mapping": service_test_map,
     }
-    
+
     os.makedirs(os.path.dirname(REPORT_PATH), exist_ok=True)
     with open(REPORT_PATH, "w") as f:
         json.dump(report, f, indent=2)
-        
+
     # Print report to stdout
     print("# Service Test Coverage Report\n")
     print(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-    
+
     overall_total = report["overall"]["total"]
     overall_tested = report["overall"]["tested"]
     overall_coverage = (overall_tested / overall_total * 100) if overall_total > 0 else 100
-    
+
     print(f"## Overall Coverage: {overall_tested}/{overall_total} ({overall_coverage:.2f}%)\n")
 
     if changed_services:
         changed_total = sum(changed_results[p]["total"] for p in changed_results)
         changed_tested = sum(changed_results[p]["tested"] for p in changed_results)
         changed_coverage = (changed_tested / changed_total * 100) if changed_total > 0 else 100
-        print(f"## Changed Services Coverage: {changed_tested}/{changed_total} ({changed_coverage:.2f}%)\n")
-    
+        print(
+            f"## Changed Services Coverage: {changed_tested}/{changed_total} ({changed_coverage:.2f}%)\n"
+        )
+
     for p in ["P0", "P1", "P2"]:
         total = results[p]["total"]
         tested = results[p]["tested"]
@@ -200,7 +244,7 @@ def main():
                 for service in changed_results[p]["untested"]:
                     print(f"  - {service}")
             print()
-        
+
     # Exit code for gate
     if "--gate" in sys.argv:
         gate_untested = changed_results["P0"]["untested"] + changed_results["P1"]["untested"]
@@ -226,6 +270,7 @@ def main():
                 sys.exit(1)
         print("SUCCESS: All changed P0/P1 services have tests.")
         sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

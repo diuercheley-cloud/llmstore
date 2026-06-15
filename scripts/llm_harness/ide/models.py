@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -10,12 +10,14 @@ class ContextRefType(str, Enum):
     SYMBOL = "symbol"
     SELECTION = "selection"
 
+
 class ContextRef(BaseModel):
     ref_type: ContextRefType
     path: str
-    symbol: Optional[str] = None
-    start_line: Optional[int] = None
-    end_line: Optional[int] = None
+    symbol: str | None = None
+    start_line: int | None = None
+    end_line: int | None = None
+
 
 class ContextBundle(BaseModel):
     files: list[dict[str, Any]] = Field(default_factory=list)
@@ -34,8 +36,7 @@ class ContextBundle(BaseModel):
             parts.append("")
         for s in self.selections:
             parts.append(
-                f"--- Selection: {s['path']} "
-                f"(lines {s['start_line']}-{s['end_line']}) ---"
+                f"--- Selection: {s['path']} (lines {s['start_line']}-{s['end_line']}) ---"
             )
             parts.append(s.get("content", ""))
             parts.append("")
@@ -44,6 +45,7 @@ class ContextBundle(BaseModel):
             parts.append(sym.get("content", ""))
             parts.append("")
         return "\n".join(parts)
+
 
 class InlineEditRequest(BaseModel):
     file_path: str

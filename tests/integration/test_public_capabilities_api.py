@@ -7,7 +7,10 @@ PUBLIC_PY = ROOT / "control_plane" / "app" / "api" / "public.py"
 
 def test_uses_dynamic_registry_instead_of_hardcoded_features():
     content = PUBLIC_PY.read_text()
-    assert "from app.services.feature_registry import" in content or "get_public_capabilities" in content
+    assert (
+        "from app.services.feature_registry import" in content
+        or "get_public_capabilities" in content
+    )
 
 
 def test_uses_pydantic_response_model():
@@ -24,7 +27,7 @@ def test_each_feature_has_required_fields_via_schema():
 
 def test_no_hardcoded_feature_list_in_endpoint():
     content = PUBLIC_PY.read_text()
-    endpoint_start = content.index('async def public_capabilities():')
+    endpoint_start = content.index("async def public_capabilities():")
     endpoint_body = content[endpoint_start:]
     has_hardcoded = '"name":' in endpoint_body or "'name':" in endpoint_body
     assert not has_hardcoded, (
@@ -67,7 +70,9 @@ def test_no_api_keys_in_route():
     for pat in ["sk-", "admin_token", "Bearer"]:
         if pat in content:
             line_with_secret = [
-                l for l in content.split("\n") if pat in l and "limitations" not in l.lower() and "features" not in l.lower()
+                l
+                for l in content.split("\n")
+                if pat in l and "limitations" not in l.lower() and "features" not in l.lower()
             ]
             for line in line_with_secret:
                 assert False, f"Possible secret in route: {line.strip()[:80]}"

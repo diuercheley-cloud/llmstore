@@ -7,4 +7,3 @@ RUNTIME_DOMAIN_EVENTS = (
     "runtime.execution.failed",
     "runtime.capacity.updated",
 )
-

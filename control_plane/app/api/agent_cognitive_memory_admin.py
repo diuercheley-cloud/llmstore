@@ -65,7 +65,10 @@ async def search_memory(
     if not settings.agent_cognitive_memory_enabled:
         raise HTTPException(status_code=400, detail="Cognitive memory is disabled")
     items = await SemanticMemoryService(db).search(req.tenant_id, req.query, req.limit)
-    return [{"id": str(item.id), "summary": item.summary, "memory_type": item.memory_type} for item in items]
+    return [
+        {"id": str(item.id), "summary": item.summary, "memory_type": item.memory_type}
+        for item in items
+    ]
 
 
 @router.get("/explain/{memory_id}")

@@ -10,47 +10,47 @@ DEFAULT_PRICING: dict[str, dict[str, Any]] = {
     "gpt-4o": {
         "prompt_token_price_per_1m": 5.0,
         "completion_token_price_per_1m": 15.0,
-        "currency": "USD"
+        "currency": "USD",
     },
     "gpt-4o-mini": {
         "prompt_token_price_per_1m": 0.15,
         "completion_token_price_per_1m": 0.6,
-        "currency": "USD"
+        "currency": "USD",
     },
     "claude-3-5-sonnet-20241022": {
         "prompt_token_price_per_1m": 3.0,
         "completion_token_price_per_1m": 15.0,
-        "currency": "USD"
+        "currency": "USD",
     },
     "claude-3-5-haiku-20241022": {
         "prompt_token_price_per_1m": 0.25,
         "completion_token_price_per_1m": 1.25,
-        "currency": "USD"
+        "currency": "USD",
     },
     "claude-sonnet-4-20250514": {
         "prompt_token_price_per_1m": 3.0,
         "completion_token_price_per_1m": 15.0,
-        "currency": "USD"
+        "currency": "USD",
     },
     "gemini-2.5-flash": {
         "prompt_token_price_per_1m": 0.10,
         "completion_token_price_per_1m": 0.40,
-        "currency": "USD"
+        "currency": "USD",
     },
     "gemini-2.5-pro": {
         "prompt_token_price_per_1m": 1.25,
         "completion_token_price_per_1m": 5.0,
-        "currency": "USD"
+        "currency": "USD",
     },
     "o3-mini": {
         "prompt_token_price_per_1m": 1.10,
         "completion_token_price_per_1m": 4.40,
-        "currency": "USD"
+        "currency": "USD",
     },
     "deepseek-chat": {
         "prompt_token_price_per_1m": 0.27,
         "completion_token_price_per_1m": 1.10,
-        "currency": "USD"
+        "currency": "USD",
     },
 }
 
@@ -92,7 +92,10 @@ class PricingManager:
         return None, model
 
     def calculate_cost(
-        self, model: str, prompt_tokens: int, completion_tokens: int,
+        self,
+        model: str,
+        prompt_tokens: int,
+        completion_tokens: int,
         reasoning_tokens: int | None = None,
     ) -> PricingResult | None:
         lookup_model = self._model_override or model
@@ -101,7 +104,8 @@ class PricingManager:
         if model_pricing is None:
             logger.debug(
                 "Unknown model '%s' (looked up as '%s'); no pricing data available",
-                model, lookup_model,
+                model,
+                lookup_model,
             )
             return None
 

@@ -16,7 +16,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def canonical_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+    )
 
 
 def sha256_hex(payload: Any) -> str:
@@ -34,7 +36,19 @@ def redact_sensitive_payload(payload: Any) -> Any:
         redacted: dict[str, Any] = {}
         for key, value in payload.items():
             lowered = key.lower()
-            if any(token in lowered for token in ("secret", "token", "password", "prompt", "response", "plaintext", "input_text", "output_text")):
+            if any(
+                token in lowered
+                for token in (
+                    "secret",
+                    "token",
+                    "password",
+                    "prompt",
+                    "response",
+                    "plaintext",
+                    "input_text",
+                    "output_text",
+                )
+            ):
                 redacted[key] = f"sha256:{sha256_hex(value)}"
             else:
                 redacted[key] = redact_sensitive_payload(value)
@@ -52,19 +66,33 @@ class WorkflowProvenanceService:
     ) -> dict[str, Any]:
         definition = await db.get(CommercialWorkflowDefinition, execution.definition_id)
         stage_rows = (
-            await db.execute(
-                select(CommercialWorkflowStage)
-                .where(CommercialWorkflowStage.execution_id == execution.id)
-                .order_by(CommercialWorkflowStage.stage_order.asc(), CommercialWorkflowStage.created_at.asc())
+            (
+                await db.execute(
+                    select(CommercialWorkflowStage)
+                    .where(CommercialWorkflowStage.execution_id == execution.id)
+                    .order_by(
+                        CommercialWorkflowStage.stage_order.asc(),
+                        CommercialWorkflowStage.created_at.asc(),
+                    )
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         checkpoints = (
-            await db.execute(
-                select(CommercialWorkflowCheckpoint)
-                .where(CommercialWorkflowCheckpoint.execution_id == execution.id)
-                .order_by(CommercialWorkflowCheckpoint.step_index.asc(), CommercialWorkflowCheckpoint.created_at.asc())
+            (
+                await db.execute(
+                    select(CommercialWorkflowCheckpoint)
+                    .where(CommercialWorkflowCheckpoint.execution_id == execution.id)
+                    .order_by(
+                        CommercialWorkflowCheckpoint.step_index.asc(),
+                        CommercialWorkflowCheckpoint.created_at.asc(),
+                    )
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         provenance = sanitize_report_payload(
             {
                 "execution_id": str(execution.id),
@@ -119,19 +147,27 @@ class WorkflowProvenanceService:
         if original is None or replay is None:
             raise ValueError("execution_not_found")
         original_stages = (
-            await db.execute(
-                select(CommercialWorkflowStage)
-                .where(CommercialWorkflowStage.execution_id == original.id)
-                .order_by(CommercialWorkflowStage.stage_order.asc())
+            (
+                await db.execute(
+                    select(CommercialWorkflowStage)
+                    .where(CommercialWorkflowStage.execution_id == original.id)
+                    .order_by(CommercialWorkflowStage.stage_order.asc())
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         replay_stages = (
-            await db.execute(
-                select(CommercialWorkflowStage)
-                .where(CommercialWorkflowStage.execution_id == replay.id)
-                .order_by(CommercialWorkflowStage.stage_order.asc())
+            (
+                await db.execute(
+                    select(CommercialWorkflowStage)
+                    .where(CommercialWorkflowStage.execution_id == replay.id)
+                    .order_by(CommercialWorkflowStage.stage_order.asc())
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         mismatches: list[dict[str, Any]] = []
         for index, pair in enumerate(zip(original_stages, replay_stages, strict=False)):
             if len(pair) != 2:

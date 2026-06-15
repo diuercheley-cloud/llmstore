@@ -1,4 +1,3 @@
-
 import pytest
 from app.core.config import get_settings
 from app.services.agents.code_interpreter.providers.mock_sandbox import MockSandboxProvider
@@ -14,8 +13,12 @@ async def test_block_env_read():
     policy = SandboxPolicyEngine()
     code = "import os\nwith open('.env', 'r') as f: print(f.read())"
     # Even if open is blocked by FORBIDDEN_CALLS, the path check should catch it first or as well
-    with pytest.raises(SandboxPolicyViolation, match="Access to protected path is not allowed|Import of 'os' is not allowed|Call to 'open' is not allowed"):
+    with pytest.raises(
+        SandboxPolicyViolation,
+        match="Access to protected path is not allowed|Import of 'os' is not allowed|Call to 'open' is not allowed",
+    ):
         policy.validate_code(code)
+
 
 @pytest.mark.asyncio
 async def test_block_subprocess():
@@ -24,12 +27,14 @@ async def test_block_subprocess():
     with pytest.raises(SandboxPolicyViolation, match="Import of 'subprocess' is not allowed"):
         policy.validate_code(code)
 
+
 @pytest.mark.asyncio
 async def test_block_network():
     policy = SandboxPolicyEngine()
     code = "url = 'https://google.com'\nprint(url)"
     with pytest.raises(SandboxPolicyViolation, match="Network access is disabled by default"):
         policy.validate_code(code)
+
 
 @pytest.mark.asyncio
 async def test_timeout_works():
@@ -41,6 +46,7 @@ async def test_timeout_works():
     assert result["exit_code"] == 124
     assert "timed out" in result["stderr"]
 
+
 @pytest.mark.asyncio
 async def test_output_truncation():
     policy = SandboxPolicyEngine()
@@ -51,6 +57,7 @@ async def test_output_truncation():
     assert len(truncated_output.encode("utf-8")) <= max_bytes + len("\n...[truncated]")
     assert "...[truncated]" in truncated_output
 
+
 @pytest.mark.asyncio
 async def test_artifact_secret_blocking():
     policy = SandboxPolicyEngine()
@@ -59,15 +66,17 @@ async def test_artifact_secret_blocking():
     with pytest.raises(SandboxPolicyViolation, match="Artifact contains secret-like content"):
         policy.validate_artifact_content(secret_content)
 
+
 @pytest.mark.asyncio
 async def test_provider_unavailable_no_simulated_success():
     settings = get_settings()
     settings.agent_sandbox_allow_simulated_provider = False
-    
+
     policy = SandboxPolicyEngine()
     # If a provider is 'mock' but simulated is NOT allowed, it should fail
     with pytest.raises(SandboxPolicyViolation, match="Simulated provider 'mock' is not allowed"):
         policy.validate_provider("mock", is_simulated=True)
+
 
 @pytest.mark.asyncio
 async def test_forbidden_calls_getattr():
@@ -75,6 +84,7 @@ async def test_forbidden_calls_getattr():
     code = "getattr(object, 'attr')"
     with pytest.raises(SandboxPolicyViolation, match="Call to 'getattr' is not allowed"):
         policy.validate_code(code)
+
 
 @pytest.mark.asyncio
 async def test_forbidden_calls_exec():

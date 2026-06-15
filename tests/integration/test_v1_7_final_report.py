@@ -23,11 +23,20 @@ def test_latest_report_json():
     data = json.loads(fp.read_text(encoding="utf-8"))
 
     required = [
-        "report_type", "version", "git_branch", "git_commit",
-        "generated_at", "timestamp", "final_status",
-        "critical_fails", "blocking_warnings", "nonblocking_warnings",
-        "critical_fail_list", "blocking_warning_list",
-        "nonblocking_warning_list", "limitations_out_of_scope",
+        "report_type",
+        "version",
+        "git_branch",
+        "git_commit",
+        "generated_at",
+        "timestamp",
+        "final_status",
+        "critical_fails",
+        "blocking_warnings",
+        "nonblocking_warnings",
+        "critical_fail_list",
+        "blocking_warning_list",
+        "nonblocking_warning_list",
+        "limitations_out_of_scope",
     ]
     for field in required:
         assert field in data, f"Missing report field: {field}"
@@ -39,7 +48,12 @@ def test_report_status_is_valid():
         pytest.skip("No report directory")
     fp = report_dir / "v1.7-final-validation.json"
     data = json.loads(fp.read_text(encoding="utf-8"))
-    valid = ["V1_7_READY", "V1_7_READY_WITH_WARNINGS", "V1_7_READY_WITH_ACCEPTED_WARNINGS", "V1_7_NOT_READY"]
+    valid = [
+        "V1_7_READY",
+        "V1_7_READY_WITH_WARNINGS",
+        "V1_7_READY_WITH_ACCEPTED_WARNINGS",
+        "V1_7_NOT_READY",
+    ]
     assert data["final_status"] in valid, f"Invalid status: {data['final_status']}"
 
 
@@ -95,7 +109,12 @@ def test_report_md_has_status():
         pytest.skip("No report directory")
     fp = report_dir / "v1.7-final-validation.md"
     content = fp.read_text(encoding="utf-8")
-    statuses = ["V1_7_READY", "V1_7_READY_WITH_WARNINGS", "V1_7_READY_WITH_ACCEPTED_WARNINGS", "V1_7_NOT_READY"]
+    statuses = [
+        "V1_7_READY",
+        "V1_7_READY_WITH_WARNINGS",
+        "V1_7_READY_WITH_ACCEPTED_WARNINGS",
+        "V1_7_NOT_READY",
+    ]
     has_status = any(s in content for s in statuses)
     assert has_status, "No valid status in MD report"
 
@@ -142,9 +161,7 @@ def test_report_consistency():
     md_content = md_fp.read_text(encoding="utf-8")
 
     json_status = data.get("final_status", "")
-    assert json_status in md_content, (
-        f"JSON status '{json_status}' not found in MD report"
-    )
+    assert json_status in md_content, f"JSON status '{json_status}' not found in MD report"
 
 
 def test_no_secrets_in_report():

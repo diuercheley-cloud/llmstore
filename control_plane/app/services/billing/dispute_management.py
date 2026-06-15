@@ -1,7 +1,7 @@
 import uuid
 from datetime import timedelta
 from decimal import Decimal
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -22,9 +22,9 @@ class DisputeManagementService:
         dispute_type: str,
         claimed_amount_brl: Decimal,
         disputed_reason: str,
-        qos_billing_record_id: Optional[uuid.UUID] = None,
-        invoice_id: Optional[uuid.UUID] = None,
-        wallet_transaction_id: Optional[uuid.UUID] = None
+        qos_billing_record_id: uuid.UUID | None = None,
+        invoice_id: uuid.UUID | None = None,
+        wallet_transaction_id: uuid.UUID | None = None,
     ) -> CommercialBillingDispute:
         """
         Opens a new billing dispute.
@@ -37,21 +37,23 @@ class DisputeManagementService:
             dispute_type=dispute_type,
             status="open",
             claimed_amount_brl=claimed_amount_brl,
-            disputed_reason=disputed_reason
+            disputed_reason=disputed_reason,
         )
         db.add(dispute)
         await db.flush()
-        
+
         await FinancialAuditTrailService.create_audit_event(
             db,
             event_type="dispute_opened",
             client_id=client_id,
             related_record_type="CommercialBillingDispute",
-            related_record_id=str(dispute.id), # This might be problematic before flush, but SQLAlchemy usually handles it or we flush
+            related_record_id=str(
+                dispute.id
+            ),  # This might be problematic before flush, but SQLAlchemy usually handles it or we flush
             amount_brl=claimed_amount_brl,
-            metadata_json={"dispute_type": dispute_type}
+            metadata_json={"dispute_type": dispute_type},
         )
-        
+
         recent_stmt = select(func.count(CommercialBillingDispute.id)).where(
             CommercialBillingDispute.client_id == client_id,
             CommercialBillingDispute.created_at >= utc_now() - timedelta(hours=24),
@@ -79,14 +81,14 @@ class DisputeManagementService:
         """
         stmt = select(CommercialBillingDispute).where(CommercialBillingDispute.id == dispute_id)
         dispute = (await db.execute(stmt)).scalar_one_or_none()
-        
+
         if not dispute or dispute.status != "open":
             return False
-            
+
         dispute.status = "under_review"
         dispute.admin_notes = admin_notes
         dispute.updated_at = utc_now()
-        
+
         await db.commit()
         return True
 
@@ -95,21 +97,21 @@ class DisputeManagementService:
         db: AsyncSession,
         dispute_id: uuid.UUID,
         resolution_notes: str,
-        credit_amount_brl: Decimal = Decimal("0.000000")
+        credit_amount_brl: Decimal = Decimal("0.000000"),
     ) -> bool:
         """
         Resolves a dispute, optionally providing a credit.
         """
         stmt = select(CommercialBillingDispute).where(CommercialBillingDispute.id == dispute_id)
         dispute = (await db.execute(stmt)).scalar_one_or_none()
-        
+
         if not dispute or dispute.status in ["resolved", "rejected", "credited"]:
             return False
-            
+
         dispute.resolution_notes = resolution_notes
         dispute.resolved_at = utc_now()
         dispute.updated_at = utc_now()
-        
+
         if credit_amount_brl > 0:
             # Issue manual credit via wallet_service
             tx = await wallet_service.credit_manual(
@@ -117,12 +119,12 @@ class DisputeManagementService:
                 client_id=dispute.client_id,
                 amount_brl=credit_amount_brl,
                 reason=f"Dispute Resolution {dispute.id}",
-                created_by="system_admin" # Or pass admin id
+                created_by="system_admin",  # Or pass admin id
             )
             await db.flush()
             dispute.credit_transaction_id = tx.id
             dispute.status = "credited"
-            
+
             await FinancialAuditTrailService.create_audit_event(
                 db,
                 event_type="dispute_resolved",
@@ -130,7 +132,7 @@ class DisputeManagementService:
                 related_record_type="CommercialBillingDispute",
                 related_record_id=str(dispute.id),
                 amount_brl=credit_amount_brl,
-                metadata_json={"resolution": "credited", "notes": resolution_notes}
+                metadata_json={"resolution": "credited", "notes": resolution_notes},
             )
         else:
             dispute.status = "resolved"
@@ -141,28 +143,30 @@ class DisputeManagementService:
                 related_record_type="CommercialBillingDispute",
                 related_record_id=str(dispute.id),
                 amount_brl=Decimal("0.000000"),
-                metadata_json={"resolution": "resolved_no_credit", "notes": resolution_notes}
+                metadata_json={"resolution": "resolved_no_credit", "notes": resolution_notes},
             )
-            
+
         await db.commit()
         return True
 
     @staticmethod
-    async def reject_dispute(db: AsyncSession, dispute_id: uuid.UUID, resolution_notes: str) -> bool:
+    async def reject_dispute(
+        db: AsyncSession, dispute_id: uuid.UUID, resolution_notes: str
+    ) -> bool:
         """
         Rejects a dispute.
         """
         stmt = select(CommercialBillingDispute).where(CommercialBillingDispute.id == dispute_id)
         dispute = (await db.execute(stmt)).scalar_one_or_none()
-        
+
         if not dispute or dispute.status in ["resolved", "rejected", "credited"]:
             return False
-            
+
         dispute.status = "rejected"
         dispute.resolution_notes = resolution_notes
         dispute.resolved_at = utc_now()
         dispute.updated_at = utc_now()
-        
+
         await FinancialAuditTrailService.create_audit_event(
             db,
             event_type="dispute_resolved",
@@ -170,19 +174,15 @@ class DisputeManagementService:
             related_record_type="CommercialBillingDispute",
             related_record_id=str(dispute.id),
             amount_brl=Decimal("0.000000"),
-            metadata_json={"resolution": "rejected", "notes": resolution_notes}
+            metadata_json={"resolution": "rejected", "notes": resolution_notes},
         )
-        
+
         await db.commit()
         return True
 
     @staticmethod
     async def create_manual_credit(
-        db: AsyncSession,
-        client_id: uuid.UUID,
-        amount_brl: Decimal,
-        reason: str,
-        admin_id: str
+        db: AsyncSession, client_id: uuid.UUID, amount_brl: Decimal, reason: str, admin_id: str
     ) -> AiWalletTransaction:
         """
         Creates a manual credit for a client.
@@ -190,16 +190,12 @@ class DisputeManagementService:
         settings = get_settings()
         if not settings.commercial_financial_manual_credit_enabled:
             raise ValueError("Manual credit is disabled by configuration")
-            
+
         tx = await wallet_service.credit_manual(
-            db,
-            client_id=client_id,
-            amount_brl=amount_brl,
-            reason=reason[:128],
-            created_by=admin_id
+            db, client_id=client_id, amount_brl=amount_brl, reason=reason[:128], created_by=admin_id
         )
         await db.flush()
-        
+
         await FinancialAuditTrailService.create_audit_event(
             db,
             event_type="manual_credit",
@@ -207,26 +203,26 @@ class DisputeManagementService:
             related_record_type="AiWalletTransaction",
             related_record_id=str(tx.id),
             amount_brl=amount_brl,
-            metadata_json={"reason": reason, "admin_id": admin_id}
+            metadata_json={"reason": reason, "admin_id": admin_id},
         )
-        
+
         await db.commit()
         return tx
 
     @staticmethod
-    async def summarize_disputes(db: AsyncSession) -> Dict[str, Any]:
+    async def summarize_disputes(db: AsyncSession) -> dict[str, Any]:
         """
         Summarizes disputes status.
         """
         stmt = select(
             CommercialBillingDispute.status,
             func.count(CommercialBillingDispute.id),
-            func.sum(CommercialBillingDispute.claimed_amount_brl)
+            func.sum(CommercialBillingDispute.claimed_amount_brl),
         ).group_by(CommercialBillingDispute.status)
-        
+
         result = await db.execute(stmt)
         summary = result.all()
-        
+
         return {
             str(status): {"count": count, "total_claimed": float(total_claimed or 0)}
             for status, count, total_claimed in summary

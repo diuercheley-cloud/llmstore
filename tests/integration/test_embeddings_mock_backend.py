@@ -9,10 +9,11 @@ def test_mock_embedding_determinism():
     emb1 = get_mock_embedding(text, dimensions=128)
     emb2 = get_mock_embedding(text, dimensions=128)
     assert emb1 == emb2
-    
+
     text2 = "other test"
     emb3 = get_mock_embedding(text2, dimensions=128)
     assert emb1 != emb3
+
 
 def test_mock_embedding_dimensions():
     """
@@ -21,9 +22,10 @@ def test_mock_embedding_dimensions():
     text = "dim test"
     emb = get_mock_embedding(text, dimensions=64)
     assert len(emb) == 64
-    
+
     emb2 = get_mock_embedding(text, dimensions=384)
     assert len(emb2) == 384
+
 
 def test_process_mock_embeddings_format():
     """

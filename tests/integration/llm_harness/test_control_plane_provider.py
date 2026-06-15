@@ -22,7 +22,11 @@ async def test_control_plane_health_and_list_agents():
         raise AssertionError(f"Unexpected request: {request.method} {request.url}")
 
     provider = ControlPlaneProvider(
-        {"base_url": "http://control-plane", "agent_id": "agent-1", "transport": httpx.MockTransport(handler)}
+        {
+            "base_url": "http://control-plane",
+            "agent_id": "agent-1",
+            "transport": httpx.MockTransport(handler),
+        }
     )
 
     health = await provider.health_check()
@@ -45,16 +49,20 @@ async def test_control_plane_start_run_and_completed_event():
             return _response(200, {"id": "run-1"}, request)
         if request.url.path == "/v1/agents/runs/run-1/events":
             payload = (
-                'event: tool.called\n'
+                "event: tool.called\n"
                 'data: {"tool_name":"run_shell","parameters":{"command":"pytest -q"}}\n\n'
-                'event: run.completed\n'
+                "event: run.completed\n"
                 'data: {"message":"done"}\n\n'
             )
             return _response(200, payload, request)
         raise AssertionError(f"Unexpected request: {request.method} {request.url}")
 
     provider = ControlPlaneProvider(
-        {"base_url": "http://control-plane", "agent_id": "agent-1", "transport": httpx.MockTransport(handler)}
+        {
+            "base_url": "http://control-plane",
+            "agent_id": "agent-1",
+            "transport": httpx.MockTransport(handler),
+        }
     )
 
     run_data = await provider.start_run("Fix it")
@@ -78,7 +86,7 @@ async def test_control_plane_run_completed_with_output_action_and_secrets_redact
             return _response(200, {"id": "run-1"}, request)
         if request.url.path == "/v1/agents/runs/run-1/events":
             payload = (
-                'event: run.completed\n'
+                "event: run.completed\n"
                 'data: {"output":{"type":"final","payload":{"message":"api_key=super-secret-token"}}}\n\n'
             )
             return _response(200, payload, request)
@@ -112,7 +120,11 @@ async def test_control_plane_run_failed():
         raise AssertionError(f"Unexpected request: {request.method} {request.url}")
 
     provider = ControlPlaneProvider(
-        {"base_url": "http://control-plane", "agent_id": "agent-1", "transport": httpx.MockTransport(handler)}
+        {
+            "base_url": "http://control-plane",
+            "agent_id": "agent-1",
+            "transport": httpx.MockTransport(handler),
+        }
     )
 
     with pytest.raises(RuntimeError, match="provider exploded"):
@@ -125,13 +137,17 @@ async def test_control_plane_sse_malformed_is_ignored():
         payload = (
             "event: tool.called\n"
             "data: not-json\n\n"
-            'event: tool.called\n'
+            "event: tool.called\n"
             'data: {"tool_name":"final","parameters":{"message":"done"}}\n\n'
         )
         return _response(200, payload, request)
 
     provider = ControlPlaneProvider(
-        {"base_url": "http://control-plane", "agent_id": "agent-1", "transport": httpx.MockTransport(handler)}
+        {
+            "base_url": "http://control-plane",
+            "agent_id": "agent-1",
+            "transport": httpx.MockTransport(handler),
+        }
     )
     events = [event async for event in provider._stream_sse_events("http://control-plane/sse")]
     assert len(events) == 1

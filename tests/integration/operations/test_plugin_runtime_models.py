@@ -52,6 +52,8 @@ async def test_plugin_runtime_models_persist(session):
 
 
 def test_phase_79_migration_present():
-    content = open("control_plane/alembic/versions/phase79_formal_plugin_abi_runtime.py", "r", encoding="utf-8").read()
+    content = open(
+        "control_plane/alembic/versions/phase79_formal_plugin_abi_runtime.py", encoding="utf-8"
+    ).read()
     assert "plugin_abi_contracts" in content
     assert "plugin_runtime_receipts" in content

@@ -1,7 +1,7 @@
 # Owner: agent-platform
 import logging
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.services.prompts.prompt_template_renderer import PromptTemplateRenderer
 
@@ -29,14 +29,14 @@ class TemplateValidationResult:
     def __init__(
         self,
         valid: bool,
-        errors: Optional[List[str]] = None,
-        warnings: Optional[List[str]] = None,
+        errors: list[str] | None = None,
+        warnings: list[str] | None = None,
     ):
         self.valid = valid
         self.errors = errors or []
         self.warnings = warnings or []
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "valid": self.valid,
             "errors": self.errors,
@@ -49,8 +49,8 @@ class PromptTemplateValidator:
         self.renderer = PromptTemplateRenderer()
 
     def validate_template_content(self, content: str) -> TemplateValidationResult:
-        errors: List[str] = []
-        warnings: List[str] = []
+        errors: list[str] = []
+        warnings: list[str] = []
 
         try:
             self.renderer.validate_template_syntax(content)
@@ -76,28 +76,24 @@ class PromptTemplateValidator:
     def validate_variable_declaration(
         self, var_name: str, var_type: str
     ) -> TemplateValidationResult:
-        errors: List[str] = []
+        errors: list[str] = []
 
         if not var_name or not var_name.strip():
             errors.append("Variable name cannot be empty")
 
         if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", var_name):
-            errors.append(
-                f"Variable name '{var_name}' must be a valid Python identifier"
-            )
+            errors.append(f"Variable name '{var_name}' must be a valid Python identifier")
 
         valid_types = {"string", "number", "boolean", "object", "array", "any"}
         if var_type not in valid_types:
-            errors.append(
-                f"Invalid variable type '{var_type}'. Must be one of: {valid_types}"
-            )
+            errors.append(f"Invalid variable type '{var_type}'. Must be one of: {valid_types}")
 
         return TemplateValidationResult(valid=len(errors) == 0, errors=errors)
 
     def validate_variables_satisfy_template(
-        self, content: str, declared_vars: Optional[List[Dict[str, Any]]] = None
+        self, content: str, declared_vars: list[dict[str, Any]] | None = None
     ) -> TemplateValidationResult:
-        errors: List[str] = []
+        errors: list[str] = []
 
         try:
             used_vars = self.renderer.extract_variables(content)
@@ -109,17 +105,15 @@ class PromptTemplateValidator:
             declared_names = {v["name"] for v in declared_vars}
             undeclared = used_vars - declared_names
             if undeclared:
-                errors.append(
-                    f"Template uses variables not declared: {undeclared}"
-                )
+                errors.append(f"Template uses variables not declared: {undeclared}")
 
         return TemplateValidationResult(valid=len(errors) == 0, errors=errors)
 
     def validate_version_promotion(
         self, version: Any, target_status: str
     ) -> TemplateValidationResult:
-        errors: List[str] = []
-        warnings: List[str] = []
+        errors: list[str] = []
+        warnings: list[str] = []
 
         content_validation = self.validate_template_content(version.content)
         errors.extend(content_validation.errors)

@@ -8,8 +8,8 @@ from app.core.security import hash_secret, short_prefix
 from app.db.base import Base
 from app.db.session import get_db_session, get_redis
 from app.main import app
-from app.models.core.api_key import ApiKey
 from app.models.billing.billing_plan import BillingPlan
+from app.models.core.api_key import ApiKey
 from app.models.core.client import Client
 from app.models.core.quota_counter import QuotaCounter
 from app.models.core.tts_usage_event import TtsUsageEvent
@@ -91,13 +91,33 @@ def test_get_or_create_tts_readiness_client_avoids_suspended_client():
     def fake_http_request(path, *, method="GET", headers=None, body=None, timeout=15):
         calls.append((method, path))
         if path == "/admin/billing/plans":
-            return 200, '[{"id":"plan-disabled","code":"free","tts_enabled":false,"is_active":true},{"id":"plan-tts","code":"basic","tts_enabled":true,"is_active":true}]', {}, None
+            return (
+                200,
+                '[{"id":"plan-disabled","code":"free","tts_enabled":false,"is_active":true},{"id":"plan-tts","code":"basic","tts_enabled":true,"is_active":true}]',
+                {},
+                None,
+            )
         if path == "/admin/clients":
             if method == "GET":
-                return 200, '[{"id":"old-client","name":"tts-readiness-probe-client","billing_status":"suspended","is_blocked":false,"billing_plan_id":"plan-disabled"}]', {}, None
-            return 201, '{"id":"new-client","name":"tts-readiness-probe-client-2","billing_status":"active","is_blocked":false,"billing_plan_id":"plan-tts"}', {}, None
+                return (
+                    200,
+                    '[{"id":"old-client","name":"tts-readiness-probe-client","billing_status":"suspended","is_blocked":false,"billing_plan_id":"plan-disabled"}]',
+                    {},
+                    None,
+                )
+            return (
+                201,
+                '{"id":"new-client","name":"tts-readiness-probe-client-2","billing_status":"active","is_blocked":false,"billing_plan_id":"plan-tts"}',
+                {},
+                None,
+            )
         if path == "/admin/api-keys":
-            return 201, '{"id":"key-1","key_prefix":"sk-test-pref","api_key":"sk-test-secret-value-1234"}', {}, None  # FAKE TEST KEY - DO NOT USE
+            return (
+                201,
+                '{"id":"key-1","key_prefix":"sk-test-pref","api_key":"sk-test-secret-value-1234"}',
+                {},
+                None,
+            )  # FAKE TEST KEY - DO NOT USE
         raise AssertionError(f"unexpected call: {method} {path}")
 
     result = get_or_create_tts_readiness_client(fake_http_request, "admin-token")
@@ -147,11 +167,23 @@ async def test_tts_proxy_records_usage_on_201(mock_verify, tts_probe_setup):
     assert response.status_code == 201
 
     async with sessionmaker() as session:
-        events = (await session.execute(select(TtsUsageEvent).where(TtsUsageEvent.client_id == client.id))).scalars().all()
+        events = (
+            (
+                await session.execute(
+                    select(TtsUsageEvent).where(TtsUsageEvent.client_id == client.id)
+                )
+            )
+            .scalars()
+            .all()
+        )
         assert len(events) == 1
         assert events[0].chars_input == 5
         assert events[0].api_key_prefix is not None
 
-        counters = (await session.execute(select(QuotaCounter).where(QuotaCounter.client_id == client.id))).scalars().all()
+        counters = (
+            (await session.execute(select(QuotaCounter).where(QuotaCounter.client_id == client.id)))
+            .scalars()
+            .all()
+        )
         assert counters
         assert sum(counter.used_tts_chars for counter in counters) >= 10

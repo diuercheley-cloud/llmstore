@@ -45,7 +45,6 @@ ASSESSMENT_DICT = {
 
 
 class TestReceiptStructure:
-
     def test_signal_receipt_has_all_required_fields(self):
         r = build_failure_signal_receipt(SIGNAL_DICT)
         _assert_receipt_fields(r, "failure_signal_recorded")
@@ -63,7 +62,6 @@ class TestReceiptStructure:
 
 
 class TestReceiptType:
-
     def test_signal_receipt_type(self):
         r = build_failure_signal_receipt(SIGNAL_DICT)
         assert r["receipt_type"] == "failure_signal_recorded"
@@ -81,7 +79,6 @@ class TestReceiptType:
 
 
 class TestIdentity:
-
     def test_signal_client_id(self):
         r = build_failure_signal_receipt(SIGNAL_DICT)
         assert r["client_id"] == "client-1"
@@ -107,7 +104,6 @@ class TestIdentity:
 
 
 class TestHashes:
-
     def test_signal_immutable_hash_passed_through(self):
         r = build_failure_signal_receipt(SIGNAL_DICT)
         assert r["immutable_hash"] == "a" * 64
@@ -133,7 +129,6 @@ class TestHashes:
 
 
 class TestPayloadHash:
-
     def test_payload_hash_is_64_hex_chars(self):
         r = build_failure_signal_receipt(SIGNAL_DICT)
         assert len(r["payload_hash"]) == 64
@@ -155,7 +150,6 @@ class TestPayloadHash:
 
 
 class TestSignaturePlaceholder:
-
     def test_signature_present(self):
         r = build_failure_signal_receipt(SIGNAL_DICT)
         assert "signature" in r
@@ -180,7 +174,6 @@ class TestSignaturePlaceholder:
 
 
 class TestAdvisoryOnly:
-
     def test_signal_receipt_advisory_only(self):
         r = build_failure_signal_receipt(SIGNAL_DICT)
         assert r["advisory_only"] is True
@@ -198,10 +191,19 @@ class TestAdvisoryOnly:
 
 
 class TestMetadata:
-
     def test_deterministic_version(self):
-        for builder in (build_failure_signal_receipt, build_failure_forecast_receipt, build_failure_risk_assessment_receipt):
-            r = builder(SIGNAL_DICT if builder is build_failure_signal_receipt else (FORECAST_DICT if builder is build_failure_forecast_receipt else ASSESSMENT_DICT))
+        for builder in (
+            build_failure_signal_receipt,
+            build_failure_forecast_receipt,
+            build_failure_risk_assessment_receipt,
+        ):
+            r = builder(
+                SIGNAL_DICT
+                if builder is build_failure_signal_receipt
+                else (
+                    FORECAST_DICT if builder is build_failure_forecast_receipt else ASSESSMENT_DICT
+                )
+            )
             assert r["deterministic_version"] == "v1"
 
     def test_generated_at_is_iso(self):
@@ -213,7 +215,6 @@ class TestMetadata:
 
 
 class TestReceiptHash:
-
     def test_receipt_hash_is_64_hex_chars(self):
         r = build_failure_signal_receipt(SIGNAL_DICT)
         assert len(r["receipt_hash"]) == 64
@@ -224,7 +225,6 @@ class TestReceiptHash:
 
 
 class TestOffline:
-
     def test_builds_without_network(self):
         r = build_failure_signal_receipt(SIGNAL_DICT)
         assert r["receipt_hash"] is not None
@@ -234,7 +234,6 @@ class TestOffline:
 
 
 class TestSensitivePayload:
-
     def test_payload_with_secret_key_is_excluded(self):
         sig = dict(SIGNAL_DICT, payload_json={"api_key": "sk-123"})
         r = build_failure_signal_receipt(sig)
@@ -255,7 +254,6 @@ class TestSensitivePayload:
 
 
 class TestEdgeCases:
-
     def test_empty_signal_dict(self):
         r = build_failure_signal_receipt({})
         assert r["client_id"] == ""

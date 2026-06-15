@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -6,7 +6,8 @@ from pydantic import BaseModel
 class GeneratedToolSchema(BaseModel):
     name: str
     description: str
-    parameters: Dict[str, Any]
+    parameters: dict[str, Any]
+
 
 class ToolSynthesizer:
     def __init__(self, llm_provider=None):
@@ -17,6 +18,6 @@ class ToolSynthesizer:
         # based on the schema and prompt. For this mock, we just generate a basic structure.
         params_str = ", ".join(schema.parameters.keys())
         code = f"def {schema.name}({params_str}):\n"
-        code += f"    \"\"\"{schema.description}\"\"\"\n"
+        code += f'    """{schema.description}"""\n'
         code += "    return {'status': 'success'}\n"
         return code

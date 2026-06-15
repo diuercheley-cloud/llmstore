@@ -70,8 +70,13 @@ class DeterministicWorkflowOrchestrator:
                 }
             )
         order = self._topological_sort(normalized_stages)
-        ordered_stages = [next(stage for stage in normalized_stages if stage["stage_key"] == key) for key in order]
-        return {"entry_stage": entry_stage or (order[0] if order else None), "stages": ordered_stages}
+        ordered_stages = [
+            next(stage for stage in normalized_stages if stage["stage_key"] == key) for key in order
+        ]
+        return {
+            "entry_stage": entry_stage or (order[0] if order else None),
+            "stages": ordered_stages,
+        }
 
     def _topological_sort(self, stages: list[dict[str, Any]]) -> list[str]:
         stage_map = {stage["stage_key"]: stage for stage in stages}
@@ -97,8 +102,12 @@ class DeterministicWorkflowOrchestrator:
             visit(stage["stage_key"])
         return order
 
-    def _definition_hash(self, normalized_dag: dict[str, Any], metadata_json: dict[str, Any] | None) -> str:
-        return sha256_hex({"dag": normalized_dag, "metadata": sanitize_report_payload(metadata_json or {})})
+    def _definition_hash(
+        self, normalized_dag: dict[str, Any], metadata_json: dict[str, Any] | None
+    ) -> str:
+        return sha256_hex(
+            {"dag": normalized_dag, "metadata": sanitize_report_payload(metadata_json or {})}
+        )
 
     async def create_definition(
         self,
@@ -120,7 +129,9 @@ class DeterministicWorkflowOrchestrator:
             dag_json=normalized_dag,
             entry_stage=normalized_dag["entry_stage"],
             definition_hash=definition_hash,
-            immutable_hash=sha256_hex({"definition_hash": definition_hash, "created_at": utc_now().isoformat()}),
+            immutable_hash=sha256_hex(
+                {"definition_hash": definition_hash, "created_at": utc_now().isoformat()}
+            ),
             offline_compatible=True,
             sovereign_ready=True,
             is_deterministic=True,
@@ -229,17 +240,27 @@ class DeterministicWorkflowOrchestrator:
             )
             db.add(stage_row)
             previous_stage_hash = sha256_hex(
-                {"stage_key": stage_row.stage_key, "planned_input_hash": planned_input_hash, "previous_stage_hash": previous_stage_hash}
+                {
+                    "stage_key": stage_row.stage_key,
+                    "planned_input_hash": planned_input_hash,
+                    "previous_stage_hash": previous_stage_hash,
+                }
             )
         await db.flush()
         for stage_row in (
-            await db.execute(
-                select(CommercialWorkflowStage)
-                .where(CommercialWorkflowStage.execution_id == execution.id)
-                .order_by(CommercialWorkflowStage.stage_order.asc())
+            (
+                await db.execute(
+                    select(CommercialWorkflowStage)
+                    .where(CommercialWorkflowStage.execution_id == execution.id)
+                    .order_by(CommercialWorkflowStage.stage_order.asc())
+                )
             )
-        ).scalars().all():
-            await self.policy_enforcement.bind_stage_policy(db, execution=execution, stage=stage_row)
+            .scalars()
+            .all()
+        ):
+            await self.policy_enforcement.bind_stage_policy(
+                db, execution=execution, stage=stage_row
+            )
         return execution
 
     async def _evaluate_stage_policy(
@@ -252,9 +273,17 @@ class DeterministicWorkflowOrchestrator:
         decision = {"decision": "allow", "requires_approval": False, "reason": None}
         allowed_tenants = policy.get("allowed_tenants") or []
         if allowed_tenants and tenant_id not in allowed_tenants:
-            decision = {"decision": "deny", "requires_approval": False, "reason": "tenant_not_allowed"}
+            decision = {
+                "decision": "deny",
+                "requires_approval": False,
+                "reason": "tenant_not_allowed",
+            }
         elif policy.get("require_approval"):
-            decision = {"decision": "allow", "requires_approval": True, "reason": "approval_required"}
+            decision = {
+                "decision": "allow",
+                "requires_approval": True,
+                "reason": "approval_required",
+            }
         elif policy.get("deny_execution"):
             decision = {"decision": "deny", "requires_approval": False, "reason": "policy_denied"}
         return decision
@@ -285,8 +314,12 @@ class DeterministicWorkflowOrchestrator:
         if execution.status == "paused":
             raise ValueError("workflow_execution_paused")
 
-        policy_decision = await self.policy_enforcement.evaluate_stage(db, execution=execution, stage=stage)
-        in_memory_decision = await self._evaluate_stage_policy(stage=stage, tenant_id=execution.tenant_id)
+        policy_decision = await self.policy_enforcement.evaluate_stage(
+            db, execution=execution, stage=stage
+        )
+        in_memory_decision = await self._evaluate_stage_policy(
+            stage=stage, tenant_id=execution.tenant_id
+        )
         stage_policy = ((stage.metadata_json or {}).get("policy")) or {}
         if (
             policy_decision.get("reason") == "missing_valid_policy"
@@ -318,7 +351,11 @@ class DeterministicWorkflowOrchestrator:
             await self.approvals.expire_pending_approvals(db, execution_id=execution.id)
             stage.status = "pending_approval"
             stage.policy_gate_status = "approval_required"
-            snapshot = await db.get(CommercialWorkflowPolicySnapshot, stage.active_policy_snapshot_id) if stage.active_policy_snapshot_id else None
+            snapshot = (
+                await db.get(CommercialWorkflowPolicySnapshot, stage.active_policy_snapshot_id)
+                if stage.active_policy_snapshot_id
+                else None
+            )
             if stage.approval_status != "approved":
                 await self.approvals.request_approval(
                     db,
@@ -326,10 +363,27 @@ class DeterministicWorkflowOrchestrator:
                     stage=stage,
                     snapshot=snapshot,
                     requested_by=(execution.metadata_json or {}).get("requested_by", "system"),
-                    approvers=list((((stage.metadata_json or {}).get("policy")) or {}).get("approvers") or ["workflow-approver"]),
-                    ttl_seconds=int(((((stage.metadata_json or {}).get("policy")) or {}).get("approval_ttl_seconds")) or 3600),
-                    delegated_approvers=list((((stage.metadata_json or {}).get("policy")) or {}).get("delegated_approvers") or []),
-                    replay_safe=not bool((((stage.metadata_json or {}).get("policy")) or {}).get("replay_unsafe")),
+                    approvers=list(
+                        (((stage.metadata_json or {}).get("policy")) or {}).get("approvers")
+                        or ["workflow-approver"]
+                    ),
+                    ttl_seconds=int(
+                        (
+                            (((stage.metadata_json or {}).get("policy")) or {}).get(
+                                "approval_ttl_seconds"
+                            )
+                        )
+                        or 3600
+                    ),
+                    delegated_approvers=list(
+                        (((stage.metadata_json or {}).get("policy")) or {}).get(
+                            "delegated_approvers"
+                        )
+                        or []
+                    ),
+                    replay_safe=not bool(
+                        (((stage.metadata_json or {}).get("policy")) or {}).get("replay_unsafe")
+                    ),
                     metadata={"stage_key": stage.stage_key},
                 )
             if stage.approval_status != "approved":
@@ -351,14 +405,17 @@ class DeterministicWorkflowOrchestrator:
             }
         )
         dependency_hashes = (
-            await db.execute(
-                select(CommercialWorkflowStage.stage_hash)
-                .where(
-                    CommercialWorkflowStage.execution_id == execution.id,
-                    CommercialWorkflowStage.stage_key.in_(stage.dependencies_json or []),
+            (
+                await db.execute(
+                    select(CommercialWorkflowStage.stage_hash).where(
+                        CommercialWorkflowStage.execution_id == execution.id,
+                        CommercialWorkflowStage.stage_key.in_(stage.dependencies_json or []),
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         dependency_hashes = sorted([item for item in dependency_hashes if item])
         previous_stage_hash = stage.previous_stage_hash
         stage_hash = sha256_hex(
@@ -394,7 +451,9 @@ class DeterministicWorkflowOrchestrator:
                 event_type="workflow_stage_completed",
                 summary=f"Workflow stage {stage.stage_key} completed with confidential runtime controls",
             )
-            stage.confidential_audit_hash = sha256_hex(f"confidential:{stage.stage_key}:{execution.id}")
+            stage.confidential_audit_hash = sha256_hex(
+                f"confidential:{stage.stage_key}:{execution.id}"
+            )
 
         checkpoint = await self.checkpoints.create_checkpoint(
             db,
@@ -446,7 +505,9 @@ class DeterministicWorkflowOrchestrator:
             execution.determinism_status = "verified"
             provenance = await self.provenance.build_execution_provenance(db, execution)
             execution.provenance_hash = provenance["provenance_hash"]
-            receipt = await self.receipts.issue_execution_receipt(db, execution, provenance_summary=provenance)
+            receipt = await self.receipts.issue_execution_receipt(
+                db, execution, provenance_summary=provenance
+            )
             stage.receipt_hash = receipt.receipt_hash
         return stage
 
@@ -456,7 +517,9 @@ class DeterministicWorkflowOrchestrator:
             raise ValueError("workflow_execution_not_found")
         execution.status = "paused"
         execution.paused_at = utc_now()
-        execution.resume_token_hash = sha256_hex(f"{execution.id}:{execution.last_checkpoint_hash}:{execution.paused_at.isoformat()}")
+        execution.resume_token_hash = sha256_hex(
+            f"{execution.id}:{execution.last_checkpoint_hash}:{execution.paused_at.isoformat()}"
+        )
         return execution
 
     async def resume_execution(
@@ -469,7 +532,11 @@ class DeterministicWorkflowOrchestrator:
         execution = await db.get(CommercialWorkflowExecution, execution_id)
         if execution is None:
             raise ValueError("workflow_execution_not_found")
-        if execution.resume_token_hash and resume_token and execution.resume_token_hash != sha256_hex(resume_token):
+        if (
+            execution.resume_token_hash
+            and resume_token
+            and execution.resume_token_hash != sha256_hex(resume_token)
+        ):
             raise ValueError("resume_token_invalid")
         execution.status = "running"
         execution.paused_at = None
@@ -481,10 +548,16 @@ class DeterministicWorkflowOrchestrator:
             raise ValueError("workflow_execution_not_found")
         provenance = await self.provenance.build_execution_provenance(db, execution)
         execution.provenance_hash = provenance["provenance_hash"]
-        return await self.receipts.issue_execution_receipt(db, execution, provenance_summary=provenance)
+        return await self.receipts.issue_execution_receipt(
+            db, execution, provenance_summary=provenance
+        )
 
-    async def initiate_replay(self, db: AsyncSession, original_execution_id) -> CommercialWorkflowReplay:
-        replay = CommercialWorkflowReplay(original_execution_id=original_execution_id, status="pending")
+    async def initiate_replay(
+        self, db: AsyncSession, original_execution_id
+    ) -> CommercialWorkflowReplay:
+        replay = CommercialWorkflowReplay(
+            original_execution_id=original_execution_id, status="pending"
+        )
         db.add(replay)
         await db.flush()
         return replay
@@ -502,7 +575,11 @@ class DeterministicWorkflowOrchestrator:
         original_execution = await db.get(CommercialWorkflowExecution, original_execution_id)
         if original_execution is None:
             raise ValueError("workflow_execution_not_found")
-        replay_execution = await db.get(CommercialWorkflowExecution, replay_execution_id) if replay_execution_id else None
+        replay_execution = (
+            await db.get(CommercialWorkflowExecution, replay_execution_id)
+            if replay_execution_id
+            else None
+        )
         return await self.replay_sessions.create_session(
             db,
             original_execution=original_execution,
@@ -518,13 +595,17 @@ class DeterministicWorkflowOrchestrator:
             raise ValueError("workflow_replay_session_not_found")
         return await self.replay_sessions.complete_session(db, session_row=row)
 
-    async def verify_replay(self, db: AsyncSession, replay_id) -> CommercialWorkflowDeterminismReport:
+    async def verify_replay(
+        self, db: AsyncSession, replay_id
+    ) -> CommercialWorkflowDeterminismReport:
         replay = await db.get(CommercialWorkflowReplay, replay_id)
         if replay is None:
             raise ValueError("workflow_replay_not_found")
         if replay.replay_execution_id is None:
             raise ValueError("workflow_replay_execution_missing")
-        drift = await self.provenance.detect_pipeline_drift(db, replay.original_execution_id, replay.replay_execution_id)
+        drift = await self.provenance.detect_pipeline_drift(
+            db, replay.original_execution_id, replay.replay_execution_id
+        )
         score = 1.0 if not drift["drift_detected"] else 0.0
         replay.status = "verified" if not drift["drift_detected"] else "drift_detected"
         if drift["mismatches"]:
@@ -534,17 +615,33 @@ class DeterministicWorkflowOrchestrator:
             execution_id=replay.original_execution_id,
             determinism_score=score,
             drift_detected=drift["drift_detected"],
-            drift_summary="Perfect determinism verified" if not drift["drift_detected"] else canonical_json(drift),
+            drift_summary="Perfect determinism verified"
+            if not drift["drift_detected"]
+            else canonical_json(drift),
         )
         db.add(report)
         return report
 
     async def summarize(self, db: AsyncSession) -> dict[str, Any]:
-        definition_count = (await db.execute(select(func.count()).select_from(CommercialWorkflowDefinition))).scalar_one()
-        execution_count = (await db.execute(select(func.count()).select_from(CommercialWorkflowExecution))).scalar_one()
-        stage_count = (await db.execute(select(func.count()).select_from(CommercialWorkflowStage))).scalar_one()
-        receipt_count = (await db.execute(select(func.count()).select_from(CommercialWorkflowStage).where(CommercialWorkflowStage.receipt_hash.is_not(None)))).scalar_one()
-        replay_count = (await db.execute(select(func.count()).select_from(CommercialWorkflowReplay))).scalar_one()
+        definition_count = (
+            await db.execute(select(func.count()).select_from(CommercialWorkflowDefinition))
+        ).scalar_one()
+        execution_count = (
+            await db.execute(select(func.count()).select_from(CommercialWorkflowExecution))
+        ).scalar_one()
+        stage_count = (
+            await db.execute(select(func.count()).select_from(CommercialWorkflowStage))
+        ).scalar_one()
+        receipt_count = (
+            await db.execute(
+                select(func.count())
+                .select_from(CommercialWorkflowStage)
+                .where(CommercialWorkflowStage.receipt_hash.is_not(None))
+            )
+        ).scalar_one()
+        replay_count = (
+            await db.execute(select(func.count()).select_from(CommercialWorkflowReplay))
+        ).scalar_one()
         return {
             "enabled": self.settings.commercial_workflow_determinism_enabled,
             "offline_first": True,

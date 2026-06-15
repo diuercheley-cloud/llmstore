@@ -18,7 +18,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _canonical_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+    )
 
 
 def _hash_payload(payload: Any) -> str:
@@ -62,16 +64,14 @@ def _normalize_chain(chain_of_custody: dict[str, Any] | None) -> dict[str, Any]:
 def _requires_encryption(classification: str | None) -> bool:
     settings = get_settings()
     return bool(
-        settings.commercial_airgap_require_encryption
-        or classification == "sovereign_restricted"
+        settings.commercial_airgap_require_encryption or classification == "sovereign_restricted"
     )
 
 
 def _requires_signature(classification: str | None) -> bool:
     settings = get_settings()
     return bool(
-        settings.commercial_airgap_require_signature
-        or classification == "sovereign_restricted"
+        settings.commercial_airgap_require_signature or classification == "sovereign_restricted"
     )
 
 
@@ -246,7 +246,11 @@ async def export_airgap_package(
     package.signature = signature
     package.status = "exported"
     await db.flush()
-    return {"package_id": str(package.id), "files": files, "dry_run": get_settings().commercial_airgap_sync_mode == "dry_run"}
+    return {
+        "package_id": str(package.id),
+        "files": files,
+        "dry_run": get_settings().commercial_airgap_sync_mode == "dry_run",
+    }
 
 
 async def import_airgap_package(
@@ -254,9 +258,15 @@ async def import_airgap_package(
     package_bundle: dict[str, Any],
 ) -> CommercialAirgapSyncPackage:
     verification = await verify_airgap_manifest(db, package_bundle)
-    manifest = (package_bundle.get("files") or {}).get("manifest.json") or package_bundle.get("manifest") or {}
+    manifest = (
+        (package_bundle.get("files") or {}).get("manifest.json")
+        or package_bundle.get("manifest")
+        or {}
+    )
     package_id = manifest.get("package_id")
-    package = await db.get(CommercialAirgapSyncPackage, uuid.UUID(package_id)) if package_id else None
+    package = (
+        await db.get(CommercialAirgapSyncPackage, uuid.UUID(package_id)) if package_id else None
+    )
     if package is None:
         package = CommercialAirgapSyncPackage(
             package_type=manifest.get("package_type", "policy_bundle"),
@@ -265,10 +275,14 @@ async def import_airgap_package(
             package_version=manifest.get("package_version", "1.0"),
             manifest_hash=manifest.get("manifest_hash", ""),
             signature=(package_bundle.get("files") or {}).get("signature.txt", ""),
-            encryption_key_id=uuid.UUID(manifest["encryption_key_id"]) if manifest.get("encryption_key_id") else None,
+            encryption_key_id=uuid.UUID(manifest["encryption_key_id"])
+            if manifest.get("encryption_key_id")
+            else None,
             status="created",
             file_ref=f"airgap://imported/{manifest.get('manifest_hash', '')[:16]}",
-            chain_of_custody_json=_normalize_chain((package_bundle.get("files") or {}).get("chain_of_custody.json")),
+            chain_of_custody_json=_normalize_chain(
+                (package_bundle.get("files") or {}).get("chain_of_custody.json")
+            ),
         )
         db.add(package)
         await db.flush()

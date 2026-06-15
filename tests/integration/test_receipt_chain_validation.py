@@ -104,11 +104,16 @@ async def test_chain_ledger_events(session, settings):
     await validate_receipt_chain(session, receipt)
 
     events = (
-        await session.execute(
-            select(CommercialInferenceReceiptLedgerEvent)
-            .where(CommercialInferenceReceiptLedgerEvent.receipt_id == receipt.id)
+        (
+            await session.execute(
+                select(CommercialInferenceReceiptLedgerEvent).where(
+                    CommercialInferenceReceiptLedgerEvent.receipt_id == receipt.id
+                )
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     event_types = [e.event_type for e in events]
     assert "receipt_created" in event_types
     assert "receipt_chain_validated" in event_types

@@ -52,6 +52,7 @@ def resolve_source_ip(request: Request) -> str:
 
 async def request_context_middleware(request: Request, call_next):
     from app.services.backup.restore_lock_service import MaintenanceMode
+
     if MaintenanceMode.is_active():
         path = request.url.path
         is_allowed = (
@@ -67,7 +68,7 @@ async def request_context_middleware(request: Request, call_next):
             if is_write or is_sensitive:
                 return JSONResponse(
                     {"detail": "Service Unavailable: system is undergoing maintenance restore"},
-                    status_code=503
+                    status_code=503,
                 )
 
     settings = get_settings()
@@ -87,9 +88,9 @@ async def request_context_middleware(request: Request, call_next):
     # SaaS Protection: Block dangerous endpoints
     if settings.deployment_mode == "saas":
         blocked_paths = {
-            "/admin-lab", 
-            "/admin/tests", 
-            "/admin/readiness", 
+            "/admin-lab",
+            "/admin/tests",
+            "/admin/readiness",
             "/admin/security",
             "/admin/status/deep",
         }
@@ -117,7 +118,11 @@ async def request_context_middleware(request: Request, call_next):
     # Enforce Global Rate Limit (all deployment modes)
     try:
         redis = await get_redis()
-        limit = settings.rate_limit_global_per_minute if hasattr(settings, 'rate_limit_global_per_minute') else 1000
+        limit = (
+            settings.rate_limit_global_per_minute
+            if hasattr(settings, "rate_limit_global_per_minute")
+            else 1000
+        )
         await enforce_global_rate_limit(redis, limit_per_minute=limit)
     except RateLimitExceeded as exc:
         return JSONResponse({"detail": str(exc)}, status_code=429)
@@ -127,7 +132,7 @@ async def request_context_middleware(request: Request, call_next):
     # Enforce Per-Tenant Rate Limit
     try:
         redis = await get_redis()
-        tenant_rpm = getattr(settings, 'rate_limit_tenant_per_minute', 500)
+        tenant_rpm = getattr(settings, "rate_limit_tenant_per_minute", 500)
         await enforce_tenant_rate_limit(redis, tenant_id, limit_per_minute=tenant_rpm)
     except RateLimitExceeded as exc:
         return JSONResponse({"detail": str(exc)}, status_code=429)
@@ -141,7 +146,7 @@ async def request_context_middleware(request: Request, call_next):
     set_correlation_id(correlation_id)
     set_source_ip(source_ip)
     set_tenant_id(tenant_id)
-    
+
     start_time = time.perf_counter()
     try:
         response = await call_next(request)
@@ -171,6 +176,7 @@ async def request_context_middleware(request: Request, call_next):
 
 _api_surface_cache = None
 
+
 def _get_api_surface_map():
     global _api_surface_cache
     if _api_surface_cache is not None:
@@ -178,11 +184,11 @@ def _get_api_surface_map():
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.abspath(os.path.join(current_dir, "../../config/api-surface.yaml"))
-    
+
     mapping = {}
     if os.path.exists(config_path):
         try:
-            with open(config_path, "r", encoding="utf-8") as f:
+            with open(config_path, encoding="utf-8") as f:
                 data = yaml.safe_load(f) or []
                 for entry in data:
                     key = (entry.get("path") or entry.get("endpoint"), entry.get("method"))
@@ -191,7 +197,7 @@ def _get_api_surface_map():
             logger.error(f"Error loading api-surface.yaml: {e}")
     else:
         logger.warning(f"api-surface.yaml not found at {config_path}")
-        
+
     _api_surface_cache = mapping
     return mapping
 
@@ -199,7 +205,7 @@ def _get_api_surface_map():
 async def deprecation_middleware(request: Request, call_next):
     matched_route = None
     scope = request.scope
-    
+
     # Try to match request to registered FastAPI routes
     for route in request.app.routes:
         try:
@@ -226,7 +232,7 @@ async def deprecation_middleware(request: Request, call_next):
                 sunset_date = "2026-12-31"
 
     response = await call_next(request)
-    
+
     response.headers["X-API-Surface-Status"] = status
     if status == "deprecated":
         response.headers["X-Deprecated-Endpoint"] = "true"
@@ -236,7 +242,7 @@ async def deprecation_middleware(request: Request, call_next):
             response.headers["X-Sunset-Date"] = str(sunset_date)
             response.headers["Sunset"] = str(sunset_date)
         logger.warning(f"Deprecated endpoint accessed: {request.url.path}")
-        
+
     # Inject Deprecation header for all legacy admin agent endpoints
     path = request.url.path
     if path == "/agents" or path.startswith("/agents/"):

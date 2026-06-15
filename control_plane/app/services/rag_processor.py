@@ -8,9 +8,9 @@ from app.core.time import utc_now
 from app.models.billing.billing_plan import BillingPlan
 from app.models.core.client import Client
 from app.models.rag.rag_document import RAGDocument
-from app.storage import RAGChunkRecord, resolve_storage_backend
 from app.services.embeddings import get_embedding_service
 from app.services.rag_usage import get_rag_usage_and_limits, record_rag_event
+from app.storage import RAGChunkRecord, resolve_storage_backend
 from app.utils.token_estimator import estimate_tokens_from_text
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sqlalchemy import select
@@ -19,6 +19,7 @@ from sqlalchemy.orm import selectinload
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
+
 
 async def process_rag_document(session: AsyncSession, document_id: uuid.UUID):
     backend = resolve_storage_backend(session)
@@ -47,12 +48,16 @@ async def process_rag_document(session: AsyncSession, document_id: uuid.UUID):
         # 1. Extract text
         text_by_page = []
         file_ext = doc.original_filename.lower().split(".")[-1]
-        
+
         if file_ext == "pdf":
             with fitz.open(doc.storage_path) as pdf:
                 doc.page_count = len(pdf)
-                
-                if limits["max_pages_per_month"] is not None and (usage["pages_processed_month"] + doc.page_count) > limits["max_pages_per_month"]:
+
+                if (
+                    limits["max_pages_per_month"] is not None
+                    and (usage["pages_processed_month"] + doc.page_count)
+                    > limits["max_pages_per_month"]
+                ):
                     doc.status = "rejected_limit"
                     doc.error_message = f"Monthly page limit exceeded. Plan allows {limits['max_pages_per_month']} pages."
                     await session.commit()
@@ -64,13 +69,16 @@ async def process_rag_document(session: AsyncSession, document_id: uuid.UUID):
                         text_by_page.append((page_num, text))
         elif file_ext in ["txt", "md"]:
             doc.page_count = 1
-            if limits["max_pages_per_month"] is not None and (usage["pages_processed_month"] + 1) > limits["max_pages_per_month"]:
+            if (
+                limits["max_pages_per_month"] is not None
+                and (usage["pages_processed_month"] + 1) > limits["max_pages_per_month"]
+            ):
                 doc.status = "rejected_limit"
                 doc.error_message = f"Monthly page limit exceeded. Plan allows {limits['max_pages_per_month']} pages."
                 await session.commit()
                 return
-                
-            with open(doc.storage_path, "r", encoding="utf-8") as f:
+
+            with open(doc.storage_path, encoding="utf-8") as f:
                 text = f.read().strip()
                 if text:
                     text_by_page.append((1, text))
@@ -91,10 +99,12 @@ async def process_rag_document(session: AsyncSession, document_id: uuid.UUID):
         for page_num, text in text_by_page:
             page_chunks = text_splitter.split_text(text)
             for i, chunk_text in enumerate(page_chunks):
-                chunks_to_process.append({
-                    "page_number": page_num,
-                    "content": chunk_text,
-                })
+                chunks_to_process.append(
+                    {
+                        "page_number": page_num,
+                        "content": chunk_text,
+                    }
+                )
 
         # 3. Generate embeddings
         embedding_service = get_embedding_service()
@@ -107,7 +117,9 @@ async def process_rag_document(session: AsyncSession, document_id: uuid.UUID):
         # Delete existing chunks if reprocessing
         existing_chunk_ids = await backend.document_store.list_rag_chunk_ids(document_id)
         if existing_chunk_ids:
-            await store.delete(collection_name="rag_chunks", ids=[str(cid) for cid in existing_chunk_ids])
+            await store.delete(
+                collection_name="rag_chunks", ids=[str(cid) for cid in existing_chunk_ids]
+            )
         chunk_records: list[RAGChunkRecord] = []
         for i, (chunk_data, embedding) in enumerate(zip(chunks_to_process, embeddings)):
             chunk_id = uuid.uuid4()
@@ -119,8 +131,8 @@ async def process_rag_document(session: AsyncSession, document_id: uuid.UUID):
                 metadata={
                     "client_id": str(doc.client_id),
                     "document_id": str(doc.id),
-                    "content": chunk_data["content"]
-                }
+                    "content": chunk_data["content"],
+                },
             )
 
             chunk_records.append(
@@ -143,7 +155,9 @@ async def process_rag_document(session: AsyncSession, document_id: uuid.UUID):
         doc.processed_at = utc_now()
         doc.error_message = None
 
-        await record_rag_event(session, doc.client_id, "pages_processed", quantity=doc.page_count, document_id=doc.id)
+        await record_rag_event(
+            session, doc.client_id, "pages_processed", quantity=doc.page_count, document_id=doc.id
+        )
 
         await session.commit()
         logger.info(f"Document {document_id} processed successfully with {doc.chunk_count} chunks")

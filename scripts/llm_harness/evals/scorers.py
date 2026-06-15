@@ -1,4 +1,3 @@
-
 from .schema import CaseScore, EvalCase, EvalResult, EvalSuite
 
 
@@ -40,6 +39,7 @@ def score_case(
 
     # Run plugin custom scorers
     from ..plugins import plugin_registry
+
     for name, scorer_fn in plugin_registry.list_scorers().items():
         try:
             score_ok = scorer_fn(case, harness_result)
@@ -116,7 +116,6 @@ def _check_expected_files(harness_result, expected_files: dict[str, str]) -> dic
 
 
 class Scorer:
-
     @staticmethod
     def aggregate(suite: EvalSuite, case_scores: list[CaseScore]) -> EvalResult:
         total = len(case_scores)

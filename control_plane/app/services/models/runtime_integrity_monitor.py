@@ -11,7 +11,9 @@ from typing import Any
 from app.core.config import Settings, get_settings
 from app.core.time import utc_now
 from app.db.session import SessionLocal
-from app.models.commercial.commercial_governance_federation import CommercialGovernanceFederationPeer
+from app.models.commercial.commercial_governance_federation import (
+    CommercialGovernanceFederationPeer,
+)
 from app.models.commercial.commercial_model_supply_chain import (
     CommercialModelIntegrityEvent,
     CommercialModelIntegrityScan,
@@ -52,7 +54,9 @@ ROUTING_LOADS = (
 
 
 def _canonical_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+    )
 
 
 def _immutable_hash(payload: dict[str, Any]) -> str:
@@ -74,7 +78,9 @@ def _sanitize_text(value: str | None, *, limit: int = 255) -> str | None:
     return str(sanitized).replace("\n", " ").replace("\r", " ")[:limit]
 
 
-def compare_checksum(expected_checksum: str | None, observed_checksum: str | None) -> dict[str, Any]:
+def compare_checksum(
+    expected_checksum: str | None, observed_checksum: str | None
+) -> dict[str, Any]:
     if not expected_checksum:
         return {"matched": observed_checksum is None, "reason": "missing_expected_checksum"}
     if expected_checksum == "manifest-only":
@@ -126,7 +132,9 @@ async def _active_models(db: AsyncSession) -> list[ModelRegistry]:
     return rows.scalars().all()
 
 
-async def _latest_entry(db: AsyncSession, model: ModelRegistry) -> CommercialSignedModelRegistryEntry | None:
+async def _latest_entry(
+    db: AsyncSession, model: ModelRegistry
+) -> CommercialSignedModelRegistryEntry | None:
     rows = await db.execute(
         select(CommercialSignedModelRegistryEntry)
         .where(
@@ -135,12 +143,17 @@ async def _latest_entry(db: AsyncSession, model: ModelRegistry) -> CommercialSig
                 CommercialSignedModelRegistryEntry.model_alias == model.model_alias,
             )
         )
-        .order_by(desc(CommercialSignedModelRegistryEntry.updated_at), desc(CommercialSignedModelRegistryEntry.created_at))
+        .order_by(
+            desc(CommercialSignedModelRegistryEntry.updated_at),
+            desc(CommercialSignedModelRegistryEntry.created_at),
+        )
     )
     return rows.scalars().first()
 
 
-async def _recent_failures(db: AsyncSession, entry: CommercialSignedModelRegistryEntry | None, model_name: str) -> int:
+async def _recent_failures(
+    db: AsyncSession, entry: CommercialSignedModelRegistryEntry | None, model_name: str
+) -> int:
     stmt = (
         select(CommercialModelIntegrityScan)
         .where(CommercialModelIntegrityScan.model_name == model_name)
@@ -150,10 +163,16 @@ async def _recent_failures(db: AsyncSession, entry: CommercialSignedModelRegistr
     if entry is not None:
         stmt = stmt.where(CommercialModelIntegrityScan.registry_entry_id == entry.id)
     rows = (await db.execute(stmt)).scalars().all()
-    return sum(1 for row in rows if row.integrity_status in {"error", "missing", "drift_detected", "quarantined"})
+    return sum(
+        1
+        for row in rows
+        if row.integrity_status in {"error", "missing", "drift_detected", "quarantined"}
+    )
 
 
-async def _has_active_revocation(db: AsyncSession, entry: CommercialSignedModelRegistryEntry | None, model_name: str) -> bool:
+async def _has_active_revocation(
+    db: AsyncSession, entry: CommercialSignedModelRegistryEntry | None, model_name: str
+) -> bool:
     stmt = select(CommercialModelRevocationRecord).where(
         CommercialModelRevocationRecord.model_name == model_name,
         CommercialModelRevocationRecord.revocation_type.in_(["checksum_mismatch", "crl"]),
@@ -252,7 +271,11 @@ async def detect_runtime_drift(
     reasons: list[str] = []
     if scan.integrity_status == "missing":
         reasons.append("missing_model_file")
-    if scan.expected_checksum and scan.observed_checksum and scan.expected_checksum != scan.observed_checksum:
+    if (
+        scan.expected_checksum
+        and scan.observed_checksum
+        and scan.expected_checksum != scan.observed_checksum
+    ):
         reasons.append("checksum_mismatch")
     if attestation.expected_manifest_hash and attestation.observed_manifest_hash:
         if attestation.expected_manifest_hash != attestation.observed_manifest_hash:
@@ -337,7 +360,11 @@ async def scan_model_file(
     entry = entry or await _latest_entry(db, model)
     model_name = model.model_id
     expected_checksum = entry.checksum_sha256 if entry else None
-    runtime_path = Path(model.model_file) if Path(model.model_file).is_absolute() else Path(cfg.models_dir) / model.model_file
+    runtime_path = (
+        Path(model.model_file)
+        if Path(model.model_file).is_absolute()
+        else Path(cfg.models_dir) / model.model_file
+    )
     metadata_json = {
         "model_alias": model.model_alias,
         "backend_name": model.inference_backend.name if model.inference_backend else None,
@@ -394,7 +421,9 @@ async def scan_model_file(
     if not runtime_path.exists():
         scan.integrity_status = "missing"
         scan.scan_duration_ms = int((perf_counter() - start) * 1000)
-        scan.metadata_json = sanitize_report_payload(metadata_json | {"missing_file": runtime_path.name})
+        scan.metadata_json = sanitize_report_payload(
+            metadata_json | {"missing_file": runtime_path.name}
+        )
         await _emit_integrity_event(
             db,
             model_name=model_name,
@@ -515,31 +544,49 @@ async def scan_registered_models(
 
 async def summarize_integrity_status(db: AsyncSession, *, client_id=None) -> dict[str, Any]:
     latest_scans = (
-        await db.execute(
-            select(CommercialModelIntegrityScan)
-            .order_by(desc(CommercialModelIntegrityScan.created_at))
-            .limit(100)
+        (
+            await db.execute(
+                select(CommercialModelIntegrityScan)
+                .order_by(desc(CommercialModelIntegrityScan.created_at))
+                .limit(100)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     latest_events = (
-        await db.execute(
-            select(CommercialModelIntegrityEvent)
-            .order_by(desc(CommercialModelIntegrityEvent.created_at))
-            .limit(100)
+        (
+            await db.execute(
+                select(CommercialModelIntegrityEvent)
+                .order_by(desc(CommercialModelIntegrityEvent.created_at))
+                .limit(100)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     latest_attestations = (
-        await db.execute(
-            select(CommercialRuntimeModelAttestation)
-            .order_by(desc(CommercialRuntimeModelAttestation.attested_at))
-            .limit(100)
+        (
+            await db.execute(
+                select(CommercialRuntimeModelAttestation)
+                .order_by(desc(CommercialRuntimeModelAttestation.attested_at))
+                .limit(100)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     peer_rows = (
-        await db.execute(
-            select(CommercialGovernanceFederationPeer).order_by(desc(CommercialGovernanceFederationPeer.updated_at))
+        (
+            await db.execute(
+                select(CommercialGovernanceFederationPeer).order_by(
+                    desc(CommercialGovernanceFederationPeer.updated_at)
+                )
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     status_counts: dict[str, int] = {}
     for row in latest_scans:
@@ -547,12 +594,26 @@ async def summarize_integrity_status(db: AsyncSession, *, client_id=None) -> dic
 
     attestation_counts: dict[str, int] = {}
     for row in latest_attestations:
-        attestation_counts[row.attestation_status] = attestation_counts.get(row.attestation_status, 0) + 1
+        attestation_counts[row.attestation_status] = (
+            attestation_counts.get(row.attestation_status, 0) + 1
+        )
 
-    quarantined_models = sorted({row.model_name for row in latest_scans if row.integrity_status == "quarantined"})
-    missing_models = sorted({row.model_name for row in latest_scans if row.integrity_status == "missing"})
-    alias_drift_models = sorted({row.model_name for row in latest_events if row.event_type == "alias_drift_detected"})
-    drift_models = sorted({row.model_name for row in latest_events if row.event_type == "model_integrity_drift_detected"})
+    quarantined_models = sorted(
+        {row.model_name for row in latest_scans if row.integrity_status == "quarantined"}
+    )
+    missing_models = sorted(
+        {row.model_name for row in latest_scans if row.integrity_status == "missing"}
+    )
+    alias_drift_models = sorted(
+        {row.model_name for row in latest_events if row.event_type == "alias_drift_detected"}
+    )
+    drift_models = sorted(
+        {
+            row.model_name
+            for row in latest_events
+            if row.event_type == "model_integrity_drift_detected"
+        }
+    )
 
     items = []
     for row in latest_scans[:20]:
@@ -560,7 +621,9 @@ async def summarize_integrity_status(db: AsyncSession, *, client_id=None) -> dic
             sanitize_report_payload(
                 {
                     "id": str(row.id),
-                    "registry_entry_id": str(row.registry_entry_id) if row.registry_entry_id else None,
+                    "registry_entry_id": str(row.registry_entry_id)
+                    if row.registry_entry_id
+                    else None,
                     "model_name": row.model_name,
                     "scan_type": row.scan_type,
                     "expected_checksum": _mask_checksum(row.expected_checksum),
@@ -615,7 +678,9 @@ async def summarize_integrity_status(db: AsyncSession, *, client_id=None) -> dic
             "alias_drift_models": alias_drift_models,
             "latest_scans": items,
             "integrity_timeline": events,
-            "latest_attestations": [serialize_runtime_attestation(row) for row in latest_attestations[:20]],
+            "latest_attestations": [
+                serialize_runtime_attestation(row) for row in latest_attestations[:20]
+            ],
             "federated_integrity": federated_integrity,
             "client_scope_applied": bool(client_id),
         }
@@ -659,8 +724,12 @@ async def runtime_integrity_monitor_loop(stop_event: asyncio.Event) -> None:
                     )
                 await session.commit()
         except Exception as exc:
-            logger.exception("runtime integrity monitor failed", extra={"extra_data": {"error": str(exc)}})
+            logger.exception(
+                "runtime integrity monitor failed", extra={"extra_data": {"error": str(exc)}}
+            )
         try:
-            await asyncio.wait_for(stop_event.wait(), timeout=cfg.commercial_model_integrity_scan_interval_seconds)
-        except asyncio.TimeoutError:
+            await asyncio.wait_for(
+                stop_event.wait(), timeout=cfg.commercial_model_integrity_scan_interval_seconds
+            )
+        except TimeoutError:
             continue

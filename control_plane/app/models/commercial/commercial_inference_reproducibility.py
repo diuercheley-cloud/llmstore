@@ -42,14 +42,18 @@ class CommercialInferenceReproducibilityRecord(Base):
     runtime_config_hash: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
 
     replay_supported: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    replay_status: Mapped[str] = mapped_column(String(32), nullable=False, default="original", index=True)
+    replay_status: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="original", index=True
+    )
     replay_similarity: Mapped[float | None] = mapped_column(Float, nullable=True)
     replay_distance: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     immutable_hash: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
     replayed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
@@ -70,7 +74,9 @@ class CommercialInferenceReplayEvent(Base):
     replay_output_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
     replay_runtime_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
 
 class CommercialInferenceRuntimeSnapshot(Base):
@@ -85,4 +91,6 @@ class CommercialInferenceRuntimeSnapshot(Base):
     runtime_config_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     tokenizer_info_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     snapshot_hash: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )

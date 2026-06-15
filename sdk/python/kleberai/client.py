@@ -84,7 +84,9 @@ class Client:
         payload = {"input": input, "model": model}
         return self._request("POST", "/v1/embeddings", json=payload)
 
-    def responses(self, input: Union[str, List[Dict[str, str]]], model: str = "default", **kwargs) -> Dict[str, Any]:
+    def responses(
+        self, input: Union[str, List[Dict[str, str]]], model: str = "default", **kwargs
+    ) -> Dict[str, Any]:
         if isinstance(input, str):
             input = [{"role": "user", "content": input}]
         payload = {"model": model, "input": input, **kwargs}

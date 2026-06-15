@@ -2,7 +2,9 @@ from typing import Any
 
 from app.models.operations.plugin_supply_chain import PluginSBOMPlaceholder
 from app.services.operations.plugin_supply_chain.hash_utils import compute_sbom_hash, sha256_hex
-from app.services.operations.plugin_supply_chain.sbom_service import PluginSBOMService, SBOMGenerationError
+from app.services.operations.plugin_supply_chain.sbom_service import (
+    PluginSBOMService,
+)
 
 
 class PluginSBOMPlaceholderService(PluginSBOMService):
@@ -16,6 +18,7 @@ class PluginSBOMPlaceholderService(PluginSBOMService):
         offline_verifiable: bool = True,
     ) -> PluginSBOMPlaceholder:
         from app.core.config import get_settings
+
         if get_settings().app_env == "production":
             raise RuntimeError("Placeholder SBOM is blocked in production mode.")
 
@@ -30,7 +33,9 @@ class PluginSBOMPlaceholderService(PluginSBOMService):
             "signature_only": True,
         }
         sbom_hash = compute_sbom_hash(logical_payload)
-        immutable_hash = sha256_hex({"kind": "plugin_supply_chain_sbom_immutable", "sbom_hash": sbom_hash})
+        immutable_hash = sha256_hex(
+            {"kind": "plugin_supply_chain_sbom_immutable", "sbom_hash": sbom_hash}
+        )
         placeholder = PluginSBOMPlaceholder(
             id=sha256_hex({"kind": "plugin_supply_chain_sbom_id", **logical_payload}),
             client_id=provenance_record.client_id,
@@ -48,6 +53,7 @@ class PluginSBOMPlaceholderService(PluginSBOMService):
 
     def validate_sbom_placeholder(self, placeholder: PluginSBOMPlaceholder) -> dict[str, Any]:
         from app.core.config import get_settings
+
         if get_settings().app_env == "production":
             raise RuntimeError("Placeholder SBOM is blocked in production mode.")
 
@@ -90,5 +96,3 @@ class PluginSBOMPlaceholderService(PluginSBOMService):
         if placeholder.sbom_format == "cyclonedx_json":
             return super().explain_sbom(placeholder)
         return self.explain_sbom_placeholder(placeholder)
-
-

@@ -1,11 +1,11 @@
 # Owner: agent-platform
 import asyncio
 import logging
-from typing import Dict, List
 
 from fastapi import WebSocket
 
 logger = logging.getLogger("websocket_manager")
+
 
 class ActiveConnection:
     def __init__(self, websocket: WebSocket):
@@ -41,7 +41,7 @@ class ActiveConnection:
         try:
             # Backpressure: non-blocking wait up to 2 seconds if buffer is full
             await asyncio.wait_for(self.queue.put(event), timeout=2.0)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning("Slow client detected: dropping message to enforce backpressure.")
         except Exception as e:
             logger.error(f"Failed to queue websocket event: {e}")
@@ -58,7 +58,7 @@ class ActiveConnection:
 
 class WebSocketManager:
     def __init__(self):
-        self._active_connections: Dict[str, List[ActiveConnection]] = {}
+        self._active_connections: dict[str, list[ActiveConnection]] = {}
 
     def connect(self, run_id: str, websocket: WebSocket) -> ActiveConnection:
         conn = ActiveConnection(websocket)
@@ -80,7 +80,9 @@ class WebSocketManager:
         connections = self._active_connections.get(run_id, [])
         if not connections:
             return
-        await asyncio.gather(*(conn.send_event(event) for conn in connections), return_exceptions=True)
+        await asyncio.gather(
+            *(conn.send_event(event) for conn in connections), return_exceptions=True
+        )
 
     async def broadcast_to_session(self, session_id: str, event: dict):
         """Broadcast an event to all WebSocket connections for a session by
@@ -90,6 +92,7 @@ class WebSocketManager:
             broadcast_tasks.append(self.broadcast(channel_id, event))
         if broadcast_tasks:
             await asyncio.gather(*broadcast_tasks, return_exceptions=True)
+
 
 # Global singleton manager
 ws_manager = WebSocketManager()

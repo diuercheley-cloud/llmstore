@@ -17,8 +17,12 @@ class CommercialRoutingEventIngest(Base):
     correlation_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     request_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     node_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
-    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now(), index=True)
-    processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    received_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
+    )
+    processed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending", index=True)
     dedupe_key: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     error_message: Mapped[str | None] = mapped_column(String(500), nullable=True)

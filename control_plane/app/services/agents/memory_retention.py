@@ -2,8 +2,8 @@
 Owner: agent-platform
 Status: beta
 """
+
 import uuid
-from typing import Optional
 
 from app.core.time import utc_now
 from app.models.agents.agents import AgentMemoryDeleteRequest, AgentMemoryItem
@@ -30,7 +30,7 @@ class MemoryRetentionService:
         stmt = select(AgentMemoryDeleteRequest).where(AgentMemoryDeleteRequest.status == "pending")
         res = await self.db.execute(stmt)
         requests = res.scalars().all()
-        
+
         total_deleted = 0
         for req in requests:
             # find items to delete
@@ -39,25 +39,25 @@ class MemoryRetentionService:
                 item_stmt = item_stmt.where(AgentMemoryItem.agent_id == req.agent_id)
             if req.memory_type:
                 item_stmt = item_stmt.where(AgentMemoryItem.memory_type == req.memory_type)
-                
+
             items_res = await self.db.execute(item_stmt)
             items = items_res.scalars().all()
             for i in items:
                 await self.db.delete(i)
                 total_deleted += 1
-                
+
             req.status = "completed"
             req.items_deleted = len(items)
             req.completed_at = utc_now()
-            
+
         await self.db.commit()
         return {"requests_processed": len(requests), "items_deleted": total_deleted}
 
-    async def create_delete_request(self, tenant_id: str, agent_id: Optional[uuid.UUID] = None, memory_type: Optional[str] = None) -> AgentMemoryDeleteRequest:
+    async def create_delete_request(
+        self, tenant_id: str, agent_id: uuid.UUID | None = None, memory_type: str | None = None
+    ) -> AgentMemoryDeleteRequest:
         req = AgentMemoryDeleteRequest(
-            tenant_id=tenant_id,
-            agent_id=agent_id,
-            memory_type=memory_type
+            tenant_id=tenant_id, agent_id=agent_id, memory_type=memory_type
         )
         self.db.add(req)
         await self.db.commit()

@@ -31,7 +31,13 @@ class ArtifactVerificationService:
             artifact_hash=artifact_hash,
             verification_status=verification_status,
             replay_verified=verification_status == "passed",
-            immutable_hash=sha256_hex({"kind": "artifact_verification_record_immutable", "artifact_hash": artifact_hash, "status": verification_status}),
+            immutable_hash=sha256_hex(
+                {
+                    "kind": "artifact_verification_record_immutable",
+                    "artifact_hash": artifact_hash,
+                    "status": verification_status,
+                }
+            ),
         )
         record._logical_payload = logical_payload
         record._expected_hash = expected_hash
@@ -46,7 +52,9 @@ class ArtifactVerificationService:
             "right_hash": right_hash,
         }
 
-    def validate_artifact_replay(self, record: ArtifactVerificationRecord) -> ArtifactReplayVerification:
+    def validate_artifact_replay(
+        self, record: ArtifactVerificationRecord
+    ) -> ArtifactReplayVerification:
         logical_payload = getattr(record, "_logical_payload", None) or {
             "client_id": str(record.client_id),
             "build_manifest_id": record.build_manifest_id,
@@ -56,18 +64,34 @@ class ArtifactVerificationService:
         replay_hash = compute_replay_hash(logical_payload)
         replay_status = "passed" if record.verification_status == "passed" else "failed"
         replay = ArtifactReplayVerification(
-            id=sha256_hex({"kind": "artifact_replay_verification_id", "artifact_verification_id": record.id, "replay_hash": replay_hash}),
+            id=sha256_hex(
+                {
+                    "kind": "artifact_replay_verification_id",
+                    "artifact_verification_id": record.id,
+                    "replay_hash": replay_hash,
+                }
+            ),
             client_id=record.client_id,
             artifact_verification_id=record.id,
             replay_hash=replay_hash,
             replay_status=replay_status,
-            deterministic_summary="artifact replay verified deterministically" if replay_status == "passed" else "artifact replay mismatch detected",
-            immutable_hash=sha256_hex({"kind": "artifact_replay_verification_immutable", "artifact_verification_id": record.id, "replay_hash": replay_hash}),
+            deterministic_summary="artifact replay verified deterministically"
+            if replay_status == "passed"
+            else "artifact replay mismatch detected",
+            immutable_hash=sha256_hex(
+                {
+                    "kind": "artifact_replay_verification_immutable",
+                    "artifact_verification_id": record.id,
+                    "replay_hash": replay_hash,
+                }
+            ),
         )
         replay._logical_payload = logical_payload
         return replay
 
-    def explain_artifact_verification(self, record: ArtifactVerificationRecord, replay: ArtifactReplayVerification | None = None) -> dict[str, Any]:
+    def explain_artifact_verification(
+        self, record: ArtifactVerificationRecord, replay: ArtifactReplayVerification | None = None
+    ) -> dict[str, Any]:
         return {
             "artifact": f"{record.artifact_name}:{record.artifact_version}",
             "artifact_hash": record.artifact_hash,

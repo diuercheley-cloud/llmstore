@@ -164,7 +164,7 @@ fi
 
 # 3. Apply Migrations
 echo "--- Applying Database Migrations (Alembic) ---"
-if ! dc run --rm control-plane alembic upgrade head; then
+if ! dc run --rm control-plane alembic upgrade heads; then
   echo "[upgrade-release][error] Falha na migração do banco de dados (Alembic). Recomenda-se rollback imediato." >&2
   exit 1
 fi

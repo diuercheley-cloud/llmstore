@@ -14,6 +14,7 @@ settings.load_profile("ci")
 # Strategy for dictionary values
 value_strategy = st.none() | st.booleans() | st.integers() | st.floats() | st.text()
 
+
 @given(st.text())
 def test_sanitizer_redacts_simulated_secrets(text):
     """Sanitizer must always redact known secret formats inserted in random text."""
@@ -23,16 +24,24 @@ def test_sanitizer_redacts_simulated_secrets(text):
     assert aws_key not in sanitized
     assert "[REDACTED_AWS_KEY]" in sanitized
 
-@given(st.lists(st.text(min_size=1, max_size=10, alphabet="abcdefghijklmnopqrstuvwxyz"), min_size=1, max_size=3))
+
+@given(
+    st.lists(
+        st.text(min_size=1, max_size=10, alphabet="abcdefghijklmnopqrstuvwxyz"),
+        min_size=1,
+        max_size=3,
+    )
+)
 def test_policy_engine_blocks_path_traversal(parts):
     """PolicyEngine must block any file path trying to traversal outside workspace."""
     engine = PolicyEngine()
     path_suffix = "/".join(parts)
     traversal_path = f"../{path_suffix}"
-    
+
     decision = engine.evaluate_file_path(traversal_path)
     assert not decision.allowed
     assert "traversal" in decision.reason.lower() or "absolute" in decision.reason.lower()
+
 
 @given(st.dictionaries(st.text(), value_strategy))
 def test_config_loader_safety(d):
@@ -42,6 +51,7 @@ def test_config_loader_safety(d):
         HarnessConfig(**d)
     except (ValidationError, TypeError, ValueError):
         pass
+
 
 @given(st.dictionaries(st.text(), value_strategy))
 def test_schema_validation_rejects_malformed_actions(d):

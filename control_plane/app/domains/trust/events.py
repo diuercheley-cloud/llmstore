@@ -7,4 +7,3 @@ TRUST_DOMAIN_EVENTS = (
     "trust.replay.validated",
     "trust.snapshot.recorded",
 )
-

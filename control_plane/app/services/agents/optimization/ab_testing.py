@@ -1,7 +1,6 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import Dict, List, Tuple
 
 from app.models.agents.agent_optimization_tournament import (
     AgentOptimizationPairwiseResult,
@@ -14,15 +13,15 @@ logger = logging.getLogger(__name__)
 
 class ABTestingService:
     def __init__(self):
-        self._pairwise_cache: Dict[str, float] = {}
+        self._pairwise_cache: dict[str, float] = {}
 
     def compare_pairwise(
         self,
         candidate_a: AgentOptimizationTournamentCandidate,
         candidate_b: AgentOptimizationTournamentCandidate,
-        metrics_a: Dict,
-        metrics_b: Dict,
-    ) -> Tuple[uuid.UUID, float, float]:
+        metrics_a: dict,
+        metrics_b: dict,
+    ) -> tuple[uuid.UUID, float, float]:
         score_a = self._compute_pairwise_score(metrics_a)
         score_b = self._compute_pairwise_score(metrics_b)
 
@@ -33,7 +32,7 @@ class ABTestingService:
 
         return winner_id, score_a, score_b
 
-    def _compute_pairwise_score(self, metrics: Dict) -> float:
+    def _compute_pairwise_score(self, metrics: dict) -> float:
         score = 0.0
         score += metrics.get("success_rate", 0) * 10.0
         score -= metrics.get("latency_p50", 0) / 1000.0
@@ -47,9 +46,9 @@ class ABTestingService:
     def build_pairwise_results(
         self,
         tournament: AgentOptimizationTournament,
-        candidates: List[AgentOptimizationTournamentCandidate],
-        metrics_map: Dict[uuid.UUID, Dict],
-    ) -> List[AgentOptimizationPairwiseResult]:
+        candidates: list[AgentOptimizationTournamentCandidate],
+        metrics_map: dict[uuid.UUID, dict],
+    ) -> list[AgentOptimizationPairwiseResult]:
         results = []
         for i in range(len(candidates)):
             for j in range(i + 1, len(candidates)):

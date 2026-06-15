@@ -1,14 +1,15 @@
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
 class WorkspaceCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=128)
-    description: Optional[str] = None
-    tenant_id: Optional[str] = "default"
+    description: str | None = None
+    tenant_id: str | None = "default"
+
 
 class WorkspaceRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -16,21 +17,23 @@ class WorkspaceRead(BaseModel):
     id: uuid.UUID
     name: str
     tenant_id: str
-    description: Optional[str]
+    description: str | None
     owner_id: str
     created_at: datetime
     updated_at: datetime
+
 
 class ArtifactCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     artifact_type: str
     content: str
     creator_id: str
-    creator_type: str = "human" # human|agent
-    run_id: Optional[uuid.UUID] = None
-    step_id: Optional[uuid.UUID] = None
-    change_summary: Optional[str] = None
-    version_metadata: Optional[Dict[str, Any]] = None
+    creator_type: str = "human"  # human|agent
+    run_id: uuid.UUID | None = None
+    step_id: uuid.UUID | None = None
+    change_summary: str | None = None
+    version_metadata: dict[str, Any] | None = None
+
 
 class ArtifactRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -40,21 +43,23 @@ class ArtifactRead(BaseModel):
     tenant_id: str
     name: str
     artifact_type: str
-    current_version_id: Optional[uuid.UUID]
+    current_version_id: uuid.UUID | None
     owner_id: str
     status: str
     created_at: datetime
     updated_at: datetime
 
+
 class ArtifactVersionCreate(BaseModel):
     content: str
     creator_id: str
     creator_type: str = "human"
-    run_id: Optional[uuid.UUID] = None
-    step_id: Optional[uuid.UUID] = None
-    change_summary: Optional[str] = None
-    version_metadata: Optional[Dict[str, Any]] = None
-    expected_version_id: Optional[uuid.UUID] = None # For optimistic locking
+    run_id: uuid.UUID | None = None
+    step_id: uuid.UUID | None = None
+    change_summary: str | None = None
+    version_metadata: dict[str, Any] | None = None
+    expected_version_id: uuid.UUID | None = None  # For optimistic locking
+
 
 class ArtifactVersionRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -66,17 +71,19 @@ class ArtifactVersionRead(BaseModel):
     content_hash: str
     creator_id: str
     creator_type: str
-    run_id: Optional[uuid.UUID]
-    step_id: Optional[uuid.UUID]
-    change_summary: Optional[str]
-    version_metadata: Optional[Dict[str, Any]] = None
+    run_id: uuid.UUID | None
+    step_id: uuid.UUID | None
+    change_summary: str | None
+    version_metadata: dict[str, Any] | None = None
     created_at: datetime
+
 
 class ArtifactLockAcquire(BaseModel):
     holder_id: str
-    holder_type: str = "human" # human|agent
-    lock_type: Optional[str] = "exclusive"
-    expires_in_seconds: Optional[int] = 300
+    holder_type: str = "human"  # human|agent
+    lock_type: str | None = "exclusive"
+    expires_in_seconds: int | None = 300
+
 
 class ArtifactLockRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -86,15 +93,17 @@ class ArtifactLockRead(BaseModel):
     holder_id: str
     holder_type: str
     lock_type: str
-    expires_at: Optional[datetime]
+    expires_at: datetime | None
     created_at: datetime
+
 
 class ArtifactReviewCreate(BaseModel):
     version_id: uuid.UUID
     reviewer_id: str
     reviewer_type: str = "human"
-    status: str # pending|approved|rejected|changes_requested
-    comment: Optional[str] = None
+    status: str  # pending|approved|rejected|changes_requested
+    comment: str | None = None
+
 
 class ArtifactReviewRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -105,28 +114,31 @@ class ArtifactReviewRead(BaseModel):
     reviewer_id: str
     reviewer_type: str
     status: str
-    comment: Optional[str]
+    comment: str | None
     created_at: datetime
     updated_at: datetime
+
 
 class ArtifactCommentCreate(BaseModel):
     content: str
     author_id: str
     author_type: str = "human"
-    version_id: Optional[uuid.UUID] = None
-    parent_id: Optional[uuid.UUID] = None
+    version_id: uuid.UUID | None = None
+    parent_id: uuid.UUID | None = None
+
 
 class ArtifactCommentRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
     artifact_id: uuid.UUID
-    version_id: Optional[uuid.UUID]
+    version_id: uuid.UUID | None
     author_id: str
     author_type: str
     content: str
-    parent_id: Optional[uuid.UUID]
+    parent_id: uuid.UUID | None
     created_at: datetime
+
 
 class ArtifactEventRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -136,13 +148,15 @@ class ArtifactEventRead(BaseModel):
     event_type: str
     actor_id: str
     actor_type: str
-    payload: Optional[Dict[str, Any]]
+    payload: dict[str, Any] | None
     created_at: datetime
 
+
 class DiffStructuredLine(BaseModel):
-    type: str # equal|delete|insert
+    type: str  # equal|delete|insert
     value: str
+
 
 class ArtifactDiffResponse(BaseModel):
     raw_diff: str
-    structured: List[DiffStructuredLine]
+    structured: list[DiffStructuredLine]

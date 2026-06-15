@@ -1,7 +1,7 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import Any, Dict, List
+from typing import Any
 
 from app.core.time import utc_now
 from app.models.agents.agents import AgentIncident
@@ -11,47 +11,48 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class AgentIncidentPlaybookService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def list_available_playbooks(self) -> List[Dict[str, Any]]:
+    async def list_available_playbooks(self) -> list[dict[str, Any]]:
         return [
             {
                 "id": "runaway-agent",
                 "name": "Runaway Agent Mitigation",
                 "description": "Termina execuções em loop ou excessivamente longas.",
                 "destructive": True,
-                "required_role": "admin_write"
+                "required_role": "admin_write",
             },
             {
                 "id": "tool-cascade-failure",
                 "name": "Tool Isolation",
                 "description": "Desabilita ferramentas que estão causando falhas sistêmicas.",
                 "destructive": True,
-                "required_role": "admin_write"
+                "required_role": "admin_write",
             },
             {
                 "id": "memory-poisoning",
                 "name": "Memory Quarantine",
                 "description": "Isola memórias corrompidas ou maliciosas.",
                 "destructive": True,
-                "required_role": "admin_write"
+                "required_role": "admin_write",
             },
             {
                 "id": "stuck-approvals",
                 "name": "Approval Expiry",
                 "description": "Expira aprovações pendentes há muito tempo.",
                 "destructive": True,
-                "required_role": "admin_write"
+                "required_role": "admin_write",
             },
             {
                 "id": "queue-saturation",
                 "name": "Queue Throttling",
                 "description": "Limita a entrada de novos jobs para aliviar a carga.",
                 "destructive": True,
-                "required_role": "admin_write"
-            }
+                "required_role": "admin_write",
+            },
         ]
 
     async def execute_playbook(
@@ -61,7 +62,7 @@ class AgentIncidentPlaybookService:
         performed_by: str,
         confirmation: bool = False,
         dry_run: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         incident = await self.db.get(AgentIncident, incident_id)
         if not incident:
             raise ValueError("Incident not found")
@@ -79,20 +80,26 @@ class AgentIncidentPlaybookService:
             "before": {
                 "incident_status": incident.status,
                 "incident_type": incident.incident_type,
-                "run_id": str(incident.run_id) if incident.run_id else None
+                "run_id": str(incident.run_id) if incident.run_id else None,
             },
             "actions": [],
-            "after": {}
+            "after": {},
         }
 
         from app.services.agents.incident_action_executor import IncidentActionExecutor
+
         executor = IncidentActionExecutor(self.db)
 
         # Playbook logic
         if playbook_id == "runaway-agent":
             if incident.run_id:
                 if not dry_run:
-                    await agent_state.update_run(self.db, incident.run_id, status="failed", failure_reason="Terminated by runaway-agent playbook")
+                    await agent_state.update_run(
+                        self.db,
+                        incident.run_id,
+                        status="failed",
+                        failure_reason="Terminated by runaway-agent playbook",
+                    )
                     report["actions"].append(f"Killed run {incident.run_id}")
                 else:
                     report["actions"].append(f"Killed run {incident.run_id} (dry run)")
@@ -102,7 +109,9 @@ class AgentIncidentPlaybookService:
         elif playbook_id == "tool-cascade-failure":
             tool_name = incident.details_json.get("tool_name")
             if tool_name:
-                action_report = await executor.disable_tool(tool_id=tool_name, performed_by=performed_by, dry_run=dry_run)
+                action_report = await executor.disable_tool(
+                    tool_id=tool_name, performed_by=performed_by, dry_run=dry_run
+                )
                 report["actions"].append(action_report)
             else:
                 report["actions"].append("No tool_name found in incident details")
@@ -112,15 +121,13 @@ class AgentIncidentPlaybookService:
                 target_id=str(incident.agent_id),
                 reason=f"Quarantined by memory-poisoning playbook due to incident {incident_id}",
                 performed_by=performed_by,
-                dry_run=dry_run
+                dry_run=dry_run,
             )
             report["actions"].append(action_report)
 
         elif playbook_id == "stuck-approvals":
             action_report = await executor.expire_approvals(
-                agent_id_or_scope=str(incident.agent_id),
-                performed_by=performed_by,
-                dry_run=dry_run
+                agent_id_or_scope=str(incident.agent_id), performed_by=performed_by, dry_run=dry_run
             )
             report["actions"].append(action_report)
 
@@ -130,7 +137,7 @@ class AgentIncidentPlaybookService:
                 target_id=str(incident.agent_id),
                 limit=limit,
                 performed_by=performed_by,
-                dry_run=dry_run
+                dry_run=dry_run,
             )
             report["actions"].append(action_report)
 
@@ -142,7 +149,7 @@ class AgentIncidentPlaybookService:
             actor_identifier=performed_by,
             target_type="agent_incident",
             target_id=str(incident_id),
-            metadata={"report": report}
+            metadata={"report": report},
         )
 
         if not dry_run:
@@ -155,7 +162,7 @@ class AgentIncidentPlaybookService:
 
         report["after"] = {
             "incident_status": incident.status,
-            "resolved_at": incident.updated_at.isoformat() if incident.updated_at else None
+            "resolved_at": incident.updated_at.isoformat() if incident.updated_at else None,
         }
 
         return report

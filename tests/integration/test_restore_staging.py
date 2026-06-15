@@ -1,40 +1,43 @@
 import uuid
-import pytest
-import shutil
-import tempfile
 from pathlib import Path
+
+import pytest
+from app.core.config import get_settings
+from app.models.agents.agents import AgentDefinition
+from app.schemas.backup import BackupCreateRequest, BackupRestoreRequest
+from app.services.backup.backup_service import BackupService
+from app.services.backup.restore_staging_service import RestoreStagingService
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.core.config import get_settings
-from app.services.backup.backup_service import BackupService
-from app.services.backup.restore_staging_service import RestoreStagingService
-from app.schemas.backup import BackupCreateRequest, BackupRestoreRequest
-from app.models.agents.agents import AgentDefinition
 
 @pytest.fixture(autouse=True)
 def setup_backup_keys(monkeypatch):
     monkeypatch.setenv("BACKUP_ENCRYPTION_KEY", "a" * 32)
     monkeypatch.setenv("BACKUP_SIGNING_KEY", "b" * 32)
 
+
 @pytest.mark.asyncio
-async def test_staging_restore_validation_failures_and_dry_run(isolated_db_url, tmp_path, monkeypatch):
+async def test_staging_restore_validation_failures_and_dry_run(
+    isolated_db_url, tmp_path, monkeypatch
+):
     monkeypatch.setenv("LLMSTACK_BACKUP_SOURCE_ROOT", str(tmp_path / "repo"))
     (tmp_path / "repo" / "config").mkdir(parents=True, exist_ok=True)
     (tmp_path / "repo" / "VERSION").write_text("1.0.0", encoding="utf-8")
-    
+
     settings = get_settings()
     settings.disaster_recovery_backup_dir = str(tmp_path / "backup-store")
 
     # Connect to isolated database
     engine = create_async_engine(isolated_db_url)
     session_local = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-    
+
     # Create the tables
     from app.db.base import Base
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        
+
     # 1. Seed some database rows
     agent_id = uuid.uuid4()
     async with session_local() as session:
@@ -46,7 +49,7 @@ async def test_staging_restore_validation_failures_and_dry_run(isolated_db_url, 
             model_id="mock-model",
             owner="db-test",
             tenant_id="tenant-db",
-            status="active"
+            status="active",
         )
         session.add(agent)
         await session.commit()
@@ -60,7 +63,9 @@ async def test_staging_restore_validation_failures_and_dry_run(isolated_db_url, 
 
     # 3. Test: Manifest/Signature corruption does not alter production
     # Tamper with the encrypted archive payload to trigger verification failure
-    payload_path = Path(settings.disaster_recovery_backup_dir) / "system" / backup_id / manifest.payload_file
+    payload_path = (
+        Path(settings.disaster_recovery_backup_dir) / "system" / backup_id / manifest.payload_file
+    )
     original_payload = payload_path.read_bytes()
     # Write corrupt bytes
     payload_path.write_bytes(b"corrupted_bytes_that_fail_decryption_or_hmac")
@@ -90,7 +95,9 @@ async def test_staging_restore_validation_failures_and_dry_run(isolated_db_url, 
 
     async with session_local() as session:
         staging_svc = RestoreStagingService(session)
-        dry_run_res = await staging_svc.restore_with_staging(backup_id, BackupRestoreRequest(dry_run=True))
+        dry_run_res = await staging_svc.restore_with_staging(
+            backup_id, BackupRestoreRequest(dry_run=True)
+        )
         assert dry_run_res.status == "dry_run_complete"
         assert dry_run_res.details["side_effects_prevented"] is True
         assert dry_run_res.details["validation_report"]["database_valid"] is True
@@ -104,7 +111,9 @@ async def test_staging_restore_validation_failures_and_dry_run(isolated_db_url, 
     # 5. Test: Real restore promotion works
     async with session_local() as session:
         staging_svc = RestoreStagingService(session)
-        restore_res = await staging_svc.restore_with_staging(backup_id, BackupRestoreRequest(dry_run=False))
+        restore_res = await staging_svc.restore_with_staging(
+            backup_id, BackupRestoreRequest(dry_run=False)
+        )
         assert restore_res.status == "restored"
 
     # Verify production data is now restored to original
@@ -123,16 +132,17 @@ async def test_restore_failure_after_database_rollback(isolated_db_url, tmp_path
     (tmp_path / "repo" / "config").mkdir(parents=True, exist_ok=True)
     config_file = tmp_path / "repo" / "config" / "settings.json"
     (tmp_path / "repo" / "VERSION").write_text("1.0.0", encoding="utf-8")
-    
+
     settings = get_settings()
     settings.disaster_recovery_backup_dir = str(tmp_path / "backup-store")
 
     # Connect to isolated database
     engine = create_async_engine(isolated_db_url)
     session_local = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-    
+
     # Create the tables
     from app.db.base import Base
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -147,7 +157,7 @@ async def test_restore_failure_after_database_rollback(isolated_db_url, tmp_path
             model_id="mock-model",
             owner="db-test",
             tenant_id="tenant-db",
-            status="active"
+            status="active",
         )
         session.add(agent)
         await session.commit()
@@ -171,24 +181,27 @@ async def test_restore_failure_after_database_rollback(isolated_db_url, tmp_path
     # 4. Simulate failure right after database restore, before config restore
     should_fail = True
     original_write_text = Path.write_text
+
     def patched_write_text(self_path, content, *args, **kwargs):
         nonlocal should_fail
         if should_fail and "repo/config" in str(self_path):
             should_fail = False
             raise RuntimeError("Simulated config promotion failure")
         return original_write_text(self_path, content, *args, **kwargs)
-    
+
     monkeypatch.setattr(Path, "write_text", patched_write_text)
 
     async with session_local() as session:
         staging_svc = RestoreStagingService(session)
-        res = await staging_svc.restore_with_staging(backup_to_restore_id, BackupRestoreRequest(dry_run=False))
-        
+        res = await staging_svc.restore_with_staging(
+            backup_to_restore_id, BackupRestoreRequest(dry_run=False)
+        )
+
         # Confirm rollback was triggered and succeeded
         assert res.status == "failed"
         assert res.details["rollback_status"] == "success"
         assert res.details["pre_restore_backup_id"] is not None
-        
+
     # Verify production agent is rolled back to "Modified Production Agent"
     async with session_local() as session:
         res = await session.execute(select(AgentDefinition).where(AgentDefinition.id == agent_id))
@@ -209,16 +222,17 @@ async def test_restore_failure_after_configs_rollback(isolated_db_url, tmp_path,
     (tmp_path / "repo" / "config").mkdir(parents=True, exist_ok=True)
     config_file = tmp_path / "repo" / "config" / "settings.json"
     (tmp_path / "repo" / "VERSION").write_text("1.0.0", encoding="utf-8")
-    
+
     settings = get_settings()
     settings.disaster_recovery_backup_dir = str(tmp_path / "backup-store")
 
     # Connect to isolated database
     engine = create_async_engine(isolated_db_url)
     session_local = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-    
+
     # Create the tables
     from app.db.base import Base
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -233,7 +247,7 @@ async def test_restore_failure_after_configs_rollback(isolated_db_url, tmp_path,
             model_id="mock-model",
             owner="db-test",
             tenant_id="tenant-db",
-            status="active"
+            status="active",
         )
         session.add(agent)
         await session.commit()
@@ -256,24 +270,27 @@ async def test_restore_failure_after_configs_rollback(isolated_db_url, tmp_path,
 
     # 4. Simulate failure right after configs restore, before feature flags
     should_fail = True
+
     def mock_restore_ff(*args, **kwargs):
         nonlocal should_fail
         if should_fail:
             should_fail = False
             raise RuntimeError("Simulated failure after configs restore")
         return None
-    
+
     monkeypatch.setattr(BackupService, "_restore_feature_flags", mock_restore_ff)
 
     async with session_local() as session:
         staging_svc = RestoreStagingService(session)
-        res = await staging_svc.restore_with_staging(backup_to_restore_id, BackupRestoreRequest(dry_run=False))
-        
+        res = await staging_svc.restore_with_staging(
+            backup_to_restore_id, BackupRestoreRequest(dry_run=False)
+        )
+
         # Confirm rollback was triggered and succeeded
         assert res.status == "failed"
         assert res.details["rollback_status"] == "success"
         assert res.details["pre_restore_backup_id"] is not None
-        
+
     # Verify production agent is rolled back to "Modified Production Agent"
     async with session_local() as session:
         res = await session.execute(select(AgentDefinition).where(AgentDefinition.id == agent_id))

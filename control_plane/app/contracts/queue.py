@@ -1,27 +1,31 @@
 from contextlib import asynccontextmanager
-from typing import Any, Dict, Optional, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from app.contracts.base import BaseContract, ContractCapability
 from pydantic import BaseModel
 
 
 class QueueSnapshot(BaseModel):
-    queues: Dict[str, Dict[str, Any]]
+    queues: dict[str, dict[str, Any]]
     total_pending: int
+
 
 class QueueCapabilities(ContractCapability):
     priority_queues: bool = False
     per_backend_limits: bool = False
     fairness_scheduling: bool = False
 
+
 @runtime_checkable
 class QueueContract(BaseContract, Protocol):
     """
     Contract for Request Queuing and Concurrency Control.
     """
-    
+
     @asynccontextmanager
-    async def slot(self, plan_code: str = "free", is_admin: bool = False, backend_id: Optional[str] = None):
+    async def slot(
+        self, plan_code: str = "free", is_admin: bool = False, backend_id: str | None = None
+    ):
         """Acquires a concurrency slot for a request."""
         ...
 

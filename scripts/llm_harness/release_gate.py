@@ -217,6 +217,7 @@ def check_advanced_features():
 def check_server_health_gate():
     try:
         from scripts.llm_harness.server.app import app
+
         routes = [getattr(r, "path", None) for r in app.routes]
         routes = [r for r in routes if r is not None]
         required = [
@@ -241,6 +242,7 @@ def check_server_health_gate():
 def check_plugin_registry_gate():
     try:
         from scripts.llm_harness.plugins import plugin_registry
+
         try:
             plugin_registry.register_tool("read_file", lambda x: x)
             return False, "Tool protection failed: allowed overwriting core tool without flag."
@@ -249,7 +251,7 @@ def check_plugin_registry_gate():
         return (
             True,
             "Plugin registry discovers local plugins, pkg entrypoints, "
-            "and prevents core tool overwrites."
+            "and prevents core tool overwrites.",
         )
     except Exception as e:
         return False, f"Plugin registry gate verification failed: {e}"
@@ -258,11 +260,12 @@ def check_plugin_registry_gate():
 def check_mcp_fake_gate():
     try:
         from scripts.llm_harness.mcp import mcp_client
+
         assert mcp_client is not None
         return (
             True,
             "MCP client supports client configuration loading, "
-            "external tools listing, and policy validations."
+            "external tools listing, and policy validations.",
         )
     except Exception as e:
         return False, f"MCP client gate verification failed: {e}"
@@ -271,8 +274,10 @@ def check_mcp_fake_gate():
 def check_benchmark_mini_gate():
     try:
         from scripts.llm_harness.benchmarks import compare_benchmarks
+
         curr = {"accuracy": 0.8}
         import tempfile
+
         with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as tmp:
             json.dump({"accuracy": 0.85}, tmp)
             tmp_name = tmp.name
@@ -285,7 +290,7 @@ def check_benchmark_mini_gate():
         return (
             True,
             "Standard benchmarks suite runner loaded, "
-            "capable of computing pass@1 and baseline comparison."
+            "capable of computing pass@1 and baseline comparison.",
         )
     except Exception as e:
         return False, f"Benchmark gate verification failed: {e}"
@@ -294,6 +299,7 @@ def check_benchmark_mini_gate():
 def check_multimodal_schema_gate():
     try:
         from scripts.llm_harness.prompt_builder import PromptBuilder
+
         pb = PromptBuilder()
         content = [
             {"type": "text", "text": "task text"},
@@ -305,7 +311,7 @@ def check_multimodal_schema_gate():
         return (
             True,
             "Context schema expanded to support multimodal block schemas "
-            "(text, image, base64 redirection)."
+            "(text, image, base64 redirection).",
         )
     except Exception as e:
         return False, f"Multimodal schema gate verification failed: {e}"

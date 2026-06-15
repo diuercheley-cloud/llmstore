@@ -12,8 +12,12 @@ from app.models.commercial.commercial_compliance import (
     CommercialControlPolicy,
 )
 from app.models.commercial.commercial_financial_anomaly import CommercialFinancialAnomaly
-from app.models.commercial.commercial_revenue_protection_action import CommercialRevenueProtectionAction
-from app.models.commercial.commercial_revenue_protection_policy import CommercialRevenueProtectionPolicy
+from app.models.commercial.commercial_revenue_protection_action import (
+    CommercialRevenueProtectionAction,
+)
+from app.models.commercial.commercial_revenue_protection_policy import (
+    CommercialRevenueProtectionPolicy,
+)
 from app.services.billing.revenue_protection import apply_action
 from app.services.compliance.financial_controls import (
     build_audit_report,

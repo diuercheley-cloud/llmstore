@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from scripts.llm_harness.config import HarnessConfig
 from scripts.llm_harness.model_router import ModelRouter, is_cloud_provider
@@ -24,18 +25,15 @@ def test_profile_resolution_and_routing():
                     "model": "qwen/qwen3.6-35b-a3b",
                     "base_url": "http://localhost:1234/v1",
                     "timeout": 300,
-                    "api_key": "dummy-local-key"
+                    "api_key": "dummy-local-key",
                 },
                 "cloud-fast": {
                     "provider": "openai-compatible",
                     "model": "gpt-4o-mini",
-                    "api_key": "AKIA1234567890123456"
-                }
+                    "api_key": "AKIA1234567890123456",
+                },
             },
-            "routing": {
-                "bugfix": "local-qwen",
-                "multimodal": "cloud-fast"
-            }
+            "routing": {"bugfix": "local-qwen", "multimodal": "cloud-fast"},
         }
     }
     config = HarnessConfig(**config_dict)
@@ -62,12 +60,8 @@ def test_profile_resolution_and_routing():
 def test_cloud_model_policy():
     # 1. Cloud models allowed (default)
     config = HarnessConfig(
-        models={
-            "profiles": {
-                "cloud": {"provider": "openai-compatible", "model": "gpt-4o"}
-            }
-        },
-        allow_cloud_models=True
+        models={"profiles": {"cloud": {"provider": "openai-compatible", "model": "gpt-4o"}}},
+        allow_cloud_models=True,
     )
     router = ModelRouter(config)
     profile = router.resolve_profile("cloud")
@@ -75,12 +69,8 @@ def test_cloud_model_policy():
 
     # 2. Cloud models blocked
     config_blocked = HarnessConfig(
-        models={
-            "profiles": {
-                "cloud": {"provider": "openai-compatible", "model": "gpt-4o"}
-            }
-        },
-        allow_cloud_models=False
+        models={"profiles": {"cloud": {"provider": "openai-compatible", "model": "gpt-4o"}}},
+        allow_cloud_models=False,
     )
     router_blocked = ModelRouter(config_blocked)
     assert router_blocked.check_policy(profile) is False
@@ -93,7 +83,7 @@ async def test_fallback_on_transient_error(mock_create_agent):
         models={
             "profiles": {
                 "primary": {"provider": "stub", "model": "primary-model"},
-                "fallback": {"provider": "stub", "model": "fallback-model"}
+                "fallback": {"provider": "stub", "model": "fallback-model"},
             }
         }
     )
@@ -101,9 +91,7 @@ async def test_fallback_on_transient_error(mock_create_agent):
 
     # Mock primary agent failing, fallback agent succeeding
     mock_agent_primary = MagicMock()
-    mock_agent_primary.chat_completion = AsyncMock(
-        side_effect=RuntimeError("Timeout error")
-    )
+    mock_agent_primary.chat_completion = AsyncMock(side_effect=RuntimeError("Timeout error"))
 
     mock_agent_fallback = MagicMock()
     mock_agent_fallback.chat_completion = AsyncMock(return_value="fallback_success")
@@ -118,7 +106,7 @@ async def test_fallback_on_transient_error(mock_create_agent):
     res = await router.chat_completion_with_fallback(
         messages=[{"role": "user", "content": "hello"}],
         profile_name="primary",
-        fallback_profile_name="fallback"
+        fallback_profile_name="fallback",
     )
 
     assert res == "fallback_success"
@@ -130,19 +118,14 @@ async def test_fallback_on_transient_error(mock_create_agent):
 @patch("scripts.llm_harness.model_router.create_code_agent")
 async def test_policy_cloud_blocked_raises_permission_error(mock_create_agent):
     config = HarnessConfig(
-        models={
-            "profiles": {
-                "cloud": {"provider": "openai-compatible", "model": "gpt-4o"}
-            }
-        },
-        allow_cloud_models=False
+        models={"profiles": {"cloud": {"provider": "openai-compatible", "model": "gpt-4o"}}},
+        allow_cloud_models=False,
     )
     router = ModelRouter(config)
 
     with pytest.raises(PermissionError, match="blocked by policy"):
         await router.chat_completion_with_fallback(
-            messages=[{"role": "user", "content": "hello"}],
-            profile_name="cloud"
+            messages=[{"role": "user", "content": "hello"}], profile_name="cloud"
         )
 
 
@@ -161,9 +144,7 @@ def test_estimate_cost():
     assert cost_gpt4o["is_local"] is False
 
     # 3. Unknown cloud model cost
-    cost_unknown = router.estimate_cost(
-        {"provider": "openai-compatible", "model": "unknown-model"}
-    )
+    cost_unknown = router.estimate_cost({"provider": "openai-compatible", "model": "unknown-model"})
 
     assert cost_unknown["prompt_token_price_per_1m"] == 10.0
     assert cost_unknown["is_local"] is False
@@ -176,7 +157,7 @@ async def test_fallback_fails_both(mock_create_agent):
         models={
             "profiles": {
                 "primary": {"provider": "stub", "model": "primary-model"},
-                "fallback": {"provider": "stub", "model": "fallback-model"}
+                "fallback": {"provider": "stub", "model": "fallback-model"},
             }
         }
     )
@@ -190,17 +171,14 @@ async def test_fallback_fails_both(mock_create_agent):
         await router.chat_completion_with_fallback(
             messages=[{"role": "user", "content": "hello"}],
             profile_name="primary",
-            fallback_profile_name="fallback"
+            fallback_profile_name="fallback",
         )
 
 
 @pytest.mark.asyncio
 @patch("scripts.llm_harness.model_router.create_code_agent")
 async def test_fallback_default_config_resolution(mock_create_agent):
-    config = HarnessConfig(
-        provider="stub",
-        model="global-model"
-    )
+    config = HarnessConfig(provider="stub", model="global-model")
     router = ModelRouter(config)
 
     mock_agent = MagicMock()
@@ -230,19 +208,14 @@ async def test_non_existent_profile_raises_value_error():
 
     with pytest.raises(ValueError, match="not found in configuration"):
         await router.chat_completion_with_fallback(
-            messages=[{"role": "user", "content": "hello"}],
-            profile_name="non-existent"
+            messages=[{"role": "user", "content": "hello"}], profile_name="non-existent"
         )
 
 
 @pytest.mark.asyncio
 async def test_non_existent_fallback_profile_raises_value_error():
     config = HarnessConfig(
-        models={
-            "profiles": {
-                "primary": {"provider": "stub", "model": "primary-model"}
-            }
-        }
+        models={"profiles": {"primary": {"provider": "stub", "model": "primary-model"}}}
     )
     router = ModelRouter(config)
 
@@ -255,18 +228,16 @@ async def test_non_existent_fallback_profile_raises_value_error():
             await router.chat_completion_with_fallback(
                 messages=[{"role": "user", "content": "hello"}],
                 profile_name="primary",
-                fallback_profile_name="non-existent"
+                fallback_profile_name="non-existent",
             )
 
 
 def test_policy_models_config_dict():
     class SimpleConfig:
         def __init__(self):
-            self.models = {
-                "allow_cloud_models": False
-            }
+            self.models = {"allow_cloud_models": False}
+
     config = SimpleConfig()
     router = ModelRouter(config)
     assert router.check_policy({"provider": "openai-compatible"}) is False
     assert router.check_policy({"provider": "stub"}) is True
-

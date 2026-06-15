@@ -8,7 +8,6 @@ from .schema import EvalResult
 
 
 class EvalReportGenerator:
-
     @staticmethod
     def generate_summary(result: EvalResult) -> dict[str, Any]:
         case_results = []
@@ -23,9 +22,7 @@ class EvalReportGenerator:
                 "error": Sanitizer.sanitize_text(cs.error) if cs.error else None,
             }
             if cs.judge_verdict:
-                entry["judge_verdict"] = Sanitizer.sanitize_data(
-                    cs.judge_verdict.model_dump()
-                )
+                entry["judge_verdict"] = Sanitizer.sanitize_data(cs.judge_verdict.model_dump())
                 judge_scores.append(cs.judge_verdict.score)
             case_results.append(entry)
 
@@ -41,15 +38,11 @@ class EvalReportGenerator:
             "total_tokens": result.total_tokens,
         }
         if judge_scores:
-            summary["judge_avg_score"] = round(
-                sum(judge_scores) / len(judge_scores), 4
-            )
+            summary["judge_avg_score"] = round(sum(judge_scores) / len(judge_scores), 4)
         return summary
 
     @staticmethod
-    def save_json_report(
-        result: EvalResult, output_dir: str
-    ) -> str:
+    def save_json_report(result: EvalResult, output_dir: str) -> str:
         os.makedirs(output_dir, exist_ok=True)
         timestamp = int(time.time())
         filename = f"eval_report_{timestamp}.json"
@@ -68,9 +61,7 @@ class EvalReportGenerator:
         duration_str = f"{result.total_duration_seconds:.2f}s"
 
         judge_scores = [
-            cs.judge_verdict.score
-            for cs in result.case_scores
-            if cs.judge_verdict is not None
+            cs.judge_verdict.score for cs in result.case_scores if cs.judge_verdict is not None
         ]
         judge_avg = sum(judge_scores) / len(judge_scores) if judge_scores else None
 
@@ -103,9 +94,7 @@ class EvalReportGenerator:
 
         for cs in result.case_scores:
             status = "✅ PASS" if cs.passed else "❌ FAIL"
-            checks_str = ", ".join(
-                f"{k}={'✓' if v else '✗'}" for k, v in cs.checks.items()
-            )
+            checks_str = ", ".join(f"{k}={'✓' if v else '✗'}" for k, v in cs.checks.items())
             dur = f"{cs.duration_seconds:.2f}s"
             err = Sanitizer.sanitize_text(cs.error or "")[:80] if cs.error else ""
             if cs.judge_verdict:
@@ -114,9 +103,7 @@ class EvalReportGenerator:
                     f"| {cs.case_id} | {status} | {checks_str} | {jscore} | {dur} | {err} |"
                 )
             else:
-                lines.append(
-                    f"| {cs.case_id} | {status} | {checks_str} | {dur} | {err} |"
-                )
+                lines.append(f"| {cs.case_id} | {status} | {checks_str} | {dur} | {err} |")
 
         lines.extend(
             [

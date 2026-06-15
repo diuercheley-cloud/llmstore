@@ -1,11 +1,11 @@
-from typing import Any, Dict, List
+from typing import Any
 
 from app.core.time import utc_now
 from app.services.agents.web_search.web_search_provider import WebSearchProvider
 
 
 class MockSearchProvider(WebSearchProvider):
-    async def search(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
+    async def search(self, query: str, limit: int = 5) -> list[dict[str, Any]]:
         query_lower = query.lower()
 
         if "weather" in query_lower:

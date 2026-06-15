@@ -1,0 +1,17 @@
+# Semgrep Configuration for LLM Inference Stack
+# Specific project rules and overrides
+
+rules:
+  - id: python-shell-true
+    patterns:
+      - pattern: subprocess.run(..., shell=True, ...)
+      - pattern-not: subprocess.run(..., shell=True, ..., executable=...)
+    message: "Found subprocess.run with shell=True. Ensure the command is not constructed from untrusted input."
+    languages: [python]
+    severity: WARNING
+
+  - id: unsafe-eval
+    pattern: eval(...)
+    message: "Detected use of eval(). This is dangerous if input is not trusted."
+    languages: [python, javascript]
+    severity: ERROR

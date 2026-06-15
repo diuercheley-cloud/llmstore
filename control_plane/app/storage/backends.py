@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict
-from dataclasses import replace
+from dataclasses import asdict, replace
 from functools import cached_property
 from typing import Any
 from urllib.parse import urlparse
@@ -9,7 +8,11 @@ from urllib.parse import urlparse
 from app.core.config import get_settings
 from app.storage.contracts import BackendDescriptor
 from app.storage.interfaces import AuditStore, DocumentStore, StorageBackend, VectorStore
-from app.storage.sqlalchemy_backend import SQLAlchemyAuditStore, SQLAlchemyDocumentStore, VectorStoreAdapter
+from app.storage.sqlalchemy_backend import (
+    SQLAlchemyAuditStore,
+    SQLAlchemyDocumentStore,
+    VectorStoreAdapter,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -57,7 +60,9 @@ class SQLiteStorageBackend(_SQLStorageBackend):
         supports_vector_indexing=True,
         supports_structured_audit=True,
         readiness="active",
-        notes=["Vector similarity falls back to persisted embeddings when pgvector is unavailable."],
+        notes=[
+            "Vector similarity falls back to persisted embeddings when pgvector is unavailable."
+        ],
     )
 
 

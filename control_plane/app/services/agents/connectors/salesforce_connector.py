@@ -1,5 +1,5 @@
 # Owner: Platform Operations
-from typing import Any, Dict, List
+from typing import Any
 
 from app.services.agents.connectors.base import (
     ConnectorAdapter,
@@ -30,30 +30,29 @@ class SalesforceConnector(ConnectorAdapter):
         return "Salesforce"
 
     @property
-    def capabilities(self) -> List[ConnectorCapability]:
-        return [
-            ConnectorCapability.SEARCH,
-            ConnectorCapability.READ,
-            ConnectorCapability.CREATE
-        ]
+    def capabilities(self) -> list[ConnectorCapability]:
+        return [ConnectorCapability.SEARCH, ConnectorCapability.READ, ConnectorCapability.CREATE]
 
     @property
-    def input_schema(self) -> Dict[str, Any]:
+    def input_schema(self) -> dict[str, Any]:
         return {
             "type": "object",
             "properties": {
-                "action": {"type": "string", "enum": ["search_accounts", "get_account", "create_task"]},
-                "params": {"type": "object"}
+                "action": {
+                    "type": "string",
+                    "enum": ["search_accounts", "get_account", "create_task"],
+                },
+                "params": {"type": "object"},
             },
-            "required": ["action"]
+            "required": ["action"],
         }
 
     @property
-    def output_schema(self) -> Dict[str, Any]:
+    def output_schema(self) -> dict[str, Any]:
         return {"type": "object"}
 
     @property
-    def required_scopes(self) -> List[str]:
+    def required_scopes(self) -> list[str]:
         return ["api", "refresh_token"]
 
     @property
@@ -65,54 +64,64 @@ class SalesforceConnector(ConnectorAdapter):
         return SideEffectLevel.EXTERNAL
 
     @property
-    def rate_limit_policy(self) -> Dict[str, Any]:
+    def rate_limit_policy(self) -> dict[str, Any]:
         return {"requests_per_minute": 100}
 
     async def healthcheck(self) -> bool:
         return True
 
-    async def dry_run(self, tenant_id: str, credentials: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+    async def dry_run(
+        self, tenant_id: str, credentials: dict[str, Any], **kwargs
+    ) -> dict[str, Any]:
         return self._with_execution_metadata(
             {"status": "dry_run_success", "action": kwargs.get("action")},
             mode="dry_run",
         )
 
-    async def execute(self, tenant_id: str, credentials: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+    async def execute(
+        self, tenant_id: str, credentials: dict[str, Any], **kwargs
+    ) -> dict[str, Any]:
         action = kwargs.get("action")
         params = kwargs.get("params", {})
-        
+
         capability_map = {
             "search_accounts": ConnectorCapability.SEARCH,
             "get_account": ConnectorCapability.READ,
-            "create_task": ConnectorCapability.CREATE
+            "create_task": ConnectorCapability.CREATE,
         }
-        
+
         capability = capability_map.get(action)
         if not capability:
             raise ValueError(f"Unknown action: {action}")
-        
+
         self._check_feature_flags(capability)
 
         # Agent IAM Check
         await self.check_iam(tenant_id, credentials, action)
 
         # Audit event
-        await self.audit_connector_call(tenant_id, credentials, action, {"params": params, "mode": self.mode})
+        await self.audit_connector_call(
+            tenant_id, credentials, action, {"params": params, "mode": self.mode}
+        )
 
         if self.mode == ConnectorMode.REAL:
             real_kwargs = kwargs.copy()
             real_kwargs.pop("action", None)
             real_kwargs.pop("params", None)
             return self._with_execution_metadata(
-                await self._execute_real(action, params, credentials, tenant_id=tenant_id, **real_kwargs),
+                await self._execute_real(
+                    action, params, credentials, tenant_id=tenant_id, **real_kwargs
+                ),
                 mode="real",
             )
         return await self._execute_mock(action, params)
 
-    async def _execute_real(self, action: str, params: Dict[str, Any], credentials: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+    async def _execute_real(
+        self, action: str, params: dict[str, Any], credentials: dict[str, Any], **kwargs
+    ) -> dict[str, Any]:
         tenant_id = kwargs.get("tenant_id")
         invocation_id = kwargs.get("invocation_id", "manual")
-        
+
         ConnectorRuntime.ensure_real_allowed(self.connector_name)
         ConnectorRuntime.validate_credentials(self.connector_name, credentials)
 
@@ -126,20 +135,26 @@ class SalesforceConnector(ConnectorAdapter):
             tenant_id=tenant_id,
             connector_name=self.connector_name,
             rate_limit_policy=self.rate_limit_policy,
-            headers={"Authorization": f"Bearer {token}"}
+            headers={"Authorization": f"Bearer {token}"},
         )
 
         if action == "get_account":
             account_id = params.get("account_id")
             if not account_id:
                 raise ValueError("account_id is required for get_account")
-            return await client.request("GET", f"/services/data/v60.0/sobjects/Account/{account_id}")
+            return await client.request(
+                "GET", f"/services/data/v60.0/sobjects/Account/{account_id}"
+            )
         elif action == "search_accounts":
             q = params.get("q")
             if not q:
                 raise ValueError("q is required for search_accounts")
             # SOSL or SOQL
-            return await client.request("GET", "/services/data/v60.0/query", params={"q": f"SELECT Id, Name FROM Account WHERE Name LIKE '%{q}%'"})
+            return await client.request(
+                "GET",
+                "/services/data/v60.0/query",
+                params={"q": f"SELECT Id, Name FROM Account WHERE Name LIKE '%{q}%'"},
+            )
         elif action == "create_task":
             # High-risk write path
             approval_kwargs = kwargs.copy()
@@ -160,14 +175,14 @@ class SalesforceConnector(ConnectorAdapter):
                 payload["WhatId"] = params["account_id"]
             if params.get("owner_id"):
                 payload["OwnerId"] = params["owner_id"]
-            
+
             result = await client.request(
-                "POST", 
-                "/services/data/v60.0/sobjects/Task", 
+                "POST",
+                "/services/data/v60.0/sobjects/Task",
                 json_data=payload,
-                idempotency_key=idempotency_key
+                idempotency_key=idempotency_key,
             )
-            
+
             await self._register_receipt(tenant_id, result, invocation_id)
             return result
 
@@ -177,7 +192,7 @@ class SalesforceConnector(ConnectorAdapter):
             supported_actions=["create_task", "get_account", "search_accounts"],
         )
 
-    async def _execute_mock(self, action: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def _execute_mock(self, action: str, params: dict[str, Any]) -> dict[str, Any]:
         if action == "search_accounts":
             return self._with_execution_metadata(
                 {"accounts": [{"id": "ACC1", "name": "Acme Corp"}]},
@@ -185,7 +200,13 @@ class SalesforceConnector(ConnectorAdapter):
             )
         elif action == "get_account":
             return self._with_execution_metadata(
-                {"account": {"id": params.get("account_id"), "name": "Mock Account", "industry": "Software"}},
+                {
+                    "account": {
+                        "id": params.get("account_id"),
+                        "name": "Mock Account",
+                        "industry": "Software",
+                    }
+                },
                 mode="mock",
             )
         elif action == "create_task":
@@ -193,7 +214,7 @@ class SalesforceConnector(ConnectorAdapter):
                 {"status": "success", "task_id": "TSK123"},
                 mode="mock",
             )
-            
+
         raise self._unsupported_action(
             action,
             mode="mock",

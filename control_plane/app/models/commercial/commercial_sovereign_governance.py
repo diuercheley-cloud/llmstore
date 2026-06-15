@@ -18,11 +18,15 @@ class CommercialAirgapSyncPackage(Base):
     package_version: Mapped[str] = mapped_column(String(64), nullable=False)
     manifest_hash: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     signature: Mapped[str] = mapped_column(Text, nullable=False)
-    encryption_key_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
+    encryption_key_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True, index=True
+    )
     status: Mapped[str] = mapped_column(String(32), default="created", nullable=False, index=True)
     file_ref: Mapped[str | None] = mapped_column(String(512), nullable=True)
     chain_of_custody_json: Mapped[dict] = mapped_column(JSON, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
     imported_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
@@ -38,7 +42,9 @@ class CommercialOfflineRevocationList(Base):
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     manifest_hash: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     signature: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
@@ -48,10 +54,14 @@ class CommercialHardwareAttestationRecord(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     node_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     cluster_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    attestation_type: Mapped[str] = mapped_column(String(32), default="placeholder", nullable=False, index=True)
+    attestation_type: Mapped[str] = mapped_column(
+        String(32), default="placeholder", nullable=False, index=True
+    )
     status: Mapped[str] = mapped_column(String(32), default="unknown", nullable=False, index=True)
     evidence_json: Mapped[dict] = mapped_column(JSON, nullable=False)
     evidence_hash: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )

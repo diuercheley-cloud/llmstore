@@ -1,7 +1,6 @@
 import logging
 import re
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
 from app.models.agents.agent_notifications import NotificationEvent
 from app.models.agents.agents import AgentApprovalRequest
@@ -17,7 +16,7 @@ SECRET_PATTERNS = [
     r"(?i)(password|passwd|pwd|secret|api_key|apikey|token|private_key|auth_token)\s*[:=]\s*[a-zA-Z0-9_\-\.\~]{8,}",
     r"-----BEGIN[ A-Z0-9_]*PRIVATE KEY-----",
     r"aws_access_key_id\s*[:=]\s*[A-Z0-9]{20}",
-    r"aws_secret_access_key\s*[:=]\s*[a-zA-Z0-9/+=]{40}"
+    r"aws_secret_access_key\s*[:=]\s*[a-zA-Z0-9/+=]{40}",
 ]
 
 
@@ -42,11 +41,11 @@ class NotificationPolicyService:
         cls,
         db: AsyncSession,
         tenant_id: str,
-        run_id: Optional[str],
+        run_id: str | None,
         title: str,
         body: str,
         recipient: str,
-        channel: str
+        channel: str,
     ) -> None:
         """
         Evaluates policies for email/push notification.
@@ -57,10 +56,9 @@ class NotificationPolicyService:
             raise ValueError("Access denied: message contains sensitive secrets or credentials.")
 
         # 2. Rate limit rule (default 5 messages per 60 seconds per tenant)
-        window = datetime.now(timezone.utc) - timedelta(seconds=60)
+        window = datetime.now(UTC) - timedelta(seconds=60)
         stmt = select(func.count(NotificationEvent.id)).where(
-            NotificationEvent.tenant_id == tenant_id,
-            NotificationEvent.created_at >= window
+            NotificationEvent.tenant_id == tenant_id, NotificationEvent.created_at >= window
         )
         res = await db.execute(stmt)
         count = res.scalar() or 0
@@ -70,14 +68,17 @@ class NotificationPolicyService:
         # 3. Approval for sensitive messages rule
         if has_sensitive_keywords(title, body):
             if not run_id:
-                raise ValueError("Approval required for sensitive notification content, but no agent run context provided.")
+                raise ValueError(
+                    "Approval required for sensitive notification content, but no agent run context provided."
+                )
 
             # Check if there is an approved AgentApprovalRequest for this run
             # where the status is 'approved'
             import uuid
+
             stmt_approval = select(AgentApprovalRequest).where(
                 AgentApprovalRequest.agent_run_id == uuid.UUID(run_id),
-                AgentApprovalRequest.status == "approved"
+                AgentApprovalRequest.status == "approved",
             )
             res_approval = await db.execute(stmt_approval)
             approvals = res_approval.scalars().all()
@@ -91,11 +92,13 @@ class NotificationPolicyService:
                     # Match input recipient / title / body
                     raw_input = app.raw_tool_input or {}
                     if (
-                        raw_input.get("recipient") == recipient or
-                        raw_input.get("user_id") == recipient
+                        raw_input.get("recipient") == recipient
+                        or raw_input.get("user_id") == recipient
                     ):
                         approved = True
                         break
 
             if not approved:
-                raise ValueError("Approval required: message contains sensitive keywords and has not been approved.")
+                raise ValueError(
+                    "Approval required: message contains sensitive keywords and has not been approved."
+                )

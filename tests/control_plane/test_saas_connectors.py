@@ -15,6 +15,7 @@ def patch_settings(env_dict):
     get_settings.cache_clear()
     return patcher
 
+
 import pytest_asyncio
 from app.db.base import Base
 from app.db.session import engine
@@ -27,6 +28,7 @@ async def setup_db():
     yield
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+
 
 @pytest.fixture(autouse=True)
 def setup_connectors():
@@ -47,58 +49,72 @@ async def test_connector_registry_lists_connectors():
     assert "github" in names
     assert "slack" in names
 
+
 @pytest.mark.asyncio
 async def test_write_action_blocked_by_default():
     github = connector_registry.get_connector("github")
-    
-    p = patch_settings({
-        "AGENT_SAAS_CONNECTORS_ENABLED": "true", 
-        "AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED": "true",
-        "AGENT_CONNECTOR_WRITE_ENABLED": "false"
-    })
+
+    p = patch_settings(
+        {
+            "AGENT_SAAS_CONNECTORS_ENABLED": "true",
+            "AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED": "true",
+            "AGENT_CONNECTOR_WRITE_ENABLED": "false",
+        }
+    )
     try:
         with pytest.raises(PermissionError, match="Write capability 'create' is disabled"):
             await github.execute("tenant1", {}, action="create_issue", params={})
     finally:
         p.stop()
 
+
 @pytest.mark.asyncio
 async def test_external_network_disabled_blocks_calls():
     github = connector_registry.get_connector("github")
-    
-    p = patch_settings({
-        "AGENT_SAAS_CONNECTORS_ENABLED": "true", 
-        "AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED": "false"
-    })
+
+    p = patch_settings(
+        {
+            "AGENT_SAAS_CONNECTORS_ENABLED": "true",
+            "AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED": "false",
+        }
+    )
     try:
-        with pytest.raises(PermissionError, match="External network access for connectors is disabled"):
+        with pytest.raises(
+            PermissionError, match="External network access for connectors is disabled"
+        ):
             await github.execute("tenant1", {}, action="get_issue", params={"issue_id": "1"})
     finally:
         p.stop()
 
+
 @pytest.mark.asyncio
 async def test_dry_run_no_side_effect():
     github = connector_registry.get_connector("github")
-    
-    p = patch_settings({
-        "AGENT_SAAS_CONNECTORS_ENABLED": "true", 
-        "AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED": "true",
-        "AGENT_CONNECTOR_WRITE_ENABLED": "false"
-    })
+
+    p = patch_settings(
+        {
+            "AGENT_SAAS_CONNECTORS_ENABLED": "true",
+            "AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED": "true",
+            "AGENT_CONNECTOR_WRITE_ENABLED": "false",
+        }
+    )
     try:
         result = await github.dry_run("tenant1", {}, action="create_issue", params={})
         assert result["status"] == "dry_run_success"
     finally:
         p.stop()
 
+
 @pytest.mark.asyncio
 async def test_github_mock_search_works():
     github = connector_registry.get_connector("github")
-    
-    p = patch_settings({
-        "AGENT_SAAS_CONNECTORS_ENABLED": "true", 
-        "AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED": "true"
-    })
+
+    p = patch_settings(
+        {
+            "AGENT_SAAS_CONNECTORS_ENABLED": "true",
+            "AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED": "true",
+        }
+    )
     try:
         result = await github.execute("tenant1", {}, action="search_repositories")
         assert "repositories" in result
@@ -106,28 +122,33 @@ async def test_github_mock_search_works():
     finally:
         p.stop()
 
+
 @pytest.mark.asyncio
 async def test_slack_post_message_requires_write_enabled():
     slack = connector_registry.get_connector("slack")
-    
+
     # 1. Disabled
-    p = patch_settings({
-        "AGENT_SAAS_CONNECTORS_ENABLED": "true", 
-        "AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED": "true",
-        "AGENT_CONNECTOR_WRITE_ENABLED": "false"
-    })
+    p = patch_settings(
+        {
+            "AGENT_SAAS_CONNECTORS_ENABLED": "true",
+            "AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED": "true",
+            "AGENT_CONNECTOR_WRITE_ENABLED": "false",
+        }
+    )
     try:
         with pytest.raises(PermissionError):
             await slack.execute("tenant1", {}, action="post_message", params={"text": "hi"})
     finally:
         p.stop()
-            
+
     # 2. Enabled
-    p = patch_settings({
-        "AGENT_SAAS_CONNECTORS_ENABLED": "true", 
-        "AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED": "true",
-        "AGENT_CONNECTOR_WRITE_ENABLED": "true"
-    })
+    p = patch_settings(
+        {
+            "AGENT_SAAS_CONNECTORS_ENABLED": "true",
+            "AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED": "true",
+            "AGENT_CONNECTOR_WRITE_ENABLED": "true",
+        }
+    )
     try:
         result = await slack.execute("tenant1", {}, action="post_message", params={"text": "hi"})
         assert result["status"] == "success"

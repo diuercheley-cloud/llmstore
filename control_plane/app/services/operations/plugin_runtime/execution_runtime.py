@@ -213,11 +213,15 @@ class GovernedPluginRuntime:
             await self.db.flush()
             raise
 
-    async def _resolve_install(self, contract: PluginABIContract) -> tuple[PluginInstall, PluginVersion]:
+    async def _resolve_install(
+        self, contract: PluginABIContract
+    ) -> tuple[PluginInstall, PluginVersion]:
         result = await self.db.execute(
             select(PluginInstall, PluginVersion)
             .join(PluginVersion, PluginVersion.id == PluginInstall.current_version_id)
-            .join(PluginMarketplaceEntry, PluginMarketplaceEntry.id == PluginInstall.plugin_entry_id)
+            .join(
+                PluginMarketplaceEntry, PluginMarketplaceEntry.id == PluginInstall.plugin_entry_id
+            )
             .where(
                 PluginMarketplaceEntry.name == contract.plugin_name,
                 PluginVersion.version == contract.plugin_version,
@@ -253,15 +257,23 @@ class GovernedPluginRuntime:
             raise PluginExecutionError("Isolation policy is required before plugin activation")
         return policy
 
-    def _enforce_isolation(self, boundary: PluginCapabilityBoundary, policy: PluginIsolationPolicy) -> None:
+    def _enforce_isolation(
+        self, boundary: PluginCapabilityBoundary, policy: PluginIsolationPolicy
+    ) -> None:
         if boundary.network_allowed and policy.deny_network:
             raise PluginExecutionError("Isolation policy blocks network access for plugin runtime")
         if boundary.subprocess_allowed and policy.deny_subprocess:
-            raise PluginExecutionError("Isolation policy blocks subprocess access for plugin runtime")
+            raise PluginExecutionError(
+                "Isolation policy blocks subprocess access for plugin runtime"
+            )
         if boundary.filesystem_write_allowed and policy.deny_external_filesystem_write:
-            raise PluginExecutionError("Isolation policy blocks filesystem writes for plugin runtime")
+            raise PluginExecutionError(
+                "Isolation policy blocks filesystem writes for plugin runtime"
+            )
         if boundary.external_secret_access_allowed and policy.deny_plaintext_secret_access:
-            raise PluginExecutionError("Isolation policy blocks plaintext secret access for plugin runtime")
+            raise PluginExecutionError(
+                "Isolation policy blocks plaintext secret access for plugin runtime"
+            )
 
     def _build_callable(self, install_path: str, entrypoint: str):
         def run_plugin(*, payload: dict[str, Any], command: str | None = None):
@@ -274,11 +286,14 @@ class GovernedPluginRuntime:
             workdir = Path(tempfile.mkdtemp(prefix="plugin-runtime-"))
             try:
                 from app.utils.archive import safe_extract_zip
+
                 with zipfile.ZipFile(io.BytesIO(archive.read_bytes())) as zf:
                     safe_extract_zip(zf, workdir)
                 entrypoint_path = workdir / entrypoint
                 if not entrypoint_path.exists():
-                    raise PluginExecutionError(f"Entrypoint '{entrypoint}' not found in plugin archive")
+                    raise PluginExecutionError(
+                        f"Entrypoint '{entrypoint}' not found in plugin archive"
+                    )
 
                 code = entrypoint_path.read_text(encoding="utf-8")
                 self._validate_source(code)
@@ -345,7 +360,7 @@ print(json.dumps(result))
             "from subprocess",
             "import socket",
             "from socket",
-            "os.system(", # nosec
+            "os.system(",  # nosec
             "subprocess.",
         ]
         for marker in blocked_markers:

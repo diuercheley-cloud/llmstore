@@ -104,11 +104,16 @@ async def test_generate_verification_report_valid(session, settings):
     assert report_data["report_hash"] is not None
 
     reports = (
-        await session.execute(
-            select(CommercialInferenceReceiptVerificationReport)
-            .where(CommercialInferenceReceiptVerificationReport.receipt_id == receipt.id)
+        (
+            await session.execute(
+                select(CommercialInferenceReceiptVerificationReport).where(
+                    CommercialInferenceReceiptVerificationReport.receipt_id == receipt.id
+                )
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     assert len(reports) >= 1
     assert reports[0].verification_result == "valid"
 

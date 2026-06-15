@@ -51,11 +51,22 @@ def test_bundle_manifest_is_valid_json():
     fp = RELEASE_DIR / "bundle-manifest.json"
     assert fp.exists()
     data = json.loads(fp.read_text(encoding="utf-8"))
-    required = ["version", "git_branch", "git_commit", "generated_at",
-                 "included_paths", "excluded_paths", "files_count",
-                 "archive_name", "archive_sha256", "secrets_scan_passed",
-                 "models_included", "rag_uploads_included",
-                 "env_included", "local_data_included"]
+    required = [
+        "version",
+        "git_branch",
+        "git_commit",
+        "generated_at",
+        "included_paths",
+        "excluded_paths",
+        "files_count",
+        "archive_name",
+        "archive_sha256",
+        "secrets_scan_passed",
+        "models_included",
+        "rag_uploads_included",
+        "env_included",
+        "local_data_included",
+    ]
     for field in required:
         assert field in data, f"Missing field in bundle-manifest.json: {field}"
     assert data["version"] == VERSION, f"Version mismatch: {data['version']}"
@@ -65,9 +76,16 @@ def test_release_manifest_is_valid_json():
     fp = RELEASE_DIR / "release-manifest.json"
     assert fp.exists()
     data = json.loads(fp.read_text(encoding="utf-8"))
-    required = ["release_name", "version", "git_branch", "git_commit",
-                 "generated_at", "validation_artifact_path",
-                 "summary_json_path", "summary_md_path"]
+    required = [
+        "release_name",
+        "version",
+        "git_branch",
+        "git_commit",
+        "generated_at",
+        "validation_artifact_path",
+        "summary_json_path",
+        "summary_md_path",
+    ]
     for field in required:
         assert field in data, f"Missing field in release-manifest.json: {field}"
 
@@ -129,14 +147,11 @@ def test_validate_script_runs():
         timeout=30,
     )
     print(f"STDOUT:\n{result.stdout}")
-    assert result.returncode == 0, (
-        f"validate script failed:\n{result.stdout}\n{result.stderr}"
-    )
+    assert result.returncode == 0, f"validate script failed:\n{result.stdout}\n{result.stderr}"
 
 
 def test_no_forbidden_dirs_in_release():
-    forbidden = [".env", ".env.local", ".local", "models",
-                 "data", "backups", "exports"]
+    forbidden = [".env", ".env.local", ".local", "models", "data", "backups", "exports"]
     for item in forbidden:
         assert not (RELEASE_DIR / item).exists(), f"Forbidden item found: {item}"
 

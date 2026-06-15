@@ -20,7 +20,10 @@ RESTRICTED_CAPABILITIES = {
 class PluginCapabilityBoundaryService:
     def evaluate_capabilities(self, boundary: PluginCapabilityBoundary) -> dict[str, Any]:
         allowed = sorted(set(boundary.allowed_capabilities_json or []))
-        denied = sorted(set(boundary.denied_capabilities_json or []) | self.deny_restricted_capabilities(allowed))
+        denied = sorted(
+            set(boundary.denied_capabilities_json or [])
+            | self.deny_restricted_capabilities(allowed)
+        )
         effective_allowed = [capability for capability in allowed if capability not in denied]
         return {
             "allowed_capabilities": effective_allowed,
@@ -52,7 +55,10 @@ class PluginCapabilityBoundaryService:
                 for reason, enabled in (
                     ("network_allowed=False is required", boundary.network_allowed),
                     ("subprocess_allowed=False is required", boundary.subprocess_allowed),
-                    ("filesystem_write_allowed=False is required", boundary.filesystem_write_allowed),
+                    (
+                        "filesystem_write_allowed=False is required",
+                        boundary.filesystem_write_allowed,
+                    ),
                     ("offline_only=True is required", not boundary.offline_only),
                     ("isolation_required=True is required", not boundary.isolation_required),
                 )

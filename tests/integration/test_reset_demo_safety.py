@@ -52,36 +52,37 @@ class TestResetDemoSafetyBasics:
             for line in lines:
                 stripped = line.strip()
                 if stripped.startswith("rm"):
-                    assert stripped.count("/") >= 1 or stripped.count("$") >= 1, \
+                    assert stripped.count("/") >= 1 or stripped.count("$") >= 1, (
                         f"Potentially unsafe rm: {stripped}"
+                    )
 
     def test_reset_script_does_not_touch_models_dir(self):
         script = ROOT / "scripts" / "reset-commercial-demo-pack.sh"
         content = script.read_text()
-        dangerous = ['rm -rf models/', 'rm -rf /models/', 'DELETE FROM models']
+        dangerous = ["rm -rf models/", "rm -rf /models/", "DELETE FROM models"]
         for d in dangerous:
             assert d not in content, f"Dangerous operation on models/: {d}"
 
     def test_reset_script_does_not_touch_backups_dir(self):
         script = ROOT / "scripts" / "reset-commercial-demo-pack.sh"
         content = script.read_text()
-        dangerous = ['rm -rf backups/', 'rm -rf /backups/']
+        dangerous = ["rm -rf backups/", "rm -rf /backups/"]
         for d in dangerous:
             assert d not in content, f"Dangerous operation on backups/: {d}"
 
     def test_reset_script_does_not_touch_releases_dir(self):
         script = ROOT / "scripts" / "reset-commercial-demo-pack.sh"
         content = script.read_text()
-        dangerous = ['rm -rf releases/', 'rm -rf /releases/']
+        dangerous = ["rm -rf releases/", "rm -rf /releases/"]
         for d in dangerous:
             assert d not in content, f"Dangerous operation on releases/: {d}"
 
     def test_reset_script_does_not_touch_env_local(self):
         script = ROOT / "scripts" / "reset-commercial-demo-pack.sh"
         content = script.read_text()
-        dangerous = ['.env.local']
+        dangerous = [".env.local"]
         for d in dangerous:
-            assert d not in content or 'PROTECTED_PATTERNS' in content
+            assert d not in content or "PROTECTED_PATTERNS" in content
 
     def test_reset_script_protects_exports(self):
         script = ROOT / "scripts" / "reset-commercial-demo-pack.sh"
@@ -99,10 +100,10 @@ class TestResetSafetyMetadata:
     def test_non_demo_clients_preserved(self):
         script = ROOT / "scripts" / "reset-commercial-demo-pack.sh"
         content = script.read_text()
-        lines = content.split('\n')
+        lines = content.split("\n")
         for line in lines:
-            if 'DELETE FROM' in line and 'client' in line.lower():
-                assert '=' in line, f"DELETE without condition: {line}"
+            if "DELETE FROM" in line and "client" in line.lower():
+                assert "=" in line, f"DELETE without condition: {line}"
 
     def test_reset_script_parses_metadata_json(self):
         script = ROOT / "scripts" / "reset-commercial-demo-pack.sh"
@@ -112,12 +113,20 @@ class TestResetSafetyMetadata:
     def test_reset_script_uses_get_demo_clients_function(self):
         script = ROOT / "scripts" / "reset-commercial-demo-pack.sh"
         content = script.read_text()
-        assert "fetch_clients_json" in content or "get_demo_clients" in content or "filter_demo_clients" in content
+        assert (
+            "fetch_clients_json" in content
+            or "get_demo_clients" in content
+            or "filter_demo_clients" in content
+        )
 
     def test_reset_script_uses_get_demo_plans_function(self):
         script = ROOT / "scripts" / "reset-commercial-demo-pack.sh"
         content = script.read_text()
-        assert "fetch_plans_json" in content or "get_demo_plans" in content or "filter_demo_plans" in content
+        assert (
+            "fetch_plans_json" in content
+            or "get_demo_plans" in content
+            or "filter_demo_plans" in content
+        )
 
 
 class TestResetDryRunSafety:
@@ -154,8 +163,13 @@ class TestResetSafetyGuarantees:
         script = ROOT / "scripts" / "reset-commercial-demo-pack.sh"
         content = script.read_text()
         assert "GARANTIAS DE SEGURANCA" in content
-        for item in ["NUNCA apaga clientes", "NUNCA apaga models", "NUNCA apaga backup",
-                       "NUNCA apaga release", "NUNCA apaga .env.local"]:
+        for item in [
+            "NUNCA apaga clientes",
+            "NUNCA apaga models",
+            "NUNCA apaga backup",
+            "NUNCA apaga release",
+            "NUNCA apaga .env.local",
+        ]:
             assert item in content, f"Missing guarantee: {item}"
 
     def test_reset_script_fails_without_yes_in_real_mode(self):

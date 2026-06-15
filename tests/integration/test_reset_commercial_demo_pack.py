@@ -53,13 +53,13 @@ class TestResetCommercialDemoPackScript:
     def test_dry_run_is_default_mode(self):
         script = ROOT / "scripts" / "reset-commercial-demo-pack.sh"
         content = script.read_text()
-        assert 'DRY_RUN=true' in content
+        assert "DRY_RUN=true" in content
 
     def test_yes_required_for_real_reset(self):
         script = ROOT / "scripts" / "reset-commercial-demo-pack.sh"
         content = script.read_text()
-        assert '--yes' in content
-        assert 'CONFIRMED' in content
+        assert "--yes" in content
+        assert "CONFIRMED" in content
 
     def test_reset_filters_by_metadata_demo(self):
         script = ROOT / "scripts" / "reset-commercial-demo-pack.sh"
@@ -80,9 +80,13 @@ class TestResetCommercialDemoPackScript:
     def test_no_hardcoded_client_names_in_reset(self):
         script = ROOT / "scripts" / "reset-commercial-demo-pack.sh"
         content = script.read_text()
-        suspicious = ["Clinica Saude Total Demo", "Escritorio Juridico Oliveira Demo",
-                       "SuporteTech Helpdesk Demo", "Escola EducaMais Demo",
-                       "APILayer IA Provider Demo"]
+        suspicious = [
+            "Clinica Saude Total Demo",
+            "Escritorio Juridico Oliveira Demo",
+            "SuporteTech Helpdesk Demo",
+            "Escola EducaMais Demo",
+            "APILayer IA Provider Demo",
+        ]
         for name in suspicious:
             assert name not in content, f"Hardcoded client name found: {name}"
 
@@ -210,5 +214,6 @@ class TestResetIntegrationSafety:
         forbidden = ["DELETE FROM clients", "DROP TABLE", "TRUNCATE"]
         for fw in forbidden:
             if fw in reset_content:
-                assert "client_id" in reset_content or "WHERE" in reset_content, \
+                assert "client_id" in reset_content or "WHERE" in reset_content, (
                     f"Potential unsafe SQL in reset: {fw}"
+                )

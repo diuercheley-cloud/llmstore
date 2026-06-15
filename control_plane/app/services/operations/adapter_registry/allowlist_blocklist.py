@@ -1,4 +1,3 @@
-
 from app.models.operations.adapter_registry import (
     AdapterRegistryAllowlistEntry,
     AdapterRegistryBlocklistEntry,
@@ -13,10 +12,12 @@ class AdapterRegistryListService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def add_to_allowlist(self, entry: SignedAdapterRegistryEntry, reason: str) -> AdapterRegistryAllowlistEntry:
+    async def add_to_allowlist(
+        self, entry: SignedAdapterRegistryEntry, reason: str
+    ) -> AdapterRegistryAllowlistEntry:
         # Deterministic immutable_hash
         immutable_hash = sha256_hex(f"allow_{entry.client_id}_{entry.manifest_hash}")
-        
+
         item = AdapterRegistryAllowlistEntry(
             client_id=entry.client_id,
             adapter_name=entry.adapter_name,
@@ -29,10 +30,12 @@ class AdapterRegistryListService:
         await self.session.flush()
         return item
 
-    async def add_to_blocklist(self, entry: SignedAdapterRegistryEntry, reason: str) -> AdapterRegistryBlocklistEntry:
+    async def add_to_blocklist(
+        self, entry: SignedAdapterRegistryEntry, reason: str
+    ) -> AdapterRegistryBlocklistEntry:
         # Deterministic immutable_hash
         immutable_hash = sha256_hex(f"block_{entry.client_id}_{entry.manifest_hash}")
-        
+
         item = AdapterRegistryBlocklistEntry(
             client_id=entry.client_id,
             adapter_name=entry.adapter_name,
@@ -48,7 +51,7 @@ class AdapterRegistryListService:
     async def is_allowed(self, entry: SignedAdapterRegistryEntry) -> bool:
         stmt = select(AdapterRegistryAllowlistEntry).where(
             AdapterRegistryAllowlistEntry.client_id == entry.client_id,
-            AdapterRegistryAllowlistEntry.manifest_hash == entry.manifest_hash
+            AdapterRegistryAllowlistEntry.manifest_hash == entry.manifest_hash,
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none() is not None
@@ -56,7 +59,7 @@ class AdapterRegistryListService:
     async def is_blocked(self, entry: SignedAdapterRegistryEntry) -> bool:
         stmt = select(AdapterRegistryBlocklistEntry).where(
             AdapterRegistryBlocklistEntry.client_id == entry.client_id,
-            AdapterRegistryBlocklistEntry.manifest_hash == entry.manifest_hash
+            AdapterRegistryBlocklistEntry.manifest_hash == entry.manifest_hash,
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none() is not None

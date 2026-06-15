@@ -7,13 +7,12 @@ and execution proofs.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
 from app.api.dependencies import require_admin
 from app.core.config import get_settings
-from app.services.runtime_dependencies import get_db
 from app.models.commercial.commercial_cryptographic_receipts import CommercialInferenceReceipt
 from app.models.commercial.commercial_merkle_timelines import (
     CommercialExecutionProof,
@@ -33,6 +32,7 @@ from app.services.inference.merkle_timelines import (
     seal_timeline,
     validate_timeline_chain,
 )
+from app.services.runtime_dependencies import get_db
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -44,6 +44,7 @@ router = APIRouter(prefix="/admin/inference/proofs", tags=["admin", "execution-p
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _settings():
     return get_settings()
 
@@ -51,6 +52,7 @@ def _settings():
 # ---------------------------------------------------------------------------
 # Timeline endpoints
 # ---------------------------------------------------------------------------
+
 
 @router.get("/timelines", dependencies=[Depends(require_admin)])
 async def list_timelines(
@@ -99,7 +101,7 @@ async def build_timeline(
     body = await request.json()
     timeline_type = body.get("timeline_type", "inference_receipts")
     minutes = body.get("window_minutes", _settings().commercial_merkle_timeline_window_minutes)
-    end = datetime.now(timezone.utc)
+    end = datetime.now(UTC)
     start = end - timedelta(minutes=minutes)
 
     builders = {
@@ -135,19 +137,27 @@ async def seal_timeline_endpoint(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Seal a timeline, making it immutable and computing its final root."""
-    timeline = (await db.execute(
-        select(CommercialMerkleTimeline).where(CommercialMerkleTimeline.id == timeline_id)
-    )).scalar_one_or_none()
+    timeline = (
+        await db.execute(
+            select(CommercialMerkleTimeline).where(CommercialMerkleTimeline.id == timeline_id)
+        )
+    ).scalar_one_or_none()
     if not timeline:
         raise HTTPException(status_code=404, detail="Timeline not found")
     if timeline.status == "sealed":
         raise HTTPException(status_code=400, detail="Timeline already sealed")
 
-    leaves = (await db.execute(
-        select(CommercialMerkleLeaf).where(CommercialMerkleLeaf.timeline_id == timeline_id).order_by(
-            CommercialMerkleLeaf.leaf_index
+    leaves = (
+        (
+            await db.execute(
+                select(CommercialMerkleLeaf)
+                .where(CommercialMerkleLeaf.timeline_id == timeline_id)
+                .order_by(CommercialMerkleLeaf.leaf_index)
+            )
         )
-    )).scalars().all()
+        .scalars()
+        .all()
+    )
     leaf_hashes = [leaf.leaf_hash for leaf in leaves]
 
     try:
@@ -157,7 +167,7 @@ async def seal_timeline_endpoint(
 
     timeline.merkle_root = root
     timeline.status = "sealed"
-    timeline.sealed_at = datetime.now(timezone.utc)
+    timeline.sealed_at = datetime.now(UTC)
     timeline.timeline_hash = root  # update with the sealed root
     await db.commit()
     await db.refresh(timeline)
@@ -175,17 +185,25 @@ async def verify_timeline_endpoint(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Verify a timeline's chain integrity and detect tampering."""
-    timeline = (await db.execute(
-        select(CommercialMerkleTimeline).where(CommercialMerkleTimeline.id == timeline_id)
-    )).scalar_one_or_none()
+    timeline = (
+        await db.execute(
+            select(CommercialMerkleTimeline).where(CommercialMerkleTimeline.id == timeline_id)
+        )
+    ).scalar_one_or_none()
     if not timeline:
         raise HTTPException(status_code=404, detail="Timeline not found")
 
-    leaves = (await db.execute(
-        select(CommercialMerkleLeaf).where(CommercialMerkleLeaf.timeline_id == timeline_id).order_by(
-            CommercialMerkleLeaf.leaf_index
+    leaves = (
+        (
+            await db.execute(
+                select(CommercialMerkleLeaf)
+                .where(CommercialMerkleLeaf.timeline_id == timeline_id)
+                .order_by(CommercialMerkleLeaf.leaf_index)
+            )
         )
-    )).scalars().all()
+        .scalars()
+        .all()
+    )
     leaf_hashes = [leaf.leaf_hash for leaf in leaves]
 
     valid = validate_timeline_chain(
@@ -205,6 +223,7 @@ async def verify_timeline_endpoint(
 # ---------------------------------------------------------------------------
 # Proof endpoints
 # ---------------------------------------------------------------------------
+
 
 @router.get("/proofs", dependencies=[Depends(require_admin)])
 async def list_proofs(
@@ -247,27 +266,41 @@ async def generate_proof_endpoint(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Generate an execution proof for a given receipt."""
-    receipt = (await db.execute(
-        select(CommercialInferenceReceipt).where(CommercialInferenceReceipt.id == receipt_id)
-    )).scalar_one_or_none()
+    receipt = (
+        await db.execute(
+            select(CommercialInferenceReceipt).where(CommercialInferenceReceipt.id == receipt_id)
+        )
+    ).scalar_one_or_none()
     if not receipt:
         raise HTTPException(status_code=404, detail="Receipt not found")
 
     # Find or build a timeline for this receipt
-    timeline = (await db.execute(
-        select(CommercialMerkleTimeline)
-        .where(CommercialMerkleTimeline.timeline_type == "inference_receipts")
-        .where(CommercialMerkleTimeline.status == "sealed")
-        .order_by(CommercialMerkleTimeline.created_at.desc())
-    )).scalars().first()
+    timeline = (
+        (
+            await db.execute(
+                select(CommercialMerkleTimeline)
+                .where(CommercialMerkleTimeline.timeline_type == "inference_receipts")
+                .where(CommercialMerkleTimeline.status == "sealed")
+                .order_by(CommercialMerkleTimeline.created_at.desc())
+            )
+        )
+        .scalars()
+        .first()
+    )
     if not timeline:
         raise HTTPException(status_code=400, detail="No sealed timeline available")
 
-    leaves = (await db.execute(
-        select(CommercialMerkleLeaf).where(CommercialMerkleLeaf.timeline_id == timeline.id).order_by(
-            CommercialMerkleLeaf.leaf_index
+    leaves = (
+        (
+            await db.execute(
+                select(CommercialMerkleLeaf)
+                .where(CommercialMerkleLeaf.timeline_id == timeline.id)
+                .order_by(CommercialMerkleLeaf.leaf_index)
+            )
         )
-    )).scalars().all()
+        .scalars()
+        .all()
+    )
 
     proof = await generate_execution_proof(db, timeline, receipt, leaves)
     db.add(proof)
@@ -288,15 +321,17 @@ async def verify_proof_endpoint(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Verify an execution proof."""
-    proof = (await db.execute(
-        select(CommercialExecutionProof).where(CommercialExecutionProof.id == proof_id)
-    )).scalar_one_or_none()
+    proof = (
+        await db.execute(
+            select(CommercialExecutionProof).where(CommercialExecutionProof.id == proof_id)
+        )
+    ).scalar_one_or_none()
     if not proof:
         raise HTTPException(status_code=404, detail="Proof not found")
 
     valid = await verify_execution_proof(db, proof)
     proof.verification_status = "valid" if valid else "invalid"
-    proof.verified_at = datetime.now(timezone.utc)
+    proof.verified_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(proof)
 
@@ -314,9 +349,11 @@ async def export_proof_endpoint(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Export a tenant-safe execution proof."""
-    proof = (await db.execute(
-        select(CommercialExecutionProof).where(CommercialExecutionProof.id == proof_id)
-    )).scalar_one_or_none()
+    proof = (
+        await db.execute(
+            select(CommercialExecutionProof).where(CommercialExecutionProof.id == proof_id)
+        )
+    ).scalar_one_or_none()
     if not proof:
         raise HTTPException(status_code=404, detail="Proof not found")
 

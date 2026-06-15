@@ -1,12 +1,13 @@
 import logging
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.models.agents.agents import AgentDefinition
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
+
 
 class AssistantRegistry:
     def __init__(self, db: AsyncSession):
@@ -18,9 +19,9 @@ class AssistantRegistry:
         name: str,
         model_id: str,
         instructions: str,
-        description: Optional[str] = None,
-        tools: Optional[List[Dict[str, Any]]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        description: str | None = None,
+        tools: list[dict[str, Any]] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> AgentDefinition:
         assistant = AgentDefinition(
             id=uuid.uuid4(),
@@ -32,23 +33,22 @@ class AssistantRegistry:
             allowed_tools=tools,
             owner="assistants_api",
             version="1.0.0",
-            status="active"
+            status="active",
         )
         self.db.add(assistant)
         await self.db.flush()
         return assistant
 
-    async def get_assistant(self, tenant_id: str, assistant_id: uuid.UUID) -> Optional[AgentDefinition]:
+    async def get_assistant(
+        self, tenant_id: str, assistant_id: uuid.UUID
+    ) -> AgentDefinition | None:
         stmt = select(AgentDefinition).where(
-            AgentDefinition.id == assistant_id,
-            AgentDefinition.tenant_id == tenant_id
+            AgentDefinition.id == assistant_id, AgentDefinition.tenant_id == tenant_id
         )
         res = await self.db.execute(stmt)
         return res.scalar_one_or_none()
 
-    async def list_assistants(self, tenant_id: str, limit: int = 20) -> List[AgentDefinition]:
-        stmt = select(AgentDefinition).where(
-            AgentDefinition.tenant_id == tenant_id
-        ).limit(limit)
+    async def list_assistants(self, tenant_id: str, limit: int = 20) -> list[AgentDefinition]:
+        stmt = select(AgentDefinition).where(AgentDefinition.tenant_id == tenant_id).limit(limit)
         res = await self.db.execute(stmt)
         return list(res.scalars().all())

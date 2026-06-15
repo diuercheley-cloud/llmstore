@@ -16,7 +16,6 @@ class EvalSchemaError(EvalLoadError):
 
 
 class EvalLoader:
-
     @staticmethod
     def load(path: str) -> EvalSuite:
         if not os.path.exists(path):

@@ -4,9 +4,10 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from app.services.runtime_dependencies import get_db_session
 from app.models.commercial.commercial_revenue_alert_delivery import CommercialRevenueAlertDelivery
-from app.models.commercial.commercial_revenue_escalation_policy import CommercialRevenueEscalationPolicy
+from app.models.commercial.commercial_revenue_escalation_policy import (
+    CommercialRevenueEscalationPolicy,
+)
 from app.services.auth import require_admin
 from app.services.notifications.revenue_escalations import (
     evaluate_escalation_policies,
@@ -14,6 +15,7 @@ from app.services.notifications.revenue_escalations import (
     sanitize_alert_payload,
     summarize_deliveries,
 )
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import desc, select
@@ -31,10 +33,14 @@ class RevenueEscalationPolicyUpsert(BaseModel):
     enabled: bool = True
     severity_threshold: str = "high"
     trigger_types_json: list[str] = Field(default_factory=list)
-    allowed_delivery_types_json: list[str] = Field(default_factory=lambda: ["webhook", "slack", "pagerduty", "email"])
+    allowed_delivery_types_json: list[str] = Field(
+        default_factory=lambda: ["webhook", "slack", "pagerduty", "email"]
+    )
     cooldown_minutes: int = Field(default=30, ge=0, le=10080)
     max_retries: int = Field(default=3, ge=0, le=10)
-    escalation_order_json: list[str] = Field(default_factory=lambda: ["webhook", "slack", "pagerduty", "email"])
+    escalation_order_json: list[str] = Field(
+        default_factory=lambda: ["webhook", "slack", "pagerduty", "email"]
+    )
     metadata_json: dict[str, Any] | None = None
 
 
@@ -54,7 +60,11 @@ async def list_deliveries(
     limit: int = Query(default=50, ge=1, le=200),
     session: AsyncSession = Depends(get_db_session),
 ):
-    stmt = select(CommercialRevenueAlertDelivery).order_by(desc(CommercialRevenueAlertDelivery.created_at)).limit(limit)
+    stmt = (
+        select(CommercialRevenueAlertDelivery)
+        .order_by(desc(CommercialRevenueAlertDelivery.created_at))
+        .limit(limit)
+    )
     if status:
         stmt = stmt.where(CommercialRevenueAlertDelivery.status == status)
     result = await session.execute(stmt)
@@ -63,12 +73,18 @@ async def list_deliveries(
 
 @router.get("/policies")
 async def list_policies(session: AsyncSession = Depends(get_db_session)):
-    result = await session.execute(select(CommercialRevenueEscalationPolicy).order_by(desc(CommercialRevenueEscalationPolicy.created_at)))
+    result = await session.execute(
+        select(CommercialRevenueEscalationPolicy).order_by(
+            desc(CommercialRevenueEscalationPolicy.created_at)
+        )
+    )
     return result.scalars().all()
 
 
 @router.post("/test")
-async def send_test(payload: RevenueEscalationTestRequest, session: AsyncSession = Depends(get_db_session)):
+async def send_test(
+    payload: RevenueEscalationTestRequest, session: AsyncSession = Depends(get_db_session)
+):
     return await evaluate_escalation_policies(
         session,
         source_type=payload.source_type,
@@ -88,12 +104,20 @@ async def retry_delivery(delivery_id: uuid.UUID, session: AsyncSession = Depends
         return await retry_alert_delivery(session, delivery_id)
     except ValueError as exc:
         detail = str(exc)
-        status_code = 404 if detail == "delivery_not_found" else 409 if detail == "retry_backoff_active" else 400
+        status_code = (
+            404
+            if detail == "delivery_not_found"
+            else 409
+            if detail == "retry_backoff_active"
+            else 400
+        )
         raise HTTPException(status_code=status_code, detail=detail) from exc
 
 
 @router.post("/policies", status_code=201)
-async def create_policy(payload: RevenueEscalationPolicyUpsert, session: AsyncSession = Depends(get_db_session)):
+async def create_policy(
+    payload: RevenueEscalationPolicyUpsert, session: AsyncSession = Depends(get_db_session)
+):
     policy = CommercialRevenueEscalationPolicy(
         **{
             **payload.model_dump(),
@@ -107,7 +131,11 @@ async def create_policy(payload: RevenueEscalationPolicyUpsert, session: AsyncSe
 
 
 @router.patch("/policies/{policy_id}")
-async def patch_policy(policy_id: uuid.UUID, payload: RevenueEscalationPolicyUpsert, session: AsyncSession = Depends(get_db_session)):
+async def patch_policy(
+    policy_id: uuid.UUID,
+    payload: RevenueEscalationPolicyUpsert,
+    session: AsyncSession = Depends(get_db_session),
+):
     policy = await session.get(CommercialRevenueEscalationPolicy, policy_id)
     if policy is None:
         raise HTTPException(status_code=404, detail="policy_not_found")

@@ -22,7 +22,7 @@ def test_reporter_generation(tmp_path):
     )
     filename = reporter.generate_summary(result, trace=[{"step": 1, "output": "ok"}])
     assert os.path.exists(os.path.join(output_dir, filename))
-    with open(os.path.join(output_dir, filename), "r") as f:
+    with open(os.path.join(output_dir, filename)) as f:
         data = f.read()
         assert '"events"' in data
         assert '"trace_id": "trace-123"' in data
@@ -38,7 +38,7 @@ def test_reporter_stub_warning(tmp_path):
 
     # Test JSON with stub
     filename = reporter.generate_summary(result, trace=[], policy_info={"provider": "stub"})
-    with open(os.path.join(output_dir, filename), "r") as f:
+    with open(os.path.join(output_dir, filename)) as f:
         data = f.read()
         assert "stub" in data
         assert "warning" in data
@@ -68,7 +68,12 @@ def test_reporter_includes_parsed_summary(tmp_path):
                     "parsed": {
                         "kind": "pytest",
                         "summary": "pytest reported 1 failure(s)",
-                        "failures": [{"location": "tests/test_demo.py::test_nope", "message": "AssertionError"}],
+                        "failures": [
+                            {
+                                "location": "tests/test_demo.py::test_nope",
+                                "message": "AssertionError",
+                            }
+                        ],
                         "error_count": 1,
                         "warning_count": 0,
                     }

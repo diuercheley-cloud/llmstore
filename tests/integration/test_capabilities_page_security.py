@@ -21,9 +21,16 @@ def test_no_real_api_keys():
                 safe = any(
                     marker in m
                     for marker in [
-                        "masked", "example", "test", "changeme",
-                        "sk-demo-xxxx", "sk-example", "admin-token-123",
-                        "test-admin-token", "sk-demo", "xxxx",
+                        "masked",
+                        "example",
+                        "test",
+                        "changeme",
+                        "sk-demo-xxxx",
+                        "sk-example",
+                        "admin-token-123",
+                        "test-admin-token",
+                        "sk-demo",
+                        "xxxx",
                     ]
                 )
                 if not safe:
@@ -54,13 +61,20 @@ def test_psp_pix_not_promised_as_real():
     lines_with_psp = [l for l in content.split("\n") if "PSP" in l.upper() or "PIX" in l.upper()]
     for line in lines_with_psp:
         line_lower = line.lower()
-        assert any(word in line_lower for word in ["nao", "não", "not", "sem", "desabilitado", "mock", "offline", "future"]), \
-            f"PSP/PIX may be falsely promised: {line.strip()}"
+        assert any(
+            word in line_lower
+            for word in ["nao", "não", "not", "sem", "desabilitado", "mock", "offline", "future"]
+        ), f"PSP/PIX may be falsely promised: {line.strip()}"
 
 
 def test_tools_not_promised():
     content = HTML_FILE.read_text()
-    assert "Parcial" in content or "Nao suportado" in content or "partial" in content.lower() or "unsupported" in content.lower()
+    assert (
+        "Parcial" in content
+        or "Nao suportado" in content
+        or "partial" in content.lower()
+        or "unsupported" in content.lower()
+    )
 
 
 def test_no_absolute_security_guarantee():

@@ -15,17 +15,19 @@ def sanitize_and_check_injection(text: str) -> tuple[str, bool]:
         r"system\s+prompt\s+override",
         r"override\s+instructions",
     ]
-    
+
     is_untrusted = False
     text_lower = text.lower()
     for pattern in injection_patterns:
         if re.search(pattern, text_lower):
             is_untrusted = True
             break
-            
+
     sanitized = text
     if is_untrusted:
-        warning_banner = "\n[WARNING: UNTRUSTED CONTENT DETECTED - POTENTIAL PROMPT INJECTION SHIELD ACTIVE]\n"
+        warning_banner = (
+            "\n[WARNING: UNTRUSTED CONTENT DETECTED - POTENTIAL PROMPT INJECTION SHIELD ACTIVE]\n"
+        )
         sanitized = warning_banner + text + warning_banner
-        
+
     return sanitized, is_untrusted

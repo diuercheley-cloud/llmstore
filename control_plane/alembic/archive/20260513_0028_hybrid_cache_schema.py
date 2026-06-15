@@ -18,12 +18,23 @@ depends_on = None
 def upgrade() -> None:
     op.alter_column("response_cache", "endpoint", new_column_name="endpoint_type")
 
-    op.add_column("response_cache", sa.Column("client_id", postgresql.UUID(as_uuid=True), nullable=True))
+    op.add_column(
+        "response_cache", sa.Column("client_id", postgresql.UUID(as_uuid=True), nullable=True)
+    )
     op.add_column("response_cache", sa.Column("provider", sa.String(length=64), nullable=True))
-    op.add_column("response_cache", sa.Column("normalized_prompt_hash", sa.String(length=64), nullable=True))
-    op.add_column("response_cache", sa.Column("prompt_fingerprint", sa.String(length=64), nullable=True))
-    op.add_column("response_cache", sa.Column("semantic_embedding_id", sa.String(length=64), nullable=True))
-    op.add_column("response_cache", sa.Column("ttl_seconds", sa.Integer(), nullable=False, server_default="3600"))
+    op.add_column(
+        "response_cache", sa.Column("normalized_prompt_hash", sa.String(length=64), nullable=True)
+    )
+    op.add_column(
+        "response_cache", sa.Column("prompt_fingerprint", sa.String(length=64), nullable=True)
+    )
+    op.add_column(
+        "response_cache", sa.Column("semantic_embedding_id", sa.String(length=64), nullable=True)
+    )
+    op.add_column(
+        "response_cache",
+        sa.Column("ttl_seconds", sa.Integer(), nullable=False, server_default="3600"),
+    )
     op.add_column("response_cache", sa.Column("metadata_json", sa.Text(), nullable=True))
 
     op.create_foreign_key(
@@ -44,10 +55,27 @@ def upgrade() -> None:
 
     op.drop_index("ix_response_cache_endpoint", table_name="response_cache")
     op.create_index("ix_response_cache_client_id", "response_cache", ["client_id"], unique=False)
-    op.create_index("ix_response_cache_endpoint_type", "response_cache", ["endpoint_type"], unique=False)
-    op.create_index("ix_response_cache_normalized_prompt_hash", "response_cache", ["normalized_prompt_hash"], unique=False)
-    op.create_index("ix_response_cache_prompt_fingerprint", "response_cache", ["prompt_fingerprint"], unique=False)
-    op.create_index("ix_response_cache_semantic_embedding_id", "response_cache", ["semantic_embedding_id"], unique=False)
+    op.create_index(
+        "ix_response_cache_endpoint_type", "response_cache", ["endpoint_type"], unique=False
+    )
+    op.create_index(
+        "ix_response_cache_normalized_prompt_hash",
+        "response_cache",
+        ["normalized_prompt_hash"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_response_cache_prompt_fingerprint",
+        "response_cache",
+        ["prompt_fingerprint"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_response_cache_semantic_embedding_id",
+        "response_cache",
+        ["semantic_embedding_id"],
+        unique=False,
+    )
 
     op.create_table(
         "semantic_cache_entries",
@@ -73,19 +101,53 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("client_id", "endpoint_type", "model", "semantic_embedding_id", name="uq_semantic_cache_lookup"),
+        sa.UniqueConstraint(
+            "client_id",
+            "endpoint_type",
+            "model",
+            "semantic_embedding_id",
+            name="uq_semantic_cache_lookup",
+        ),
     )
-    op.create_index("ix_semantic_cache_entries_client_id", "semantic_cache_entries", ["client_id"], unique=False)
-    op.create_index("ix_semantic_cache_entries_endpoint_type", "semantic_cache_entries", ["endpoint_type"], unique=False)
-    op.create_index("ix_semantic_cache_entries_expires_at", "semantic_cache_entries", ["expires_at"], unique=False)
-    op.create_index("ix_semantic_cache_entries_model", "semantic_cache_entries", ["model"], unique=False)
-    op.create_index("ix_semantic_cache_entries_normalized_prompt_hash", "semantic_cache_entries", ["normalized_prompt_hash"], unique=False)
-    op.create_index("ix_semantic_cache_entries_semantic_embedding_id", "semantic_cache_entries", ["semantic_embedding_id"], unique=False)
+    op.create_index(
+        "ix_semantic_cache_entries_client_id", "semantic_cache_entries", ["client_id"], unique=False
+    )
+    op.create_index(
+        "ix_semantic_cache_entries_endpoint_type",
+        "semantic_cache_entries",
+        ["endpoint_type"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_semantic_cache_entries_expires_at",
+        "semantic_cache_entries",
+        ["expires_at"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_semantic_cache_entries_model", "semantic_cache_entries", ["model"], unique=False
+    )
+    op.create_index(
+        "ix_semantic_cache_entries_normalized_prompt_hash",
+        "semantic_cache_entries",
+        ["normalized_prompt_hash"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_semantic_cache_entries_semantic_embedding_id",
+        "semantic_cache_entries",
+        ["semantic_embedding_id"],
+        unique=False,
+    )
 
 
 def downgrade() -> None:
-    op.drop_index("ix_semantic_cache_entries_semantic_embedding_id", table_name="semantic_cache_entries")
-    op.drop_index("ix_semantic_cache_entries_normalized_prompt_hash", table_name="semantic_cache_entries")
+    op.drop_index(
+        "ix_semantic_cache_entries_semantic_embedding_id", table_name="semantic_cache_entries"
+    )
+    op.drop_index(
+        "ix_semantic_cache_entries_normalized_prompt_hash", table_name="semantic_cache_entries"
+    )
     op.drop_index("ix_semantic_cache_entries_model", table_name="semantic_cache_entries")
     op.drop_index("ix_semantic_cache_entries_expires_at", table_name="semantic_cache_entries")
     op.drop_index("ix_semantic_cache_entries_endpoint_type", table_name="semantic_cache_entries")

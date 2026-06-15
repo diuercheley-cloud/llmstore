@@ -81,7 +81,11 @@ async def register_cluster(
     timestamp = utc_now()
 
     existing = (
-        await db.execute(select(CommercialClusterRegistry).where(CommercialClusterRegistry.cluster_id == normalized_cluster_id))
+        await db.execute(
+            select(CommercialClusterRegistry).where(
+                CommercialClusterRegistry.cluster_id == normalized_cluster_id
+            )
+        )
     ).scalar_one_or_none()
     if existing is None:
         existing = CommercialClusterRegistry(
@@ -100,7 +104,9 @@ async def register_cluster(
         )
         db.add(existing)
     else:
-        existing.name = (name or existing.name or normalized_cluster_id).strip() or normalized_cluster_id
+        existing.name = (
+            name or existing.name or normalized_cluster_id
+        ).strip() or normalized_cluster_id
         existing.region = region if region is not None else existing.region
         existing.environment = normalized_environment
         existing.status = normalized_status
@@ -147,7 +153,13 @@ async def update_cluster_status(
     last_seen_at=None,
     metadata_json: Any = None,
 ) -> CommercialClusterRegistry | None:
-    row = (await db.execute(select(CommercialClusterRegistry).where(CommercialClusterRegistry.cluster_id == cluster_id))).scalar_one_or_none()
+    row = (
+        await db.execute(
+            select(CommercialClusterRegistry).where(
+                CommercialClusterRegistry.cluster_id == cluster_id
+            )
+        )
+    ).scalar_one_or_none()
     if row is None:
         return None
     row.status = status if status in VALID_CLUSTER_STATUSES else row.status
@@ -159,8 +171,12 @@ async def update_cluster_status(
     return row
 
 
-async def mark_cluster_offline(db: AsyncSession, *, cluster_id: str) -> CommercialClusterRegistry | None:
-    return await update_cluster_status(db, cluster_id=cluster_id, status="offline", last_seen_at=utc_now())
+async def mark_cluster_offline(
+    db: AsyncSession, *, cluster_id: str
+) -> CommercialClusterRegistry | None:
+    return await update_cluster_status(
+        db, cluster_id=cluster_id, status="offline", last_seen_at=utc_now()
+    )
 
 
 async def list_clusters(
@@ -170,7 +186,9 @@ async def list_clusters(
     settings: Settings | None = None,
 ) -> list[dict[str, Any]]:
     await ensure_local_cluster_registered(db, settings=settings)
-    stmt = select(CommercialClusterRegistry).order_by(CommercialClusterRegistry.priority.asc(), CommercialClusterRegistry.cluster_id.asc())
+    stmt = select(CommercialClusterRegistry).order_by(
+        CommercialClusterRegistry.priority.asc(), CommercialClusterRegistry.cluster_id.asc()
+    )
     if not include_disabled:
         stmt = stmt.where(CommercialClusterRegistry.status != "disabled")
     rows = (await db.execute(stmt)).scalars().all()

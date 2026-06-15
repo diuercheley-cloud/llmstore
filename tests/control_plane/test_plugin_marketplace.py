@@ -43,10 +43,13 @@ class MockResult:
         class MockScalars:
             def __init__(self, items):
                 self.items = items
+
             def first(self):
                 return self.items[0] if self.items else None
+
             def all(self):
                 return self.items
+
         return MockScalars(self.data)
 
 
@@ -184,7 +187,9 @@ async def test_install_valid_plugin(db_session, settings):
 @pytest.mark.asyncio
 async def test_install_invalid_checksum(db_session, settings):
     manifest = dict(VALID_MANIFEST)
-    manifest["checksums"] = {"archive": "0000000000000000000000000000000000000000000000000000000000000000"}
+    manifest["checksums"] = {
+        "archive": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
     plugin_zip = _make_plugin_zip(manifest)
     service = PluginMarketplaceService(db_session)
     with pytest.raises(ValueError, match="Archive checksum mismatch"):
@@ -298,7 +303,9 @@ async def test_plugin_reviews(db_session, settings):
     entry = entries[0]
 
     review = await service.add_review(
-        entry.id, version="1.0.0", rating=5,
+        entry.id,
+        version="1.0.0",
+        rating=5,
         review_text="Great plugin!",
     )
     assert review.rating == 5

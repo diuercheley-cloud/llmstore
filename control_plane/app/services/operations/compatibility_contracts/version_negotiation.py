@@ -40,12 +40,17 @@ class VersionNegotiationService:
         if not replay_verifiable:
             return False
         expected = self.negotiate(source, target)
-        return expected["negotiated_version"] == negotiated and expected["negotiation_status"] == self._get(session, "negotiation_status")
+        return expected["negotiated_version"] == negotiated and expected[
+            "negotiation_status"
+        ] == self._get(session, "negotiation_status")
 
     def resolve_conflict(self, session: Any) -> dict[str, Any]:
         if self._get(session, "negotiation_status") != "conflicted":
             return {"resolution_status": "not_required", "reason": "session already resolved"}
-        return {"resolution_status": "rejected", "reason": "no deterministic compatible version available"}
+        return {
+            "resolution_status": "rejected",
+            "reason": "no deterministic compatible version available",
+        }
 
     def explain_negotiation(self, session: Any) -> str:
         return (

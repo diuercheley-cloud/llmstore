@@ -1,6 +1,6 @@
 import hashlib
 import uuid
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 from app.core.config import get_settings
 from app.models.commercial.commercial_cluster_registry import CommercialClusterRegistry
@@ -12,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 cfg = get_settings()
+
 
 class CommercialGlobalTrafficShifter:
     def __init__(self, db: AsyncSession):
@@ -25,7 +26,16 @@ class CommercialGlobalTrafficShifter:
         val = int.from_bytes(hash_bytes[:4], byteorder="little")
         return (val % 100) + 1
 
-    async def create_policy(self, name: str, source_cluster: str, target_cluster: str, percent: int, mode: str, max_percent: int = None, **kwargs) -> CommercialGlobalTrafficPolicy:
+    async def create_policy(
+        self,
+        name: str,
+        source_cluster: str,
+        target_cluster: str,
+        percent: int,
+        mode: str,
+        max_percent: int = None,
+        **kwargs,
+    ) -> CommercialGlobalTrafficPolicy:
         if max_percent is None:
             max_percent = cfg.commercial_global_traffic_shifting_max_canary_percent
 
@@ -38,12 +48,12 @@ class CommercialGlobalTrafficShifter:
             traffic_percent=percent,
             max_traffic_percent=max_percent,
             mode=mode,
-            status="active" if mode == "canary" else "pending", # Or whatever logic
+            status="active" if mode == "canary" else "pending",  # Or whatever logic
             tenant_id=kwargs.get("tenant_id"),
             provider=kwargs.get("provider"),
             model=kwargs.get("model"),
             region=kwargs.get("region"),
-            created_by=kwargs.get("created_by")
+            created_by=kwargs.get("created_by"),
         )
         if mode == "canary":
             policy.activated_at = datetime.now(UTC)
@@ -53,8 +63,14 @@ class CommercialGlobalTrafficShifter:
         await self.db.refresh(policy)
         return policy
 
-    async def pause_policy(self, policy_id: str, reason: str = "Paused by admin") -> CommercialGlobalTrafficPolicy:
-        res = await self.db.execute(select(CommercialGlobalTrafficPolicy).where(CommercialGlobalTrafficPolicy.id == policy_id))
+    async def pause_policy(
+        self, policy_id: str, reason: str = "Paused by admin"
+    ) -> CommercialGlobalTrafficPolicy:
+        res = await self.db.execute(
+            select(CommercialGlobalTrafficPolicy).where(
+                CommercialGlobalTrafficPolicy.id == policy_id
+            )
+        )
         policy = res.scalar_one_or_none()
         if policy and policy.status == "active":
             policy.status = "paused"
@@ -63,8 +79,14 @@ class CommercialGlobalTrafficShifter:
             await self.db.refresh(policy)
         return policy
 
-    async def rollback_policy(self, policy_id: str, reason: str = "Manual rollback") -> CommercialGlobalTrafficPolicy:
-        res = await self.db.execute(select(CommercialGlobalTrafficPolicy).where(CommercialGlobalTrafficPolicy.id == policy_id))
+    async def rollback_policy(
+        self, policy_id: str, reason: str = "Manual rollback"
+    ) -> CommercialGlobalTrafficPolicy:
+        res = await self.db.execute(
+            select(CommercialGlobalTrafficPolicy).where(
+                CommercialGlobalTrafficPolicy.id == policy_id
+            )
+        )
         policy = res.scalar_one_or_none()
         if policy and policy.status in ["active", "paused", "pending"]:
             policy.status = "rolled_back"
@@ -76,22 +98,28 @@ class CommercialGlobalTrafficShifter:
         return policy
 
     async def check_cluster_health(self, cluster_id: str) -> bool:
-        res = await self.db.execute(select(CommercialClusterRegistry).where(CommercialClusterRegistry.cluster_id == cluster_id))
+        res = await self.db.execute(
+            select(CommercialClusterRegistry).where(
+                CommercialClusterRegistry.cluster_id == cluster_id
+            )
+        )
         cluster = res.scalar_one_or_none()
         if not cluster:
             return False
         return cluster.status == "active"
 
-    async def decide_cluster_for_request(self, request_payload: dict, original_cluster_id: str = None) -> CommercialGlobalTrafficDecision:
+    async def decide_cluster_for_request(
+        self, request_payload: dict, original_cluster_id: str = None
+    ) -> CommercialGlobalTrafficDecision:
         original_cluster_id = original_cluster_id or cfg.commercial_cluster_id
-        
+
         tenant_id = request_payload.get("tenant_id")
         provider = request_payload.get("provider")
         model = request_payload.get("model")
         correlation_id = request_payload.get("correlation_id", "")
         request_id = request_payload.get("request_id", "")
         client_id = request_payload.get("client_id", "")
-        
+
         # Default stay_local
         decision = CommercialGlobalTrafficDecision(
             id=str(uuid.uuid4()),
@@ -106,7 +134,7 @@ class CommercialGlobalTrafficShifter:
             bucket=0,
             traffic_percent=0,
             reason="no_active_policy",
-            created_at=datetime.now(UTC)
+            created_at=datetime.now(UTC),
         )
 
         if not cfg.commercial_global_traffic_shifting_enabled:
@@ -117,11 +145,11 @@ class CommercialGlobalTrafficShifter:
         query = select(CommercialGlobalTrafficPolicy).where(
             CommercialGlobalTrafficPolicy.enabled == True,
             CommercialGlobalTrafficPolicy.status.in_(["active", "pending"]),
-            CommercialGlobalTrafficPolicy.source_cluster_id == original_cluster_id
+            CommercialGlobalTrafficPolicy.source_cluster_id == original_cluster_id,
         )
         res = await self.db.execute(query)
         policies = res.scalars().all()
-        
+
         # Filter policies by match
         matched_policy = None
         for p in policies:
@@ -134,7 +162,7 @@ class CommercialGlobalTrafficShifter:
             # Found a match! Priority logic could be complex, just pick first for now
             matched_policy = p
             break
-            
+
         if not matched_policy:
             return decision
 
@@ -178,8 +206,12 @@ class CommercialGlobalTrafficShifter:
         """Checks policies and rolls them back if analytics show errors, high latency, or low margin."""
         if not cfg.commercial_global_traffic_shifting_auto_rollback:
             return
-        
-        res = await self.db.execute(select(CommercialGlobalTrafficPolicy).where(CommercialGlobalTrafficPolicy.status == "active"))
+
+        res = await self.db.execute(
+            select(CommercialGlobalTrafficPolicy).where(
+                CommercialGlobalTrafficPolicy.status == "active"
+            )
+        )
         policies = res.scalars().all()
         for p in policies:
             pass

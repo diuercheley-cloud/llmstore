@@ -13,4 +13,3 @@ def estimate_prompt_tokens(messages: list[dict] | None = None, prompt: str | Non
     for message in messages:
         total += estimate_tokens_from_text(str(message.get("content", ""))) + 4
     return total
-

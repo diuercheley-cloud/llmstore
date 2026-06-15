@@ -1,8 +1,9 @@
-import os
-import yaml
 import pytest
-from scripts.llm_harness.mas.registry import AgentRegistry
+import yaml
+
 from scripts.llm_harness.config import HarnessConfig
+from scripts.llm_harness.mas.registry import AgentRegistry
+
 
 class Args:
     def __init__(self, **kwargs):
@@ -59,22 +60,17 @@ class Args:
         self.model_profile = None
         self.fallback_model_profile = None
         self.allow_cloud_models = None
-        
+
         for k, v in kwargs.items():
             setattr(self, k, v)
+
 
 @pytest.fixture
 def sample_registry_yaml(tmp_path):
     registry_data = {
         "agents": {
-            "alice": {
-                "role": "Developer",
-                "prompt": "You are Alice"
-            },
-            "bob": {
-                "role": "Tester",
-                "prompt": "You are Bob"
-            }
+            "alice": {"role": "Developer", "prompt": "You are Alice"},
+            "bob": {"role": "Tester", "prompt": "You are Bob"},
         },
         "teams": {
             "dream_team": {
@@ -83,19 +79,20 @@ def sample_registry_yaml(tmp_path):
                 "topology": "supervisor",
                 "members": [
                     {"agent_id": "alice", "role": "coder"},
-                    {"agent_id": "bob", "role": "qa"}
-                ]
+                    {"agent_id": "bob", "role": "qa"},
+                ],
             }
         },
         "roles": {
             "coder": {"name": "Coder", "description": "Codes"},
-            "qa": {"name": "QA", "description": "Tests"}
-        }
+            "qa": {"name": "QA", "description": "Tests"},
+        },
     }
     registry_file = tmp_path / "agent-registry.yaml"
     with open(registry_file, "w") as f:
         yaml.dump(registry_data, f)
     return str(registry_file)
+
 
 def test_load_registry_with_teams(sample_registry_yaml):
     registry = AgentRegistry.load(sample_registry_yaml)
@@ -104,9 +101,11 @@ def test_load_registry_with_teams(sample_registry_yaml):
     assert len(registry.teams["dream_team"].members) == 2
     assert registry.teams["dream_team"].members[0].agent_id == "alice"
 
+
 def test_validate_registry_success(sample_registry_yaml):
     registry = AgentRegistry.load(sample_registry_yaml)
     assert registry.validate() is True
+
 
 def test_validate_registry_missing_agent(tmp_path):
     registry_data = {
@@ -115,42 +114,42 @@ def test_validate_registry_missing_agent(tmp_path):
             "bad_team": {
                 "name": "Bad",
                 "description": "...",
-                "members": [{"agent_id": "missing", "role": "coder"}]
+                "members": [{"agent_id": "missing", "role": "coder"}],
             }
-        }
+        },
     }
     registry_file = tmp_path / "bad-registry.yaml"
     with open(registry_file, "w") as f:
         yaml.dump(registry_data, f)
-    
+
     registry = AgentRegistry.load(str(registry_file))
     with pytest.raises(ValueError, match="not found in agents"):
         registry.validate()
+
 
 def test_config_loading_with_teams():
     config = HarnessConfig(agent_mode="team", default_team="dream_team")
     assert config.agent_mode == "team"
     assert config.default_team == "dream_team"
 
+
 def test_cli_teams_list(sample_registry_yaml):
-    from scripts.llm_harness.cli_commands import run_teams_command
     import asyncio
 
-    args = Args(
-        agent_registry_file=sample_registry_yaml,
-        teams_command="list"
-    )
-    
+    from scripts.llm_harness.cli_commands import run_teams_command
+
+    args = Args(agent_registry_file=sample_registry_yaml, teams_command="list")
+
     asyncio.run(run_teams_command(args))
 
+
 def test_cli_teams_inspect(sample_registry_yaml):
-    from scripts.llm_harness.cli_commands import run_teams_command
     import asyncio
 
+    from scripts.llm_harness.cli_commands import run_teams_command
+
     args = Args(
-        agent_registry_file=sample_registry_yaml,
-        teams_command="inspect",
-        team_name="dream_team"
+        agent_registry_file=sample_registry_yaml, teams_command="inspect", team_name="dream_team"
     )
-    
+
     asyncio.run(run_teams_command(args))

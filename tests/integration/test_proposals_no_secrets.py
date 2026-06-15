@@ -16,10 +16,10 @@ SCRIPT_FILES = [
 ]
 
 SECRET_REGEX_PATTERNS = [
-    'sk-[a-zA-Z0-9]',
-    'ghp_[a-zA-Z0-9]',
-    '-----BEGIN [A-Z ]',
-    'ADMIN_TOKEN=',
+    "sk-[a-zA-Z0-9]",
+    "ghp_[a-zA-Z0-9]",
+    "-----BEGIN [A-Z ]",
+    "ADMIN_TOKEN=",
 ]
 
 
@@ -27,22 +27,25 @@ def _is_secret_regex_line(line):
     """Check if a line is a regex pattern definition, not an actual secret."""
     stripped = line.strip()
     # Lines with character classes like [A-Z] are regex patterns, not real secrets
-    if re.search(r'\[[A-Za-z]', stripped):
+    if re.search(r"\[[A-Za-z]", stripped):
         return True
     # Lines with escaped backslash sequences are regex patterns
-    if re.search(r'\\\\\{|\\\\\(|\\\\\[', stripped):
+    if re.search(r"\\\\\{|\\\\\(|\\\\\[", stripped):
         return True
     # Lines inside SECRET_PATTERNS array
     if any(pat in stripped for pat in SECRET_REGEX_PATTERNS):
-        if 'regex' in stripped.lower() or 'pattern' in stripped.lower() or 'SECRET_PATTERNS' in line:
+        if (
+            "regex" in stripped.lower()
+            or "pattern" in stripped.lower()
+            or "SECRET_PATTERNS" in line
+        ):
             return True
-        if re.search(r'\\\{|\\\(|\\\[', stripped):
+        if re.search(r"\\\{|\\\(|\\\[", stripped):
             return True
     return False
 
 
 class TestProposalFilesNoSecrets:
-
     def test_no_real_api_keys(self):
         """Check that no real OpenAI-style API keys are present."""
         pattern = re.compile(r"sk-[a-zA-Z0-9]{32,}")
@@ -50,14 +53,15 @@ class TestProposalFilesNoSecrets:
             f = ROOT / filepath
             if not f.exists():
                 continue
-            lines = f.read_text().split('\n')
+            lines = f.read_text().split("\n")
             for lineno, line in enumerate(lines, 1):
                 if _is_secret_regex_line(line):
                     continue
                 matches = pattern.findall(line)
                 for key in matches:
-                    assert key.startswith("sk-demo-") or key.startswith("sk-local-"), \
+                    assert key.startswith("sk-demo-") or key.startswith("sk-local-"), (
                         f"Potential real API key in {filepath}:{lineno}: {key[:20]}..."
+                    )
 
     def test_no_private_keys(self):
         """Check for PEM private key markers."""
@@ -65,7 +69,7 @@ class TestProposalFilesNoSecrets:
             f = ROOT / filepath
             if not f.exists():
                 continue
-            lines = f.read_text().split('\n')
+            lines = f.read_text().split("\n")
             for lineno, line in enumerate(lines, 1):
                 if _is_secret_regex_line(line):
                     continue
@@ -77,7 +81,7 @@ class TestProposalFilesNoSecrets:
             f = ROOT / filepath
             if not f.exists():
                 continue
-            lines = f.read_text().split('\n')
+            lines = f.read_text().split("\n")
             for lineno, line in enumerate(lines, 1):
                 if _is_secret_regex_line(line):
                     continue
@@ -90,8 +94,7 @@ class TestProposalFilesNoSecrets:
             if not f.exists():
                 continue
             content = f.read_text()
-            assert "ADMIN_TOKEN=" not in content, \
-                f"{filepath} may expose env secrets"
+            assert "ADMIN_TOKEN=" not in content, f"{filepath} may expose env secrets"
 
     def test_no_real_client_names(self):
         """Check no real company names used as examples."""
@@ -101,15 +104,22 @@ class TestProposalFilesNoSecrets:
                 continue
             content = f.read_text().lower()
             # Should use placeholders or generic references instead of real client names
-            assert any(phrase in content for phrase in [
-                "[nome do cliente]", "[cliente]", "Nome do Cliente",
-                "[Nome do Cliente]", "acme", "cliente",
-                "para quem serve", "documento é um template"
-            ]), f"{filepath} should use placeholders for client names"
+            assert any(
+                phrase in content
+                for phrase in [
+                    "[nome do cliente]",
+                    "[cliente]",
+                    "Nome do Cliente",
+                    "[Nome do Cliente]",
+                    "acme",
+                    "cliente",
+                    "para quem serve",
+                    "documento é um template",
+                ]
+            ), f"{filepath} should use placeholders for client names"
 
 
 class TestProposalScriptsNoSecrets:
-
     def test_generate_script_no_network(self):
         """Verify generate-proposal-pdf.sh doesn't send data to internet."""
         f = ROOT / "scripts/legacy/generate-proposal-pdf.sh"
@@ -131,13 +141,16 @@ class TestProposalScriptsNoSecrets:
         f = ROOT / "scripts/legacy/validate-proposals-local.sh"
         if not f.exists():
             return
-        lines = f.read_text().split('\n')
+        lines = f.read_text().split("\n")
         for lineno, line in enumerate(lines, 1):
             if _is_secret_regex_line(line):
                 continue
-            assert "sk-" not in line, \
+            assert "sk-" not in line, (
                 f"Secret pattern found in validation script:{lineno}: {line.strip()[:50]}"
-            assert "ghp_" not in line, \
+            )
+            assert "ghp_" not in line, (
                 f"GitHub token pattern in validation script:{lineno}: {line.strip()[:50]}"
-            assert "ADMIN_TOKEN=" not in line, \
+            )
+            assert "ADMIN_TOKEN=" not in line, (
                 f"Admin token pattern in validation script:{lineno}: {line.strip()[:50]}"
+            )

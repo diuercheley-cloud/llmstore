@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from app.services.auth import require_admin
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 
@@ -37,9 +37,9 @@ try:
     from scripts.llm_harness.evals.loader import EvalLoader
     from scripts.llm_harness.evals.runner import EvalRunner
     from scripts.llm_harness.legacy_runner import run_harness
-    from scripts.llm_harness.providers import create_code_agent
-    from scripts.llm_harness.providers import _PROVIDER_REGISTRY
+    from scripts.llm_harness.providers import _PROVIDER_REGISTRY, create_code_agent
     from scripts.llm_harness.sanitizer import Sanitizer
+
     HARNESS_RUNTIME_AVAILABLE = True
 except ModuleNotFoundError as exc:
     HarnessConfig = None  # type: ignore[assignment]
@@ -122,7 +122,9 @@ class HarnessRunRequest(BaseModel):
     def validate_local_provider_config(cls, value: dict[str, Any], info: Any) -> dict[str, Any]:
         provider = info.data.get("provider", "")
         if provider == "local-openai-compatible" and not str(value.get("base_url", "")).strip():
-            raise ValueError("config_overrides.base_url is required for provider local-openai-compatible")
+            raise ValueError(
+                "config_overrides.base_url is required for provider local-openai-compatible"
+            )
         return value
 
 
@@ -145,7 +147,9 @@ class HarnessEvalRunRequest(BaseModel):
     def validate_local_provider_config(cls, value: dict[str, Any], info: Any) -> dict[str, Any]:
         provider = info.data.get("provider", "")
         if provider == "local-openai-compatible" and not str(value.get("base_url", "")).strip():
-            raise ValueError("config_overrides.base_url is required for provider local-openai-compatible")
+            raise ValueError(
+                "config_overrides.base_url is required for provider local-openai-compatible"
+            )
         return value
 
 
@@ -156,7 +160,9 @@ async def health() -> dict[str, Any]:
         "runtime_available": HARNESS_RUNTIME_AVAILABLE,
         "runtime_error": str(HARNESS_IMPORT_ERROR) if HARNESS_IMPORT_ERROR else None,
         "active_runs": sum(1 for run in ACTIVE_RUNS.values() if run["status"] == "running"),
-        "active_eval_runs": sum(1 for run in ACTIVE_EVAL_RUNS.values() if run["status"] == "running"),
+        "active_eval_runs": sum(
+            1 for run in ACTIVE_EVAL_RUNS.values() if run["status"] == "running"
+        ),
         "max_concurrent_runs": MAX_CONCURRENT_RUNS,
     }
 
@@ -326,16 +332,18 @@ async def list_runs(limit: int = 50, offset: int = 0) -> dict[str, list[dict[str
     _evict_stale_runs()
     runs = []
     for run_id, data in ACTIVE_RUNS.items():
-        runs.append({
-            "run_id": run_id,
-            "task": data["task"][:200],
-            "status": data["status"],
-            "created_at": data.get("created_at"),
-            "finished_at": data.get("finished_at"),
-            "error": data.get("error"),
-        })
+        runs.append(
+            {
+                "run_id": run_id,
+                "task": data["task"][:200],
+                "status": data["status"],
+                "created_at": data.get("created_at"),
+                "finished_at": data.get("finished_at"),
+                "error": data.get("error"),
+            }
+        )
     runs.sort(key=lambda r: r.get("created_at") or 0, reverse=True)
-    return {"runs": runs[offset:offset + limit]}
+    return {"runs": runs[offset : offset + limit]}
 
 
 @router.delete("/runs/{run_id}")
@@ -375,7 +383,10 @@ async def list_provider_models(
     require_harness_runtime()
     if provider_name not in _PROVIDER_REGISTRY:
         raise HTTPException(status_code=404, detail="Provider not found")
-    if provider_name in {"local-openai-compatible", "openai-compatible", "control-plane"} and not base_url.strip():
+    if (
+        provider_name in {"local-openai-compatible", "openai-compatible", "control-plane"}
+        and not base_url.strip()
+    ):
         raise HTTPException(status_code=422, detail="base_url is required for this provider")
 
     try:
@@ -544,7 +555,9 @@ async def get_eval_run_events(eval_run_id: str) -> StreamingResponse:
             return
 
         if len(run_data["listeners"]) >= 16:
-            raise HTTPException(status_code=429, detail="Too many event listeners for this eval run")
+            raise HTTPException(
+                status_code=429, detail="Too many event listeners for this eval run"
+            )
         queue: asyncio.Queue[Any] = asyncio.Queue(maxsize=1024)
         run_data["listeners"].append(queue)
         try:

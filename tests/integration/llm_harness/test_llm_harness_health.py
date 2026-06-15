@@ -52,9 +52,12 @@ async def test_health_local_env_detects_project_venv(monkeypatch):
     def fake_exists(path: str) -> bool:
         return path.endswith(".venv/bin/python") or path.endswith(".venv/bin/pytest")
 
-    with patch("scripts.llm_harness.health.os.path.exists", side_effect=fake_exists), patch(
-        "scripts.llm_harness.health.shutil.which",
-        side_effect=lambda name: f"/usr/bin/{name}",
+    with (
+        patch("scripts.llm_harness.health.os.path.exists", side_effect=fake_exists),
+        patch(
+            "scripts.llm_harness.health.shutil.which",
+            side_effect=lambda name: f"/usr/bin/{name}",
+        ),
     ):
         result = await HealthCheck.check_local_env()
 

@@ -83,7 +83,9 @@ class TestHeadingChunking:
 
 class TestSemanticChunking:
     def test_chunks_by_paragraph(self):
-        config = ChunkingConfig(chunk_size=5000, chunk_overlap=0, strategy=ChunkStrategy.semantic_placeholder)
+        config = ChunkingConfig(
+            chunk_size=5000, chunk_overlap=0, strategy=ChunkStrategy.semantic_placeholder
+        )
         chunks = chunk_semantic_placeholder(SAMPLE_TEXT, config)
         assert len(chunks) >= 1
         for c in chunks:
@@ -115,7 +117,9 @@ class TestChunkDispatcher:
         assert chunks[0].metadata["strategy"] == "heading"
 
     def test_semantic_strategy(self):
-        config = ChunkingConfig(chunk_size=5000, chunk_overlap=0, strategy=ChunkStrategy.semantic_placeholder)
+        config = ChunkingConfig(
+            chunk_size=5000, chunk_overlap=0, strategy=ChunkStrategy.semantic_placeholder
+        )
         chunks = chunk_text("Para1\n\nPara2\n\nPara3", config)
         assert len(chunks) >= 1
         assert chunks[0].metadata["strategy"] == "semantic_placeholder"
@@ -123,6 +127,7 @@ class TestChunkDispatcher:
     def test_unknown_strategy_fallback(self):
         import app.services.rag_enterprise.chunking as c
         from app.services.rag_enterprise.schemas import ChunkStrategy
+
         original_map = c.STRATEGY_MAP.copy()
         try:
             config = ChunkingConfig(chunk_size=100, chunk_overlap=0, strategy=ChunkStrategy.fixed)

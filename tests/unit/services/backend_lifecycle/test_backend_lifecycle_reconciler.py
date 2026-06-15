@@ -2,7 +2,6 @@ from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
-
 from app.contracts.backend_lifecycle import (
     BackendDesiredState,
     BackendObservedState,
@@ -61,7 +60,10 @@ async def test_reconcile_detects_drift_when_active_not_running(desired_active):
         error="process not found",
     )
     mock_provider.start_backend.return_value = LifecycleActionResult(
-        success=True, action="start", backend_id=desired_active.backend_id, message="started",
+        success=True,
+        action="start",
+        backend_id=desired_active.backend_id,
+        message="started",
     )
     reconciler = BackendReconciler(mock_provider)
     observed, drifts, action = await reconciler.reconcile(desired_active)
@@ -80,7 +82,10 @@ async def test_reconcile_detects_drift_when_inactive_but_running(desired_inactiv
         healthy=True,
     )
     mock_provider.stop_backend.return_value = LifecycleActionResult(
-        success=True, action="stop", backend_id=desired_inactive.backend_id, message="stopped",
+        success=True,
+        action="stop",
+        backend_id=desired_inactive.backend_id,
+        message="stopped",
     )
     reconciler = BackendReconciler(mock_provider)
     observed, drifts, action = await reconciler.reconcile(desired_inactive)
@@ -116,7 +121,10 @@ async def test_reconcile_on_drift_callback(desired_active):
         error="not found",
     )
     mock_provider.start_backend.return_value = LifecycleActionResult(
-        success=True, action="start", backend_id=desired_active.backend_id, message="started",
+        success=True,
+        action="start",
+        backend_id=desired_active.backend_id,
+        message="started",
     )
     reconciler = BackendReconciler(mock_provider, on_drift=callback)
     observed, drifts, action = await reconciler.reconcile(desired_active)

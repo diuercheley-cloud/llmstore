@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import asyncio
-import sys
 import os
+import sys
 
 # Append workspace root and control_plane/ to sys.path so we can import app modules
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
@@ -9,6 +9,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", "control_plane"))
 
 from app.db.session import SessionLocal
 from app.services.security.immutable_audit import ImmutableAuditStore
+
 
 async def main():
     print("Connecting to database...")
@@ -26,6 +27,7 @@ async def main():
     except Exception as e:
         print(f"Error connecting to database or verifying: {e}")
         sys.exit(2)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

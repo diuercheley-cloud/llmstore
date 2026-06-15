@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 
 @dataclass
@@ -68,7 +69,9 @@ def get_or_create_tts_readiness_client(
     import json
 
     plans = json.loads(plans_body)
-    tts_plan = next((plan for plan in plans if plan.get("tts_enabled") and plan.get("is_active", True)), None)
+    tts_plan = next(
+        (plan for plan in plans if plan.get("tts_enabled") and plan.get("is_active", True)), None
+    )
     if not tts_plan:
         return TTSReadinessClient(False, "", "", False, "no active TTS plan")
 
@@ -112,7 +115,9 @@ def get_or_create_tts_readiness_client(
         body={"client_id": client_id, "name": "tts-readiness-probe"},
     )
     if status not in (200, 201):
-        return TTSReadinessClient(False, client_id, tts_plan["code"], temporary, "api key creation failed")
+        return TTSReadinessClient(
+            False, client_id, tts_plan["code"], temporary, "api key creation failed"
+        )
     key_payload = json.loads(key_body)
     key_prefix = key_payload.get("key_prefix", "sk-redacted")
 

@@ -39,7 +39,9 @@ def test_all_screens_documented_in_storyboard():
         content = f.read()
     content_lower = content.lower()
     for screen in SCREENS:
-        assert screen.lower() in content_lower, f"Tela '{screen}' nao encontrada em DEMO_STORYBOARD.md"
+        assert screen.lower() in content_lower, (
+            f"Tela '{screen}' nao encontrada em DEMO_STORYBOARD.md"
+        )
 
 
 def test_psp_pix_limitations_documented():
@@ -57,7 +59,14 @@ def test_storyboard_has_required_fields():
     """Verifica se o storyboard contém os campos obrigatorios."""
     with open(f"{BASE_DIR}/DEMO_STORYBOARD.md") as f:
         content = f.read()
-    required_fields = ["Ordem", "URL", "Screenshot esperado", "Fala sugerida", "Objetivo", "Pontos de aten"]
+    required_fields = [
+        "Ordem",
+        "URL",
+        "Screenshot esperado",
+        "Fala sugerida",
+        "Objetivo",
+        "Pontos de aten",
+    ]
     for field in required_fields:
         assert field in content, f"Campo obrigatorio '{field}' ausente em DEMO_STORYBOARD.md"
 
@@ -74,8 +83,7 @@ def test_readme_links_consistent():
 
 def test_validate_script_runs():
     result = subprocess.run(
-        ["bash", "scripts/validators/validate-demo-visual-guide.sh"],
-        capture_output=True, text=True
+        ["bash", "scripts/validators/validate-demo-visual-guide.sh"], capture_output=True, text=True
     )
     # Should pass or have warnings, but not crash
     assert result.returncode == 0 or "AVISO" in result.stdout
@@ -84,7 +92,8 @@ def test_validate_script_runs():
 def test_prepare_script_help_works():
     result = subprocess.run(
         ["bash", "scripts/dev/prepare-demo-screenshots-local.sh", "--help"],
-        capture_output=True, text=True
+        capture_output=True,
+        text=True,
     )
     assert result.returncode == 0
     assert "Uso:" in result.stdout

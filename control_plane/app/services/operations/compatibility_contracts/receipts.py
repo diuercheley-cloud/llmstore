@@ -8,7 +8,14 @@ from app.utils.crypto_signer import sign_payload
 signature_placeholder = "conceptual_only_no_real_crypto"
 
 
-def _build_receipt(receipt_type: str, client_id: str, subject_id: str, immutable_hash: str, payload_hash: str, deterministic_version: str) -> dict[str, Any]:
+def _build_receipt(
+    receipt_type: str,
+    client_id: str,
+    subject_id: str,
+    immutable_hash: str,
+    payload_hash: str,
+    deterministic_version: str,
+) -> dict[str, Any]:
     generated_at = utc_now()
     return {
         "receipt_type": receipt_type,

@@ -42,14 +42,21 @@ async def test_plugin_runtime_api_flow(session):
         assert listed.status_code == 200
         assert len(listed.json()) == 1
 
-        detail = await ac.get(f"/admin/operations/plugin-runtime/contracts/{contract_id}?client_id={client.id}")
-        blocked_detail = await ac.get(f"/admin/operations/plugin-runtime/contracts/{contract_id}?client_id={other.id}")
+        detail = await ac.get(
+            f"/admin/operations/plugin-runtime/contracts/{contract_id}?client_id={client.id}"
+        )
+        blocked_detail = await ac.get(
+            f"/admin/operations/plugin-runtime/contracts/{contract_id}?client_id={other.id}"
+        )
         assert detail.status_code == 200
         assert blocked_detail.status_code == 404
 
         capabilities = await ac.post(
             f"/admin/operations/plugin-runtime/contracts/{contract_id}/capabilities",
-            json={"client_id": str(client.id), "allowed_capabilities_json": ["read_logs", "network", "dynamic_import"]},
+            json={
+                "client_id": str(client.id),
+                "allowed_capabilities_json": ["read_logs", "network", "dynamic_import"],
+            },
         )
         assert capabilities.status_code == 200
         assert "network" in capabilities.json()["evaluation"]["denied_capabilities"]
@@ -78,7 +85,11 @@ async def test_plugin_runtime_api_flow(session):
 
         lifecycle = await ac.post(
             f"/admin/operations/plugin-runtime/contracts/{contract_id}/lifecycle",
-            json={"client_id": str(client.id), "lifecycle_event_type": "placeholder_certified", "reason": "doc only"},
+            json={
+                "client_id": str(client.id),
+                "lifecycle_event_type": "placeholder_certified",
+                "reason": "doc only",
+            },
         )
         assert lifecycle.status_code == 200
 
@@ -91,7 +102,11 @@ async def test_plugin_runtime_api_flow(session):
 
         federation = await ac.post(
             f"/admin/operations/plugin-runtime/contracts/{contract_id}/federation-compatibility",
-            json={"client_id": str(client.id), "source_environment": "a", "target_environment": "b"},
+            json={
+                "client_id": str(client.id),
+                "source_environment": "a",
+                "target_environment": "b",
+            },
         )
         assert federation.status_code == 200
 
@@ -100,7 +115,10 @@ async def test_plugin_runtime_api_flow(session):
             json={"client_id": str(client.id), "receipt_type": "abi_contract_receipt"},
         )
         assert receipt.status_code == 200
-        assert isinstance(receipt.json()["receipt"]["signature"], str) and len(receipt.json()["receipt"]["signature"]) > 0
+        assert (
+            isinstance(receipt.json()["receipt"]["signature"], str)
+            and len(receipt.json()["receipt"]["signature"]) > 0
+        )
 
         cross_tenant = await ac.post(
             f"/admin/operations/plugin-runtime/contracts/{contract_id}/replay-verify",

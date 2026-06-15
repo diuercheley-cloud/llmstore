@@ -6,7 +6,7 @@ Supports HashiCorp Vault and AWS Secrets Manager backends.
 import json
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, List, Optional
+from typing import Any
 
 import httpx
 from app.core.config import get_settings
@@ -16,16 +16,16 @@ logger = logging.getLogger(__name__)
 
 class SecretsBackend(ABC):
     @abstractmethod
-    async def get_secret(self, path: str, key: Optional[str] = None) -> Optional[str]: ...
+    async def get_secret(self, path: str, key: str | None = None) -> str | None: ...
 
     @abstractmethod
-    async def set_secret(self, path: str, value: Any, key: Optional[str] = None) -> bool: ...
+    async def set_secret(self, path: str, value: Any, key: str | None = None) -> bool: ...
 
     @abstractmethod
     async def delete_secret(self, path: str) -> bool: ...
 
     @abstractmethod
-    async def list_secrets(self, prefix: str) -> List[str]: ...
+    async def list_secrets(self, prefix: str) -> list[str]: ...
 
 
 class VaultBackend(SecretsBackend):
@@ -45,7 +45,7 @@ class VaultBackend(SecretsBackend):
             timeout=10.0,
         )
 
-    async def get_secret(self, path: str, key: Optional[str] = None) -> Optional[str]:
+    async def get_secret(self, path: str, key: str | None = None) -> str | None:
         try:
             resp = await self._http.get(f"/v1/{self.mount}/data/{path}")
             if resp.status_code == 404:
@@ -59,7 +59,7 @@ class VaultBackend(SecretsBackend):
             logger.error("Vault get_secret failed for %s: %s", path, e)
             return None
 
-    async def set_secret(self, path: str, value: Any, key: Optional[str] = None) -> bool:
+    async def set_secret(self, path: str, value: Any, key: str | None = None) -> bool:
         data = {key: value} if key else (value if isinstance(value, dict) else {"value": value})
         try:
             resp = await self._http.post(
@@ -79,9 +79,11 @@ class VaultBackend(SecretsBackend):
         except Exception:
             return False
 
-    async def list_secrets(self, prefix: str) -> List[str]:
+    async def list_secrets(self, prefix: str) -> list[str]:
         try:
-            resp = await self._http.get(f"/v1/{self.mount}/metadata/{prefix}", params={"list": "true"})
+            resp = await self._http.get(
+                f"/v1/{self.mount}/metadata/{prefix}", params={"list": "true"}
+            )
             if resp.status_code == 404:
                 return []
             resp.raise_for_status()
@@ -109,6 +111,7 @@ class AWSSecretsManagerBackend(SecretsBackend):
     async def _get_client(self):
         if self._client is None:
             import aioboto3
+
             session = aioboto3.Session()
             self._client = await session.client(
                 "secretsmanager",
@@ -116,7 +119,7 @@ class AWSSecretsManagerBackend(SecretsBackend):
             ).__aenter__()
         return self._client
 
-    async def get_secret(self, path: str, key: Optional[str] = None) -> Optional[str]:
+    async def get_secret(self, path: str, key: str | None = None) -> str | None:
         try:
             client = await self._get_client()
             resp = await client.get_secret_value(SecretId=path)
@@ -129,10 +132,14 @@ class AWSSecretsManagerBackend(SecretsBackend):
             logger.error("AWS Secrets Manager get failed for %s: %s", path, e)
             return None
 
-    async def set_secret(self, path: str, value: Any, key: Optional[str] = None) -> bool:
+    async def set_secret(self, path: str, value: Any, key: str | None = None) -> bool:
         try:
             client = await self._get_client()
-            secret_value = json.dumps({key: value}) if key else (json.dumps(value) if not isinstance(value, str) else value)
+            secret_value = (
+                json.dumps({key: value})
+                if key
+                else (json.dumps(value) if not isinstance(value, str) else value)
+            )
             await client.create_secret(Name=path, SecretString=secret_value)
             return True
         except Exception as e:
@@ -147,7 +154,7 @@ class AWSSecretsManagerBackend(SecretsBackend):
         except Exception:
             return False
 
-    async def list_secrets(self, prefix: str) -> List[str]:
+    async def list_secrets(self, prefix: str) -> list[str]:
         try:
             client = await self._get_client()
             paginator = client.get_paginator("list_secrets")
@@ -168,7 +175,7 @@ class SecretsManagerService:
 
     def __init__(self):
         self.settings = get_settings()
-        self._backend: Optional[SecretsBackend] = None
+        self._backend: SecretsBackend | None = None
 
     def _get_backend(self) -> SecretsBackend:
         if self._backend is not None:
@@ -183,7 +190,7 @@ class SecretsManagerService:
             raise ValueError(f"Unknown secrets manager provider: {provider}")
         return self._backend
 
-    async def get_agent_credential(self, agent_id: str, credential_name: str) -> Optional[str]:
+    async def get_agent_credential(self, agent_id: str, credential_name: str) -> str | None:
         backend = self._get_backend()
         path = f"agents/{agent_id}/credentials"
         return await backend.get_secret(path, key=credential_name)
@@ -198,7 +205,7 @@ class SecretsManagerService:
         path = f"agents/{agent_id}/credentials"
         return await backend.delete_secret(path)
 
-    async def get_provider_api_key(self, provider: str) -> Optional[str]:
+    async def get_provider_api_key(self, provider: str) -> str | None:
         backend = self._get_backend()
         path = "providers/api-keys"
         return await backend.get_secret(path, key=provider)
@@ -208,12 +215,12 @@ class SecretsManagerService:
         path = "providers/api-keys"
         return await backend.set_secret(path, api_key, key=provider)
 
-    async def get_tenant_secret(self, tenant_id: str, key: str) -> Optional[str]:
+    async def get_tenant_secret(self, tenant_id: str, key: str) -> str | None:
         backend = self._get_backend()
         path = f"tenants/{tenant_id}/secrets"
         return await backend.get_secret(path, key=key)
 
-    async def list_agent_secrets(self, agent_id: str) -> List[str]:
+    async def list_agent_secrets(self, agent_id: str) -> list[str]:
         backend = self._get_backend()
         path = f"agents/{agent_id}/credentials"
         return await backend.list_secrets(path)

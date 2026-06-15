@@ -1,3 +1,4 @@
+from datetime import UTC
 
 import pytest
 from app.db.base import Base
@@ -29,7 +30,9 @@ async def test_exact_cache_miss_then_hit(isolated_db_url: str):
 
         # MISS
         result = await get_exact(
-            session, endpoint_type="/v1/chat/completions", model="gemma",
+            session,
+            endpoint_type="/v1/chat/completions",
+            model="gemma",
             request_hash=request_hash,
         )
         assert not result.hit
@@ -37,16 +40,22 @@ async def test_exact_cache_miss_then_hit(isolated_db_url: str):
 
         # Store
         await set_exact(
-            session, endpoint_type="/v1/chat/completions", model="gemma",
-            request_hash=request_hash, request_fingerprint=fingerprint,
+            session,
+            endpoint_type="/v1/chat/completions",
+            model="gemma",
+            request_hash=request_hash,
+            request_fingerprint=fingerprint,
             response_payload={"choices": [{"message": {"content": "hi"}}]},
-            prompt_tokens=10, completion_tokens=5,
+            prompt_tokens=10,
+            completion_tokens=5,
         )
         await session.commit()
 
         # HIT
         result = await get_exact(
-            session, endpoint_type="/v1/chat/completions", model="gemma",
+            session,
+            endpoint_type="/v1/chat/completions",
+            model="gemma",
             request_hash=request_hash,
         )
         assert result.hit
@@ -68,34 +77,46 @@ async def test_exact_cache_different_requests_different_keys(isolated_db_url: st
             model="gemma",
             endpoint_type="/v1/chat/completions",
             messages=[{"role": "user", "content": "hello"}],
-            temperature=0.7, top_p=0.95, max_tokens=512,
+            temperature=0.7,
+            top_p=0.95,
+            max_tokens=512,
         )
         hash_b, _, fp_b = build_cache_key(
             model="gemma",
             endpoint_type="/v1/chat/completions",
             messages=[{"role": "user", "content": "goodbye"}],
-            temperature=0.7, top_p=0.95, max_tokens=512,
+            temperature=0.7,
+            top_p=0.95,
+            max_tokens=512,
         )
 
         assert hash_a != hash_b
         assert fp_a != fp_b
 
         await set_exact(
-            session, endpoint_type="/v1/chat/completions", model="gemma",
-            request_hash=hash_a, request_fingerprint=fp_a,
+            session,
+            endpoint_type="/v1/chat/completions",
+            model="gemma",
+            request_hash=hash_a,
+            request_fingerprint=fp_a,
             response_payload={"choices": [{"message": {"content": "hi"}}]},
-            prompt_tokens=5, completion_tokens=3,
+            prompt_tokens=5,
+            completion_tokens=3,
         )
         await session.commit()
 
         result_a = await get_exact(
-            session, endpoint_type="/v1/chat/completions", model="gemma",
+            session,
+            endpoint_type="/v1/chat/completions",
+            model="gemma",
             request_hash=hash_a,
         )
         assert result_a.hit
 
         result_b = await get_exact(
-            session, endpoint_type="/v1/chat/completions", model="gemma",
+            session,
+            endpoint_type="/v1/chat/completions",
+            model="gemma",
             request_hash=hash_b,
         )
         assert not result_b.hit
@@ -110,13 +131,15 @@ async def test_exact_cache_ttl_expiry(isolated_db_url: str, monkeypatch: pytest.
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    from datetime import datetime, timezone
-    current_time = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    from datetime import datetime
+
+    current_time = datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC)
 
     def fake_utc_now():
         return current_time
 
     import app.services.cache.intelligent_cache as cache_module
+
     monkeypatch.setattr(cache_module, "utc_now", fake_utc_now)
 
     async with testing_session() as session:
@@ -124,28 +147,38 @@ async def test_exact_cache_ttl_expiry(isolated_db_url: str, monkeypatch: pytest.
             model="gemma",
             endpoint_type="/v1/chat/completions",
             messages=[{"role": "user", "content": "hello"}],
-            temperature=0.7, top_p=0.95, max_tokens=512,
+            temperature=0.7,
+            top_p=0.95,
+            max_tokens=512,
         )
 
         await set_exact(
-            session, endpoint_type="/v1/chat/completions", model="gemma",
-            request_hash=request_hash, request_fingerprint=fingerprint,
+            session,
+            endpoint_type="/v1/chat/completions",
+            model="gemma",
+            request_hash=request_hash,
+            request_fingerprint=fingerprint,
             response_payload={"choices": [{"message": {"content": "hi"}}]},
-            prompt_tokens=5, completion_tokens=3,
+            prompt_tokens=5,
+            completion_tokens=3,
             ttl_seconds=1,
         )
         await session.commit()
 
         result = await get_exact(
-            session, endpoint_type="/v1/chat/completions", model="gemma",
+            session,
+            endpoint_type="/v1/chat/completions",
+            model="gemma",
             request_hash=request_hash,
         )
         assert result.hit
 
-        current_time = datetime(2026, 1, 1, 12, 0, 2, tzinfo=timezone.utc)
+        current_time = datetime(2026, 1, 1, 12, 0, 2, tzinfo=UTC)
 
         result = await get_exact(
-            session, endpoint_type="/v1/chat/completions", model="gemma",
+            session,
+            endpoint_type="/v1/chat/completions",
+            model="gemma",
             request_hash=request_hash,
         )
         assert not result.hit
@@ -154,7 +187,9 @@ async def test_exact_cache_ttl_expiry(isolated_db_url: str, monkeypatch: pytest.
 
 
 @pytest.mark.asyncio
-async def test_exact_cache_passthrough_when_disabled(isolated_db_url: str, monkeypatch: pytest.MonkeyPatch):
+async def test_exact_cache_passthrough_when_disabled(
+    isolated_db_url: str, monkeypatch: pytest.MonkeyPatch
+):
     import app.services.cache.intelligent_cache as cache_module
 
     engine = create_async_engine(isolated_db_url)
@@ -167,21 +202,29 @@ async def test_exact_cache_passthrough_when_disabled(isolated_db_url: str, monke
             model="gemma",
             endpoint_type="/v1/chat/completions",
             messages=[{"role": "user", "content": "hello"}],
-            temperature=0.7, top_p=0.95, max_tokens=512,
+            temperature=0.7,
+            top_p=0.95,
+            max_tokens=512,
         )
 
         monkeypatch.setattr(cache_module.settings, "response_cache_enabled", False)
 
         await set_exact(
-            session, endpoint_type="/v1/chat/completions", model="gemma",
-            request_hash=request_hash, request_fingerprint=fingerprint,
+            session,
+            endpoint_type="/v1/chat/completions",
+            model="gemma",
+            request_hash=request_hash,
+            request_fingerprint=fingerprint,
             response_payload={"choices": [{"message": {"content": "hi"}}]},
-            prompt_tokens=5, completion_tokens=3,
+            prompt_tokens=5,
+            completion_tokens=3,
         )
         await session.commit()
 
         result = await get_exact(
-            session, endpoint_type="/v1/chat/completions", model="gemma",
+            session,
+            endpoint_type="/v1/chat/completions",
+            model="gemma",
             request_hash=request_hash,
         )
         assert not result.hit

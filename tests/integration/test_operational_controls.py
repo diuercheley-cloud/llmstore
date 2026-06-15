@@ -109,7 +109,9 @@ async def test_operational_control_endpoints_require_admin_auth(admin_client, ad
     )
     assert create_resp.status_code == 201
 
-    listing = await admin_client.get("/admin/compliance/operational-controls", headers=admin_token_headers)
+    listing = await admin_client.get(
+        "/admin/compliance/operational-controls", headers=admin_token_headers
+    )
     assert listing.status_code == 200
     payload = listing.json()
     assert payload["summary"]["controls"] >= 1

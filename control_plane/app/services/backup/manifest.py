@@ -1,15 +1,16 @@
-import json
 import hashlib
+import json
 from pathlib import Path
-from typing import Any, Dict, List
-from app.schemas.backup import BackupManifest, BackupComponent
-from .contracts import BackupManifestProvider
+
+from app.schemas.backup import BackupComponent, BackupManifest
+
 
 def _sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
+
 class ManifestService:
-    def build_components(self, payload_parts: Dict[str, bytes]) -> List[BackupComponent]:
+    def build_components(self, payload_parts: dict[str, bytes]) -> list[BackupComponent]:
         labels = {
             "database.json": ("database", "Logical database snapshot for supported DR tables"),
             "db.dump": ("database", "Complete native database dump"),
@@ -19,7 +20,7 @@ class ManifestService:
             "workflows.json": ("workflows", "Workflow definitions and executions snapshot"),
             "embeddings_metadata.json": ("embeddings_metadata", "Embedding metadata snapshot"),
         }
-        components: List[BackupComponent] = []
+        components: list[BackupComponent] = []
         for file_name, payload in payload_parts.items():
             if file_name.endswith(".json"):
                 try:
@@ -31,7 +32,7 @@ class ManifestService:
                     item_count = 1
             else:
                 item_count = 1
-                
+
             name, description = labels.get(file_name, ("unknown", "Unknown component"))
             components.append(
                 BackupComponent(
@@ -46,9 +47,12 @@ class ManifestService:
 
     def read(self, backup_root: Path, backup_id: str) -> BackupManifest:
         from .errors import BackupManifestError
+
         manifest_path = backup_root / backup_id / "manifest.json"
         if not manifest_path.exists():
-            raise BackupManifestError(f"Backup manifest not found: {backup_id}", details={"backup_id": backup_id})
+            raise BackupManifestError(
+                f"Backup manifest not found: {backup_id}", details={"backup_id": backup_id}
+            )
         try:
             return BackupManifest.model_validate_json(manifest_path.read_text(encoding="utf-8"))
         except Exception as exc:
@@ -56,7 +60,7 @@ class ManifestService:
                 f"Backup manifest is corrupted: {backup_id}",
                 details={"backup_id": backup_id, "path": str(manifest_path)},
             ) from exc
-            
+
     def write(self, backup_root: Path, manifest: BackupManifest) -> None:
         target_dir = backup_root / manifest.backup_id
         target_dir.mkdir(parents=True, exist_ok=True)
@@ -65,17 +69,19 @@ class ManifestService:
             encoding="utf-8",
         )
 
+
 # Backward compatibility
 class ManifestBuilder:
     @staticmethod
-    def build_components(payload_parts: Dict[str, bytes]) -> List[BackupComponent]:
+    def build_components(payload_parts: dict[str, bytes]) -> list[BackupComponent]:
         return ManifestService().build_components(payload_parts)
+
 
 class ManifestReader:
     @staticmethod
     def read(backup_root: Path, backup_id: str) -> BackupManifest:
         return ManifestService().read(backup_root, backup_id)
-            
+
     @staticmethod
     def write(backup_root: Path, manifest: BackupManifest) -> None:
         return ManifestService().write(backup_root, manifest)

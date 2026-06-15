@@ -16,6 +16,7 @@ try:
     import io
 
     from PIL import Image
+
     HAS_PIL = True
 except ImportError:
     HAS_PIL = False
@@ -29,7 +30,7 @@ class ImageGenerationService:
     def __init__(self):
         self.policy_service = MultimodalPolicyService()
         self.usage_service = MultimodalUsageService()
-        
+
         base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
         self.storage_dir = os.path.join(base_dir, "data", "multimodal_assets")
         os.makedirs(self.storage_dir, exist_ok=True)
@@ -40,14 +41,14 @@ class ImageGenerationService:
         client_id: uuid.UUID,
         prompt: str,
         size: str = "1024x1024",
-        provider: str = "mock"
+        provider: str = "mock",
     ) -> dict:
         # 1. Policy checks (feature flag and safety words check)
         await self.policy_service.check_policy(db, client_id, "image-generation", input_text=prompt)
 
         # 2. Mock generation logic
         logger.info(f"Generating image using prompt: '{prompt}' and provider: {provider}")
-        
+
         # Determine image color based on prompt words for a nice visual detail in mock
         color = "blue"
         if "red" in prompt.lower():
@@ -66,7 +67,7 @@ class ImageGenerationService:
                     width, height = 256, 256
                 elif size == "1024x1024":
                     width, height = 1024, 1024
-                
+
                 image = Image.new("RGB", (width, height), color=color)
                 output = io.BytesIO()
                 image.save(output, format="PNG")
@@ -75,10 +76,14 @@ class ImageGenerationService:
             except Exception as e:
                 logger.error(f"Failed to generate mock PIL image: {e}")
                 # Fallback to base64
-                image_bytes = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")
+                image_bytes = base64.b64decode(
+                    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+                )
                 mime_type = "image/png"
         else:
-            image_bytes = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")
+            image_bytes = base64.b64decode(
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+            )
             mime_type = "image/png"
 
         file_hash = hashlib.sha256(image_bytes).hexdigest()
@@ -100,7 +105,7 @@ class ImageGenerationService:
             file_hash=file_hash,
             provenance=f"generated_{provider}",
             exif_sanitized=True,  # Generated images are clean
-            metadata_json={"prompt": prompt, "size": size}
+            metadata_json={"prompt": prompt, "size": size},
         )
         db.add(asset)
         await db.commit()
@@ -118,5 +123,5 @@ class ImageGenerationService:
             "prompt": prompt,
             "provider": provider,
             "provenance": asset.provenance,
-            "url": f"/v1/multimodal/assets/{asset_id}"
+            "url": f"/v1/multimodal/assets/{asset_id}",
         }

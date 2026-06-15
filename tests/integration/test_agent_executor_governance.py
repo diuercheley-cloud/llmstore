@@ -132,7 +132,9 @@ async def test_erro_real_nao_vira_sucesso_simulado(session, executor_governance_
 
     step = (
         await session.execute(
-            select(AgentRunStep).where(AgentRunStep.run_id == run.id).order_by(AgentRunStep.step_number.desc())
+            select(AgentRunStep)
+            .where(AgentRunStep.run_id == run.id)
+            .order_by(AgentRunStep.step_number.desc())
         )
     ).scalar_one()
     assert step.status == "failed"
@@ -182,7 +184,9 @@ async def test_simulation_flag_nao_substitui_execucao_real(session, executor_gov
     assert should_continue is True
     step = (
         await session.execute(
-            select(AgentRunStep).where(AgentRunStep.run_id == run.id).order_by(AgentRunStep.step_number.desc())
+            select(AgentRunStep)
+            .where(AgentRunStep.run_id == run.id)
+            .order_by(AgentRunStep.step_number.desc())
         )
     ).scalar_one()
     assert step.status == "success"

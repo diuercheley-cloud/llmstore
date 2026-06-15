@@ -19,23 +19,32 @@ def test_security_report_classification(tmp_path):
     scripts_dir = repo_root / "scripts"
     scripts_dir.mkdir()
     shutil.copy2("scripts/validators/check-secrets.sh", scripts_dir / "check-secrets.sh")
-    shutil.copy2("scripts/validators/security-report-local.sh", scripts_dir / "security-report-local.sh")
+    shutil.copy2(
+        "scripts/validators/security-report-local.sh", scripts_dir / "security-report-local.sh"
+    )
 
     (repo_root / "docker-compose.yml").write_text("services:\n  app:\n    image: busybox\n")
     (repo_root / "tests" / "fixtures").mkdir(parents=True)
     (repo_root / "releases" / "v1").mkdir(parents=True)
 
     (repo_root / "tests" / "fixtures" / "fake_secret_sample.txt").write_text(
-        "FAKE SECRET FOR TESTS ONLY\n"
-        + "sk-"
-        + "thisisafakebutlongenoughsecret12345\n"
+        "FAKE SECRET FOR TESTS ONLY\n" + "sk-" + "thisisafakebutlongenoughsecret12345\n"
     )
     (repo_root / "releases" / "v1" / "bundle.txt").write_text(
         "ADMIN_TOKEN=" + "very-secret-token-1234567890" + "\n"
     )
 
     subprocess.run(["git", "add", "."], cwd=repo_root, check=True)
-    subprocess.run(["chmod", "+x", "scripts/validators/check-secrets.sh", "scripts/validators/security-report-local.sh"], cwd=repo_root, check=True)
+    subprocess.run(
+        [
+            "chmod",
+            "+x",
+            "scripts/validators/check-secrets.sh",
+            "scripts/validators/security-report-local.sh",
+        ],
+        cwd=repo_root,
+        check=True,
+    )
 
     output_dir = repo_root / "artifacts" / "security-reports"
     result = subprocess.run(

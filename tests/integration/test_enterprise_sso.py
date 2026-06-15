@@ -27,6 +27,7 @@ def setup_env():
     os.environ["ENTERPRISE_SSO_OKTA_DOMAIN"] = "test.okta.com"
     os.environ["FRONTEND_URL"] = "http://localhost:5173"
     from app.core.config import get_settings
+
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()
@@ -54,6 +55,7 @@ class TestEnterpriseSSOService:
     def test_get_provider_config_unknown(self):
         svc = EnterpriseSSOService()
         from fastapi import HTTPException
+
         with pytest.raises(HTTPException) as exc:
             svc.get_provider_config("unknown-provider")
         assert exc.value.status_code == 400
@@ -82,9 +84,11 @@ class TestEnterpriseSSOService:
 
     def test_build_saml_request_xml_structure(self):
         svc = EnterpriseSSOService()
-        saml_xml = svc._build_saml_request("https://app.example.com", "https://saml.example.com/sso")
+        saml_xml = svc._build_saml_request(
+            "https://app.example.com", "https://saml.example.com/sso"
+        )
         assert '<?xml version="1.0" encoding="UTF-8"?>' in saml_xml
-        assert '<saml2p:AuthnRequest' in saml_xml
+        assert "<saml2p:AuthnRequest" in saml_xml
         assert 'Version="2.0"' in saml_xml
 
     def test_client_id_and_secret_azure(self):
@@ -116,7 +120,9 @@ async def test_exchange_code_azure_ad():
             return self._data
 
     token_resp = FakeResponse({"access_token": "test-token"})
-    userinfo_resp = FakeResponse({"email": "user@example.com", "name": "Test User", "sub": "user-123"})
+    userinfo_resp = FakeResponse(
+        {"email": "user@example.com", "name": "Test User", "sub": "user-123"}
+    )
 
     async def mock_context_manager(self):
         return self
@@ -142,14 +148,14 @@ class TestSAMLHandling:
             '<?xml version="1.0" encoding="UTF-8"?>'
             '<saml2p:Response xmlns:saml2p="urn:oasis:names:tc:SAML:2.0:protocol"'
             ' xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion">'
-            '<saml2:Assertion>'
-            '<saml2:Subject><saml2:NameID>user@example.com</saml2:NameID></saml2:Subject>'
-            '<saml2:AttributeStatement>'
+            "<saml2:Assertion>"
+            "<saml2:Subject><saml2:NameID>user@example.com</saml2:NameID></saml2:Subject>"
+            "<saml2:AttributeStatement>"
             '<saml2:Attribute Name="email"><saml2:AttributeValue>user@example.com</saml2:AttributeValue></saml2:Attribute>'
             '<saml2:Attribute Name="name"><saml2:AttributeValue>Test User</saml2:AttributeValue></saml2:Attribute>'
-            '</saml2:AttributeStatement>'
-            '</saml2:Assertion>'
-            '</saml2p:Response>'
+            "</saml2:AttributeStatement>"
+            "</saml2:Assertion>"
+            "</saml2p:Response>"
         )
         encoded = base64.b64encode(saml_xml.encode()).decode()
         result = await svc.exchange_code("saml", encoded, "http://localhost/callback")
@@ -160,6 +166,7 @@ class TestSAMLHandling:
     async def test_exchange_code_saml_invalid(self):
         svc = EnterpriseSSOService()
         from fastapi import HTTPException
+
         with pytest.raises(HTTPException) as exc:
             await svc.exchange_code("saml", "invalid-base64!!!", "http://localhost/callback")
         assert exc.value.status_code == 400
@@ -188,6 +195,7 @@ class TestEnterpriseSSOEndpoints:
             return engine
 
         import anyio
+
         anyio.run(init)
 
         async def get_test_session():
@@ -202,7 +210,9 @@ class TestEnterpriseSSOEndpoints:
 
     @pytest.mark.asyncio
     async def test_login_endpoint_success(self, app_with_db):
-        async with AsyncClient(transport=ASGITransport(app=app_with_db), base_url="http://test") as client:
+        async with AsyncClient(
+            transport=ASGITransport(app=app_with_db), base_url="http://test"
+        ) as client:
             resp = await client.get("/auth/enterprise/login/azure-ad")
             assert resp.status_code == 200
             data = resp.json()
@@ -222,19 +232,25 @@ class TestEnterpriseSSOEndpoints:
 
     @pytest.mark.asyncio
     async def test_login_unknown_provider(self, app_with_db):
-        async with AsyncClient(transport=ASGITransport(app=app_with_db), base_url="http://test") as client:
+        async with AsyncClient(
+            transport=ASGITransport(app=app_with_db), base_url="http://test"
+        ) as client:
             resp = await client.get("/auth/enterprise/login/unknown-provider")
             assert resp.status_code == 400
 
     @pytest.mark.asyncio
     async def test_callback_missing_code(self, app_with_db):
-        async with AsyncClient(transport=ASGITransport(app=app_with_db), base_url="http://test") as client:
+        async with AsyncClient(
+            transport=ASGITransport(app=app_with_db), base_url="http://test"
+        ) as client:
             resp = await client.get("/auth/enterprise/callback/azure-ad")
             assert resp.status_code == 400
 
     @pytest.mark.asyncio
     async def test_callback_invalid_state(self, app_with_db):
-        async with AsyncClient(transport=ASGITransport(app=app_with_db), base_url="http://test") as client:
+        async with AsyncClient(
+            transport=ASGITransport(app=app_with_db), base_url="http://test"
+        ) as client:
             resp = await client.get(
                 "/auth/enterprise/callback/azure-ad?code=test-code&state=invalid-state"
             )

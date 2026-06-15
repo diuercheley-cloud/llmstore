@@ -1,4 +1,5 @@
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 RESTRICTED_CAPABILITIES = {
     "shell",
@@ -13,10 +14,14 @@ RESTRICTED_CAPABILITIES = {
 
 
 class CapabilityNegotiationService:
-    def negotiate_capabilities(self, requested: Iterable[str], available: Iterable[str]) -> dict[str, Any]:
+    def negotiate_capabilities(
+        self, requested: Iterable[str], available: Iterable[str]
+    ) -> dict[str, Any]:
         requested_set = self._normalize(requested)
         available_set = self._normalize(available)
-        denied = sorted({*self.deny_restricted_capabilities(requested_set), *(requested_set - available_set)})
+        denied = sorted(
+            {*self.deny_restricted_capabilities(requested_set), *(requested_set - available_set)}
+        )
         approved = sorted((requested_set & available_set) - set(denied))
         if approved and denied:
             status = "partially_approved"

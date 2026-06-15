@@ -37,7 +37,9 @@ def test_audit_script_exists():
 
 
 def test_validate_script_exists():
-    assert VALIDATE_SCRIPT.exists(), "scripts/validators/validate-v1.6-release-line-audit.sh missing"
+    assert VALIDATE_SCRIPT.exists(), (
+        "scripts/validators/validate-v1.6-release-line-audit.sh missing"
+    )
     assert os.access(VALIDATE_SCRIPT, os.X_OK), "validate script not executable"
 
 

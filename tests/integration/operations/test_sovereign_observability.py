@@ -13,6 +13,7 @@ def test_observability_sanitizes_sensitive_payload():
 
 
 def test_observability_metric_hash_is_deterministic():
-    assert build_metric_hash("tenant", "cpu", "node", "0.4") == build_metric_hash("tenant", "cpu", "node", "0.4")
+    assert build_metric_hash("tenant", "cpu", "node", "0.4") == build_metric_hash(
+        "tenant", "cpu", "node", "0.4"
+    )
     assert validate_metric_payload({"password": "x"}) == ["password"]
-

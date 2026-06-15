@@ -1,7 +1,7 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -38,10 +38,10 @@ class AgentSessionService:
         self,
         tenant_id: str,
         agent_id: uuid.UUID,
-        user_id: Optional[str] = None,
-        title: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        retention_policy: Optional[Dict[str, Any]] = None,
+        user_id: str | None = None,
+        title: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        retention_policy: dict[str, Any] | None = None,
     ) -> AgentSession:
         session = AgentSession(
             tenant_id=tenant_id,
@@ -64,9 +64,7 @@ class AgentSessionService:
         await self.db.refresh(session)
         return session
 
-    async def get_session(
-        self, session_id: uuid.UUID, tenant_id: str
-    ) -> Optional[AgentSession]:
+    async def get_session(self, session_id: uuid.UUID, tenant_id: str) -> AgentSession | None:
         stmt = select(AgentSession).where(
             AgentSession.id == session_id,
             AgentSession.tenant_id == tenant_id,
@@ -77,12 +75,12 @@ class AgentSessionService:
     async def list_sessions(
         self,
         tenant_id: str,
-        agent_id: Optional[uuid.UUID] = None,
-        user_id: Optional[str] = None,
-        status: Optional[str] = None,
+        agent_id: uuid.UUID | None = None,
+        user_id: str | None = None,
+        status: str | None = None,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[AgentSession]:
+    ) -> list[AgentSession]:
         stmt = select(AgentSession).where(AgentSession.tenant_id == tenant_id)
         if agent_id:
             stmt = stmt.where(AgentSession.agent_id == agent_id)
@@ -99,10 +97,10 @@ class AgentSessionService:
         self,
         session_id: uuid.UUID,
         tenant_id: str,
-        title: Optional[str] = None,
-        status: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> Optional[AgentSession]:
+        title: str | None = None,
+        status: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> AgentSession | None:
         session = await self.get_session(session_id, tenant_id)
         if not session:
             return None
@@ -119,9 +117,7 @@ class AgentSessionService:
         await self.db.refresh(session)
         return session
 
-    async def delete_session(
-        self, session_id: uuid.UUID, tenant_id: str
-    ) -> bool:
+    async def delete_session(self, session_id: uuid.UUID, tenant_id: str) -> bool:
         session = await self.get_session(session_id, tenant_id)
         if not session:
             return False
@@ -129,16 +125,14 @@ class AgentSessionService:
         await self.db.commit()
         return True
 
-    async def archive_session(
-        self, session_id: uuid.UUID, tenant_id: str
-    ) -> Optional[AgentSession]:
+    async def archive_session(self, session_id: uuid.UUID, tenant_id: str) -> AgentSession | None:
         return await self.update_session(session_id, tenant_id, status="archived")
 
     async def get_or_create_default_session(
         self,
         tenant_id: str,
         agent_id: uuid.UUID,
-        user_id: Optional[str] = None,
+        user_id: str | None = None,
     ) -> AgentSession:
         stmt = (
             select(AgentSession)
@@ -161,9 +155,7 @@ class AgentSessionService:
             title=f"Default session with {agent_id}",
         )
 
-    async def touch_session(
-        self, session_id: uuid.UUID
-    ) -> None:
+    async def touch_session(self, session_id: uuid.UUID) -> None:
         stmt = select(AgentSession).where(AgentSession.id == session_id)
         res = await self.db.execute(stmt)
         session = res.scalar_one_or_none()
@@ -185,7 +177,7 @@ class AgentSessionService:
 
     async def get_session_runs(
         self, session_id: uuid.UUID, tenant_id: str
-    ) -> List[AgentSessionRun]:
+    ) -> list[AgentSessionRun]:
         session = await self.get_session(session_id, tenant_id)
         if not session:
             raise SessionNotFoundError(f"Session {session_id} not found")
@@ -197,9 +189,7 @@ class AgentSessionService:
         res = await self.db.execute(stmt)
         return list(res.scalars().all())
 
-    async def count_active_sessions(
-        self, tenant_id: str
-    ) -> int:
+    async def count_active_sessions(self, tenant_id: str) -> int:
         stmt = select(func.count(AgentSession.id)).where(
             AgentSession.tenant_id == tenant_id,
             AgentSession.status == "active",
@@ -207,27 +197,25 @@ class AgentSessionService:
         res = await self.db.execute(stmt)
         return res.scalar() or 0
 
-    async def apply_retention_policies(
-        self, dry_run: bool = False
-    ) -> Dict[str, int]:
+    async def apply_retention_policies(self, dry_run: bool = False) -> dict[str, int]:
         return await self.policy_service.apply_retention_policies(self.db, dry_run)
 
     async def check_and_trigger_summarization(
         self, session_id: uuid.UUID
-    ) -> Optional[AgentSessionSummary]:
+    ) -> AgentSessionSummary | None:
         if await self.policy_service.should_summarize(session_id):
             logger.info(f"Triggering automatic summarization for session {session_id}")
             context = await self.policy_service.build_summary_context(session_id)
-            
+
             # Here we would normally call an LLM to summarize
             # For now, we'll create a placeholder summary or use a mock logic
             summary_text = f"Automatic summary of the conversation as of {utc_now().isoformat()}"
-            
+
             summary = await self.policy_service.create_summary(
                 session_id=session_id,
                 summary_text=summary_text,
             )
-            
+
             # Update session cache
             stmt = select(AgentSession).where(AgentSession.id == session_id)
             res = await self.db.execute(stmt)
@@ -235,6 +223,6 @@ class AgentSessionService:
             if session:
                 session.summary = summary_text
                 await self.db.commit()
-            
+
             return summary
         return None

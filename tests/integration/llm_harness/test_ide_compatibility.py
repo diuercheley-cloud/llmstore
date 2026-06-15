@@ -1,16 +1,12 @@
-import os
-import json
-import pytest
-from unittest.mock import MagicMock
-
-from scripts.llm_harness.ide.importers import import_vscode_config, get_ide_config
+from scripts.llm_harness.diagnostics import diagnose_errors
+from scripts.llm_harness.ide.importers import get_ide_config, import_vscode_config
 from scripts.llm_harness.languages import (
+    LANGUAGES,
     detect_language_by_filename,
     detect_primary_language_in_workspace,
-    LANGUAGES,
 )
 from scripts.llm_harness.prompt_builder import PromptBuilder
-from scripts.llm_harness.diagnostics import diagnose_errors
+
 
 def test_language_detection():
     # Test by filename

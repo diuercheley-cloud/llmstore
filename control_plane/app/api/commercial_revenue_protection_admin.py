@@ -2,9 +2,12 @@
 import uuid
 from typing import Any
 
-from app.services.runtime_dependencies import get_db_session
-from app.models.commercial.commercial_revenue_protection_action import CommercialRevenueProtectionAction
-from app.models.commercial.commercial_revenue_protection_policy import CommercialRevenueProtectionPolicy
+from app.models.commercial.commercial_revenue_protection_action import (
+    CommercialRevenueProtectionAction,
+)
+from app.models.commercial.commercial_revenue_protection_policy import (
+    CommercialRevenueProtectionPolicy,
+)
 from app.services.auth import require_admin
 from app.services.billing.revenue_protection import (
     apply_action,
@@ -14,6 +17,7 @@ from app.services.billing.revenue_protection import (
 )
 from app.services.compliance.financial_controls import evaluate_control_policy
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import desc, select
@@ -45,12 +49,18 @@ class RevenueProtectionEvaluateRequest(BaseModel):
 
 @router.get("/policies")
 async def list_policies(session: AsyncSession = Depends(get_db_session)):
-    result = await session.execute(select(CommercialRevenueProtectionPolicy).order_by(desc(CommercialRevenueProtectionPolicy.created_at)))
+    result = await session.execute(
+        select(CommercialRevenueProtectionPolicy).order_by(
+            desc(CommercialRevenueProtectionPolicy.created_at)
+        )
+    )
     return result.scalars().all()
 
 
 @router.post("/policies", status_code=201)
-async def create_policy(payload: RevenueProtectionPolicyUpsert, session: AsyncSession = Depends(get_db_session)):
+async def create_policy(
+    payload: RevenueProtectionPolicyUpsert, session: AsyncSession = Depends(get_db_session)
+):
     data = payload.model_dump()
     data["metadata_json"] = sanitize_report_payload(payload.metadata_json or {})
     policy = CommercialRevenueProtectionPolicy(**data)
@@ -61,7 +71,11 @@ async def create_policy(payload: RevenueProtectionPolicyUpsert, session: AsyncSe
 
 
 @router.patch("/policies/{policy_id}")
-async def patch_policy(policy_id: uuid.UUID, payload: RevenueProtectionPolicyUpsert, session: AsyncSession = Depends(get_db_session)):
+async def patch_policy(
+    policy_id: uuid.UUID,
+    payload: RevenueProtectionPolicyUpsert,
+    session: AsyncSession = Depends(get_db_session),
+):
     policy = await session.get(CommercialRevenueProtectionPolicy, policy_id)
     if not policy:
         raise HTTPException(status_code=404, detail="Policy not found")
@@ -73,8 +87,12 @@ async def patch_policy(policy_id: uuid.UUID, payload: RevenueProtectionPolicyUps
 
 
 @router.post("/evaluate")
-async def evaluate_policies(payload: RevenueProtectionEvaluateRequest, session: AsyncSession = Depends(get_db_session)):
-    return await evaluate_revenue_protection_policies(session, anomaly_ids=payload.anomaly_ids or None)
+async def evaluate_policies(
+    payload: RevenueProtectionEvaluateRequest, session: AsyncSession = Depends(get_db_session)
+):
+    return await evaluate_revenue_protection_policies(
+        session, anomaly_ids=payload.anomaly_ids or None
+    )
 
 
 @router.get("/actions")
@@ -83,7 +101,11 @@ async def list_actions(
     limit: int = Query(default=50, ge=1, le=500),
     session: AsyncSession = Depends(get_db_session),
 ):
-    stmt = select(CommercialRevenueProtectionAction).order_by(desc(CommercialRevenueProtectionAction.created_at)).limit(limit)
+    stmt = (
+        select(CommercialRevenueProtectionAction)
+        .order_by(desc(CommercialRevenueProtectionAction.created_at))
+        .limit(limit)
+    )
     if status:
         stmt = stmt.where(CommercialRevenueProtectionAction.status == status)
     result = await session.execute(stmt)
@@ -120,7 +142,9 @@ async def apply_action_endpoint(
 
 
 @router.post("/actions/{action_id}/revert")
-async def revert_action_endpoint(action_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
+async def revert_action_endpoint(
+    action_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)
+):
     action = await session.get(CommercialRevenueProtectionAction, action_id)
     if not action:
         raise HTTPException(status_code=404, detail="Action not found")

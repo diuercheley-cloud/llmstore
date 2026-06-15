@@ -11,19 +11,14 @@ RISK_THRESHOLDS: list[tuple[float, str]] = [
 FALLBACK_LEVEL = "low"
 
 ADVISORY_RECOMMENDATIONS: dict[str, str] = {
-    "low": (
-        "No action required. Continue routine monitoring."
-    ),
-    "medium": (
-        "Review signals. Consider investigation if trend persists or escalates."
-    ),
+    "low": ("No action required. Continue routine monitoring."),
+    "medium": ("Review signals. Consider investigation if trend persists or escalates."),
     "high": (
         "Investigate root cause. Prepare mitigation plan. "
         "Approval workflow is recommended before any action."
     ),
     "critical": (
-        "Requires human approval workflow. Do not auto-remediate. "
-        "Escalate to operator immediately."
+        "Requires human approval workflow. Do not auto-remediate. Escalate to operator immediately."
     ),
 }
 
@@ -122,6 +117,16 @@ class FailureRiskScoringService:
     @staticmethod
     def _compute_assessment_hash(assessment: dict[str, Any]) -> str:
         """Deterministic SHA-256 of the core assessment fields."""
-        core = {k: assessment[k] for k in ("risk_level", "recommendation", "requires_approval", "dry_run", "advisory_only") if k in assessment}
+        core = {
+            k: assessment[k]
+            for k in (
+                "risk_level",
+                "recommendation",
+                "requires_approval",
+                "dry_run",
+                "advisory_only",
+            )
+            if k in assessment
+        }
         raw = json.dumps(core, sort_keys=True, ensure_ascii=False, default=str)
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()

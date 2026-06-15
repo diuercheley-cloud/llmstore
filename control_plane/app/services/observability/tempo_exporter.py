@@ -1,12 +1,12 @@
 # Owner: agent-platform
 import logging
-import os
 
 from app.core.config import get_settings
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 logger = logging.getLogger(__name__)
+
 
 class TempoExporter:
     def setup(self, provider):

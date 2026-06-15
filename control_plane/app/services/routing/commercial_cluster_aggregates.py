@@ -6,7 +6,7 @@ import io
 import json
 import logging
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from app.core.config import Settings, get_settings
@@ -26,8 +26,8 @@ logger = logging.getLogger(__name__)
 
 def _as_utc(value: datetime) -> datetime:
     if value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc)
-    return value.astimezone(timezone.utc)
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
 
 
 def _floor_bucket(value: datetime, bucket_minutes: int) -> datetime:
@@ -66,24 +66,46 @@ async def _resolve_event_map(
     return event_map
 
 
-def _metrics_from_sources(ingest: CommercialRoutingEventIngest, event: CommercialRoutingEvent | None) -> dict[str, Any]:
+def _metrics_from_sources(
+    ingest: CommercialRoutingEventIngest, event: CommercialRoutingEvent | None
+) -> dict[str, Any]:
     payload = ingest.payload_json or {}
     provider = (event.selected_provider if event else None) or payload.get("selected_provider")
-    model = (event.selected_model if event else None) or payload.get("selected_model") or payload.get("model_requested")
+    model = (
+        (event.selected_model if event else None)
+        or payload.get("selected_model")
+        or payload.get("model_requested")
+    )
     client_id = str(event.client_id) if event and event.client_id else payload.get("client_id")
-    estimated_revenue_brl = float((event.estimated_revenue_brl if event else None) or payload.get("estimated_revenue_brl") or 0)
-    estimated_cost_brl = float((event.estimated_cost_brl if event else None) or payload.get("estimated_cost_brl") or 0)
-    actual_revenue_brl = float((event.actual_revenue_brl if event else None) or payload.get("actual_revenue_brl") or 0)
-    actual_cost_brl = float((event.actual_cost_brl if event else None) or payload.get("actual_cost_brl") or 0)
+    estimated_revenue_brl = float(
+        (event.estimated_revenue_brl if event else None)
+        or payload.get("estimated_revenue_brl")
+        or 0
+    )
+    estimated_cost_brl = float(
+        (event.estimated_cost_brl if event else None) or payload.get("estimated_cost_brl") or 0
+    )
+    actual_revenue_brl = float(
+        (event.actual_revenue_brl if event else None) or payload.get("actual_revenue_brl") or 0
+    )
+    actual_cost_brl = float(
+        (event.actual_cost_brl if event else None) or payload.get("actual_cost_brl") or 0
+    )
     actual_margin_brl = float(
         (event.actual_margin_brl if event else None)
         or payload.get("actual_margin_brl")
         or (actual_revenue_brl - actual_cost_brl)
     )
     latency_ms = (event.latency_ms if event else None) or payload.get("latency_ms")
-    fallback_used = bool((event.fallback_used if event else None) or payload.get("fallback_used", False))
+    fallback_used = bool(
+        (event.fallback_used if event else None) or payload.get("fallback_used", False)
+    )
     blocked = bool((event.blocked if event else None) or payload.get("blocked", False))
-    error_present = bool((event.error_type if event else None) or payload.get("error_type") or payload.get("error_code"))
+    error_present = bool(
+        (event.error_type if event else None)
+        or payload.get("error_type")
+        or payload.get("error_code")
+    )
     return {
         "provider": provider,
         "model": model,
@@ -119,7 +141,11 @@ async def aggregate_bucket(
         )
     )
 
-    ingest_result = await db.execute(select(CommercialRoutingEventIngest).where(CommercialRoutingEventIngest.status == "processed"))
+    ingest_result = await db.execute(
+        select(CommercialRoutingEventIngest).where(
+            CommercialRoutingEventIngest.status == "processed"
+        )
+    )
     ingests = [
         row
         for row in ingest_result.scalars().all()
@@ -127,23 +153,27 @@ async def aggregate_bucket(
     ]
     event_map = await _resolve_event_map(db, ingests)
 
-    groups: dict[tuple[str | None, str | None, str | None, str | None], dict[str, Any]] = defaultdict(
-        lambda: {
-            "requests_count": 0,
-            "fallback_count": 0,
-            "block_count": 0,
-            "estimated_revenue_brl": 0.0,
-            "estimated_cost_brl": 0.0,
-            "actual_revenue_brl": 0.0,
-            "actual_cost_brl": 0.0,
-            "actual_margin_brl": 0.0,
-            "latencies": [],
-            "error_count": 0,
-        }
+    groups: dict[tuple[str | None, str | None, str | None, str | None], dict[str, Any]] = (
+        defaultdict(
+            lambda: {
+                "requests_count": 0,
+                "fallback_count": 0,
+                "block_count": 0,
+                "estimated_revenue_brl": 0.0,
+                "estimated_cost_brl": 0.0,
+                "actual_revenue_brl": 0.0,
+                "actual_cost_brl": 0.0,
+                "actual_margin_brl": 0.0,
+                "latencies": [],
+                "error_count": 0,
+            }
+        )
     )
 
     for ingest in ingests:
-        event = event_map.get(f"req:{ingest.request_id}") or event_map.get(f"corr:{ingest.correlation_id}")
+        event = event_map.get(f"req:{ingest.request_id}") or event_map.get(
+            f"corr:{ingest.correlation_id}"
+        )
         metrics = _metrics_from_sources(ingest, event)
         key = (ingest.node_id, metrics["provider"], metrics["model"], metrics["client_id"])
         bucket = groups[key]
@@ -175,7 +205,9 @@ async def aggregate_bucket(
             actual_revenue_brl=stats["actual_revenue_brl"],
             actual_cost_brl=stats["actual_cost_brl"],
             actual_margin_brl=stats["actual_margin_brl"],
-            avg_latency_ms=(sum(stats["latencies"]) / len(stats["latencies"])) if stats["latencies"] else 0,
+            avg_latency_ms=(sum(stats["latencies"]) / len(stats["latencies"]))
+            if stats["latencies"]
+            else 0,
             error_count=stats["error_count"],
         )
         db.add(aggregate)
@@ -255,17 +287,34 @@ async def cleanup_old_analytics(
             settings=cfg,
         )
         if not valid:
-            return {"ingest_deleted": 0, "aggregate_deleted": 0, "heartbeat_deleted": 0, "retention_days": cfg.commercial_analytics_retention_days, "executed": False, "reason": "fencing_rejected"}
+            return {
+                "ingest_deleted": 0,
+                "aggregate_deleted": 0,
+                "heartbeat_deleted": 0,
+                "retention_days": cfg.commercial_analytics_retention_days,
+                "executed": False,
+                "reason": "fencing_rejected",
+            }
     cutoff = utc_now() - timedelta(days=cfg.commercial_analytics_retention_days)
 
     ingest_deleted = (
-        await db.execute(delete(CommercialRoutingEventIngest).where(CommercialRoutingEventIngest.received_at < cutoff))
+        await db.execute(
+            delete(CommercialRoutingEventIngest).where(
+                CommercialRoutingEventIngest.received_at < cutoff
+            )
+        )
     ).rowcount or 0
     aggregate_deleted = (
-        await db.execute(delete(CommercialClusterAggregate).where(CommercialClusterAggregate.bucket_start < cutoff))
+        await db.execute(
+            delete(CommercialClusterAggregate).where(
+                CommercialClusterAggregate.bucket_start < cutoff
+            )
+        )
     ).rowcount or 0
     heartbeat_deleted = (
-        await db.execute(delete(CommercialNodeHeartbeat).where(CommercialNodeHeartbeat.last_seen_at < cutoff))
+        await db.execute(
+            delete(CommercialNodeHeartbeat).where(CommercialNodeHeartbeat.last_seen_at < cutoff)
+        )
     ).rowcount or 0
     await db.flush()
     return {
@@ -325,7 +374,9 @@ async def get_cluster_overview(
 
             leaders = []
             for role in ["scheduler", "aggregator", "reporter", "calibration", "canary", "global"]:
-                leader = await get_current_leader(db, cluster_id=cfg.cluster_id, leader_role=role, settings=cfg)
+                leader = await get_current_leader(
+                    db, cluster_id=cfg.cluster_id, leader_role=role, settings=cfg
+                )
                 if leader:
                     leaders.append(leader)
             overview["ha"] = {"cluster_id": cfg.cluster_id, "leaders": leaders}
@@ -334,8 +385,19 @@ async def get_cluster_overview(
         return overview
 
     latency_weight = 0
-    node_stats: dict[str, dict[str, Any]] = defaultdict(lambda: {"requests": 0, "margin": 0.0, "fallbacks": 0, "blocks": 0, "errors": 0, "last_bucket": None})
-    provider_stats: dict[str, dict[str, Any]] = defaultdict(lambda: {"requests": 0, "margin": 0.0, "cost": 0.0})
+    node_stats: dict[str, dict[str, Any]] = defaultdict(
+        lambda: {
+            "requests": 0,
+            "margin": 0.0,
+            "fallbacks": 0,
+            "blocks": 0,
+            "errors": 0,
+            "last_bucket": None,
+        }
+    )
+    provider_stats: dict[str, dict[str, Any]] = defaultdict(
+        lambda: {"requests": 0, "margin": 0.0, "cost": 0.0}
+    )
     aggregate_rows = []
     drift_abs = 0.0
 
@@ -361,7 +423,11 @@ async def get_cluster_overview(
             node_bucket["fallbacks"] += row.fallback_count or 0
             node_bucket["blocks"] += row.block_count or 0
             node_bucket["errors"] += row.error_count or 0
-            node_bucket["last_bucket"] = max(node_bucket["last_bucket"], row.bucket_start) if node_bucket["last_bucket"] else row.bucket_start
+            node_bucket["last_bucket"] = (
+                max(node_bucket["last_bucket"], row.bucket_start)
+                if node_bucket["last_bucket"]
+                else row.bucket_start
+            )
 
         if row.provider:
             prov_bucket = provider_stats[row.provider]
@@ -390,7 +456,9 @@ async def get_cluster_overview(
             }
         )
 
-    overview["avg_latency_ms"] = round((overview["avg_latency_ms"] / latency_weight) if latency_weight else 0, 2)
+    overview["avg_latency_ms"] = round(
+        (overview["avg_latency_ms"] / latency_weight) if latency_weight else 0, 2
+    )
     overview["estimated_vs_actual_drift_brl"] = round(drift_abs, 4)
     overview["nodes"] = [
         {
@@ -445,7 +513,9 @@ async def list_aggregates(
     client_id: str | None = None,
 ) -> list[dict[str, Any]]:
     since = utc_now() - timedelta(hours=hours)
-    stmt = select(CommercialClusterAggregate).where(CommercialClusterAggregate.bucket_start >= since)
+    stmt = select(CommercialClusterAggregate).where(
+        CommercialClusterAggregate.bucket_start >= since
+    )
     if node_id:
         stmt = stmt.where(CommercialClusterAggregate.node_id == node_id)
     if provider:
@@ -505,7 +575,9 @@ def export_cluster_json(report: dict[str, Any]) -> bytes:
 def export_cluster_csv(report: dict[str, Any]) -> str:
     rows = report.get("aggregates", [])
     output = io.StringIO()
-    fieldnames = list(rows[0].keys()) if rows else ["bucket_start", "node_id", "provider", "requests_count"]
+    fieldnames = (
+        list(rows[0].keys()) if rows else ["bucket_start", "node_id", "provider", "requests_count"]
+    )
     writer = csv.DictWriter(output, fieldnames=fieldnames)
     writer.writeheader()
     for row in rows:
@@ -525,7 +597,11 @@ def export_cluster_html(report: dict[str, Any]) -> str:
         header = "".join(f"<th>{html.escape(field)}</th>" for field in fields)
         body = []
         for item in items[:50]:
-            body.append("<tr>" + "".join(f"<td>{html.escape(str(item.get(field, '-')))}</td>" for field in fields) + "</tr>")
+            body.append(
+                "<tr>"
+                + "".join(f"<td>{html.escape(str(item.get(field, '-')))}</td>" for field in fields)
+                + "</tr>"
+            )
         return f"<table><thead><tr>{header}</tr></thead><tbody>{''.join(body)}</tbody></table>"
 
     return f"""<!doctype html>

@@ -1,7 +1,7 @@
 import json
 import logging
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.models.agents.digital_twin import DigitalTwin
 from app.services.agents.digital_twins.twin_connector import TwinConnector
@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import aiomqtt
+
     HAS_MQTT = True
 except ImportError:
     HAS_MQTT = False
@@ -21,7 +22,14 @@ class MQTTTwinConnector(TwinConnector):
     Reads twin state from MQTT topics and executes commands via MQTT publish.
     """
 
-    def __init__(self, db, broker: str = "localhost", port: int = 1883, username: Optional[str] = None, password: Optional[str] = None):
+    def __init__(
+        self,
+        db,
+        broker: str = "localhost",
+        port: int = 1883,
+        username: str | None = None,
+        password: str | None = None,
+    ):
         super().__init__(db)
         self._broker = broker
         self._port = port
@@ -43,7 +51,7 @@ class MQTTTwinConnector(TwinConnector):
                 logger.warning(f"MQTT connection failed: {e}")
         return self._client
 
-    async def read(self, twin_id: uuid.UUID) -> Dict[str, Any]:
+    async def read(self, twin_id: uuid.UUID) -> dict[str, Any]:
         twin = await self.db.get(DigitalTwin, twin_id)
         if not twin:
             raise ValueError("Twin not found")
@@ -61,7 +69,7 @@ class MQTTTwinConnector(TwinConnector):
         try:
             await client.subscribe(topic)
             async for message in client.messages(timeout=5.0):
-                payload = json.loads(message.payload.decode('utf-8'))
+                payload = json.loads(message.payload.decode("utf-8"))
                 await self.state_service.record_state(twin_id, payload)
                 return payload
         except Exception as e:
@@ -71,7 +79,9 @@ class MQTTTwinConnector(TwinConnector):
 
         return {"status": "timeout", "error": "No MQTT message received within timeout"}
 
-    async def execute_command(self, twin_id: uuid.UUID, command: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute_command(
+        self, twin_id: uuid.UUID, command: str, params: dict[str, Any]
+    ) -> dict[str, Any]:
         twin = await self.db.get(DigitalTwin, twin_id)
         if not twin:
             raise ValueError("Twin not found")

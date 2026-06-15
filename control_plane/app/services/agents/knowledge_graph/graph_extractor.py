@@ -11,9 +11,24 @@ ENTITY_HINTS = {
     "repository": re.compile(r"\b([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)\b"),
 }
 RELATION_PATTERNS = [
-    ("owns", re.compile(r"(?P<left>[A-Z][A-Za-z0-9 _-]+)\s+owns\s+(?P<right>[A-Z][A-Za-z0-9 _-]+)", re.I)),
-    ("depends_on", re.compile(r"(?P<left>[A-Z][A-Za-z0-9 _-]+)\s+depends on\s+(?P<right>[A-Z][A-Za-z0-9 _-]+)", re.I)),
-    ("uses", re.compile(r"(?P<left>[A-Z][A-Za-z0-9 _-]+)\s+uses\s+(?P<right>[A-Z][A-Za-z0-9 _-]+)", re.I)),
+    (
+        "owns",
+        re.compile(
+            r"(?P<left>[A-Z][A-Za-z0-9 _-]+)\s+owns\s+(?P<right>[A-Z][A-Za-z0-9 _-]+)", re.I
+        ),
+    ),
+    (
+        "depends_on",
+        re.compile(
+            r"(?P<left>[A-Z][A-Za-z0-9 _-]+)\s+depends on\s+(?P<right>[A-Z][A-Za-z0-9 _-]+)", re.I
+        ),
+    ),
+    (
+        "uses",
+        re.compile(
+            r"(?P<left>[A-Z][A-Za-z0-9 _-]+)\s+uses\s+(?P<right>[A-Z][A-Za-z0-9 _-]+)", re.I
+        ),
+    ),
 ]
 
 

@@ -48,7 +48,9 @@ def upgrade() -> None:
             sa.Column("timeline_type", sa.String(length=100), nullable=False),
             sa.Column("required_signatures", sa.Integer(), server_default="1", nullable=False),
             sa.Column("allowed_witnesses_json", sa.JSON(), nullable=True),
-            sa.Column("require_external_witness", sa.Boolean(), server_default="false", nullable=False),
+            sa.Column(
+                "require_external_witness", sa.Boolean(), server_default="false", nullable=False
+            ),
             sa.Column("created_at", sa.DateTime(), nullable=False),
             sa.Column("updated_at", sa.DateTime(), nullable=False),
             sa.PrimaryKeyConstraint("id"),
@@ -65,7 +67,12 @@ def upgrade() -> None:
             sa.Column("signature", sa.Text(), nullable=False),
             sa.Column("signature_algorithm", sa.String(length=50), nullable=False),
             sa.Column("signed_at", sa.DateTime(), nullable=False),
-            sa.Column("verification_status", sa.String(length=50), server_default="pending", nullable=False),
+            sa.Column(
+                "verification_status",
+                sa.String(length=50),
+                server_default="pending",
+                nullable=False,
+            ),
             sa.Column("metadata_json", sa.JSON(), nullable=True),
             sa.ForeignKeyConstraint(["timeline_id"], ["commercial_merkle_timelines.id"]),
             sa.ForeignKeyConstraint(["witness_id"], ["commercial_witnesses.id"]),
@@ -121,7 +128,12 @@ def upgrade() -> None:
             sa.Column("timeline_hash", sa.String(length=255), nullable=True),
             sa.Column("checkpoint_hash", sa.String(length=255), nullable=True),
             sa.Column("gossip_type", sa.String(length=50), nullable=False),
-            sa.Column("verification_status", sa.String(length=50), server_default="unknown", nullable=False),
+            sa.Column(
+                "verification_status",
+                sa.String(length=50),
+                server_default="unknown",
+                nullable=False,
+            ),
             sa.Column("created_at", sa.DateTime(), nullable=False),
             sa.PrimaryKeyConstraint("id"),
         )

@@ -226,7 +226,9 @@ async def test_fix_error_dry_run(mock_run_harness, tmp_path):
 @pytest.mark.asyncio
 async def test_terminal_diagnose_from_stderr_file(tmp_path):
     stderr_file = tmp_path / "stderr.log"
-    stderr_file.write_text('Traceback (most recent call last):\n  File "app.py", line 3, in <module>\nValueError: bad input\n')
+    stderr_file.write_text(
+        'Traceback (most recent call last):\n  File "app.py", line 3, in <module>\nValueError: bad input\n'
+    )
 
     args = Namespace(
         command="terminal",
@@ -352,15 +354,13 @@ async def test_suggested_command_blocked_by_policy(tmp_path):
     # Mock agent suggestion to return a dangerous command (like sudo or rm -rf /)
     mock_agent = MagicMock()
     mock_agent.chat_completion = AsyncMock(
-        return_value={
-            "choices": [{"message": {"content": "sudo rm -rf /"}}]
-        }
+        return_value={"choices": [{"message": {"content": "sudo rm -rf /"}}]}
     )
 
     with patch("scripts.llm_harness.providers.create_code_agent", return_value=mock_agent):
         with patch("builtins.print") as mock_print:
             await run_terminal_command(args)
-            
+
             # Policy Engine should block the suggested "sudo rm -rf /" command
             # And it should print a warning
             any_blocked = any(

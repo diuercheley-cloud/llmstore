@@ -5,6 +5,7 @@ Revises: 20260514_0051
 Create Date: 2026-05-14 23:59:30.000000
 
 """
+
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
@@ -36,10 +37,30 @@ def upgrade():
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_commercial_policy_bundles_bundle_type"), "commercial_policy_bundles", ["bundle_type"], unique=False)
-    op.create_index(op.f("ix_commercial_policy_bundles_client_id"), "commercial_policy_bundles", ["client_id"], unique=False)
-    op.create_index(op.f("ix_commercial_policy_bundles_immutable_hash"), "commercial_policy_bundles", ["immutable_hash"], unique=False)
-    op.create_index(op.f("ix_commercial_policy_bundles_status"), "commercial_policy_bundles", ["status"], unique=False)
+    op.create_index(
+        op.f("ix_commercial_policy_bundles_bundle_type"),
+        "commercial_policy_bundles",
+        ["bundle_type"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_policy_bundles_client_id"),
+        "commercial_policy_bundles",
+        ["client_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_policy_bundles_immutable_hash"),
+        "commercial_policy_bundles",
+        ["immutable_hash"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_policy_bundles_status"),
+        "commercial_policy_bundles",
+        ["status"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_policy_artifacts",
@@ -49,12 +70,29 @@ def upgrade():
         sa.Column("artifact_hash", sa.String(length=64), nullable=False),
         sa.Column("artifact_json", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["bundle_id"], ["commercial_policy_bundles.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["bundle_id"], ["commercial_policy_bundles.id"], ondelete="CASCADE"
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_commercial_policy_artifacts_artifact_hash"), "commercial_policy_artifacts", ["artifact_hash"], unique=False)
-    op.create_index(op.f("ix_commercial_policy_artifacts_artifact_type"), "commercial_policy_artifacts", ["artifact_type"], unique=False)
-    op.create_index(op.f("ix_commercial_policy_artifacts_bundle_id"), "commercial_policy_artifacts", ["bundle_id"], unique=False)
+    op.create_index(
+        op.f("ix_commercial_policy_artifacts_artifact_hash"),
+        "commercial_policy_artifacts",
+        ["artifact_hash"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_policy_artifacts_artifact_type"),
+        "commercial_policy_artifacts",
+        ["artifact_type"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_policy_artifacts_bundle_id"),
+        "commercial_policy_artifacts",
+        ["bundle_id"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_policy_approvals",
@@ -67,13 +105,32 @@ def upgrade():
         sa.Column("notes", sa.Text(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("decided_at", sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(["approval_chain_id"], ["commercial_approval_chains.id"], ondelete="SET NULL"),
-        sa.ForeignKeyConstraint(["bundle_id"], ["commercial_policy_bundles.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["approval_chain_id"], ["commercial_approval_chains.id"], ondelete="SET NULL"
+        ),
+        sa.ForeignKeyConstraint(
+            ["bundle_id"], ["commercial_policy_bundles.id"], ondelete="CASCADE"
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_commercial_policy_approvals_approval_chain_id"), "commercial_policy_approvals", ["approval_chain_id"], unique=False)
-    op.create_index(op.f("ix_commercial_policy_approvals_bundle_id"), "commercial_policy_approvals", ["bundle_id"], unique=False)
-    op.create_index(op.f("ix_commercial_policy_approvals_status"), "commercial_policy_approvals", ["status"], unique=False)
+    op.create_index(
+        op.f("ix_commercial_policy_approvals_approval_chain_id"),
+        "commercial_policy_approvals",
+        ["approval_chain_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_policy_approvals_bundle_id"),
+        "commercial_policy_approvals",
+        ["bundle_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_policy_approvals_status"),
+        "commercial_policy_approvals",
+        ["status"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_policy_drift_events",
@@ -88,13 +145,35 @@ def upgrade():
         sa.Column("resolved", sa.Boolean(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("resolved_at", sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(["bundle_id"], ["commercial_policy_bundles.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(
+            ["bundle_id"], ["commercial_policy_bundles.id"], ondelete="SET NULL"
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_commercial_policy_drift_events_bundle_id"), "commercial_policy_drift_events", ["bundle_id"], unique=False)
-    op.create_index(op.f("ix_commercial_policy_drift_events_drift_type"), "commercial_policy_drift_events", ["drift_type"], unique=False)
-    op.create_index(op.f("ix_commercial_policy_drift_events_resolved"), "commercial_policy_drift_events", ["resolved"], unique=False)
-    op.create_index(op.f("ix_commercial_policy_drift_events_severity"), "commercial_policy_drift_events", ["severity"], unique=False)
+    op.create_index(
+        op.f("ix_commercial_policy_drift_events_bundle_id"),
+        "commercial_policy_drift_events",
+        ["bundle_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_policy_drift_events_drift_type"),
+        "commercial_policy_drift_events",
+        ["drift_type"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_policy_drift_events_resolved"),
+        "commercial_policy_drift_events",
+        ["resolved"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_policy_drift_events_severity"),
+        "commercial_policy_drift_events",
+        ["severity"],
+        unique=False,
+    )
 
 
 def downgrade():

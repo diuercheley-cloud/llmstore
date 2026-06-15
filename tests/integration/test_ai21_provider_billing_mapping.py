@@ -1,6 +1,5 @@
 """Tests for AI21 Labs billing mapping — cost estimation, pricing engine integration."""
 
-
 from app.services.billing.pricing_engine import estimate_provider_cost
 from app.services.providers.ai21_provider import AI21Provider
 

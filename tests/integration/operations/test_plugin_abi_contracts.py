@@ -19,7 +19,10 @@ def test_plugin_abi_contract_service_create_and_validate():
     )
     validation = service.validate_contract(contract)
     assert validation["valid"] is True
-    assert service.explain_contract(contract)["notes"][1] == "placeholder_certified is not real certification"
+    assert (
+        service.explain_contract(contract)["notes"][1]
+        == "placeholder_certified is not real certification"
+    )
 
 
 def test_plugin_abi_contract_block_and_deprecate_require_reason():

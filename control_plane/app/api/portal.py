@@ -1,7 +1,7 @@
 # Owner: platform-ops
 import json
 import uuid
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 from time import perf_counter
 from uuid import UUID
@@ -10,12 +10,11 @@ from app.api.client import _backend_errors_for_log, _chat_with_fallback, _error_
 from app.api.deps import get_inference_proxy
 from app.core.security import generate_api_key, hash_secret, short_prefix
 from app.core.time import utc_now
-from app.services.runtime_dependencies import get_db_session, get_redis
 from app.models.billing.ai_wallet import AiWalletTransaction
-from app.models.core.api_key import ApiKey
 from app.models.billing.billing_invoice import BillingInvoice
 from app.models.billing.billing_plan import BillingPlan
-from app.models.core.client import Client
+from app.models.billing.customer_payment import CustomerPayment
+from app.models.billing.request_financial import RequestFinancial
 from app.models.commercial.commercial_audit_portal import CommercialPortalSavedReport
 from app.models.commercial.commercial_billing_dispute import CommercialBillingDispute
 from app.models.commercial.commercial_cryptographic_receipts import (
@@ -37,11 +36,11 @@ from app.models.commercial.commercial_sovereign_governance import (
     CommercialHardwareAttestationRecord,
     CommercialOfflineRevocationList,
 )
-from app.models.billing.customer_payment import CustomerPayment
-from app.models.core.model_registry import ModelRegistry
-from app.models.billing.request_financial import RequestFinancial
-from app.models.core.request_log import RequestLog
 from app.models.commercial.sales_lead import SalesLead
+from app.models.core.api_key import ApiKey
+from app.models.core.client import Client
+from app.models.core.model_registry import ModelRegistry
+from app.models.core.request_log import RequestLog
 from app.schemas.admin import ApiKeyCreate, ApiKeyCreated
 from app.schemas.billing import BillingDisputeOpen
 from app.schemas.inference import (
@@ -53,7 +52,6 @@ from app.schemas.inference import (
 from app.schemas.payments import WalletTopUpCreate
 from app.schemas.public import PortalUpgradeRequest
 from app.services.audit import log_request
-from app.services.routing.commercial_report_export import sanitize_report_payload
 from app.services.auth import require_client
 from app.services.billing import (
     build_invoice_preview,
@@ -89,8 +87,10 @@ from app.services.providers.registry import get_provider
 from app.services.public_onboarding import list_public_plans
 from app.services.quota import QuotaExceeded, ensure_quota, month_start, record_usage
 from app.services.rate_limit import RateLimitExceeded, enforce_rate_limit
-from app.services.tokenizer_service import get_tokenizer_service
 from app.services.response_cache import build_chat_cache_key, lookup_exact_cache, store_exact_cache
+from app.services.routing.commercial_report_export import sanitize_report_payload
+from app.services.runtime_dependencies import get_db_session, get_redis
+from app.services.tokenizer_service import get_tokenizer_service
 from app.services.tts_usage import get_tts_usage_and_limits
 from app.utils.request_summary import summarize_chat_request
 from app.utils.token_estimator import estimate_tokens_from_text
@@ -109,7 +109,9 @@ account_router = APIRouter(tags=["portal"])
 
 
 class PortalAuditReportGeneratePayload(BaseModel):
-    report_type: str = Field(pattern="^(audit|evidence|approval_chain|attestation|exception|financial_summary)$")
+    report_type: str = Field(
+        pattern="^(audit|evidence|approval_chain|attestation|exception|financial_summary)$"
+    )
     period_start: date
     period_end: date
     export_format: str = Field(default="json", pattern="^(json|csv|html|pdf)$")
@@ -189,7 +191,7 @@ async def _log_portal_read(
 
 def _start_of_day_utc() -> datetime:
     now = utc_now()
-    return datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+    return datetime(now.year, now.month, now.day, tzinfo=UTC)
 
 
 def _portal_visible_wallet_transaction(tx: AiWalletTransaction) -> dict:
@@ -206,23 +208,26 @@ def _portal_visible_wallet_transaction(tx: AiWalletTransaction) -> dict:
 
 def _build_invoice_html(invoice: dict, client: Client) -> str:
     payments = invoice.get("payments") or []
-    payment_rows = "".join(
-        f"""
+    payment_rows = (
+        "".join(
+            f"""
         <tr>
-          <td>{payment['status']}</td>
-          <td>{payment['amount']:.2f} {payment['currency']}</td>
-          <td>{payment.get('payment_method') or '-'}</td>
-          <td>{payment.get('paid_at') or '-'}</td>
+          <td>{payment["status"]}</td>
+          <td>{payment["amount"]:.2f} {payment["currency"]}</td>
+          <td>{payment.get("payment_method") or "-"}</td>
+          <td>{payment.get("paid_at") or "-"}</td>
         </tr>
         """
-        for payment in payments
-    ) or '<tr><td colspan="4">Nenhum pagamento registrado.</td></tr>'
+            for payment in payments
+        )
+        or '<tr><td colspan="4">Nenhum pagamento registrado.</td></tr>'
+    )
 
     return f"""<!doctype html>
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
-    <title>Invoice {invoice['id']}</title>
+    <title>Invoice {invoice["id"]}</title>
     <style>
       body {{ font-family: Arial, sans-serif; margin: 32px; color: #0f172a; }}
       h1, h2 {{ margin-bottom: 8px; }}
@@ -238,26 +243,26 @@ def _build_invoice_html(invoice: dict, client: Client) -> str:
   <body>
     <h1>Fatura</h1>
     <div class="muted">Cliente: {client.name}</div>
-    <div class="muted">Invoice ID: <code>{invoice['id']}</code></div>
+    <div class="muted">Invoice ID: <code>{invoice["id"]}</code></div>
     <div class="grid">
       <div class="card">
         <h2>Status</h2>
-        <div>{invoice['status']}</div>
-        <div class="muted">Vencimento: {invoice.get('due_at') or '-'}</div>
-        <div class="muted">Período: {invoice['period_start']} até {invoice['period_end']}</div>
+        <div>{invoice["status"]}</div>
+        <div class="muted">Vencimento: {invoice.get("due_at") or "-"}</div>
+        <div class="muted">Período: {invoice["period_start"]} até {invoice["period_end"]}</div>
       </div>
       <div class="card">
         <h2>Valores</h2>
-        <div>Mensalidade: {invoice['monthly_price']:.2f} {invoice['currency']}</div>
-        <div>Excedente: {invoice['overage_cost']:.2f} {invoice['currency']}</div>
-        <div><strong>Total: {invoice['total_amount']:.2f} {invoice['currency']}</strong></div>
+        <div>Mensalidade: {invoice["monthly_price"]:.2f} {invoice["currency"]}</div>
+        <div>Excedente: {invoice["overage_cost"]:.2f} {invoice["currency"]}</div>
+        <div><strong>Total: {invoice["total_amount"]:.2f} {invoice["currency"]}</strong></div>
       </div>
     </div>
     <h2>Consumo</h2>
     <div>Tokens incluídos: {"Ilimitado" if invoice.get("included_tokens", 0) <= 0 else invoice["included_tokens"]}</div>
-    <div>Tokens usados: {invoice['used_tokens']}</div>
-    <div>Tokens excedentes: {invoice['overage_tokens']}</div>
-    <div>Instruções de pagamento: {invoice.get('payment_instructions') or 'pagamento manual/local'}</div>
+    <div>Tokens usados: {invoice["used_tokens"]}</div>
+    <div>Tokens excedentes: {invoice["overage_tokens"]}</div>
+    <div>Instruções de pagamento: {invoice.get("payment_instructions") or "pagamento manual/local"}</div>
     <h2>Pagamentos</h2>
     <table>
       <thead>
@@ -271,14 +276,18 @@ def _build_invoice_html(invoice: dict, client: Client) -> str:
 
 async def _portal_usage_request_totals(session: AsyncSession, client_id: UUID) -> dict[str, int]:
     today_start = _start_of_day_utc()
-    month_start_dt = datetime.combine(month_start(date.today()), datetime.min.time(), tzinfo=timezone.utc)
+    month_start_dt = datetime.combine(month_start(date.today()), datetime.min.time(), tzinfo=UTC)
     today_stmt = select(
         func.count(RequestLog.id),
-        func.coalesce(func.sum(RequestLog.prompt_tokens_estimated + RequestLog.completion_tokens_estimated), 0),
+        func.coalesce(
+            func.sum(RequestLog.prompt_tokens_estimated + RequestLog.completion_tokens_estimated), 0
+        ),
     ).where(RequestLog.client_id == client_id, RequestLog.created_at >= today_start)
     month_stmt = select(
         func.count(RequestLog.id),
-        func.coalesce(func.sum(RequestLog.prompt_tokens_estimated + RequestLog.completion_tokens_estimated), 0),
+        func.coalesce(
+            func.sum(RequestLog.prompt_tokens_estimated + RequestLog.completion_tokens_estimated), 0
+        ),
     ).where(RequestLog.client_id == client_id, RequestLog.created_at >= month_start_dt)
     today_row = (await session.execute(today_stmt)).one()
     month_row = (await session.execute(month_stmt)).one()
@@ -322,7 +331,7 @@ async def _portal_usage_customer_pricing(
     invoice_preview: dict,
 ) -> dict:
     today_start = _start_of_day_utc()
-    month_start_dt = datetime.combine(month_start(date.today()), datetime.min.time(), tzinfo=timezone.utc)
+    month_start_dt = datetime.combine(month_start(date.today()), datetime.min.time(), tzinfo=UTC)
     today_stmt = select(func.coalesce(func.sum(RequestFinancial.customer_price_brl), 0)).where(
         cast(RequestFinancial.client_id, PGUUID(as_uuid=True)) == client_id,
         RequestFinancial.created_at >= today_start,
@@ -338,7 +347,9 @@ async def _portal_usage_customer_pricing(
         "visible": True,
         "currency": "BRL" if has_financials else invoice_preview["currency"],
         "today_amount": round(today_total, 4) if has_financials else None,
-        "month_amount": round(month_total, 4) if has_financials else round(float(invoice_preview["total_estimated"]), 4),
+        "month_amount": round(month_total, 4)
+        if has_financials
+        else round(float(invoice_preview["total_estimated"]), 4),
         "source": "request_financials" if has_financials else "invoice_preview",
     }
 
@@ -374,14 +385,15 @@ async def portal_upgrade_plan(
 ):
     plan = (
         await session.execute(
-            select(BillingPlan)
-            .where(BillingPlan.code == payload.plan_code, BillingPlan.is_active.is_(True))
+            select(BillingPlan).where(
+                BillingPlan.code == payload.plan_code, BillingPlan.is_active.is_(True)
+            )
         )
     ).scalar_one_or_none()
-    
+
     if not plan:
         raise HTTPException(status_code=404, detail="billing plan not found")
-        
+
     # Update client plan and quotas
     client.billing_plan_id = plan.id
     client.rate_limit_per_minute = plan.rate_limit_per_minute
@@ -389,10 +401,10 @@ async def portal_upgrade_plan(
     client.weekly_token_quota = plan.weekly_token_quota
     client.monthly_token_quota = plan.monthly_token_quota
     client.max_output_tokens = plan.max_output_tokens
-    
+
     # Reset billing status to active if they were past_due/suspended (simulation)
     client.billing_status = "active"
-    
+
     await session.commit()
     return {"status": "success", "new_plan": plan.name}
 
@@ -410,22 +422,24 @@ async def portal_simulate_payment(
             .where(BillingInvoice.id == invoice_id, BillingInvoice.client_id == client.id)
         )
     ).scalar_one_or_none()
-    
+
     if not invoice:
         raise HTTPException(status_code=404, detail="invoice not found")
-        
+
     if invoice.status == "paid":
         return {"status": "already_paid"}
-        
+
     current_time = utc_now()
     invoice.status = "paid"
     invoice.paid_at = current_time
     invoice.cancelled_at = None
     invoice.updated_at = current_time
-    
+
     # Record payment
     # Check if there is already a pending/overdue payment to fulfill
-    payment = next((item for item in invoice.payments if item.status in {"pending", "overdue"}), None)
+    payment = next(
+        (item for item in invoice.payments if item.status in {"pending", "overdue"}), None
+    )
     if payment is None:
         payment = CustomerPayment(
             invoice_id=invoice.id,
@@ -444,16 +458,16 @@ async def portal_simulate_payment(
         payment.payment_method = "simulation_portal"
         payment.payment_reference = f"sim_{short_prefix(str(invoice.id))}"
         payment.updated_at = current_time
-    
+
     # Force client status to active
     client.billing_status = "active"
     client.updated_at = current_time
-    
+
     await session.commit()
     # Refresh other statuses if needed
     await refresh_billing_statuses(session)
     await session.commit()
-    
+
     return {"status": "success", "message": "Payment simulated and account refreshed"}
 
 
@@ -464,6 +478,7 @@ async def portal_me(
     session: AsyncSession = Depends(get_db_session),
 ):
     from app.core.config import get_settings
+
     settings = get_settings()
     effective_plan = await resolve_effective_plan_for_session(session, client)
     return {
@@ -538,7 +553,7 @@ async def portal_create_api_key(
 ):
     if payload.client_id != client.id:
         raise HTTPException(status_code=403, detail="forbidden")
-    
+
     plaintext = generate_api_key()
     api_key = ApiKey(
         client_id=client.id,
@@ -552,7 +567,7 @@ async def portal_create_api_key(
     session.add(api_key)
     await session.commit()
     await session.refresh(api_key)
-    
+
     return ApiKeyCreated(
         id=api_key.id,
         client_id=api_key.client_id,
@@ -575,10 +590,10 @@ async def portal_revoke_api_key(
     api_key = await session.get(ApiKey, api_key_id)
     if not api_key or api_key.client_id != client.id:
         raise HTTPException(status_code=404, detail="api key not found")
-    
+
     if api_key.revoked_at is not None:
         return {"status": "already_revoked"}
-    
+
     api_key.revoked_at = utc_now()
     api_key.is_active = False
     await session.commit()
@@ -593,46 +608,55 @@ async def portal_usage_stats(
     from datetime import timedelta
 
     from sqlalchemy import func
-    
+
     # Last 30 days daily usage
     thirty_days_ago = utc_now() - timedelta(days=30)
-    
+
     daily_query = (
         select(
             func.date(RequestLog.created_at).label("day"),
-            func.sum(RequestLog.prompt_tokens_estimated + RequestLog.completion_tokens_estimated).label("tokens"),
-            func.count(RequestLog.id).label("requests")
+            func.sum(
+                RequestLog.prompt_tokens_estimated + RequestLog.completion_tokens_estimated
+            ).label("tokens"),
+            func.count(RequestLog.id).label("requests"),
         )
         .where(RequestLog.client_id == client.id, RequestLog.created_at >= thirty_days_ago)
         .group_by(func.date(RequestLog.created_at))
         .order_by(func.date(RequestLog.created_at))
     )
     daily_results = (await session.execute(daily_query)).all()
-    
+
     # Model breakdown (this month)
     this_month_start = month_start(date.today())
     model_query = (
         select(
             RequestLog.model,
             func.count(RequestLog.id).label("requests"),
-            func.sum(RequestLog.prompt_tokens_estimated + RequestLog.completion_tokens_estimated).label("tokens")
+            func.sum(
+                RequestLog.prompt_tokens_estimated + RequestLog.completion_tokens_estimated
+            ).label("tokens"),
         )
-        .where(RequestLog.client_id == client.id, RequestLog.created_at >= datetime.combine(this_month_start, datetime.min.time(), tzinfo=timezone.utc))
+        .where(
+            RequestLog.client_id == client.id,
+            RequestLog.created_at
+            >= datetime.combine(this_month_start, datetime.min.time(), tzinfo=UTC),
+        )
         .group_by(RequestLog.model)
         .order_by(desc("requests"))
     )
     model_results = (await session.execute(model_query)).all()
-    
+
     # Current month total requests
     total_requests_query = select(func.count(RequestLog.id)).where(
-        RequestLog.client_id == client.id, 
-        RequestLog.created_at >= datetime.combine(this_month_start, datetime.min.time(), tzinfo=timezone.utc)
+        RequestLog.client_id == client.id,
+        RequestLog.created_at
+        >= datetime.combine(this_month_start, datetime.min.time(), tzinfo=UTC),
     )
     total_requests = (await session.execute(total_requests_query)).scalar() or 0
-    
+
     # TTS usage
     tts_usage = await get_tts_usage_and_limits(session, client)
-    
+
     return {
         "daily_usage": [
             {"day": str(r.day), "tokens": int(r.tokens or 0), "requests": int(r.requests or 0)}
@@ -643,7 +667,7 @@ async def portal_usage_stats(
             for r in model_results
         ],
         "total_requests_this_month": total_requests,
-        "tts_usage": tts_usage
+        "tts_usage": tts_usage,
     }
 
 
@@ -691,34 +715,47 @@ async def portal_list_models(
                 .limit(1)
             )
         ).scalar_one_or_none()
-        provenance_summary = await summarize_model_provenance(
-            session,
-            uuid.UUID(trust["provenance_id"]) if trust.get("provenance_id") else None,
-        ) if trust.get("provenance_id") else None
+        provenance_summary = (
+            await summarize_model_provenance(
+                session,
+                uuid.UUID(trust["provenance_id"]) if trust.get("provenance_id") else None,
+            )
+            if trust.get("provenance_id")
+            else None
+        )
         if provenance_summary:
             provenance_summary.pop("source_uri", None)
-        allowed_models.append({
-            "id": m.model_id,
-            "alias": m.model_alias,
-            "display_name": m.model_alias or m.model_id,
-            "context_length": m.context_length,
-            "trust_state": trust["trust_state"],
-            "trust_state_runtime": latest_scan.integrity_status if latest_scan else "unknown",
-            "approved_at": trust.get("approved_at"),
-            "revocation_status": trust["trust_state"] if trust["trust_state"] in {"revoked", "quarantined"} else None,
-            "quarantine_status": bool(
-                trust["trust_state"] == "quarantined" or (latest_scan and latest_scan.integrity_status == "quarantined")
-            ),
-            "integrity_summary": {
-                "status": latest_scan.integrity_status if latest_scan else "unknown",
-                "scan_type": latest_scan.scan_type if latest_scan else None,
-                "scanned_at": latest_scan.created_at.isoformat() if latest_scan else None,
-                "checksum_prefix": (latest_scan.observed_checksum or "")[:12] if latest_scan and latest_scan.observed_checksum else None,
-            },
-            "attestation_summary": serialize_runtime_attestation(latest_attestation) if latest_attestation else None,
-            "provenance_summary": provenance_summary,
-        })
-        
+        allowed_models.append(
+            {
+                "id": m.model_id,
+                "alias": m.model_alias,
+                "display_name": m.model_alias or m.model_id,
+                "context_length": m.context_length,
+                "trust_state": trust["trust_state"],
+                "trust_state_runtime": latest_scan.integrity_status if latest_scan else "unknown",
+                "approved_at": trust.get("approved_at"),
+                "revocation_status": trust["trust_state"]
+                if trust["trust_state"] in {"revoked", "quarantined"}
+                else None,
+                "quarantine_status": bool(
+                    trust["trust_state"] == "quarantined"
+                    or (latest_scan and latest_scan.integrity_status == "quarantined")
+                ),
+                "integrity_summary": {
+                    "status": latest_scan.integrity_status if latest_scan else "unknown",
+                    "scan_type": latest_scan.scan_type if latest_scan else None,
+                    "scanned_at": latest_scan.created_at.isoformat() if latest_scan else None,
+                    "checksum_prefix": (latest_scan.observed_checksum or "")[:12]
+                    if latest_scan and latest_scan.observed_checksum
+                    else None,
+                },
+                "attestation_summary": serialize_runtime_attestation(latest_attestation)
+                if latest_attestation
+                else None,
+                "provenance_summary": provenance_summary,
+            }
+        )
+
     return allowed_models
 
 
@@ -752,7 +789,7 @@ async def portal_account(
             )
         )
     ).scalar() or 0
-    
+
     return {
         "client_id": str(client.id),
         "name": client.name,
@@ -783,7 +820,9 @@ async def portal_account(
             "best_effort_only": True,
             "records": int(repro_total),
             "replayable": int(repro_replayable),
-            "support_percent": round(((repro_replayable / repro_total) * 100.0) if repro_total else 0.0, 2),
+            "support_percent": round(
+                ((repro_replayable / repro_total) * 100.0) if repro_total else 0.0, 2
+            ),
         },
     }
 
@@ -799,13 +838,17 @@ async def portal_inference_reproducibility(
     )
 
     rows = (
-        await session.execute(
-            select(CommercialInferenceReproducibilityRecord)
-            .where(CommercialInferenceReproducibilityRecord.client_id == str(client.id))
-            .order_by(desc(CommercialInferenceReproducibilityRecord.created_at))
-            .limit(limit)
+        (
+            await session.execute(
+                select(CommercialInferenceReproducibilityRecord)
+                .where(CommercialInferenceReproducibilityRecord.client_id == str(client.id))
+                .order_by(desc(CommercialInferenceReproducibilityRecord.created_at))
+                .limit(limit)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     items = []
     for item in rows:
         items.append(
@@ -840,20 +883,20 @@ async def portal_usage(
     session: AsyncSession = Depends(get_db_session),
 ):
     from app.services.tts_usage import get_tts_usage_and_limits
-    
+
     effective_plan = await resolve_effective_plan_for_session(session, client)
     counters = await get_current_usage_snapshot(session, client.id)
     daily_used = int(counters["daily"].used_tokens) if counters["daily"] else 0
     weekly_used = int(counters["weekly"].used_tokens) if counters["weekly"] else 0
     monthly_used = int(counters["monthly"].used_tokens) if counters["monthly"] else 0
-    
+
     tts_info = await get_tts_usage_and_limits(session, client)
     monthly_tts_used = tts_info["usage"]["monthly_chars"]
-    
+
     invoice_preview = build_invoice_preview(
-        effective_plan=effective_plan, 
+        effective_plan=effective_plan,
         monthly_used_tokens=monthly_used,
-        monthly_used_tts_chars=monthly_tts_used
+        monthly_used_tts_chars=monthly_tts_used,
     )
     request_totals = await _portal_usage_request_totals(session, client.id)
     customer_pricing = await _portal_usage_customer_pricing(session, client.id, invoice_preview)
@@ -870,9 +913,15 @@ async def portal_usage(
         "customer_pricing": customer_pricing,
         "quota_remaining": {
             "daily_tokens": _portal_remaining_tokens(effective_plan.daily_token_quota, daily_used),
-            "weekly_tokens": _portal_remaining_tokens(effective_plan.weekly_token_quota, weekly_used),
-            "monthly_tokens": _portal_remaining_tokens(effective_plan.monthly_token_quota, monthly_used),
-            "requests_per_day": max(effective_plan.requests_per_day - request_totals["requests_today"], 0)
+            "weekly_tokens": _portal_remaining_tokens(
+                effective_plan.weekly_token_quota, weekly_used
+            ),
+            "monthly_tokens": _portal_remaining_tokens(
+                effective_plan.monthly_token_quota, monthly_used
+            ),
+            "requests_per_day": max(
+                effective_plan.requests_per_day - request_totals["requests_today"], 0
+            )
             if effective_plan.requests_per_day
             else None,
         },
@@ -882,17 +931,23 @@ async def portal_usage(
         },
         "daily_usage": {
             "used_tokens": daily_used,
-            "remaining_tokens": _portal_remaining_tokens(effective_plan.daily_token_quota, daily_used),
+            "remaining_tokens": _portal_remaining_tokens(
+                effective_plan.daily_token_quota, daily_used
+            ),
             "quota": daily_quota,
         },
         "weekly_usage": {
             "used_tokens": weekly_used,
-            "remaining_tokens": _portal_remaining_tokens(effective_plan.weekly_token_quota, weekly_used),
+            "remaining_tokens": _portal_remaining_tokens(
+                effective_plan.weekly_token_quota, weekly_used
+            ),
             "quota": weekly_quota,
         },
         "monthly_usage": {
             "used_tokens": monthly_used,
-            "remaining_tokens": _portal_remaining_tokens(effective_plan.monthly_token_quota, monthly_used),
+            "remaining_tokens": _portal_remaining_tokens(
+                effective_plan.monthly_token_quota, monthly_used
+            ),
             "quota": monthly_quota,
         },
         "tts_usage": tts_info,
@@ -915,7 +970,9 @@ async def portal_rag_vault_status(
 
     docs = (
         await session.execute(
-            select(func.count(CommercialRAGDocument.id)).where(CommercialRAGDocument.vault_id == vault.id)
+            select(func.count(CommercialRAGDocument.id)).where(
+                CommercialRAGDocument.vault_id == vault.id
+            )
         )
     ).scalar() or 0
     signed_docs = (
@@ -940,7 +997,8 @@ async def portal_rag_vault_status(
             "id": str(vault.id),
             "vault_name": vault.vault_name,
             "vault_mode": vault.vault_mode,
-            "confidential_retrieval_mode": vault.vault_mode in {"confidential", "sovereign", "airgap"},
+            "confidential_retrieval_mode": vault.vault_mode
+            in {"confidential", "sovereign", "airgap"},
             "encryption_required": vault.encryption_required,
             "documents": int(docs),
             "signed_documents": int(signed_docs),
@@ -962,13 +1020,17 @@ async def portal_rag_retrieval_history(
     if vault is None:
         return {"items": []}
     rows = (
-        await session.execute(
-            select(CommercialRAGRetrievalAudit)
-            .where(CommercialRAGRetrievalAudit.vault_id == vault.id)
-            .order_by(desc(CommercialRAGRetrievalAudit.created_at))
-            .limit(100)
+        (
+            await session.execute(
+                select(CommercialRAGRetrievalAudit)
+                .where(CommercialRAGRetrievalAudit.vault_id == vault.id)
+                .order_by(desc(CommercialRAGRetrievalAudit.created_at))
+                .limit(100)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {
         "items": [
             {
@@ -998,13 +1060,17 @@ async def portal_rag_legal_holds(
     if vault is None:
         return {"items": []}
     rows = (
-        await session.execute(
-            select(CommercialRAGLegalHold)
-            .where(CommercialRAGLegalHold.vault_id == vault.id)
-            .order_by(desc(CommercialRAGLegalHold.created_at))
-            .limit(100)
+        (
+            await session.execute(
+                select(CommercialRAGLegalHold)
+                .where(CommercialRAGLegalHold.vault_id == vault.id)
+                .order_by(desc(CommercialRAGLegalHold.created_at))
+                .limit(100)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {
         "items": [
             {
@@ -1032,13 +1098,17 @@ async def portal_rag_document_trust_status(
     if vault is None:
         return {"items": []}
     rows = (
-        await session.execute(
-            select(CommercialRAGDocument)
-            .where(CommercialRAGDocument.vault_id == vault.id)
-            .order_by(desc(CommercialRAGDocument.created_at))
-            .limit(100)
+        (
+            await session.execute(
+                select(CommercialRAGDocument)
+                .where(CommercialRAGDocument.vault_id == vault.id)
+                .order_by(desc(CommercialRAGDocument.created_at))
+                .limit(100)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {
         "items": [
             {
@@ -1060,31 +1130,42 @@ async def portal_invoices(
     session: AsyncSession = Depends(get_db_session),
 ):
     from app.core.config import get_settings
+
     settings = get_settings()
     await refresh_billing_statuses(session)
     await session.commit()
     invoices = (
-        await session.execute(
-            select(BillingInvoice)
-            .options(selectinload(BillingInvoice.payments))
-            .where(BillingInvoice.client_id == client.id)
-            .order_by(desc(BillingInvoice.created_at))
-            .limit(50)
+        (
+            await session.execute(
+                select(BillingInvoice)
+                .options(selectinload(BillingInvoice.payments))
+                .where(BillingInvoice.client_id == client.id)
+                .order_by(desc(BillingInvoice.created_at))
+                .limit(50)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     payments = (
-        await session.execute(
-            select(CustomerPayment)
-            .where(CustomerPayment.client_id == client.id)
-            .order_by(desc(CustomerPayment.created_at))
-            .limit(50)
+        (
+            await session.execute(
+                select(CustomerPayment)
+                .where(CustomerPayment.client_id == client.id)
+                .order_by(desc(CustomerPayment.created_at))
+                .limit(50)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {
         "client_id": str(client.id),
         "billing_status": client.billing_status,
         "local_billing_mode": settings.local_billing_mode,
-        "local_billing_message": "pagamento manual/local" if settings.local_billing_mode == "manual" else None,
+        "local_billing_message": "pagamento manual/local"
+        if settings.local_billing_mode == "manual"
+        else None,
         "invoices": [serialize_invoice(invoice) for invoice in invoices],
         "payments": [
             {
@@ -1141,6 +1222,7 @@ async def portal_wallet(
         get_balance,
         list_transactions,
     )
+
     balance = await get_balance(session, client.id)
     txs = await list_transactions(session, client.id, limit=20)
     effective_plan = await resolve_effective_plan_for_session(session, client)
@@ -1169,7 +1251,7 @@ async def portal_wallet(
             else None
         ),
         "pix_notice": "Recarga via PIX real ainda não está disponível nesta versão. "
-                      "Créditos devem ser adicionados manualmente pelo administrador.",
+        "Créditos devem ser adicionados manualmente pelo administrador.",
         "transactions": [_portal_visible_wallet_transaction(tx) for tx in txs],
     }
 
@@ -1182,7 +1264,9 @@ async def portal_wallet_recharge_request(
 ):
     metadata = json.loads(client.metadata_json) if client.metadata_json else {}
     contact_name = metadata.get("contact_name") or client.name
-    contact_email = metadata.get("contact_email") or f"portal+{short_prefix(str(client.id))}@local.invalid"
+    contact_email = (
+        metadata.get("contact_email") or f"portal+{short_prefix(str(client.id))}@local.invalid"
+    )
     lead = SalesLead(
         company_name=client.name,
         contact_name=contact_name,
@@ -1241,7 +1325,11 @@ async def portal_examples(
     from app.core.config import get_settings
 
     settings = get_settings()
-    base_url = settings.public_base_url.rstrip("/") if settings.public_base_url else "http://localhost:8080"
+    base_url = (
+        settings.public_base_url.rstrip("/")
+        if settings.public_base_url
+        else "http://localhost:8080"
+    )
     openai_base_url = f"{base_url}/v1"
     return {
         "client_id": str(client.id),
@@ -1320,7 +1408,7 @@ async def portal_qos_billing(
     )
     result = await session.execute(stmt)
     records = result.scalars().all()
-    
+
     return [
         {
             "id": str(r.id),
@@ -1331,7 +1419,9 @@ async def portal_qos_billing(
             "priority_slots_consumed": float(r.priority_slots_consumed),
             "billable_amount_brl": float(r.billable_amount_brl),
             "status": r.status,
-            "wallet_transaction_id": str(r.wallet_transaction_id) if r.wallet_transaction_id else None,
+            "wallet_transaction_id": str(r.wallet_transaction_id)
+            if r.wallet_transaction_id
+            else None,
             "invoice_id": str(r.invoice_id) if r.invoice_id else None,
             "created_at": r.created_at.isoformat(),
         }
@@ -1360,17 +1450,28 @@ async def portal_test_chat(
         requested_model=chat_payload.model,
     )
     tokenizer = get_tokenizer_service()
-    token_res = await tokenizer.count_chat_tokens([item.model_dump() for item in chat_payload.messages], model=selected_model.model_id)
+    token_res = await tokenizer.count_chat_tokens(
+        [item.model_dump() for item in chat_payload.messages], model=selected_model.model_id
+    )
     prompt_tokens = token_res.input_tokens
     token_count_method = token_res.method
     tokens_estimated = token_res.is_estimated
     if prompt_tokens > client.max_context_tokens:
         raise HTTPException(status_code=413, detail="prompt exceeds client context limit")
-    max_tokens, temperature, top_p, effective_plan = await validate_params_for_session(session, client, chat_payload)
+    max_tokens, temperature, top_p, effective_plan = await validate_params_for_session(
+        session, client, chat_payload
+    )
     incoming_tokens = prompt_tokens + max_tokens
     try:
         await enforce_rate_limit(redis, client.id, effective_plan.rate_limit_per_minute)
-        await ensure_quota(session, client.id, effective_plan.daily_token_quota, effective_plan.weekly_token_quota, effective_plan.monthly_token_quota, incoming_tokens)
+        await ensure_quota(
+            session,
+            client.id,
+            effective_plan.daily_token_quota,
+            effective_plan.weekly_token_quota,
+            effective_plan.monthly_token_quota,
+            incoming_tokens,
+        )
     except RateLimitExceeded as exc:
         raise HTTPException(status_code=429, detail=str(exc)) from exc
     except QuotaExceeded as exc:
@@ -1390,7 +1491,9 @@ async def portal_test_chat(
         include_reasoning=False,
     )
     usage_snapshot = await get_current_usage_snapshot(session, client.id)
-    monthly_used_before = int(usage_snapshot["monthly"].used_tokens) if usage_snapshot["monthly"] else 0
+    monthly_used_before = (
+        int(usage_snapshot["monthly"].used_tokens) if usage_snapshot["monthly"] else 0
+    )
     estimated_request_cost = float(
         estimate_request_cost(
             monthly_tokens_used_before=monthly_used_before,
@@ -1399,7 +1502,9 @@ async def portal_test_chat(
             overage_price_per_1k_tokens=effective_plan.overage_price_per_1k_tokens,
         )
     )
-    request_summary = summarize_chat_request([item.model_dump() for item in chat_payload.messages], include_reasoning=False)
+    request_summary = summarize_chat_request(
+        [item.model_dump() for item in chat_payload.messages], include_reasoning=False
+    )
     started = perf_counter()
     try:
         cached = await lookup_exact_cache(
@@ -1412,12 +1517,12 @@ async def portal_test_chat(
         if cached.hit and cached.payload is not None:
             latency_ms = int((perf_counter() - started) * 1000)
             await record_usage(
-                session, 
-                client.id, 
-                prompt_tokens, 
+                session,
+                client.id,
+                prompt_tokens,
                 cached.completion_tokens,
                 token_count_method=token_count_method,
-                tokens_estimated=tokens_estimated
+                tokens_estimated=tokens_estimated,
             )
             await log_request(
                 session,
@@ -1445,10 +1550,15 @@ async def portal_test_chat(
                 "model": selected_model.model_id,
                 "cached": True,
                 "response": payload_json,
-                "text": (((payload_json.get("choices") or [{}])[0].get("message") or {}).get("content")) or "",
+                "text": (
+                    ((payload_json.get("choices") or [{}])[0].get("message") or {}).get("content")
+                )
+                or "",
             }
 
-        result = await _chat_with_fallback(proxy, selected_model, body, False, False, client=client, session=session)
+        result = await _chat_with_fallback(
+            proxy, selected_model, body, False, False, client=client, session=session
+        )
         latency_ms = int((perf_counter() - started) * 1000)
         response_payload = json.loads(result.response.body.decode("utf-8"))
         completion_tokens = estimate_tokens_from_text(result.response.body.decode("utf-8"))
@@ -1463,12 +1573,12 @@ async def portal_test_chat(
             completion_tokens=completion_tokens,
         )
         await record_usage(
-            session, 
-            client.id, 
-            prompt_tokens, 
+            session,
+            client.id,
+            prompt_tokens,
             completion_tokens,
             token_count_method=token_count_method,
-            tokens_estimated=tokens_estimated
+            tokens_estimated=tokens_estimated,
         )
         await log_request(
             session,
@@ -1495,7 +1605,10 @@ async def portal_test_chat(
             "model": selected_model.model_id,
             "cached": False,
             "response": response_payload,
-            "text": ((((response_payload.get("choices") or [{}])[0].get("message") or {}).get("content")) or ""),
+            "text": (
+                (((response_payload.get("choices") or [{}])[0].get("message") or {}).get("content"))
+                or ""
+            ),
         }
     except HTTPException as exc:
         latency_ms = int((perf_counter() - started) * 1000)
@@ -1541,12 +1654,12 @@ async def portal_open_dispute(
         disputed_reason=payload.disputed_reason,
         qos_billing_record_id=payload.qos_billing_record_id,
         invoice_id=payload.invoice_id,
-        wallet_transaction_id=payload.wallet_transaction_id
+        wallet_transaction_id=payload.wallet_transaction_id,
     )
     return {
         "id": str(dispute.id),
         "status": dispute.status,
-        "created_at": dispute.created_at.isoformat()
+        "created_at": dispute.created_at.isoformat(),
     }
 
 
@@ -1558,13 +1671,15 @@ async def portal_list_disputes(
     """
     Lists the client's billing disputes.
     """
-    stmt = select(CommercialBillingDispute).where(
-        CommercialBillingDispute.client_id == client.id
-    ).order_by(desc(CommercialBillingDispute.created_at))
-    
+    stmt = (
+        select(CommercialBillingDispute)
+        .where(CommercialBillingDispute.client_id == client.id)
+        .order_by(desc(CommercialBillingDispute.created_at))
+    )
+
     result = await session.execute(stmt)
     disputes = result.scalars().all()
-    
+
     return [
         {
             "id": str(d.id),
@@ -1610,8 +1725,23 @@ async def portal_audit_approval_chains(
         request,
         client,
         resource_type="approval_chain",
-        action=_audit_action_from_filters(period_start=period_start, period_end=period_end, status=status, control_area=control_area, actor=actor),
-        metadata_json={"count": len(items), "filters": {"period_start": period_start, "period_end": period_end, "status": status, "control_area": control_area, "actor": actor}},
+        action=_audit_action_from_filters(
+            period_start=period_start,
+            period_end=period_end,
+            status=status,
+            control_area=control_area,
+            actor=actor,
+        ),
+        metadata_json={
+            "count": len(items),
+            "filters": {
+                "period_start": period_start,
+                "period_end": period_end,
+                "status": status,
+                "control_area": control_area,
+                "actor": actor,
+            },
+        },
     )
     await session.commit()
     return {"items": items}
@@ -1643,8 +1773,18 @@ async def portal_audit_evidence_packages(
         request,
         client,
         resource_type="evidence_package",
-        action=_audit_action_from_filters(period_start=period_start, period_end=period_end, control_area=control_area, actor=actor),
-        metadata_json={"count": len(items), "filters": {"period_start": period_start, "period_end": period_end, "control_area": control_area, "actor": actor}},
+        action=_audit_action_from_filters(
+            period_start=period_start, period_end=period_end, control_area=control_area, actor=actor
+        ),
+        metadata_json={
+            "count": len(items),
+            "filters": {
+                "period_start": period_start,
+                "period_end": period_end,
+                "control_area": control_area,
+                "actor": actor,
+            },
+        },
     )
     await session.commit()
     return {"items": items}
@@ -1678,8 +1818,23 @@ async def portal_audit_attestations(
         request,
         client,
         resource_type="attestation",
-        action=_audit_action_from_filters(period_start=period_start, period_end=period_end, status=status, control_area=control_area, actor=actor),
-        metadata_json={"count": len(items), "filters": {"period_start": period_start, "period_end": period_end, "status": status, "control_area": control_area, "actor": actor}},
+        action=_audit_action_from_filters(
+            period_start=period_start,
+            period_end=period_end,
+            status=status,
+            control_area=control_area,
+            actor=actor,
+        ),
+        metadata_json={
+            "count": len(items),
+            "filters": {
+                "period_start": period_start,
+                "period_end": period_end,
+                "status": status,
+                "control_area": control_area,
+                "actor": actor,
+            },
+        },
     )
     await session.commit()
     return {"items": items}
@@ -1715,8 +1870,25 @@ async def portal_audit_exceptions(
         request,
         client,
         resource_type="exception",
-        action=_audit_action_from_filters(period_start=period_start, period_end=period_end, status=status, severity=severity, control_area=control_area, actor=actor),
-        metadata_json={"count": len(items), "filters": {"period_start": period_start, "period_end": period_end, "status": status, "severity": severity, "control_area": control_area, "actor": actor}},
+        action=_audit_action_from_filters(
+            period_start=period_start,
+            period_end=period_end,
+            status=status,
+            severity=severity,
+            control_area=control_area,
+            actor=actor,
+        ),
+        metadata_json={
+            "count": len(items),
+            "filters": {
+                "period_start": period_start,
+                "period_end": period_end,
+                "status": status,
+                "severity": severity,
+                "control_area": control_area,
+                "actor": actor,
+            },
+        },
     )
     await session.commit()
     return {"items": items}
@@ -1831,7 +2003,9 @@ async def portal_generate_audit_report(
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
 ):
-    permission = "export:financial_summary" if payload.report_type == "financial_summary" else "export:audit"
+    permission = (
+        "export:financial_summary" if payload.report_type == "financial_summary" else "export:audit"
+    )
     require_portal_permission(client, request, permission=permission)
     identity = _portal_request_identity(request)
     report, report_payload = await generate_customer_audit_report(
@@ -1854,7 +2028,11 @@ async def portal_generate_audit_report(
         resource_type="saved_report",
         resource_id=str(report.id),
         action="export",
-        metadata_json={"report_type": report.report_type, "export_format": report.export_format, "immutable_hash": report.immutable_hash},
+        metadata_json={
+            "report_type": report.report_type,
+            "export_format": report.export_format,
+            "immutable_hash": report.immutable_hash,
+        },
     )
     await session.commit()
     return {
@@ -1886,7 +2064,11 @@ async def portal_download_audit_report(
         resource_type="saved_report",
         resource_id=report.id,
     )
-    permission = "download:financial_summary" if report.report_type == "financial_summary" else "download:audit"
+    permission = (
+        "download:financial_summary"
+        if report.report_type == "financial_summary"
+        else "download:audit"
+    )
     require_portal_permission(client, request, permission=permission)
     if not report.storage_ref:
         raise HTTPException(status_code=404, detail="report artifact not found")
@@ -1912,7 +2094,9 @@ async def portal_download_audit_report(
     return Response(
         content=artifact.read_bytes(),
         media_type=media_type,
-        headers={"Content-Disposition": f'attachment; filename="enterprise-audit-report-{report.id}.{report.export_format}"'},
+        headers={
+            "Content-Disposition": f'attachment; filename="enterprise-audit-report-{report.id}.{report.export_format}"'
+        },
     )
 
 
@@ -1942,8 +2126,18 @@ async def portal_audit_access_logs(
         request,
         client,
         resource_type="access_log",
-        action=_audit_action_from_filters(period_start=period_start, period_end=period_end, actor=actor, action=action),
-        metadata_json={"count": len(items), "filters": {"period_start": period_start, "period_end": period_end, "actor": actor, "action": action}},
+        action=_audit_action_from_filters(
+            period_start=period_start, period_end=period_end, actor=actor, action=action
+        ),
+        metadata_json={
+            "count": len(items),
+            "filters": {
+                "period_start": period_start,
+                "period_end": period_end,
+                "actor": actor,
+                "action": action,
+            },
+        },
     )
     await session.commit()
     return {"items": items}
@@ -1956,32 +2150,38 @@ async def portal_inference_receipts(
     session: AsyncSession = Depends(get_db_session),
 ):
     rows = (
-        await session.execute(
-            select(CommercialInferenceReceipt)
-            .where(CommercialInferenceReceipt.client_id == str(client.id))
-            .order_by(desc(CommercialInferenceReceipt.created_at))
-            .limit(limit)
+        (
+            await session.execute(
+                select(CommercialInferenceReceipt)
+                .where(CommercialInferenceReceipt.client_id == str(client.id))
+                .order_by(desc(CommercialInferenceReceipt.created_at))
+                .limit(limit)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     items = []
     for item in rows:
-        items.append({
-            "id": str(item.id),
-            "receipt_hash": item.receipt_hash[:16],
-            "verification_status": item.verification_status,
-            "signature_algorithm": item.signature_algorithm,
-            "timestamp_mode": item.timestamp_mode,
-            "signed_at": item.signed_at.isoformat(),
-            "verified_at": item.verified_at.isoformat() if item.verified_at else None,
-            "model_name": item.model_name,
-            "prompt_hash": item.prompt_hash[:16],
-            "response_hash": item.response_hash[:16],
-            "runtime_snapshot_hash": (item.runtime_snapshot_hash or "")[:16] or None,
-            "routing_decision_hash": (item.routing_decision_hash or "")[:16] or None,
-            "has_signature": bool(item.detached_signature),
-            "tamper_reason": item.tamper_reason,
-            "created_at": item.created_at.isoformat(),
-        })
+        items.append(
+            {
+                "id": str(item.id),
+                "receipt_hash": item.receipt_hash[:16],
+                "verification_status": item.verification_status,
+                "signature_algorithm": item.signature_algorithm,
+                "timestamp_mode": item.timestamp_mode,
+                "signed_at": item.signed_at.isoformat(),
+                "verified_at": item.verified_at.isoformat() if item.verified_at else None,
+                "model_name": item.model_name,
+                "prompt_hash": item.prompt_hash[:16],
+                "response_hash": item.response_hash[:16],
+                "runtime_snapshot_hash": (item.runtime_snapshot_hash or "")[:16] or None,
+                "routing_decision_hash": (item.routing_decision_hash or "")[:16] or None,
+                "has_signature": bool(item.detached_signature),
+                "tamper_reason": item.tamper_reason,
+                "created_at": item.created_at.isoformat(),
+            }
+        )
     return {
         "best_effort_only": True,
         "items": sanitize_report_payload(items),
@@ -2058,14 +2258,13 @@ async def portal_governance_federation_summary(
     from app.services.governance.governance_consistency import GovernanceConsistencyService
 
     sync_count = await session.execute(
-        select(func.count(CommercialFederatedPolicySync.id))
-        .where(CommercialFederatedPolicySync.status == "success")
+        select(func.count(CommercialFederatedPolicySync.id)).where(
+            CommercialFederatedPolicySync.status == "success"
+        )
     )
     policies_replicated = sync_count.scalar() or 0
 
-    event_count = await session.execute(
-        select(func.count(CommercialFederatedAuditTrail.id))
-    )
+    event_count = await session.execute(select(func.count(CommercialFederatedAuditTrail.id)))
     audit_events = event_count.scalar() or 0
 
     regions_result = await session.execute(
@@ -2115,8 +2314,10 @@ async def portal_governance_federation_summary(
     crl_count = crl_result.scalar() or 0
 
     attestation_result = await session.execute(
-        select(CommercialHardwareAttestationRecord.status, func.count(CommercialHardwareAttestationRecord.id))
-        .group_by(CommercialHardwareAttestationRecord.status)
+        select(
+            CommercialHardwareAttestationRecord.status,
+            func.count(CommercialHardwareAttestationRecord.id),
+        ).group_by(CommercialHardwareAttestationRecord.status)
     )
     attestation_summary = {row[0]: int(row[1]) for row in attestation_result.all()}
 

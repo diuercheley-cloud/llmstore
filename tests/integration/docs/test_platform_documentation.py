@@ -5,7 +5,9 @@ import re
 
 import pytest
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+REPO_ROOT = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
 
 def path(relative_path):
@@ -13,7 +15,7 @@ def path(relative_path):
 
 
 def read(relative_path):
-    with open(path(relative_path), "r") as f:
+    with open(path(relative_path)) as f:
         return f.read()
 
 

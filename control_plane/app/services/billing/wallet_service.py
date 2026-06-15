@@ -31,9 +31,7 @@ async def get_or_create_wallet(session: AsyncSession, client_id: uuid.UUID) -> A
     if wallet is not None:
         return wallet
     wallet = (
-        await session.execute(
-            select(AiWallet).where(AiWallet.client_id == client_id)
-        )
+        await session.execute(select(AiWallet).where(AiWallet.client_id == client_id))
     ).scalar_one_or_none()
     if wallet is not None:
         return wallet
@@ -117,7 +115,9 @@ async def credit_manual(
     if reason:
         meta["reason"] = reason
     tx = await _record_transaction(
-        session, wallet, client_id,
+        session,
+        wallet,
+        client_id,
         tx_type="manual_credit",
         amount_brl=amount_brl,
         balance_after_brl=new_balance,
@@ -185,7 +185,9 @@ async def debit_usage(
     wallet.balance_brl = new_balance
     wallet.updated_at = utc_now()
     tx = await _record_transaction(
-        session, wallet, client_id,
+        session,
+        wallet,
+        client_id,
         tx_type="usage_debit",
         amount_brl=-amount_brl,
         balance_after_brl=new_balance,
@@ -216,7 +218,9 @@ async def reserve_amount(
     wallet.reserved_brl += amount_brl
     wallet.updated_at = utc_now()
     tx = await _record_transaction(
-        session, wallet, client_id,
+        session,
+        wallet,
+        client_id,
         tx_type="reservation",
         amount_brl=Decimal("0.0000"),
         balance_after_brl=wallet.balance_brl,
@@ -242,7 +246,9 @@ async def release_reservation(
     wallet.reserved_brl = new_reserved
     wallet.updated_at = utc_now()
     tx = await _record_transaction(
-        session, wallet, client_id,
+        session,
+        wallet,
+        client_id,
         tx_type="release",
         amount_brl=Decimal("0.0000"),
         balance_after_brl=wallet.balance_brl,
@@ -272,7 +278,9 @@ async def refund(
     if reason:
         meta["reason"] = reason
     tx = await _record_transaction(
-        session, wallet, client_id,
+        session,
+        wallet,
+        client_id,
         tx_type="refund",
         amount_brl=amount_brl,
         balance_after_brl=new_balance,
@@ -310,7 +318,9 @@ async def adjustment(
         meta["reason"] = reason
     meta["adjustment_type"] = "credit" if amount_brl > 0 else "debit"
     tx = await _record_transaction(
-        session, wallet, client_id,
+        session,
+        wallet,
+        client_id,
         tx_type="adjustment",
         amount_brl=amount_brl,
         balance_after_brl=new_balance,

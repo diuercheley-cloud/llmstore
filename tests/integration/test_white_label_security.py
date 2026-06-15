@@ -8,12 +8,14 @@ CONFIG_EXAMPLE = "config/branding.example.json"
 
 
 def test_config_not_tracked():
-    result = subprocess.check_output(["git", "ls-files", "config/branding.local.json"], stderr=subprocess.DEVNULL, text=True)
+    result = subprocess.check_output(
+        ["git", "ls-files", "config/branding.local.json"], stderr=subprocess.DEVNULL, text=True
+    )
     assert result.strip() == "", "config/branding.local.json should NOT be tracked by Git"
 
 
 def test_example_config_no_secrets():
-    with open(CONFIG_EXAMPLE, "r") as f:
+    with open(CONFIG_EXAMPLE) as f:
         content = f.read()
     secrets_patterns = [
         r"sk-[a-zA-Z0-9]{20,}",
@@ -30,8 +32,10 @@ def test_example_config_no_secrets():
 
 def test_branding_service_no_env_exposure():
     import sys
+
     sys.path.insert(0, "control_plane")
     from app.services.branding import get_safe_branding
+
     b = get_safe_branding()
     for key, value in b.items():
         if isinstance(value, str):
@@ -41,6 +45,7 @@ def test_branding_service_no_env_exposure():
 
 def test_branding_endpoint_no_auth_required():
     from app.api.public import router
+
     for route in router.routes:
         if "branding" in route.path:
             # Public endpoint should not have authentication dependencies
@@ -51,9 +56,9 @@ def test_branding_endpoint_no_auth_required():
 
 def test_branding_service_fails_gracefully():
     """Branding service should not crash when config file is missing or broken."""
-    import os
     import sys
     import tempfile
+
     sys.path.insert(0, "control_plane")
     import importlib
 
@@ -79,8 +84,8 @@ def test_branding_service_fails_gracefully():
 def test_branding_service_invalid_types():
     """Branding service should handle wrong types gracefully."""
     import json
-    import os
     import sys
+
     sys.path.insert(0, "control_plane")
     from app.services.branding import BRANDING_CONFIG_PATH, load_branding
 
@@ -92,11 +97,14 @@ def test_branding_service_invalid_types():
 
     try:
         with open(str(BRANDING_CONFIG_PATH), "w") as f:
-            json.dump({
-                "product_name": ["not", "a", "string"],
-                "show_powered_by": "not_a_bool",
-                "primary_color": 12345,
-            }, f)
+            json.dump(
+                {
+                    "product_name": ["not", "a", "string"],
+                    "show_powered_by": "not_a_bool",
+                    "primary_color": 12345,
+                },
+                f,
+            )
         b = load_branding()
         assert b["product_name"] == "Local AI Appliance"
         assert b["show_powered_by"] is True

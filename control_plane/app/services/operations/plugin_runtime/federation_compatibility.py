@@ -5,7 +5,9 @@ from app.services.operations.plugin_runtime.hash_utils import compute_compatibil
 
 
 class PluginFederationCompatibilityService:
-    def evaluate_federation_compatibility(self, contract: Any, source_environment: str, target_environment: str) -> PluginFederationCompatibility:
+    def evaluate_federation_compatibility(
+        self, contract: Any, source_environment: str, target_environment: str
+    ) -> PluginFederationCompatibility:
         replay_safe = self.validate_federation_safe(contract)
         if contract.contract_status in {"blocked", "revoked"}:
             status = "blocked"
@@ -33,11 +35,20 @@ class PluginFederationCompatibilityService:
             federation_status=status,
             compatibility_hash=compatibility_hash,
             replay_safe=replay_safe,
-            immutable_hash=sha256_hex({"kind": "plugin_federation_compatibility_immutable", "compatibility_hash": compatibility_hash}),
+            immutable_hash=sha256_hex(
+                {
+                    "kind": "plugin_federation_compatibility_immutable",
+                    "compatibility_hash": compatibility_hash,
+                }
+            ),
         )
 
     def validate_federation_safe(self, contract: Any) -> bool:
-        return contract.contract_status not in {"blocked", "revoked"} and bool(contract.abi_version) and bool(contract.schema_version)
+        return (
+            contract.contract_status not in {"blocked", "revoked"}
+            and bool(contract.abi_version)
+            and bool(contract.schema_version)
+        )
 
     def build_federation_compatibility_summary(self, contract: Any) -> dict[str, Any]:
         return {
@@ -47,7 +58,9 @@ class PluginFederationCompatibilityService:
             "phase77_conceptual_alignment": True,
         }
 
-    def explain_federation_compatibility(self, result: PluginFederationCompatibility) -> dict[str, Any]:
+    def explain_federation_compatibility(
+        self, result: PluginFederationCompatibility
+    ) -> dict[str, Any]:
         return {
             "abi_contract_id": result.abi_contract_id,
             "federation_status": result.federation_status,

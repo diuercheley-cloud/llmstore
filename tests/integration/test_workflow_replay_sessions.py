@@ -28,12 +28,30 @@ async def test_replay_session_deterministic_match(session):
     definition = await orchestrator.create_definition(
         session,
         name="replay-match-workflow",
-        dag_or_steps=[{"stage_key": "stage-a", "policy": {"bundle_ref": str(bundle.id)}, "config": {"x": 1}}],
+        dag_or_steps=[
+            {"stage_key": "stage-a", "policy": {"bundle_ref": str(bundle.id)}, "config": {"x": 1}}
+        ],
     )
-    original = await orchestrator.start_execution(session, definition_id=definition.id, session_id="orig", tenant_id="tenant-a")
-    replay = await orchestrator.start_execution(session, definition_id=definition.id, session_id="replay", tenant_id="tenant-a")
-    await orchestrator.complete_stage(session, execution_id=original.id, stage_key="stage-a", input_data={"x": 1}, output_data={"ok": True})
-    await orchestrator.complete_stage(session, execution_id=replay.id, stage_key="stage-a", input_data={"x": 1}, output_data={"ok": True})
+    original = await orchestrator.start_execution(
+        session, definition_id=definition.id, session_id="orig", tenant_id="tenant-a"
+    )
+    replay = await orchestrator.start_execution(
+        session, definition_id=definition.id, session_id="replay", tenant_id="tenant-a"
+    )
+    await orchestrator.complete_stage(
+        session,
+        execution_id=original.id,
+        stage_key="stage-a",
+        input_data={"x": 1},
+        output_data={"ok": True},
+    )
+    await orchestrator.complete_stage(
+        session,
+        execution_id=replay.id,
+        stage_key="stage-a",
+        input_data={"x": 1},
+        output_data={"ok": True},
+    )
 
     replay_session = await orchestrator.create_replay_session(
         session,
@@ -56,12 +74,30 @@ async def test_replay_session_detects_mismatch(session):
     definition = await orchestrator.create_definition(
         session,
         name="replay-drift-workflow",
-        dag_or_steps=[{"stage_key": "stage-a", "policy": {"bundle_ref": str(bundle.id)}, "config": {"x": 1}}],
+        dag_or_steps=[
+            {"stage_key": "stage-a", "policy": {"bundle_ref": str(bundle.id)}, "config": {"x": 1}}
+        ],
     )
-    original = await orchestrator.start_execution(session, definition_id=definition.id, session_id="orig-2", tenant_id="tenant-a")
-    replay = await orchestrator.start_execution(session, definition_id=definition.id, session_id="replay-2", tenant_id="tenant-a")
-    await orchestrator.complete_stage(session, execution_id=original.id, stage_key="stage-a", input_data={"x": 1}, output_data={"ok": True})
-    await orchestrator.complete_stage(session, execution_id=replay.id, stage_key="stage-a", input_data={"x": 1}, output_data={"ok": False})
+    original = await orchestrator.start_execution(
+        session, definition_id=definition.id, session_id="orig-2", tenant_id="tenant-a"
+    )
+    replay = await orchestrator.start_execution(
+        session, definition_id=definition.id, session_id="replay-2", tenant_id="tenant-a"
+    )
+    await orchestrator.complete_stage(
+        session,
+        execution_id=original.id,
+        stage_key="stage-a",
+        input_data={"x": 1},
+        output_data={"ok": True},
+    )
+    await orchestrator.complete_stage(
+        session,
+        execution_id=replay.id,
+        stage_key="stage-a",
+        input_data={"x": 1},
+        output_data={"ok": False},
+    )
 
     replay_session = await orchestrator.create_replay_session(
         session,

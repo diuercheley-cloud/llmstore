@@ -125,7 +125,7 @@ if [[ "${DATABASE_URL}" == sqlite+aiosqlite:* ]]; then
 fi
 
 log "running database migrations"
-alembic -c /app/control_plane/alembic.ini upgrade head
+alembic -c /app/control_plane/alembic.ini upgrade heads
 
 log "seeding default data"
 python - <<'PY'

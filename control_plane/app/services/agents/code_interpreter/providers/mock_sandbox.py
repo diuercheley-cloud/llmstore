@@ -9,11 +9,17 @@ class MockSandboxProvider:
     name = "mock"
     mock = True
 
-    async def run(self, code: str, limits: Any, session_id: uuid.UUID | None = None) -> dict[str, Any]:
+    async def run(
+        self, code: str, limits: Any, session_id: uuid.UUID | None = None
+    ) -> dict[str, Any]:
         start_time = time.time()
         stdout_lines: list[str] = []
         for node in ast.walk(ast.parse(code)):
-            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "print":
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id == "print"
+            ):
                 values: list[str] = []
                 for arg in node.args:
                     if isinstance(arg, ast.Constant):

@@ -30,21 +30,21 @@ async def upload_asset(
     asset_type: str = Form(...),
     tenant_id: str = Form("default"),
     db: AsyncSession = Depends(get_db),
-    client: Client = Depends(get_current_client)
+    client: Client = Depends(get_current_client),
 ):
     """Uploads a multimodal asset, sanitizes it, and returns the asset details."""
     resolved_tenant = request.headers.get("x-tenant-id") or tenant_id or "default"
     file_bytes = await file.read()
-    
+
     store = AssetStore(db)
     asset = await store.store_asset(
         client_id=client.id,
         tenant_id=resolved_tenant,
         asset_type=asset_type,
         file_bytes=file_bytes,
-        mime_type=file.content_type or "application/octet-stream"
+        mime_type=file.content_type or "application/octet-stream",
     )
-    
+
     return {
         "id": asset.id,
         "tenant_id": asset.tenant_id,
@@ -53,7 +53,7 @@ async def upload_asset(
         "mime_type": asset.mime_type,
         "size": asset.file_size_bytes,
         "redaction_status": asset.redaction_status,
-        "created_at": asset.created_at.isoformat()
+        "created_at": asset.created_at.isoformat(),
     }
 
 
@@ -63,18 +63,15 @@ async def get_asset(
     request: Request,
     tenant_id: str = "default",
     db: AsyncSession = Depends(get_db),
-    client: Client = Depends(get_current_client)
+    client: Client = Depends(get_current_client),
 ):
     """Retrieves metadata of a specific asset, verifying tenant isolation."""
     resolved_tenant = request.headers.get("x-tenant-id") or tenant_id or "default"
     store = AssetStore(db)
     asset = await store.get_asset(asset_id, resolved_tenant)
     if not asset:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Asset not found"
-        )
-        
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
+
     return {
         "id": asset.id,
         "tenant_id": asset.tenant_id,
@@ -83,7 +80,7 @@ async def get_asset(
         "mime_type": asset.mime_type,
         "size": asset.file_size_bytes,
         "redaction_status": asset.redaction_status,
-        "created_at": asset.created_at.isoformat()
+        "created_at": asset.created_at.isoformat(),
     }
 
 
@@ -92,16 +89,13 @@ async def analyze_vision(
     body: VisionRequest,
     request: Request,
     db: AsyncSession = Depends(get_db),
-    client: Client = Depends(get_current_client)
+    client: Client = Depends(get_current_client),
 ):
     """Performs image vision analysis."""
     resolved_tenant = request.headers.get("x-tenant-id") or body.tenant_id or "default"
     service = VisionService(db)
     result = await service.analyze_image(
-        client_id=client.id,
-        tenant_id=resolved_tenant,
-        asset_id=body.asset_id,
-        do_ocr=body.do_ocr
+        client_id=client.id, tenant_id=resolved_tenant, asset_id=body.asset_id, do_ocr=body.do_ocr
     )
     return result
 
@@ -111,14 +105,12 @@ async def speech_to_text(
     body: SpeechRequest,
     request: Request,
     db: AsyncSession = Depends(get_db),
-    client: Client = Depends(get_current_client)
+    client: Client = Depends(get_current_client),
 ):
     """Transcribes audio assets."""
     resolved_tenant = request.headers.get("x-tenant-id") or body.tenant_id or "default"
     service = SpeechToTextService(db)
     result = await service.transcribe_audio(
-        client_id=client.id,
-        tenant_id=resolved_tenant,
-        asset_id=body.asset_id
+        client_id=client.id, tenant_id=resolved_tenant, asset_id=body.asset_id
     )
     return result

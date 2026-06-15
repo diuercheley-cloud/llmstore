@@ -11,7 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def canonical_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+    )
 
 
 def sha256_hex(payload: Any) -> str:
@@ -99,7 +101,8 @@ class BlastRadiusAnalysisService:
         existing = (
             await db.execute(
                 select(CommercialExecutionBlastRadius).where(
-                    CommercialExecutionBlastRadius.reproducibility_hash == analysis["reproducibility_hash"]
+                    CommercialExecutionBlastRadius.reproducibility_hash
+                    == analysis["reproducibility_hash"]
                 )
             )
         ).scalar_one_or_none()

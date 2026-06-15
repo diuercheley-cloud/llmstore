@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 async def test_adapter_promotion_models_creation(session: AsyncSession):
     client_id = uuid.uuid4()
     registry_entry_id = uuid.uuid4()
-    
+
     # Workflow
     workflow = AdapterPromotionWorkflow(
         client_id=client_id,
@@ -24,7 +24,7 @@ async def test_adapter_promotion_models_creation(session: AsyncSession):
         adapter_version="1.0.0",
         target_stage="production_eligible",
         input_hash="ihash",
-        immutable_hash="wf_imm_hash"
+        immutable_hash="wf_imm_hash",
     )
     session.add(workflow)
     await session.flush()
@@ -37,7 +37,7 @@ async def test_adapter_promotion_models_creation(session: AsyncSession):
         workflow_id=workflow.id,
         gate_name="test_gate",
         gate_status="passed",
-        immutable_hash="gate_imm_hash"
+        immutable_hash="gate_imm_hash",
     )
     session.add(gate)
     await session.flush()
@@ -50,7 +50,7 @@ async def test_adapter_promotion_models_creation(session: AsyncSession):
         from_stage="draft",
         to_stage="sandboxed",
         transition_status="completed",
-        immutable_hash="trans_imm_hash"
+        immutable_hash="trans_imm_hash",
     )
     session.add(transition)
     await session.flush()
@@ -63,7 +63,7 @@ async def test_adapter_promotion_models_creation(session: AsyncSession):
         receipt_type="test_receipt",
         payload_hash="phash",
         immutable_hash="rec_imm_hash",
-        signature="sig"
+        signature="sig",
     )
     session.add(receipt)
     await session.flush()
@@ -77,7 +77,7 @@ async def test_adapter_promotion_models_creation(session: AsyncSession):
         rollback_to_stage="draft",
         reason="test rollback",
         rollback_status="completed",
-        immutable_hash="roll_imm_hash"
+        immutable_hash="roll_imm_hash",
     )
     session.add(rollback)
     await session.flush()

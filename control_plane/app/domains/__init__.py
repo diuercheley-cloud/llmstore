@@ -12,4 +12,3 @@ OFFICIAL_PLATFORM_DOMAINS = (
     "data_governance",
     "disaster_recovery",
 )
-

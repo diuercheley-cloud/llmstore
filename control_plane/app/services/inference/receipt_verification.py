@@ -17,7 +17,9 @@ from app.services.inference.cryptographic_receipts import (
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-def _verify_detached_signature(receipt_hash: str, signature: str | None, algorithm: str | None) -> bool:
+def _verify_detached_signature(
+    receipt_hash: str, signature: str | None, algorithm: str | None
+) -> bool:
     if not signature:
         return False
     return verify_payload_signature(receipt_hash, signature)
@@ -31,7 +33,9 @@ def verify_receipt_signature(receipt: CommercialInferenceReceipt) -> bool:
     )
 
 
-def verify_receipt_hash(receipt: CommercialInferenceReceipt, metadata: dict[str, Any] | None = None) -> bool:
+def verify_receipt_hash(
+    receipt: CommercialInferenceReceipt, metadata: dict[str, Any] | None = None
+) -> bool:
     recomputed = build_receipt_hash(
         prompt_hash=receipt.prompt_hash,
         response_hash=receipt.response_hash,
@@ -61,7 +65,9 @@ def verify_receipt_chain(
     for i in range(len(chain) - 1):
         current = chain[i]
         previous = chain[i + 1]
-        if current.get("previous_receipt_hash") and current["previous_receipt_hash"] != previous.get("receipt_hash"):
+        if current.get("previous_receipt_hash") and current[
+            "previous_receipt_hash"
+        ] != previous.get("receipt_hash"):
             chain_valid = False
             broken_links.append(i)
     return {
@@ -123,7 +129,11 @@ async def generate_verification_report(
 
     if replay_record is not None and hasattr(replay_record, "replay_similarity"):
         replay_match = replay_record.replay_similarity and replay_record.replay_similarity >= 0.85
-        drift_detected = replay_record.replay_status == "drift_detected" if not drift_detected else drift_detected
+        drift_detected = (
+            replay_record.replay_status == "drift_detected"
+            if not drift_detected
+            else drift_detected
+        )
 
     if runtime_snapshot is not None and receipt.runtime_snapshot_hash:
         if isinstance(runtime_snapshot, dict):

@@ -18,27 +18,46 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class FederatedWorkflowConsensusService:
-    async def _execution(self, db: AsyncSession, federated_execution_id) -> CommercialFederatedWorkflowExecution:
+    async def _execution(
+        self, db: AsyncSession, federated_execution_id
+    ) -> CommercialFederatedWorkflowExecution:
         row = await db.get(CommercialFederatedWorkflowExecution, federated_execution_id)
         if row is None:
             raise ValueError("federated_workflow_execution_not_found")
         return row
 
-    async def _peers(self, db: AsyncSession, federated_execution_id) -> list[CommercialWorkflowExecutionPeer]:
+    async def _peers(
+        self, db: AsyncSession, federated_execution_id
+    ) -> list[CommercialWorkflowExecutionPeer]:
         return (
-            await db.execute(
-                select(CommercialWorkflowExecutionPeer)
-                .where(CommercialWorkflowExecutionPeer.federated_execution_id == federated_execution_id)
-                .order_by(CommercialWorkflowExecutionPeer.created_at.asc())
+            (
+                await db.execute(
+                    select(CommercialWorkflowExecutionPeer)
+                    .where(
+                        CommercialWorkflowExecutionPeer.federated_execution_id
+                        == federated_execution_id
+                    )
+                    .order_by(CommercialWorkflowExecutionPeer.created_at.asc())
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
-    async def _latest_event(self, db: AsyncSession, federated_execution_id) -> CommercialWorkflowConsensusEvent | None:
+    async def _latest_event(
+        self, db: AsyncSession, federated_execution_id
+    ) -> CommercialWorkflowConsensusEvent | None:
         return (
             await db.execute(
                 select(CommercialWorkflowConsensusEvent)
-                .where(CommercialWorkflowConsensusEvent.federated_execution_id == federated_execution_id)
-                .order_by(desc(CommercialWorkflowConsensusEvent.created_at), desc(CommercialWorkflowConsensusEvent.id))
+                .where(
+                    CommercialWorkflowConsensusEvent.federated_execution_id
+                    == federated_execution_id
+                )
+                .order_by(
+                    desc(CommercialWorkflowConsensusEvent.created_at),
+                    desc(CommercialWorkflowConsensusEvent.id),
+                )
                 .limit(1)
             )
         ).scalar_one_or_none()
@@ -76,7 +95,9 @@ class FederatedWorkflowConsensusService:
             federation_mode=execution.federation_mode,
             deterministic_clock=execution.deterministic_clock,
             previous_hash=previous.immutable_hash if previous else execution.immutable_hash,
-            signed_execution_receipt=sign_federated_payload(sanitized_payload, scope=f"consensus:{event_type}"),
+            signed_execution_receipt=sign_federated_payload(
+                sanitized_payload, scope=f"consensus:{event_type}"
+            ),
             attestation_summary=execution.attestation_summary,
             sovereign_mode=execution.sovereign_mode,
             quorum_size=quorum_size,
@@ -112,7 +133,9 @@ class FederatedWorkflowConsensusService:
         trusted = [peer for peer in peers if peer.trust_status == "trusted"]
         peer_hashes = [peer.execution_hash for peer in trusted if peer.execution_hash]
         counter = Counter([execution.execution_hash, *peer_hashes])
-        canonical_hash, canonical_votes = counter.most_common(1)[0] if counter else (execution.execution_hash, 1)
+        canonical_hash, canonical_votes = (
+            counter.most_common(1)[0] if counter else (execution.execution_hash, 1)
+        )
         quorum_size = 1 + len(trusted)
         threshold = quorum_threshold or max(1, math.floor(quorum_size / 2) + 1)
         mismatches = [
@@ -124,11 +147,15 @@ class FederatedWorkflowConsensusService:
             for peer in trusted
             if peer.execution_hash and peer.execution_hash != canonical_hash
         ]
-        status = "verified" if canonical_votes >= threshold and not mismatches else "mismatch_detected"
+        status = (
+            "verified" if canonical_votes >= threshold and not mismatches else "mismatch_detected"
+        )
         if canonical_votes < threshold:
             status = "quorum_failed"
         execution.consensus_status = status
-        execution.reconciliation_status = "reconciliation_required" if status != "verified" else "verified"
+        execution.reconciliation_status = (
+            "reconciliation_required" if status != "verified" else "verified"
+        )
         execution.drift_detected = status != "verified"
         await self.append_event(
             db,
@@ -152,9 +179,13 @@ class FederatedWorkflowConsensusService:
             "mismatches": mismatches,
         }
 
-    async def reconcile_execution(self, db: AsyncSession, *, federated_execution_id) -> dict[str, Any]:
+    async def reconcile_execution(
+        self, db: AsyncSession, *, federated_execution_id
+    ) -> dict[str, Any]:
         execution = await self._execution(db, federated_execution_id)
-        validation = await self.validate_consensus(db, federated_execution_id=federated_execution_id)
+        validation = await self.validate_consensus(
+            db, federated_execution_id=federated_execution_id
+        )
         if validation["consensus_status"] != "verified":
             execution.execution_hash = validation["canonical_hash"]
             execution.consensus_status = "reconciled"

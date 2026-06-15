@@ -13,11 +13,12 @@ def test_script_exists():
 
 def test_script_creates_output_dir():
     result = subprocess.run(
-        ["bash", SCRIPT_PATH, "--placeholders-only"],
-        capture_output=True, text=True
+        ["bash", SCRIPT_PATH, "--placeholders-only"], capture_output=True, text=True
     )
     assert result.returncode == 0, f"Script falhou: {result.stderr}"
-    assert os.path.isdir("docs/demo-visual-guide/placeholders"), "Diretorio de placeholders nao foi criado"
+    assert os.path.isdir("docs/demo-visual-guide/placeholders"), (
+        "Diretorio de placeholders nao foi criado"
+    )
 
 
 def test_placeholders_generated():
@@ -44,7 +45,9 @@ def test_placeholders_are_valid_svg():
         with open(path) as f:
             content = f.read()
         assert "<svg" in content, f"{ph_file} nao parece um SVG valido"
-        assert ("dados ficticios" in content.lower() or "dados fictícios" in content.lower()), f"{ph_file} deve conter indicacao de dados ficticios"
+        assert "dados ficticios" in content.lower() or "dados fictícios" in content.lower(), (
+            f"{ph_file} deve conter indicacao de dados ficticios"
+        )
 
 
 def test_artifacts_dir_in_gitignore():
@@ -58,22 +61,16 @@ def test_artifacts_dir_in_gitignore():
 
 
 def test_script_does_not_crash_without_browser():
-    result = subprocess.run(
-        ["bash", SCRIPT_PATH],
-        capture_output=True, text=True, timeout=30
-    )
+    result = subprocess.run(["bash", SCRIPT_PATH], capture_output=True, text=True, timeout=30)
     assert result.returncode == 0, f"Script nao deve falhar: {result.stderr}"
-    assert "SKIP" in result.stdout or "PLACEHOLDER" in result.stdout or "CAPTURED" in result.stdout, (
-        "Script deve indicar se houve skip ou captura"
-    )
+    assert (
+        "SKIP" in result.stdout or "PLACEHOLDER" in result.stdout or "CAPTURED" in result.stdout
+    ), "Script deve indicar se houve skip ou captura"
 
 
 def test_capture_plan_generated():
     """Verifica se o capture plan foi gerado apos execucao do script."""
-    result = subprocess.run(
-        ["bash", SCRIPT_PATH],
-        capture_output=True, text=True, timeout=30
-    )
+    result = subprocess.run(["bash", SCRIPT_PATH], capture_output=True, text=True, timeout=30)
     assert result.returncode == 0
     # Check if any capture-plan.md was created
     if os.path.isdir(ARTIFACTS_DIR):
@@ -92,7 +89,9 @@ def test_capture_plan_generated():
 def test_demo_visual_flow_has_mermaid():
     with open("docs/demo-visual-guide/DEMO_VISUAL_FLOW.md") as f:
         content = f.read()
-    assert "graph LR" in content or "graph TD" in content, "DEMO_VISUAL_FLOW.md deve conter diagrama Mermaid"
+    assert "graph LR" in content or "graph TD" in content, (
+        "DEMO_VISUAL_FLOW.md deve conter diagrama Mermaid"
+    )
 
 
 def test_capture_commands_referenced_in_readme():

@@ -1,8 +1,6 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock
-
-from app.services.sandbox.service import SandboxService
 from app.services.sandbox.base import SandboxLevel
+from app.services.sandbox.service import SandboxService
 
 
 @pytest.fixture
@@ -28,7 +26,7 @@ async def test_safe_tool_no_promotion(sandbox_service):
 async def test_block_if_no_provider_available(sandbox_service):
     # If WASI is required but not available (current state of placeholder)
     result = await sandbox_service.execute_tool_safely("shell_execute", ["ls"], SandboxLevel.NONE)
-    
+
     assert result.status == "blocked"
     assert "No provider available" in result.reason
 
@@ -37,7 +35,7 @@ async def test_block_if_no_provider_available(sandbox_service):
 async def test_dry_run_noop_execution(sandbox_service):
     # Safe tool should use Noop provider if available
     result = await sandbox_service.execute_tool_safely("search_web", ["query"], SandboxLevel.NONE)
-    
+
     assert result.status == "success"
     assert "Simulation" in result.stdout.decode()
     assert result.provider_name == "noop"
@@ -46,6 +44,6 @@ async def test_dry_run_noop_execution(sandbox_service):
 @pytest.mark.asyncio
 async def test_mandatory_constraints(sandbox_service):
     policy = sandbox_service._get_policy_for_tool("shell_execute", SandboxLevel.NONE)
-    
+
     assert policy.timeout_seconds > 0
     assert policy.memory_limit_mb > 0

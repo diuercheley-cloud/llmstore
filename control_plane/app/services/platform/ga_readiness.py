@@ -23,9 +23,13 @@ CRITERIA = [
     ("profile_validation_strict", "Strict profile resolver validation with no conflicts"),
     ("no_placeholder_production_surface", "No placeholders in production surface"),
     ("clean_working_tree", "Clean working tree certified"),
-    ("supported_surface_no_production_beta_stub", "No production feature depends on beta/stub/mock"),
+    (
+        "supported_surface_no_production_beta_stub",
+        "No production feature depends on beta/stub/mock",
+    ),
     ("release_gate_passed", "Unified release gate passed for current release"),
 ]
+
 
 class GAReadinessService:
     def __init__(self, config_path="config/ga-readiness-rules.yaml"):
@@ -36,7 +40,7 @@ class GAReadinessService:
     def _load_config(self):
         # Allow default rules if config is missing
         if os.path.exists(self.config_path):
-            with open(self.config_path, "r", encoding="utf-8") as f:
+            with open(self.config_path, encoding="utf-8") as f:
                 data = yaml.safe_load(f) or {}
             self.rules = data.get("rules", {})
             self.weights = data.get("weights", {})
@@ -50,12 +54,13 @@ class GAReadinessService:
 
     def _run_sync(self, coro):
         from concurrent.futures import ThreadPoolExecutor
+
         try:
             loop = asyncio.get_event_loop()
         except RuntimeError:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-        
+
         if loop.is_running():
             with ThreadPoolExecutor(max_workers=1) as executor:
                 future = executor.submit(lambda: asyncio.run(coro))
@@ -104,7 +109,10 @@ class GAReadinessService:
                 for mode, enabled in (
                     ("mock", bool(getattr(self.settings, "agent_executor_mock_mode", False))),
                     ("dry_run", bool(getattr(self.settings, "agent_executor_dry_run_mode", False))),
-                    ("simulation", bool(getattr(self.settings, "agent_executor_allow_simulation", False))),
+                    (
+                        "simulation",
+                        bool(getattr(self.settings, "agent_executor_allow_simulation", False)),
+                    ),
                 )
                 if enabled
             ]
@@ -121,7 +129,9 @@ class GAReadinessService:
         if "agent-readiness" in production_core_ids:
             readiness_artifact = base_dir / "artifacts/runtime/real-execution-readiness.json"
             if not readiness_artifact.exists():
-                blockers.append("agent-readiness requires artifacts/runtime/real-execution-readiness.json")
+                blockers.append(
+                    "agent-readiness requires artifacts/runtime/real-execution-readiness.json"
+                )
 
         if blockers:
             return False, "; ".join(blockers)
@@ -134,11 +144,12 @@ class GAReadinessService:
             from app.models.agents.agent_execution import AgentWorkerHeartbeat
             from sqlalchemy import func
             from sqlalchemy.future import select
-            
+
             async with SessionLocal() as db:
                 res = await db.execute(
-                    select(func.count(AgentWorkerHeartbeat.worker_id))
-                    .where(AgentWorkerHeartbeat.last_heartbeat >= utc_now() - timedelta(minutes=2))
+                    select(func.count(AgentWorkerHeartbeat.worker_id)).where(
+                        AgentWorkerHeartbeat.last_heartbeat >= utc_now() - timedelta(minutes=2)
+                    )
                 )
                 count = res.scalar() or 0
                 return count > 0
@@ -153,11 +164,17 @@ class GAReadinessService:
 
         # 1. runtime_enabled
         runtime_ok = bool(self.settings.agent_runtime_enabled)
-        reasons["runtime_enabled"] = "Agent runtime is enabled" if runtime_ok else "Agent runtime is disabled"
+        reasons["runtime_enabled"] = (
+            "Agent runtime is enabled" if runtime_ok else "Agent runtime is disabled"
+        )
 
         # 2. worker_heartbeat_active
         worker_ok = self._run_sync(self._check_active_workers_db())
-        reasons["worker_heartbeat_active"] = "Active workers found in database" if worker_ok else "No active worker heartbeats found in DB"
+        reasons["worker_heartbeat_active"] = (
+            "Active workers found in database"
+            if worker_ok
+            else "No active worker heartbeats found in DB"
+        )
 
         # 3. real_execution_readiness_passed
         real_readiness_file = base_dir / "artifacts/runtime/real-execution-readiness.json"
@@ -167,13 +184,21 @@ class GAReadinessService:
                 data = json.loads(real_readiness_file.read_text(encoding="utf-8"))
                 if data.get("status") == "ready" or data.get("status") == "success":
                     real_execution_ok = True
-                    reasons["real_execution_readiness_passed"] = "Real execution readiness reports status=ready"
+                    reasons["real_execution_readiness_passed"] = (
+                        "Real execution readiness reports status=ready"
+                    )
                 else:
-                    reasons["real_execution_readiness_passed"] = f"Real execution readiness status is: {data.get('status')}"
+                    reasons["real_execution_readiness_passed"] = (
+                        f"Real execution readiness status is: {data.get('status')}"
+                    )
             except Exception as e:
-                reasons["real_execution_readiness_passed"] = f"Failed to parse real-execution-readiness.json: {e}"
+                reasons["real_execution_readiness_passed"] = (
+                    f"Failed to parse real-execution-readiness.json: {e}"
+                )
         else:
-            reasons["real_execution_readiness_passed"] = "real-execution-readiness.json artifact is missing"
+            reasons["real_execution_readiness_passed"] = (
+                "real-execution-readiness.json artifact is missing"
+            )
 
         # 4. production_agentic_e2e_passed
         e2e_summary_file = base_dir / "artifacts/e2e/production-agentic/summary.md"
@@ -184,9 +209,13 @@ class GAReadinessService:
                 e2e_ok = True
                 reasons["production_agentic_e2e_passed"] = "production-agentic-e2e passed"
             else:
-                reasons["production_agentic_e2e_passed"] = "production-agentic-e2e summary does not report PASS"
+                reasons["production_agentic_e2e_passed"] = (
+                    "production-agentic-e2e summary does not report PASS"
+                )
         else:
-            reasons["production_agentic_e2e_passed"] = "production-agentic-e2e summary.md artifact is missing"
+            reasons["production_agentic_e2e_passed"] = (
+                "production-agentic-e2e summary.md artifact is missing"
+            )
 
         # 5. plugin_runtime_verified
         plugin_artifact = resolver.get_validation_path(tag).parent / "plugin-runtime.md"
@@ -197,9 +226,13 @@ class GAReadinessService:
                 plugin_ok = True
                 reasons["plugin_runtime_verified"] = "Plugin runtime verified and sandbox active"
             else:
-                reasons["plugin_runtime_verified"] = "Plugin runtime validation does not report PASS"
+                reasons["plugin_runtime_verified"] = (
+                    "Plugin runtime validation does not report PASS"
+                )
         else:
-            reasons["plugin_runtime_verified"] = f"plugin-runtime.md artifact is missing for tag {tag}"
+            reasons["plugin_runtime_verified"] = (
+                f"plugin-runtime.md artifact is missing for tag {tag}"
+            )
 
         # 6. cryptographic_receipts_real
         receipts_artifact = resolver.get_validation_path(tag).parent / "cryptographic-receipts.md"
@@ -210,9 +243,13 @@ class GAReadinessService:
                 receipts_ok = True
                 reasons["cryptographic_receipts_real"] = "Cryptographic receipts verified and real"
             else:
-                reasons["cryptographic_receipts_real"] = "Cryptographic receipts verification does not report PASS"
+                reasons["cryptographic_receipts_real"] = (
+                    "Cryptographic receipts verification does not report PASS"
+                )
         else:
-            reasons["cryptographic_receipts_real"] = f"cryptographic-receipts.md artifact is missing for tag {tag}"
+            reasons["cryptographic_receipts_real"] = (
+                f"cryptographic-receipts.md artifact is missing for tag {tag}"
+            )
 
         # 7. observability_real_data
         observability_artifact = resolver.get_validation_path(tag).parent / "observability.md"
@@ -221,11 +258,15 @@ class GAReadinessService:
             content = observability_artifact.read_text(encoding="utf-8")
             if "Result: PASS" in content or "Status: PASS" in content:
                 observability_ok = True
-                reasons["observability_real_data"] = "Observability collects real event and metric data"
+                reasons["observability_real_data"] = (
+                    "Observability collects real event and metric data"
+                )
             else:
                 reasons["observability_real_data"] = "Observability validation does not report PASS"
         else:
-            reasons["observability_real_data"] = f"observability.md artifact is missing for tag {tag}"
+            reasons["observability_real_data"] = (
+                f"observability.md artifact is missing for tag {tag}"
+            )
 
         # 8. profile_validation_strict
         profile_artifact = resolver.get_validation_path(tag).parent / "profile-resolver.md"
@@ -236,9 +277,13 @@ class GAReadinessService:
                 profile_ok = True
                 reasons["profile_validation_strict"] = "Strict profile resolver validation passes"
             else:
-                reasons["profile_validation_strict"] = "Profile resolver validation does not report PASS"
+                reasons["profile_validation_strict"] = (
+                    "Profile resolver validation does not report PASS"
+                )
         else:
-            reasons["profile_validation_strict"] = f"profile-resolver.md artifact is missing for tag {tag}"
+            reasons["profile_validation_strict"] = (
+                f"profile-resolver.md artifact is missing for tag {tag}"
+            )
 
         # 9. no_placeholder_production_surface
         placeholder_artifact = base_dir / "artifacts/audit/production-placeholders.md"
@@ -247,14 +292,22 @@ class GAReadinessService:
             content = placeholder_artifact.read_text(encoding="utf-8")
             if "Result: PASS" in content and "production_blocker" not in content.lower():
                 placeholder_ok = True
-                reasons["no_placeholder_production_surface"] = "No placeholders in production surface"
+                reasons["no_placeholder_production_surface"] = (
+                    "No placeholders in production surface"
+                )
             else:
-                reasons["no_placeholder_production_surface"] = "Placeholder audit reports failures or production_blockers"
+                reasons["no_placeholder_production_surface"] = (
+                    "Placeholder audit reports failures or production_blockers"
+                )
         else:
-            reasons["no_placeholder_production_surface"] = "production-placeholders.md artifact is missing"
+            reasons["no_placeholder_production_surface"] = (
+                "production-placeholders.md artifact is missing"
+            )
 
         # 10. clean_working_tree
-        working_tree_artifact = resolver.get_validation_path(tag).parent / "working-tree-certification.md"
+        working_tree_artifact = (
+            resolver.get_validation_path(tag).parent / "working-tree-certification.md"
+        )
         working_tree_ok = False
         if working_tree_artifact.exists():
             content = working_tree_artifact.read_text(encoding="utf-8")
@@ -264,7 +317,9 @@ class GAReadinessService:
             else:
                 reasons["clean_working_tree"] = "Working tree certification status is not PASS"
         else:
-            reasons["clean_working_tree"] = f"working-tree-certification.md artifact is missing for tag {tag}"
+            reasons["clean_working_tree"] = (
+                f"working-tree-certification.md artifact is missing for tag {tag}"
+            )
 
         # 11. supported_surface_no_production_beta_stub
         surface_ok, surface_reason = self._production_surface_dependencies_ok(base_dir)
@@ -287,11 +342,15 @@ class GAReadinessService:
                 content = summary_artifact.read_text(encoding="utf-8")
                 if "**Status**: PASS" in content:
                     release_gate_ok = True
-                    reasons["release_gate_passed"] = "Release summary reports PASS for current release"
+                    reasons["release_gate_passed"] = (
+                        "Release summary reports PASS for current release"
+                    )
                 else:
                     reasons["release_gate_passed"] = "Release summary status is not PASS"
             else:
-                reasons["release_gate_passed"] = f"No release gate or summary artifact found for tag {tag}"
+                reasons["release_gate_passed"] = (
+                    f"No release gate or summary artifact found for tag {tag}"
+                )
 
         return {
             "runtime_enabled": runtime_ok,
@@ -336,7 +395,7 @@ class GAReadinessService:
         # Strict enforcement: if runtime is disabled or production E2E failed/didn't run, status cannot be GA_READY
         runtime_disabled = not current_state.get("runtime_enabled", False)
         e2e_failed = not current_state.get("production_agentic_e2e_passed", False)
-        
+
         if score >= self.weights.get("ga_ready", 12) and not runtime_disabled and not e2e_failed:
             maturity = "ga_ready"
         elif score >= self.weights.get("production_ready", 11) and not runtime_disabled:
@@ -354,7 +413,9 @@ class GAReadinessService:
             "failed_criteria": failed_criteria,
         }
 
-    def generate_report(self, current_state: dict, filepath: str = "artifacts/platform/ga-readiness.md") -> dict:
+    def generate_report(
+        self, current_state: dict, filepath: str = "artifacts/platform/ga-readiness.md"
+    ) -> dict:
         result = self.evaluate_readiness(current_state)
 
         lines = [

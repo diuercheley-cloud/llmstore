@@ -25,7 +25,7 @@ def test_required_doc_links():
 def test_doc_links_resolve():
     """All docs/ links in README must resolve to existing files."""
     content = README.read_text(encoding="utf-8")
-    links = re.findall(r'docs/[a-zA-Z0-9_/.-]+\.md', content)
+    links = re.findall(r"docs/[a-zA-Z0-9_/.-]+\.md", content)
     missing = []
     for link in links:
         target = ROOT / link
@@ -37,7 +37,7 @@ def test_doc_links_resolve():
 def test_no_broken_script_links():
     """All ./scripts/ references in README must resolve."""
     content = README.read_text(encoding="utf-8")
-    refs = re.findall(r'\./scripts/[a-zA-Z0-9_.-]+\.sh', content)
+    refs = re.findall(r"\./scripts/[a-zA-Z0-9_.-]+\.sh", content)
     missing = []
     for ref in refs:
         target = ROOT / ref

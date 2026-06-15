@@ -67,6 +67,7 @@ FORBIDDEN_RUNTIME_MARKERS = [
     "keras.",
 ]
 
+
 def check_file_exists(path):
     if path.exists():
         print(f"  [OK] Found: {path}")
@@ -74,6 +75,7 @@ def check_file_exists(path):
     else:
         print(f"  [FAIL] Missing: {path}")
         return False
+
 
 def check_string_in_file(path, target_string, must_be_present=True):
     if not path.exists():
@@ -84,11 +86,15 @@ def check_string_in_file(path, target_string, must_be_present=True):
         print(f"  [OK] {'Found' if must_be_present else 'Not found'}: '{target_string}' in {path}")
         return True
     else:
-        print(f"  [FAIL] {'Missing' if must_be_present else 'Forbidden'}: '{target_string}' in {path}")
+        print(
+            f"  [FAIL] {'Missing' if must_be_present else 'Forbidden'}: '{target_string}' in {path}"
+        )
         return False
+
 
 def read_file(path):
     return path.read_text() if path.exists() else ""
+
 
 def validate_no_forbidden_markers(path, markers, label):
     content = read_file(path)
@@ -101,11 +107,18 @@ def validate_no_forbidden_markers(path, markers, label):
     print(f"  [OK] {label} validated in {path}")
     return True
 
+
 def validate_advisory_only(path):
     content = read_file(path)
     if not content:
         return False
-    forbidden = ["block_client", "suspend_account", "terminate_session", "apply_restriction", "auto_remediate"]
+    forbidden = [
+        "block_client",
+        "suspend_account",
+        "terminate_session",
+        "apply_restriction",
+        "auto_remediate",
+    ]
     for marker in forbidden:
         if marker in content:
             print(f"  [FAIL] Forbidden remediation/enforcement marker found: '{marker}' in {path}")
@@ -115,6 +128,7 @@ def validate_advisory_only(path):
         return False
     print(f"  [OK] Advisory-only status validated in {path}")
     return True
+
 
 def validate_dry_run(path):
     content = read_file(path)
@@ -126,15 +140,24 @@ def validate_dry_run(path):
     print(f"  [OK] Dry-run behavior validated in {path}")
     return True
 
+
 def validate_tenant_isolation():
     admin_path = API_DIR / "operations_correlation_admin.py"
     portal_path = API_DIR / "operations_correlation_portal.py"
     admin_content = read_file(admin_path)
     portal_content = read_file(portal_path)
     required_markers = [
-        ("admin correlations filter by client_id", "OperationalCorrelation.client_id == client_id", admin_content),
+        (
+            "admin correlations filter by client_id",
+            "OperationalCorrelation.client_id == client_id",
+            admin_content,
+        ),
         ("portal auth dependency", "require_client", portal_content),
-        ("portal filter by authenticated client", "OperationalCorrelation.client_id == client.id", portal_content),
+        (
+            "portal filter by authenticated client",
+            "OperationalCorrelation.client_id == client.id",
+            portal_content,
+        ),
     ]
     success = True
     for label, marker, content in required_markers:
@@ -144,6 +167,7 @@ def validate_tenant_isolation():
         else:
             print(f"  [OK] Tenant isolation marker found for {label}")
     return success
+
 
 def validate_route_registration():
     main_path = APP_DIR / "main.py"
@@ -161,6 +185,7 @@ def validate_route_registration():
             print(f"  [OK] Route registration marker found: {marker}")
     return success
 
+
 def main():
     print(f"--- Validating Phase {PHASE}: {COMPONENT} ---")
     success = True
@@ -176,7 +201,10 @@ def main():
 
     # 2. Migration Check
     print("\n[2/5] Checking migrations...")
-    migration_found = any(f.name.endswith("phase70_correlation_engine.py") for f in (CONTROL_PLANE_DIR / "alembic" / "versions").glob("*.py"))
+    migration_found = any(
+        f.name.endswith("phase70_correlation_engine.py")
+        for f in (CONTROL_PLANE_DIR / "alembic" / "versions").glob("*.py")
+    )
     if migration_found:
         print("  [OK] Phase 70 migration found.")
     else:
@@ -185,7 +213,9 @@ def main():
 
     # 3. Architectural Invariants
     print("\n[3/5] Validating architectural invariants...")
-    engine_path = SERVICES_DIR / "operations" / "correlation" / "deterministic_correlation_engine.py"
+    engine_path = (
+        SERVICES_DIR / "operations" / "correlation" / "deterministic_correlation_engine.py"
+    )
     trust_graph_path = SERVICES_DIR / "operations" / "correlation" / "trust_graph.py"
     admin_api_path = API_DIR / "operations_correlation_admin.py"
     portal_api_path = API_DIR / "operations_correlation_portal.py"
@@ -193,18 +223,33 @@ def main():
     audit_path = SERVICES_DIR / "operations" / "correlation" / "audit_events.py"
     receipts_path = SERVICES_DIR / "operations" / "correlation" / "receipts.py"
 
-    for path in [engine_path, trust_graph_path, admin_api_path, portal_api_path, risk_path, audit_path, receipts_path]:
-        if not validate_no_forbidden_markers(path, FORBIDDEN_RUNTIME_MARKERS, "Offline deterministic runtime constraints"):
+    for path in [
+        engine_path,
+        trust_graph_path,
+        admin_api_path,
+        portal_api_path,
+        risk_path,
+        audit_path,
+        receipts_path,
+    ]:
+        if not validate_no_forbidden_markers(
+            path, FORBIDDEN_RUNTIME_MARKERS, "Offline deterministic runtime constraints"
+        ):
             success = False
         if not validate_no_forbidden_markers(path, GRAPH_DB_MARKERS, "Graph DB independence"):
             success = False
 
     admin_api_path = API_DIR / "operations_correlation_admin.py"
-    if not validate_advisory_only(admin_api_path): success = False
-    if not validate_advisory_only(portal_api_path): success = False
-    if not validate_dry_run(admin_api_path): success = False
-    if not validate_tenant_isolation(): success = False
-    if not validate_route_registration(): success = False
+    if not validate_advisory_only(admin_api_path):
+        success = False
+    if not validate_advisory_only(portal_api_path):
+        success = False
+    if not validate_dry_run(admin_api_path):
+        success = False
+    if not validate_tenant_isolation():
+        success = False
+    if not validate_route_registration():
+        success = False
 
     # 4. Claims Validation
     print("\n[4/5] Checking for prohibited claims...")
@@ -216,12 +261,18 @@ def main():
 
     # 5. Receipt & Audit Check
     print("\n[5/5] Validating receipts and audit events...")
-    if not check_string_in_file(receipts_path, "build_correlation_receipt"): success = False
-    if not check_string_in_file(receipts_path, "build_trust_link_receipt"): success = False
-    if not check_string_in_file(receipts_path, "build_graph_summary_receipt"): success = False
-    if not check_string_in_file(audit_path, "log_correlation_created"): success = False
-    if not check_string_in_file(audit_path, "log_trust_link_created"): success = False
-    if not check_string_in_file(audit_path, "log_graph_generated"): success = False
+    if not check_string_in_file(receipts_path, "build_correlation_receipt"):
+        success = False
+    if not check_string_in_file(receipts_path, "build_trust_link_receipt"):
+        success = False
+    if not check_string_in_file(receipts_path, "build_graph_summary_receipt"):
+        success = False
+    if not check_string_in_file(audit_path, "log_correlation_created"):
+        success = False
+    if not check_string_in_file(audit_path, "log_trust_link_created"):
+        success = False
+    if not check_string_in_file(audit_path, "log_graph_generated"):
+        success = False
 
     print("\n--------------------------------------------------")
     if success:
@@ -230,6 +281,7 @@ def main():
     else:
         print(f"Phase {PHASE} Validation: FAILED")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

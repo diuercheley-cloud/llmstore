@@ -3,7 +3,7 @@
 
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import yaml
 
@@ -11,10 +11,11 @@ from .profile_resolver import ProfileResolver
 
 logger = logging.getLogger(__name__)
 
-class DeploymentModeService:
-    _modes_config: Optional[Dict[str, Any]] = None
 
-    def __init__(self, config_path: Optional[str] = None):
+class DeploymentModeService:
+    _modes_config: dict[str, Any] | None = None
+
+    def __init__(self, config_path: str | None = None):
         self.profile_resolver = ProfileResolver()
         if config_path is None:
             base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../"))
@@ -26,16 +27,18 @@ class DeploymentModeService:
     def _load_config(self):
         try:
             if os.path.exists(self.config_path):
-                with open(self.config_path, "r", encoding="utf-8") as f:
+                with open(self.config_path, encoding="utf-8") as f:
                     DeploymentModeService._modes_config = yaml.safe_load(f)
             else:
-                logger.warning(f"Deployment modes config not found at {self.config_path}. Using fallback defaults.")
+                logger.warning(
+                    f"Deployment modes config not found at {self.config_path}. Using fallback defaults."
+                )
                 DeploymentModeService._modes_config = self._get_fallback_defaults()
         except Exception as e:
             logger.error(f"Failed to load deployment modes config: {e}. Using fallback defaults.")
             DeploymentModeService._modes_config = self._get_fallback_defaults()
 
-    def _get_fallback_defaults(self) -> Dict[str, Any]:
+    def _get_fallback_defaults(self) -> dict[str, Any]:
         return {
             "appliance": {
                 "name": "Appliance Mode",
@@ -57,11 +60,23 @@ class DeploymentModeService:
                     "posture": "Strict Air-gapped / Local Only",
                     "readiness_constraints": [
                         {"flag": "AGENT_RUNTIME_ENABLED", "expected": False, "severity": "blocker"},
-                        {"flag": "AGENT_SAAS_CONNECTORS_ENABLED", "expected": False, "severity": "blocker"},
-                        {"flag": "AGENT_MULTI_AGENT_ENABLED", "expected": False, "severity": "blocker"},
-                        {"flag": "AGENT_STATEFUL_WORKFLOWS_ENABLED", "expected": False, "severity": "blocker"},
-                    ]
-                }
+                        {
+                            "flag": "AGENT_SAAS_CONNECTORS_ENABLED",
+                            "expected": False,
+                            "severity": "blocker",
+                        },
+                        {
+                            "flag": "AGENT_MULTI_AGENT_ENABLED",
+                            "expected": False,
+                            "severity": "blocker",
+                        },
+                        {
+                            "flag": "AGENT_STATEFUL_WORKFLOWS_ENABLED",
+                            "expected": False,
+                            "severity": "blocker",
+                        },
+                    ],
+                },
             },
             "pilot": {
                 "name": "Pilot Mode",
@@ -86,11 +101,23 @@ class DeploymentModeService:
                     "posture": "Governed Testing / Human-in-the-loop",
                     "readiness_constraints": [
                         {"flag": "AGENT_RUNTIME_ENABLED", "expected": True, "severity": "blocker"},
-                        {"flag": "AGENT_CONNECTOR_WRITE_ENABLED", "expected": False, "severity": "blocker"},
-                        {"flag": "AGENT_HUMAN_APPROVAL_ENABLED", "expected": True, "severity": "blocker"},
-                        {"flag": "AGENT_MULTI_AGENT_ENABLED", "expected": False, "severity": "warning"},
-                    ]
-                }
+                        {
+                            "flag": "AGENT_CONNECTOR_WRITE_ENABLED",
+                            "expected": False,
+                            "severity": "blocker",
+                        },
+                        {
+                            "flag": "AGENT_HUMAN_APPROVAL_ENABLED",
+                            "expected": True,
+                            "severity": "blocker",
+                        },
+                        {
+                            "flag": "AGENT_MULTI_AGENT_ENABLED",
+                            "expected": False,
+                            "severity": "warning",
+                        },
+                    ],
+                },
             },
             "production": {
                 "name": "Production Mode",
@@ -113,10 +140,18 @@ class DeploymentModeService:
                     "posture": "Production Grade / Automatic Evals & SLOs",
                     "readiness_constraints": [
                         {"flag": "AGENT_RUNTIME_ENABLED", "expected": True, "severity": "blocker"},
-                        {"flag": "AGENT_PROMOTION_REQUIRES_EVALS", "expected": True, "severity": "blocker"},
-                        {"flag": "AGENT_EVAL_REGRESSION_GATE_ENABLED", "expected": True, "severity": "blocker"},
-                    ]
-                }
+                        {
+                            "flag": "AGENT_PROMOTION_REQUIRES_EVALS",
+                            "expected": True,
+                            "severity": "blocker",
+                        },
+                        {
+                            "flag": "AGENT_EVAL_REGRESSION_GATE_ENABLED",
+                            "expected": True,
+                            "severity": "blocker",
+                        },
+                    ],
+                },
             },
             "enterprise_managed": {
                 "name": "Enterprise Managed Mode",
@@ -144,25 +179,35 @@ class DeploymentModeService:
                     "posture": "Enterprise Managed / Federated & Strict Isolation",
                     "readiness_constraints": [
                         {"flag": "AGENT_RUNTIME_ENABLED", "expected": True, "severity": "blocker"},
-                        {"flag": "AGENT_TENANT_ISOLATION_STRICT", "expected": True, "severity": "blocker"},
-                        {"flag": "MANAGED_CONTROL_PLANE_ENABLED", "expected": True, "severity": "blocker"},
-                    ]
-                }
-            }
+                        {
+                            "flag": "AGENT_TENANT_ISOLATION_STRICT",
+                            "expected": True,
+                            "severity": "blocker",
+                        },
+                        {
+                            "flag": "MANAGED_CONTROL_PLANE_ENABLED",
+                            "expected": True,
+                            "severity": "blocker",
+                        },
+                    ],
+                },
+            },
         }
 
-    def get_mode_config(self, mode: str) -> Dict[str, Any]:
+    def get_mode_config(self, mode: str) -> dict[str, Any]:
         if not DeploymentModeService._modes_config:
             self._load_config()
-        return DeploymentModeService._modes_config.get(mode) or self._get_fallback_defaults().get("appliance")
+        return DeploymentModeService._modes_config.get(mode) or self._get_fallback_defaults().get(
+            "appliance"
+        )
 
-    def get_mode_defaults(self, mode: str) -> Dict[str, Any]:
+    def get_mode_defaults(self, mode: str) -> dict[str, Any]:
         return self.get_mode_config(mode).get("features", {})
 
     def get_governance_posture(self, mode: str) -> str:
         return self.get_mode_config(mode).get("governance", {}).get("posture", "Unknown")
 
-    def validate_coherence(self, settings: Any) -> Tuple[bool, List[str], List[str]]:
+    def validate_coherence(self, settings: Any) -> tuple[bool, list[str], list[str]]:
         """
         Validates if manually set settings are coherent with the chosen deployment mode constraints.
         Returns:
@@ -199,7 +244,9 @@ class DeploymentModeService:
 
         valid_modes = {"appliance", "pilot", "production", "enterprise_managed"}
         if mode not in valid_modes:
-            blockers.append(f"Invalid DEPLOYMENT_MODE '{mode}'. Allowed modes are: {', '.join(valid_modes)}")
+            blockers.append(
+                f"Invalid DEPLOYMENT_MODE '{mode}'. Allowed modes are: {', '.join(valid_modes)}"
+            )
 
         return len(blockers) == 0, blockers, warnings
 

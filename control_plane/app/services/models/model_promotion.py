@@ -26,7 +26,13 @@ from app.services.security.offline_crl import is_bundle_revoked, is_peer_revoked
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-PROMOTION_REQUEST_TYPES = {"staged_to_pending", "pending_to_approved", "approved_to_promoted", "offline_import", "rollback_promotion"}
+PROMOTION_REQUEST_TYPES = {
+    "staged_to_pending",
+    "pending_to_approved",
+    "approved_to_promoted",
+    "offline_import",
+    "rollback_promotion",
+}
 
 
 async def create_promotion_request(
@@ -51,7 +57,9 @@ async def create_promotion_request(
     resolved_source = source_state or record.lifecycle_state
     if not _validate_transition(resolved_source, target_state):
         raise ValueError(f"Invalid promotion transition from {resolved_source} to {target_state}")
-    sanitized_chain = sanitize_report_payload(chain_of_custody_json) if chain_of_custody_json else None
+    sanitized_chain = (
+        sanitize_report_payload(chain_of_custody_json) if chain_of_custody_json else None
+    )
     if sanitized_chain:
         chain_check = await validate_chain_of_custody(sanitized_chain)
         if not chain_check["valid"]:
@@ -76,7 +84,11 @@ async def create_promotion_request(
         db,
         action="promotion_request_created",
         status="success",
-        payload={"lifecycle_record_id": str(lifecycle_record_id), "request_type": request_type, "target_state": target_state},
+        payload={
+            "lifecycle_record_id": str(lifecycle_record_id),
+            "request_type": request_type,
+            "target_state": target_state,
+        },
         result={"promotion_request_id": str(request.id), "status": "pending"},
     )
     return request
@@ -98,11 +110,13 @@ async def approve_promotion_request(
     if not isinstance(approvals, dict):
         approvals = {"approvals": []}
     approval_list = approvals.get("approvals", [])
-    approval_list.append({
-        "approved_by": _sanitize_text(approved_by) or "admin",
-        "approved_at": utc_now().isoformat(),
-        "note": _sanitize_text(approval_note, max_length=1000),
-    })
+    approval_list.append(
+        {
+            "approved_by": _sanitize_text(approved_by) or "admin",
+            "approved_at": utc_now().isoformat(),
+            "note": _sanitize_text(approval_note, max_length=1000),
+        }
+    )
     approvals["approvals"] = approval_list
     request.approval_json = sanitize_report_payload(approvals)
     request.approval_count_received = len(approval_list)
@@ -164,7 +178,9 @@ async def execute_promotion(
     if not request:
         raise ValueError("Promotion request not found")
     if request.status != "approved":
-        raise ValueError(f"Promotion request must be approved before execution, current status: {request.status}")
+        raise ValueError(
+            f"Promotion request must be approved before execution, current status: {request.status}"
+        )
     record = await db.get(CommercialModelLifecycleRecord, request.lifecycle_record_id)
     if not record:
         raise ValueError("Lifecycle record not found")
@@ -179,7 +195,9 @@ async def execute_promotion(
         "checksum_sha256": record.checksum_sha256,
         "manifest_hash": record.manifest_hash,
     }
-    receipt_hash = hashlib.sha256(_canonical_json(sanitize_report_payload(receipt_payload)).encode("utf-8")).hexdigest()
+    receipt_hash = hashlib.sha256(
+        _canonical_json(sanitize_report_payload(receipt_payload)).encode("utf-8")
+    ).hexdigest()
     request.immutable_receipt_hash = receipt_hash
     request.status = "executed"
     record.previous_lifecycle_state = record.lifecycle_state
@@ -211,26 +229,30 @@ async def create_offline_promotion_bundle(
     if not record:
         raise ValueError("Lifecycle record not found")
     if record.lifecycle_state not in ("approved", "promoted"):
-        raise ValueError(f"Model must be approved or promoted for offline bundle, current state: {record.lifecycle_state}")
+        raise ValueError(
+            f"Model must be approved or promoted for offline bundle, current state: {record.lifecycle_state}"
+        )
     settings = get_settings()
     if record.export_restricted and not settings.commercial_sovereign_governance_enabled:
         raise ValueError("Cannot export sovereign-restricted model without sovereign governance")
-    manifest = sanitize_report_payload({
-        "model_name": record.model_name,
-        "model_alias": record.model_alias,
-        "model_version": record.model_version,
-        "provider": record.provider,
-        "checksum_sha256": record.checksum_sha256,
-        "manifest_hash": record.manifest_hash,
-        "lifecycle_state": record.lifecycle_state,
-        "sovereign_restricted": record.sovereign_restricted,
-        "export_restricted": record.export_restricted,
-        "source_cluster_id": record.cluster_id,
-        "target_cluster_id": target_cluster_id,
-        "media_ref": _sanitize_text(media_ref, max_length=512),
-        "media_uuid": _sanitize_text(media_uuid, max_length=128),
-        "created_at": utc_now().isoformat(),
-    })
+    manifest = sanitize_report_payload(
+        {
+            "model_name": record.model_name,
+            "model_alias": record.model_alias,
+            "model_version": record.model_version,
+            "provider": record.provider,
+            "checksum_sha256": record.checksum_sha256,
+            "manifest_hash": record.manifest_hash,
+            "lifecycle_state": record.lifecycle_state,
+            "sovereign_restricted": record.sovereign_restricted,
+            "export_restricted": record.export_restricted,
+            "source_cluster_id": record.cluster_id,
+            "target_cluster_id": target_cluster_id,
+            "media_ref": _sanitize_text(media_ref, max_length=512),
+            "media_uuid": _sanitize_text(media_uuid, max_length=128),
+            "created_at": utc_now().isoformat(),
+        }
+    )
     manifest_hash = hashlib.sha256(_canonical_json(manifest).encode("utf-8")).hexdigest()
     manifest["manifest_hash"] = manifest_hash
     signature = await sign_model_manifest(manifest)
@@ -285,7 +307,9 @@ async def import_offline_promotion(
         raise ValueError("Model checksum revoked by offline CRL")
     if source_cluster_id and await is_peer_revoked(db, source_cluster_id):
         raise ValueError("Source peer revoked by offline CRL")
-    sanitized_chain = sanitize_report_payload(chain_of_custody_json) if chain_of_custody_json else None
+    sanitized_chain = (
+        sanitize_report_payload(chain_of_custody_json) if chain_of_custody_json else None
+    )
     if sanitized_chain:
         chain_check = await validate_chain_of_custody(sanitized_chain)
         if not chain_check["valid"]:
@@ -314,7 +338,11 @@ async def import_offline_promotion(
         payload={"model_name": model_name, "manifest_hash": manifest_hash},
         result={"lifecycle_record_id": str(record.id), "provenance_id": str(provenance.id)},
     )
-    return {"lifecycle_record_id": str(record.id), "provenance_id": str(provenance.id), "lifecycle_state": record.lifecycle_state}
+    return {
+        "lifecycle_record_id": str(record.id),
+        "provenance_id": str(provenance.id),
+        "lifecycle_state": record.lifecycle_state,
+    }
 
 
 async def discover_model_from_manifest(
@@ -325,6 +353,7 @@ async def discover_model_from_manifest(
     imported_by: str | None = None,
 ) -> CommercialModelLifecycleRecord:
     from app.services.models.model_lifecycle_manager import discover_model
+
     return await discover_model(
         db,
         model_name=manifest.get("model_name", "unknown"),
@@ -347,7 +376,9 @@ async def list_promotion_requests(
     status: str | None = None,
     limit: int = 100,
 ) -> list[CommercialModelPromotionRequest]:
-    stmt = select(CommercialModelPromotionRequest).order_by(desc(CommercialModelPromotionRequest.created_at))
+    stmt = select(CommercialModelPromotionRequest).order_by(
+        desc(CommercialModelPromotionRequest.created_at)
+    )
     if status:
         stmt = stmt.where(CommercialModelPromotionRequest.status == status)
     stmt = stmt.limit(min(max(limit, 1), 500))
@@ -365,21 +396,23 @@ def serialize_promotion_request(
             return None
         return value if sensitive else value[:12]
 
-    return sanitize_report_payload({
-        "id": str(request.id),
-        "lifecycle_record_id": str(request.lifecycle_record_id),
-        "request_type": request.request_type,
-        "requested_by": request.requested_by,
-        "target_state": request.target_state,
-        "source_state": request.source_state,
-        "approval_count_required": request.approval_count_required,
-        "approval_count_received": request.approval_count_received,
-        "status": request.status,
-        "reason": request.reason,
-        "bundle_id": str(request.bundle_id) if request.bundle_id else None,
-        "signed_manifest_hash": _short(request.signed_manifest_hash),
-        "immutable_receipt_hash": _short(request.immutable_receipt_hash),
-        "media_ref": request.media_ref,
-        "created_at": request.created_at.isoformat(),
-        "completed_at": request.completed_at.isoformat() if request.completed_at else None,
-    })
+    return sanitize_report_payload(
+        {
+            "id": str(request.id),
+            "lifecycle_record_id": str(request.lifecycle_record_id),
+            "request_type": request.request_type,
+            "requested_by": request.requested_by,
+            "target_state": request.target_state,
+            "source_state": request.source_state,
+            "approval_count_required": request.approval_count_required,
+            "approval_count_received": request.approval_count_received,
+            "status": request.status,
+            "reason": request.reason,
+            "bundle_id": str(request.bundle_id) if request.bundle_id else None,
+            "signed_manifest_hash": _short(request.signed_manifest_hash),
+            "immutable_receipt_hash": _short(request.immutable_receipt_hash),
+            "media_ref": request.media_ref,
+            "created_at": request.created_at.isoformat(),
+            "completed_at": request.completed_at.isoformat() if request.completed_at else None,
+        }
+    )

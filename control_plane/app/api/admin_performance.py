@@ -1,16 +1,13 @@
-from typing import List
-
-from app.api.dependencies import get_current_admin
-from app.services.runtime_dependencies import get_db_session
 from app.schemas.performance import (
     BackendPerformanceProfile,
-    PerformanceCapability,
+    GPUResourceProfile,
     OptimizationRecommendation,
+    PerformanceCapability,
     PerformanceSimulationRequest,
     PerformanceSimulationResponse,
-    GPUResourceProfile
 )
 from app.services.performance.advisory_scheduler import AdvisoryScheduler
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,10 +31,10 @@ MOCK_BACKENDS = [
                 capabilities=[
                     PerformanceCapability.PAGED_ATTENTION,
                     PerformanceCapability.CONTINUOUS_BATCHING,
-                    PerformanceCapability.TENSOR_PARALLEL
-                ]
+                    PerformanceCapability.TENSOR_PARALLEL,
+                ],
             )
-        ]
+        ],
     ),
     BackendPerformanceProfile(
         backend_id="llama-cpp-edge",
@@ -54,32 +51,33 @@ MOCK_BACKENDS = [
                 utilization_percent=95.0,
                 capabilities=[
                     PerformanceCapability.LAYER_OFFLOADING,
-                    PerformanceCapability.FRACTIONAL_GPU
-                ]
+                    PerformanceCapability.FRACTIONAL_GPU,
+                ],
             )
-        ]
-    )
+        ],
+    ),
 ]
+
 
 @router.get("/capabilities")
 async def get_performance_capabilities():
     return [c.value for c in PerformanceCapability]
 
-@router.get("/backends", response_model=List[BackendPerformanceProfile])
+
+@router.get("/backends", response_model=list[BackendPerformanceProfile])
 async def list_backend_performance():
     return MOCK_BACKENDS
 
-@router.get("/recommendations", response_model=List[OptimizationRecommendation])
-async def get_performance_recommendations(
-    db: AsyncSession = Depends(get_db_session)
-):
+
+@router.get("/recommendations", response_model=list[OptimizationRecommendation])
+async def get_performance_recommendations(db: AsyncSession = Depends(get_db_session)):
     scheduler = AdvisoryScheduler(db)
     return await scheduler.generate_recommendations(MOCK_BACKENDS)
 
+
 @router.post("/simulate", response_model=PerformanceSimulationResponse)
 async def simulate_performance(
-    payload: PerformanceSimulationRequest,
-    db: AsyncSession = Depends(get_db_session)
+    payload: PerformanceSimulationRequest, db: AsyncSession = Depends(get_db_session)
 ):
     scheduler = AdvisoryScheduler(db)
     return await scheduler.simulate_load(payload, MOCK_BACKENDS)

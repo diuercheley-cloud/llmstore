@@ -1,4 +1,3 @@
-
 import pytest
 from app.core.config import get_settings
 from app.services.mlops.dataset_registry import DatasetRegistry
@@ -22,7 +21,7 @@ async def test_dataset_versionado(session):
         version="v1.0.0",
         checksum="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         provenance="s3://bucket/ds",
-        content_bytes=b""
+        content_bytes=b"",
     )
     assert version.version == "v1.0.0"
     assert version.dataset_id == dataset.id
@@ -39,7 +38,7 @@ async def test_checksum_invalido_detectado(session):
             version="v1.0.0",
             checksum="wrong_checksum",
             provenance="s3://bucket/ds",
-            content_bytes=b"actual content"
+            content_bytes=b"actual content",
         )
     assert exc.value.status_code == 400
     assert "Invalid dataset checksum" in exc.value.detail
@@ -50,10 +49,7 @@ async def test_job_mock_executa(session):
     ds_reg = DatasetRegistry(session)
     dataset = await ds_reg.create_dataset(name="test-ft")
     version = await ds_reg.create_version(
-        dataset_id=dataset.id,
-        version="v1.0",
-        checksum="hash",
-        provenance="s3://bucket/ds"
+        dataset_id=dataset.id, version="v1.0", checksum="hash", provenance="s3://bucket/ds"
     )
 
     ft_service = FineTuningService(session)
@@ -105,10 +101,7 @@ async def test_lineage_conecta_dataset_job_model(session):
     ds_reg = DatasetRegistry(session)
     dataset = await ds_reg.create_dataset(name="lineage-ds")
     version = await ds_reg.create_version(
-        dataset_id=dataset.id,
-        version="v1.0",
-        checksum="hash",
-        provenance="s3://bucket"
+        dataset_id=dataset.id, version="v1.0", checksum="hash", provenance="s3://bucket"
     )
 
     ft_service = FineTuningService(session)
@@ -143,6 +136,7 @@ async def test_external_integration_disabled_por_default(session):
     # Let's inspect the AdminAuditEvent recorded
     from app.models.core.admin_rbac import AdminAuditEvent
     from sqlalchemy import select
+
     result = await session.execute(
         select(AdminAuditEvent).where(AdminAuditEvent.event_type == "experiment_run_log")
     )
@@ -163,20 +157,19 @@ async def test_mlops_endpoints_disabled_by_default(admin_client, admin_token_hea
     resp = await admin_client.post(
         "/admin/mlops/datasets",
         json={"name": "test-endpoints", "description": "some text"},
-        headers=admin_token_headers
+        headers=admin_token_headers,
     )
     assert resp.status_code == 403
 
     # Get datasets -> 403
-    resp = await admin_client.get(
-        "/admin/mlops/datasets",
-        headers=admin_token_headers
-    )
+    resp = await admin_client.get("/admin/mlops/datasets", headers=admin_token_headers)
     assert resp.status_code == 403
 
 
 @pytest.mark.asyncio
-async def test_mlops_endpoints_work_when_enabled(admin_client, admin_token_headers, monkeypatch, session):
+async def test_mlops_endpoints_work_when_enabled(
+    admin_client, admin_token_headers, monkeypatch, session
+):
     monkeypatch.setenv("MLOPS_ENABLED", "true")
     monkeypatch.setenv("FINE_TUNING_ENABLED", "true")
     monkeypatch.setenv("EXPERIMENT_TRACKING_ENABLED", "true")
@@ -186,17 +179,14 @@ async def test_mlops_endpoints_work_when_enabled(admin_client, admin_token_heade
     resp = await admin_client.post(
         "/admin/mlops/datasets",
         json={"name": "test-enabled-ds", "description": "desc", "is_production": False},
-        headers=admin_token_headers
+        headers=admin_token_headers,
     )
     assert resp.status_code == 201
     dataset_data = resp.json()
     dataset_id = dataset_data["id"]
 
     # List datasets -> 200
-    resp = await admin_client.get(
-        "/admin/mlops/datasets",
-        headers=admin_token_headers
-    )
+    resp = await admin_client.get("/admin/mlops/datasets", headers=admin_token_headers)
     assert resp.status_code == 200
     assert any(d["id"] == dataset_id for d in resp.json())
 
@@ -207,9 +197,9 @@ async def test_mlops_endpoints_work_when_enabled(admin_client, admin_token_heade
             "version": "v1.0.0",
             "checksum": "abc",
             "provenance": "manual",
-            "redaction_status": "none"
+            "redaction_status": "none",
         },
-        headers=admin_token_headers
+        headers=admin_token_headers,
     )
     assert resp.status_code == 201
     version_data = resp.json()
@@ -222,9 +212,9 @@ async def test_mlops_endpoints_work_when_enabled(admin_client, admin_token_heade
             "model_name": "llama3",
             "dataset_version_id": version_id,
             "provider": "mock",
-            "hyperparameters": {"epochs": 1}
+            "hyperparameters": {"epochs": 1},
         },
-        headers=admin_token_headers
+        headers=admin_token_headers,
     )
     assert resp.status_code == 201
     job_data = resp.json()
@@ -232,8 +222,7 @@ async def test_mlops_endpoints_work_when_enabled(admin_client, admin_token_heade
 
     # Get fine-tuning job status -> 200
     resp = await admin_client.get(
-        f"/admin/mlops/fine-tuning/jobs/{job_id}",
-        headers=admin_token_headers
+        f"/admin/mlops/fine-tuning/jobs/{job_id}", headers=admin_token_headers
     )
     assert resp.status_code == 200
     job_details = resp.json()
@@ -243,12 +232,10 @@ async def test_mlops_endpoints_work_when_enabled(admin_client, admin_token_heade
 
     # Get model lineage -> 200
     resp = await admin_client.get(
-        f"/admin/mlops/model-lineage/{output_model_id}",
-        headers=admin_token_headers
+        f"/admin/mlops/model-lineage/{output_model_id}", headers=admin_token_headers
     )
     assert resp.status_code == 200
     lineage_data = resp.json()
     assert lineage_data["model_id"] == output_model_id
     assert lineage_data["dataset_version_id"] == version_id
     assert lineage_data["training_job_id"] == job_id
-

@@ -22,12 +22,16 @@ try:
     from data_plane_mock.main import app as mock_data_plane_app
 except ImportError:
     mock_data_plane_app = None
-    pytest.skip("data_plane_mock module not available, skipping e2e tests that depend on it.", allow_module_level=True)
+    pytest.skip(
+        "data_plane_mock module not available, skipping e2e tests that depend on it.",
+        allow_module_level=True,
+    )
 
 
 @pytest.fixture(scope="session")
 def anyio_backend():
     return "asyncio"
+
 
 @pytest_asyncio.fixture
 async def e2e_client(isolated_db_url, fake_redis, monkeypatch):
@@ -49,6 +53,7 @@ async def e2e_client(isolated_db_url, fake_redis, monkeypatch):
     monkeypatch.setenv("REDIS_URL", "redis://test.invalid:6379")
 
     from app.core.config import get_settings
+
     get_settings.cache_clear()
     settings = get_settings()
 
@@ -81,6 +86,7 @@ async def e2e_client(isolated_db_url, fake_redis, monkeypatch):
     # Monkeypatch SessionLocal so any internal import (e.g. model_runtime_manager)
     # uses our test database
     import app.db.session as db_session_mod
+
     monkeypatch.setattr(db_session_mod, "SessionLocal", testing_session_local)
 
     # Mock BackendSlotManager to avoid SQLite "database is locked" (it uses with_for_update,
@@ -92,8 +98,12 @@ async def e2e_client(isolated_db_url, fake_redis, monkeypatch):
     async def mock_release(self, backend_id):
         pass
 
-    monkeypatch.setattr("app.services.backend_slot_manager.BackendSlotManager.try_acquire", mock_try_acquire)
-    monkeypatch.setattr("app.services.backend_slot_manager.BackendSlotManager.release", mock_release)
+    monkeypatch.setattr(
+        "app.services.backend_slot_manager.BackendSlotManager.try_acquire", mock_try_acquire
+    )
+    monkeypatch.setattr(
+        "app.services.backend_slot_manager.BackendSlotManager.release", mock_release
+    )
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -110,12 +120,15 @@ async def e2e_client(isolated_db_url, fake_redis, monkeypatch):
     fastapi_app.dependency_overrides[get_db] = override_get_db  # for dependencies.py
     fastapi_app.dependency_overrides[get_redis] = lambda: fake_redis
 
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=fastapi_app), base_url="http://test") as ac:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=fastapi_app), base_url="http://test"
+    ) as ac:
         yield ac
 
     fastapi_app.dependency_overrides.clear()
     await engine.dispose()
     get_settings.cache_clear()
+
 
 @pytest.fixture
 def admin_headers():

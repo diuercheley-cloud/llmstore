@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.services.runtime_dependencies import get_db_session
 from app.services.auth import require_admin
 from app.services.routing.commercial_cluster_aggregates import (
     cleanup_old_analytics,
@@ -24,6 +23,7 @@ from app.services.routing.commercial_node_heartbeat import (
     mark_stale_nodes_offline,
     resolve_node_identity,
 )
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Body, Depends, Query, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession

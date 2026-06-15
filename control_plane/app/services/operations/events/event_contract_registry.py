@@ -10,4 +10,3 @@ def build_contract_hash(event_name: str, event_version: str, event_scope: str, s
             "schema": schema,
         }
     )
-

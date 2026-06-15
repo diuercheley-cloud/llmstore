@@ -1,14 +1,16 @@
-import pytest
 import uuid
-from app.services.audit import log_request
+
+import pytest
 from app.models.core.request_log import RequestLog
+from app.services.audit import log_request
 from sqlalchemy import select
+
 
 @pytest.mark.asyncio
 async def test_log_request_persists_token_metrics(session):
     # Setup
     client_id = uuid.uuid4()
-    
+
     # Execute
     request_log = await log_request(
         session,
@@ -26,30 +28,29 @@ async def test_log_request_persists_token_metrics(session):
         fallback_used=False,
         cache_hit=False,
         token_count_method="tiktoken",
-        tokens_estimated=False
+        tokens_estimated=False,
     )
-    
+
     # Verify in-memory object
     assert request_log.token_count_method == "tiktoken"
     assert request_log.tokens_estimated is False
-    
+
     # Flush and verify from DB
     await session.flush()
     await session.refresh(request_log)
-    
-    result = await session.execute(
-        select(RequestLog).where(RequestLog.id == request_log.id)
-    )
+
+    result = await session.execute(select(RequestLog).where(RequestLog.id == request_log.id))
     db_log = result.scalar_one()
-    
+
     assert db_log.token_count_method == "tiktoken"
     assert db_log.tokens_estimated is False
+
 
 @pytest.mark.asyncio
 async def test_log_request_defaults_token_metrics(session):
     # Setup
     client_id = uuid.uuid4()
-    
+
     # Execute with defaults
     request_log = await log_request(
         session,
@@ -65,13 +66,13 @@ async def test_log_request_defaults_token_metrics(session):
         backend_name="test-backend",
         attempts=1,
         fallback_used=False,
-        cache_hit=False
+        cache_hit=False,
     )
-    
+
     # Verify defaults
     assert request_log.token_count_method is None
     assert request_log.tokens_estimated is True
-    
+
     # Verify None handling for tokens_estimated
     request_log_none = await log_request(
         session,
@@ -88,6 +89,6 @@ async def test_log_request_defaults_token_metrics(session):
         attempts=1,
         fallback_used=False,
         cache_hit=False,
-        tokens_estimated=None
+        tokens_estimated=None,
     )
     assert request_log_none.tokens_estimated is True

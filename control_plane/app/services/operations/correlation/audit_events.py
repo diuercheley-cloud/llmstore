@@ -1,7 +1,7 @@
 import hashlib
 import json
 import uuid
-from typing import Any, Dict
+from typing import Any
 
 from app.core.time import utc_now
 from app.models.core.admin_action_log import AdminActionLog
@@ -12,8 +12,8 @@ async def log_operational_audit_event(
     session: AsyncSession,
     action: str,
     client_id: uuid.UUID,
-    payload: Dict[str, Any],
-    status: str = "success"
+    payload: dict[str, Any],
+    status: str = "success",
 ):
     """
     Logs an operational audit event to the AdminActionLog.
@@ -30,7 +30,9 @@ async def log_operational_audit_event(
         ensure_ascii=True,
         default=str,
     )
-    sanitized_payload["signature"] = hashlib.sha256(signature_material.encode("utf-8")).hexdigest()[:16]
+    sanitized_payload["signature"] = hashlib.sha256(signature_material.encode("utf-8")).hexdigest()[
+        :16
+    ]
 
     audit_entry = AdminActionLog(
         action=f"ops_correlation:{action}",
@@ -39,29 +41,36 @@ async def log_operational_audit_event(
         request_method="SYSTEM",
         payload_json=sanitized_payload,
         status=status,
-        created_at=utc_now()
+        created_at=utc_now(),
     )
-    
+
     session.add(audit_entry)
     return audit_entry
 
-async def log_correlation_created(session: AsyncSession, client_id: uuid.UUID, correlation_id: uuid.UUID, correlation_type: str):
+
+async def log_correlation_created(
+    session: AsyncSession, client_id: uuid.UUID, correlation_id: uuid.UUID, correlation_type: str
+):
     return await log_operational_audit_event(
         session,
         "operational_correlation_created",
         client_id,
-        {"correlation_id": str(correlation_id), "correlation_type": correlation_type}
+        {"correlation_id": str(correlation_id), "correlation_type": correlation_type},
     )
 
-async def log_trust_link_created(session: AsyncSession, client_id: uuid.UUID, source: str, target: str):
+
+async def log_trust_link_created(
+    session: AsyncSession, client_id: uuid.UUID, source: str, target: str
+):
     return await log_operational_audit_event(
         session,
         "operational_trust_link_created",
         client_id,
-        {"source_node": source, "target_node": target}
+        {"source_node": source, "target_node": target},
     )
 
-async def log_graph_generated(session: AsyncSession, client_id: uuid.UUID, summary: Dict[str, Any]):
+
+async def log_graph_generated(session: AsyncSession, client_id: uuid.UUID, summary: dict[str, Any]):
     return await log_operational_audit_event(
         session,
         "trust_graph_generated",
@@ -69,6 +78,6 @@ async def log_graph_generated(session: AsyncSession, client_id: uuid.UUID, summa
         {
             "node_count": summary.get("node_count"),
             "edge_count": summary.get("edge_count"),
-            "aggregate_confidence": summary.get("aggregate_confidence")
-        }
+            "aggregate_confidence": summary.get("aggregate_confidence"),
+        },
     )

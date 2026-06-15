@@ -8,11 +8,15 @@ def test_redaction_json(tmp_path):
     file_path = out_dir / "test.json"
     with open(file_path, "w") as f:
         json.dump({"secret": "sk-12345", "other": "value"}, f)
-    
-    res = subprocess.run(["./scripts/dev/scan-real-provider-artifacts.sh", "--path", str(out_dir), "--redact"], capture_output=True, text=True)
+
+    res = subprocess.run(
+        ["./scripts/dev/scan-real-provider-artifacts.sh", "--path", str(out_dir), "--redact"],
+        capture_output=True,
+        text=True,
+    )
     assert res.returncode == 0
-    
-    with open(file_path, "r") as f:
+
+    with open(file_path) as f:
         data = json.load(f)
         assert data["secret"] == "__redacted_provider_secret__"
         assert data["other"] == "value"

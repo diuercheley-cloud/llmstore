@@ -28,7 +28,7 @@ async def exchange_token(
     result = await db.execute(
         select(AgentMCPDelegatedGrant).where(
             AgentMCPDelegatedGrant.access_token == subject_token,
-            AgentMCPDelegatedGrant.tenant_id == tenant_id
+            AgentMCPDelegatedGrant.tenant_id == tenant_id,
         )
     )
     grant = result.scalar_one_or_none()
@@ -80,7 +80,8 @@ async def exchange_token(
     policy_result = await db.execute(
         select(AgentMCPScopePolicy).where(
             AgentMCPScopePolicy.tenant_id == tenant_id,
-            (AgentMCPScopePolicy.mcp_server == mcp_server) | (AgentMCPScopePolicy.mcp_server == None)
+            (AgentMCPScopePolicy.mcp_server == mcp_server)
+            | (AgentMCPScopePolicy.mcp_server == None),
         )
     )
     policies = policy_result.scalars().all()

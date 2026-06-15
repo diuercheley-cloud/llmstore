@@ -1,0 +1,1 @@
+validators/validate-upgrade-migrations-local.sh

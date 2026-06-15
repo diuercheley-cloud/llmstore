@@ -1,5 +1,6 @@
 import hmac
 import json
+from datetime import UTC
 from enum import Enum
 from functools import total_ordering
 
@@ -7,9 +8,9 @@ from app.core.config import get_settings
 from app.core.security import verify_secret
 from app.core.time import utc_now
 from app.db.session import get_db_session, get_redis
+from app.models.billing.billing_plan import BillingPlan
 from app.models.core.api_key import ApiKey
 from app.models.core.auth import UserSession
-from app.models.billing.billing_plan import BillingPlan
 from app.models.core.client import Client
 from app.services.admin_rbac import (
     RBAC_ADMIN_PERMISSIONS,
@@ -43,6 +44,7 @@ class AdminRole(Enum):
             return order[self] < order[other]
         return NotImplemented
 
+
 def get_admin_role(token: str) -> AdminRole | None:
     settings = get_settings()
     if not token:
@@ -61,6 +63,7 @@ def get_admin_role(token: str) -> AdminRole | None:
         return AdminRole.SUPER
 
     return None
+
 
 def _write_like_permissions() -> list[str]:
     permissions = []
@@ -196,6 +199,7 @@ async def require_superadmin(
         permissions=["superadmin:all"],
     )
 
+
 def require_admin_role(required_role: AdminRole):
     async def role_checker(
         request: Request,
@@ -205,7 +209,9 @@ def require_admin_role(required_role: AdminRole):
         if not is_rbac_admin_enabled():
             role = get_admin_role(x_admin_token or "")
             if not role:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid admin token")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid admin token"
+                )
             if role < required_role:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
@@ -218,7 +224,9 @@ def require_admin_role(required_role: AdminRole):
             return role
 
         if required_role == AdminRole.SUPER:
-            admin = await require_superadmin(request=request, x_admin_token=x_admin_token, session=session)
+            admin = await require_superadmin(
+                request=request, x_admin_token=x_admin_token, session=session
+            )
         elif required_role == AdminRole.WRITE:
             admin = await require_permissions(
                 session=session,
@@ -227,7 +235,9 @@ def require_admin_role(required_role: AdminRole):
                 permissions=_write_like_permissions(),
             )
         else:
-            admin = await authenticate_admin_request(session=session, request=request, token=x_admin_token or "")
+            admin = await authenticate_admin_request(
+                session=session, request=request, token=x_admin_token or ""
+            )
         return _role_from_permissions(admin.permission_codes)
 
     return role_checker
@@ -249,11 +259,13 @@ async def require_client(
                 reason="missing bearer token",
             )
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="missing bearer token")
-    
+
     plaintext = auth_creds.credentials.strip()
     prefix = plaintext[:12]
     result = await session.execute(
-        select(ApiKey).where(ApiKey.key_prefix == prefix, ApiKey.is_active == True, ApiKey.revoked_at.is_(None)).order_by(ApiKey.created_at.desc())
+        select(ApiKey)
+        .where(ApiKey.key_prefix == prefix, ApiKey.is_active == True, ApiKey.revoked_at.is_(None))
+        .order_by(ApiKey.created_at.desc())
     )
     api_keys = result.scalars().all()
     api_key = next((item for item in api_keys if verify_secret(plaintext, item.key_hash)), None)
@@ -261,34 +273,42 @@ async def require_client(
         await record_invalid_api_key_attempt(
             session,
             redis,
-            source_ip=getattr(request.state, "source_ip", "unknown") if request is not None else "unknown",
+            source_ip=getattr(request.state, "source_ip", "unknown")
+            if request is not None
+            else "unknown",
             api_key_prefix=prefix,
             reason="invalid api key",
         )
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid api key")
-    
+
     # Check expiration
     if api_key.expires_at:
         expires_at = api_key.expires_at
         if expires_at.tzinfo is None:
-            from datetime import timezone
-            expires_at = expires_at.replace(tzinfo=timezone.utc)
-        
+            expires_at = expires_at.replace(tzinfo=UTC)
+
         if expires_at < utc_now():
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="api key expired")
 
     # Check allowed IPs for this specific key
     if api_key.allowed_ips_json:
-        source_ip = getattr(request.state, "source_ip", "unknown") if request is not None else "unknown"
+        source_ip = (
+            getattr(request.state, "source_ip", "unknown") if request is not None else "unknown"
+        )
         try:
             allowed_ips = json.loads(api_key.allowed_ips_json)
             if allowed_ips and source_ip not in allowed_ips:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"IP {source_ip} not allowed for this API key")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"IP {source_ip} not allowed for this API key",
+                )
         except json.JSONDecodeError:
             pass
 
     client_result = await session.execute(
-        select(Client).options(selectinload(Client.billing_plan).selectinload(BillingPlan.pricing_rules)).where(Client.id == api_key.client_id)
+        select(Client)
+        .options(selectinload(Client.billing_plan).selectinload(BillingPlan.pricing_rules))
+        .where(Client.id == api_key.client_id)
     )
     client = client_result.scalar_one_or_none()
     if request is not None:
@@ -296,17 +316,28 @@ async def require_client(
         request.state.portal_actor_id = str(api_key.id)
         request.state.portal_actor_name = api_key.name
         try:
-            request.state.portal_actor_scopes = json.loads(api_key.scopes_json) if api_key.scopes_json else []
+            request.state.portal_actor_scopes = (
+                json.loads(api_key.scopes_json) if api_key.scopes_json else []
+            )
         except json.JSONDecodeError:
             request.state.portal_actor_scopes = []
     if client is None or client.is_blocked:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="client blocked or not found")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="client blocked or not found"
+        )
     if client.billing_status == "suspended":
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail={"error": "billing_suspended", "message": "Access suspended due to overdue payment. Please settle your invoices to restore access."}
+            detail={
+                "error": "billing_suspended",
+                "message": "Access suspended due to overdue payment. Please settle your invoices to restore access.",
+            },
         )
-    await enforce_client_ip_policy(session, client, getattr(request.state, "source_ip", "unknown") if request is not None else "unknown")
+    await enforce_client_ip_policy(
+        session,
+        client,
+        getattr(request.state, "source_ip", "unknown") if request is not None else "unknown",
+    )
     api_key.last_used_at = utc_now()
     await session.commit()
     return client

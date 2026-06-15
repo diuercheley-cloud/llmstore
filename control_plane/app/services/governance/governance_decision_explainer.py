@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from app.models.commercial.commercial_governance_supervisor import (
     CommercialGovernanceSupervisorDecision,
@@ -13,15 +13,16 @@ class GovernanceDecisionExplainer:
     Generates explainability reports for autonomous governance decisions.
     Ensures all actions have an immutable, auditable trail.
     """
+
     def __init__(self, db: AsyncSession):
         self.db = db
 
     async def generate_explanation(
-        self, 
+        self,
         decision: CommercialGovernanceSupervisorDecision,
         incident: CommercialGovernanceSupervisorIncident,
-        policy: CommercialGovernanceSupervisorPolicy
-    ) -> Dict[str, Any]:
+        policy: CommercialGovernanceSupervisorPolicy,
+    ) -> dict[str, Any]:
         """
         Compiles the signals, policy rules, and expected impacts into a readable explanation.
         In a real scenario, this might also generate a signed receipt or PDF report.
@@ -31,22 +32,15 @@ class GovernanceDecisionExplainer:
             "incident_summary": {
                 "type": incident.incident_type,
                 "severity": incident.severity,
-                "signals": incident.triggering_signals
+                "signals": incident.triggering_signals,
             },
-            "policy_applied": {
-                "name": policy.name,
-                "mode": policy.mode,
-                "rules": policy.rules
-            },
+            "policy_applied": {"name": policy.name, "mode": policy.mode, "rules": policy.rules},
             "rationale": decision.rationale,
             "confidence": decision.confidence_score,
             "expected_impact": decision.expected_impact,
-            "safety_checks": {
-                "blast_radius_acceptable": True,
-                "tenant_isolation_maintained": True
-            }
+            "safety_checks": {"blast_radius_acceptable": True, "tenant_isolation_maintained": True},
         }
-        
+
         # Here we could store this compiled explanation as a file, or add it to an audit log table.
         # For now, it's just returned or logged.
         return explanation

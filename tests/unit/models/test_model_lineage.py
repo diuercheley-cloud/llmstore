@@ -126,6 +126,7 @@ async def test_validate_lineage_empty(session):
 @pytest.mark.asyncio
 async def test_verify_provenance_chain(session):
     from app.services.models.model_provenance import create_provenance_attestation
+
     provenance = await create_provenance_attestation(
         session,
         source_type="airgap",

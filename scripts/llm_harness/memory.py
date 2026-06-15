@@ -11,13 +11,14 @@ from .sanitizer import Sanitizer
 
 logger = logging.getLogger(__name__)
 
+
 class LocalMemory:
     def __init__(
         self,
         memory_dir: str = ".llm_harness_memory",
         retention_days: int = 30,
         max_file_size_mb: int = 10,
-        compress_rotated: bool = True
+        compress_rotated: bool = True,
     ):
         self.memory_dir = memory_dir
         self.retention_days = retention_days
@@ -71,8 +72,8 @@ class LocalMemory:
 
     def _compress_file(self, file_path: str):
         try:
-            with open(file_path, 'rb') as f_in:
-                with gzip.open(f"{file_path}.gz", 'wb') as f_out:
+            with open(file_path, "rb") as f_in:
+                with gzip.open(f"{file_path}.gz", "wb") as f_out:
                     shutil.copyfileobj(f_in, f_out)
             os.remove(file_path)
             logger.info(f"Compressed rotated memory: {file_path}.gz")

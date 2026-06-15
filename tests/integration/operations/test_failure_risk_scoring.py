@@ -13,7 +13,6 @@ SERVICE = FailureRiskScoringService()
 
 
 class TestClassifyRisk:
-
     def test_zero_is_low(self):
         assert SERVICE.classify_risk(0.0) == "low"
 
@@ -66,7 +65,6 @@ class TestClassifyRisk:
 
 
 class TestRecommendationForLevel:
-
     def test_low_recommendation(self):
         rec = SERVICE.recommendation_for_level("low")
         assert isinstance(rec, str)
@@ -114,7 +112,6 @@ class TestRecommendationForLevel:
 
 
 class TestRequiresApproval:
-
     def test_low_does_not_require_approval(self):
         assert ADVISORY_REQUIRES_APPROVAL["low"] is False
 
@@ -140,7 +137,6 @@ class TestRequiresApproval:
 
 
 class TestBuildAssessment:
-
     MIN_FORECAST = {"risk_score": 0.3}
 
     def test_output_contains_all_required_keys(self):
@@ -182,7 +178,12 @@ class TestBuildAssessment:
         assert len(h) == 64
 
     def test_determinism(self):
-        f = {"risk_score": 0.45, "forecast_type": "node_failure", "deterministic_version": "v1", "input_hash": "abc"}
+        f = {
+            "risk_score": 0.45,
+            "forecast_type": "node_failure",
+            "deterministic_version": "v1",
+            "input_hash": "abc",
+        }
         a1 = SERVICE.build_assessment(f)
         a2 = SERVICE.build_assessment(f)
         assert a1 == a2
@@ -213,9 +214,13 @@ class TestBuildAssessment:
 
 
 class TestNoAutoRemediation:
-
     def test_recommendations_never_claim_auto_remediation(self):
-        forbidden = ["self-heal", "automatic remediation", "automatically remediate", "auto-remediating"]
+        forbidden = [
+            "self-heal",
+            "automatic remediation",
+            "automatically remediate",
+            "auto-remediating",
+        ]
         for level in ("low", "medium", "high", "critical"):
             rec = SERVICE.recommendation_for_level(level)
             for word in forbidden:
@@ -241,7 +246,6 @@ class TestNoAutoRemediation:
 
 
 class TestEdgeCases:
-
     def test_forecast_with_negative_risk_score(self):
         a = SERVICE.build_assessment({"risk_score": -0.5})
         assert a["risk_level"] == "low"

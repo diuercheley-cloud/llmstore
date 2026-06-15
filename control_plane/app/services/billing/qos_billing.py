@@ -1,7 +1,7 @@
 import uuid
 from datetime import timedelta
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -27,33 +27,35 @@ class CommercialQoSBillingService:
         return amount
 
     @staticmethod
-    async def generate_qos_billing_records(db: AsyncSession, hours: int = 24) -> List[CommercialQoSBillingRecord]:
+    async def generate_qos_billing_records(
+        db: AsyncSession, hours: int = 24
+    ) -> list[CommercialQoSBillingRecord]:
         """
         Generates billing records from chargeback data for the specified period.
         """
         settings = get_settings()
         since = utc_now() - timedelta(hours=hours)
-        
+
         # Find chargebacks that don't have a billing record yet
         # We use a subquery to check for existence of billing records
         billing_record_subquery = select(CommercialQoSBillingRecord.chargeback_id).where(
             CommercialQoSBillingRecord.chargeback_id.isnot(None)
         )
-        
+
         stmt = select(CommercialQueueChargeback).where(
             and_(
                 CommercialQueueChargeback.created_at >= since,
-                CommercialQueueChargeback.id.not_in(billing_record_subquery)
+                CommercialQueueChargeback.id.not_in(billing_record_subquery),
             )
         )
-        
+
         result = await db.execute(stmt)
         chargebacks = result.scalars().all()
-        
+
         records = []
         for cb in chargebacks:
             billable_amount = await CommercialQoSBillingService.calculate_qos_billable_amount(cb)
-            
+
             # Skip if below min amount
             if billable_amount < Decimal(str(settings.commercial_qos_billing_min_amount_brl)):
                 status = "skipped"
@@ -64,7 +66,7 @@ class CommercialQoSBillingService:
 
             # Idempotency key: client_id + period + qos_tier + model
             idempotency_key = f"{cb.client_id}_{cb.period_start.isoformat()}_{cb.period_end.isoformat()}_{cb.qos_tier}_{cb.model}"
-            
+
             # Check if record already exists by idempotency key
             existing_stmt = select(CommercialQoSBillingRecord).where(
                 CommercialQoSBillingRecord.idempotency_key == idempotency_key
@@ -88,21 +90,26 @@ class CommercialQoSBillingService:
                 billing_mode=settings.commercial_qos_billing_mode,
                 status=status,
                 idempotency_key=idempotency_key,
-                error_message=error
+                error_message=error,
             )
             db.add(record)
             records.append(record)
-        
+
         await db.commit()
         return records
 
     @staticmethod
-    async def debit_wallet_for_qos(db: AsyncSession, record: CommercialQoSBillingRecord) -> Optional[AiWalletTransaction]:
+    async def debit_wallet_for_qos(
+        db: AsyncSession, record: CommercialQoSBillingRecord
+    ) -> AiWalletTransaction | None:
         """
         Debits the client's wallet for the QoS usage if opt-in and mode allow.
         """
         settings = get_settings()
-        if settings.commercial_qos_billing_mode != "wallet_debit_opt_in" or not settings.commercial_qos_billing_debit_wallet:
+        if (
+            settings.commercial_qos_billing_mode != "wallet_debit_opt_in"
+            or not settings.commercial_qos_billing_debit_wallet
+        ):
             record.status = "skipped"
             record.error_message = f"Wallet debit not enabled or not in wallet_debit_opt_in mode (current mode: {settings.commercial_qos_billing_mode})"
             return None
@@ -112,7 +119,9 @@ class CommercialQoSBillingService:
 
         # Check daily limit
         daily_total = await CommercialQoSBillingService._get_daily_debit_total(db, record.client_id)
-        if daily_total + record.billable_amount_brl > Decimal(str(settings.commercial_qos_billing_max_daily_debit_brl_per_client)):
+        if daily_total + record.billable_amount_brl > Decimal(
+            str(settings.commercial_qos_billing_max_daily_debit_brl_per_client)
+        ):
             record.status = "failed"
             record.error_message = f"Daily limit exceeded. Current daily total: {daily_total}"
             return None
@@ -124,9 +133,9 @@ class CommercialQoSBillingService:
                 client_id=record.client_id,
                 amount_brl=record.billable_amount_brl,
                 reference_type="qos_billing",
-                reference_id=str(record.id)
+                reference_id=str(record.id),
             )
-            
+
             record.status = "debited"
             record.wallet_transaction_id = tx.id
             record.processed_at = utc_now()
@@ -137,7 +146,9 @@ class CommercialQoSBillingService:
             return None
 
     @staticmethod
-    async def attach_to_invoice(db: AsyncSession, record: CommercialQoSBillingRecord, invoice_id: uuid.UUID) -> bool:
+    async def attach_to_invoice(
+        db: AsyncSession, record: CommercialQoSBillingRecord, invoice_id: uuid.UUID
+    ) -> bool:
         """
         Attaches the billing record to an existing invoice.
         Note: Currently BillingInvoice is flat, so this just updates total_amount and association.
@@ -156,11 +167,11 @@ class CommercialQoSBillingService:
 
         # Update invoice total
         invoice.total_amount += record.billable_amount_brl
-        
+
         record.invoice_id = invoice.id
         record.status = "invoiced"
         record.processed_at = utc_now()
-        
+
         return True
 
     @staticmethod
@@ -173,42 +184,46 @@ class CommercialQoSBillingService:
             and_(
                 CommercialQoSBillingRecord.client_id == client_id,
                 CommercialQoSBillingRecord.status == "debited",
-                CommercialQoSBillingRecord.processed_at >= since
+                CommercialQoSBillingRecord.processed_at >= since,
             )
         )
         result = await db.execute(stmt)
         return result.scalar() or Decimal("0.000000")
 
     @staticmethod
-    async def summarize_qos_billing(db: AsyncSession, hours: int = 24) -> Dict[str, Any]:
+    async def summarize_qos_billing(db: AsyncSession, hours: int = 24) -> dict[str, Any]:
         """
         Summarizes QoS billing data.
         """
         since = utc_now() - timedelta(hours=hours)
-        stmt = select(CommercialQoSBillingRecord).where(CommercialQoSBillingRecord.created_at >= since)
+        stmt = select(CommercialQoSBillingRecord).where(
+            CommercialQoSBillingRecord.created_at >= since
+        )
         result = await db.execute(stmt)
         records = result.scalars().all()
-        
+
         summary = {
             "total_calculated_brl": Decimal("0.0"),
             "total_invoiced_brl": Decimal("0.0"),
             "total_debited_brl": Decimal("0.0"),
             "count_by_status": {},
             "count_by_tier": {},
-            "top_clients": {}
+            "top_clients": {},
         }
-        
+
         for r in records:
             summary["total_calculated_brl"] += r.billable_amount_brl
             if r.status == "invoiced":
                 summary["total_invoiced_brl"] += r.billable_amount_brl
             elif r.status == "debited":
                 summary["total_debited_brl"] += r.billable_amount_brl
-                
+
             summary["count_by_status"][r.status] = summary["count_by_status"].get(r.status, 0) + 1
             summary["count_by_tier"][r.qos_tier] = summary["count_by_tier"].get(r.qos_tier, 0) + 1
-            
+
             client_id = str(r.client_id)
-            summary["top_clients"][client_id] = summary["top_clients"].get(client_id, Decimal("0.0")) + r.billable_amount_brl
-            
+            summary["top_clients"][client_id] = (
+                summary["top_clients"].get(client_id, Decimal("0.0")) + r.billable_amount_brl
+            )
+
         return summary

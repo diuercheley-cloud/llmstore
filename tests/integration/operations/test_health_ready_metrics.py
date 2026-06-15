@@ -19,16 +19,21 @@ async def async_client(fake_redis):
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    
+
     # Create tables
     from app.db.base import Base
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         # Create alembic_version table manually for /ready check
         await conn.execute(text("CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL)"))
-        await conn.execute(text("INSERT INTO alembic_version (version_num) VALUES ('test_version')"))
+        await conn.execute(
+            text("INSERT INTO alembic_version (version_num) VALUES ('test_version')")
+        )
 
-    TestingSessionLocal = async_sessionmaker(autocommit=False, autoflush=False, bind=engine, expire_on_commit=False)
+    TestingSessionLocal = async_sessionmaker(
+        autocommit=False, autoflush=False, bind=engine, expire_on_commit=False
+    )
 
     async def override_get_db():
         async with TestingSessionLocal() as session:
@@ -42,9 +47,10 @@ async def async_client(fake_redis):
 
     async with AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
-    
+
     app.dependency_overrides.clear()
     await engine.dispose()
+
 
 @pytest.mark.asyncio
 async def test_health_endpoint(async_client: AsyncClient):
@@ -53,6 +59,7 @@ async def test_health_endpoint(async_client: AsyncClient):
     data = response.json()
     assert data["status"] == "ok"
     assert data["process"] == "alive"
+
 
 @pytest.mark.asyncio
 async def test_ready_endpoint_all_ok(async_client: AsyncClient):
@@ -70,7 +77,7 @@ async def test_ready_endpoint_all_ok(async_client: AsyncClient):
         mock_config.agent_multi_agent_enabled = False
         mock_config.agent_stateful_workflows_enabled = False
         mock_config.agent_executor_mock_mode = False
-        
+
         mock_settings.return_value = mock_config
 
         response = await async_client.get("/ready")
@@ -83,6 +90,7 @@ async def test_ready_endpoint_all_ok(async_client: AsyncClient):
         assert data["dependencies"]["rag"] == "ok"
         assert data["dependencies"]["tts"] == "ok"
         assert data["dependencies"]["lmstudio"] == "ok"
+
 
 @pytest.mark.asyncio
 async def test_ready_endpoint_degraded_when_opt_in_disabled(async_client: AsyncClient):
@@ -100,7 +108,7 @@ async def test_ready_endpoint_degraded_when_opt_in_disabled(async_client: AsyncC
         mock_config.agent_multi_agent_enabled = False
         mock_config.agent_stateful_workflows_enabled = False
         mock_config.agent_executor_mock_mode = False
-        
+
         mock_settings.return_value = mock_config
 
         response = await async_client.get("/ready")
@@ -113,6 +121,7 @@ async def test_ready_endpoint_degraded_when_opt_in_disabled(async_client: AsyncC
         assert data["dependencies"]["rag"] == "disabled"
         assert data["dependencies"]["tts"] == "disabled"
         assert data["dependencies"]["lmstudio"] == "disabled"
+
 
 @pytest.mark.asyncio
 async def test_ready_endpoint_not_ready_when_postgres_fails(fake_redis):
@@ -138,6 +147,7 @@ async def test_ready_endpoint_not_ready_when_postgres_fails(fake_redis):
 
     app.dependency_overrides.clear()
 
+
 @pytest.mark.asyncio
 async def test_metrics_endpoint_enabled(async_client: AsyncClient):
     with patch("app.api.system.get_settings") as mock_settings:
@@ -148,6 +158,7 @@ async def test_metrics_endpoint_enabled(async_client: AsyncClient):
         response = await async_client.get("/metrics")
         assert response.status_code == 200
         assert "text/plain" in response.headers.get("content-type", "")
+
 
 @pytest.mark.asyncio
 async def test_metrics_endpoint_disabled(async_client: AsyncClient):

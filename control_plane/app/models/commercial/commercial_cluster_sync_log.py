@@ -16,8 +16,12 @@ class CommercialClusterSyncLog(Base):
     source_cluster_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     sync_type: Mapped[str] = mapped_column(String(16), nullable=False, index=True)
     status: Mapped[str] = mapped_column(String(16), nullable=False, index=True)
-    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now(), index=True)
-    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
+    )
+    finished_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
     records_received: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     records_processed: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     records_duplicate: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

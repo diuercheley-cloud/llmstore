@@ -74,8 +74,7 @@ def test_checklist_no_hardcoded_pass_without_evidence():
     # Allow pass/fail/warn in Go/No-Go section
     total_status = pass_count + fail_count + warn_count
     assert total_status <= 15, (
-        f"Too many hardcoded status values ({total_status}); "
-        f"items should start as 'todo'"
+        f"Too many hardcoded status values ({total_status}); items should start as 'todo'"
     )
 
 

@@ -25,20 +25,20 @@ def test_branding_script_exists():
 @pytest.mark.parametrize("html_file", HTML_FILES)
 def test_html_references_branding_script(html_file):
     assert os.path.isfile(html_file), f"Missing: {html_file}"
-    with open(html_file, "r") as f:
+    with open(html_file) as f:
         content = f.read()
     assert "branding-init.js" in content, f"{html_file} missing branding script reference"
 
 
 @pytest.mark.parametrize("html_file", HTML_FILES)
 def test_html_has_title(html_file):
-    with open(html_file, "r") as f:
+    with open(html_file) as f:
         content = f.read()
     assert "<title>" in content, f"{html_file} missing title tag"
 
 
 def test_landing_page_has_data_brand():
-    with open("control_plane/app/static/www/index.html", "r") as f:
+    with open("control_plane/app/static/www/index.html") as f:
         content = f.read()
     assert 'data-brand="product_name"' in content
     assert 'data-brand="tagline"' in content
@@ -46,19 +46,19 @@ def test_landing_page_has_data_brand():
 
 
 def test_admin_has_data_brand():
-    with open("control_plane/app/static/admin/index.html", "r") as f:
+    with open("control_plane/app/static/admin/index.html") as f:
         content = f.read()
     assert 'data-brand="product_name"' in content
 
 
 def test_portal_has_data_brand():
-    with open("control_plane/app/static/portal/index.html", "r") as f:
+    with open("control_plane/app/static/portal/index.html") as f:
         content = f.read()
     assert 'data-brand="company_name"' in content
 
 
 def test_capabilities_has_data_brand():
-    with open("control_plane/app/static/www/capabilities.html", "r") as f:
+    with open("control_plane/app/static/www/capabilities.html") as f:
         content = f.read()
     assert 'data-brand="product_name"' in content
     assert 'data-brand="capabilities_title"' in content
@@ -67,9 +67,10 @@ def test_capabilities_has_data_brand():
 
 def test_branding_js_valid_syntax():
     path = "control_plane/app/static/www/branding-init.js"
-    with open(path, "r") as f:
+    with open(path) as f:
         content = f.read()
     import re
+
     # Basic check: balanced braces
     opens = len(re.findall(r"\{", content))
     closes = len(re.findall(r"\}", content))
@@ -78,7 +79,7 @@ def test_branding_js_valid_syntax():
 
 def test_no_hardcoded_brand_in_landing_title():
     # Title should be present but brandable
-    with open("control_plane/app/static/www/index.html", "r") as f:
+    with open("control_plane/app/static/www/index.html") as f:
         content = f.read()
     assert "LLM Inference Stack" in content  # default is fine
 
@@ -91,5 +92,16 @@ def test_static_dir_no_extra_assets():
             if f in ALLOWED_ASSETS:
                 continue
             ext = os.path.splitext(f)[1].lower()
-            if ext in [".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".woff", ".woff2", ".ttf", ".eot"]:
+            if ext in [
+                ".png",
+                ".jpg",
+                ".jpeg",
+                ".gif",
+                ".svg",
+                ".ico",
+                ".woff",
+                ".woff2",
+                ".ttf",
+                ".eot",
+            ]:
                 pytest.fail(f"Binary asset found: {os.path.join(root, f)}")

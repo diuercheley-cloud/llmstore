@@ -157,7 +157,7 @@ services:
       DATA_PLANE_BASE_URL: ${DATA_PLANE_BASE_URL}
       DEMO_MODE: ${DEMO_MODE:-false}
       # ADMIN_TOKEN_FILE: /run/secrets/admin_token
-    command: ["sh", "-c", "cd control_plane && alembic upgrade head && cd .. && python -m app.workers.generation_worker"]
+    command: ["sh", "-c", "cd control_plane && alembic upgrade heads && cd .. && python -m app.workers.generation_worker"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -185,7 +185,7 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL}
-    command: ["bash", "-lc", "python -m app.workers.rag_worker"]
+    command: ["/opt/venv/bin/python", "-m", "app.workers.rag_worker"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -196,6 +196,7 @@ services:
       - ./scripts:/app/scripts
       - ./examples:/app/examples
       - ./data:/data
+      - ./config:/config:ro
     restart: unless-stopped
     networks:
       - control_net
@@ -213,7 +214,7 @@ services:
       AGENT_EXECUTION_PLANE_ENABLED: "true"
       AGENT_WORKER_ENABLED: "true"
       AGENT_RUNTIME_ENABLED: "true"
-    command: ["bash", "-lc", "python -m app.workers.agent_worker"]
+    command: ["/opt/venv/bin/python", "-m", "app.workers.agent_worker"]
     depends_on:
       postgres:
         condition: service_healthy

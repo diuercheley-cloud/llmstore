@@ -91,7 +91,24 @@ def _init_registry() -> None:
 
     for p in all_providers:
         provider_id = p.provider_id
-        is_cloud = p.provider_type.value in ("openai", "anthropic", "deepseek", "openrouter", "gemini", "bedrock", "azure_openai", "mistral", "cohere", "groq", "together", "perplexity", "replicate", "xai", "fireworks", "ai21")
+        is_cloud = p.provider_type.value in (
+            "openai",
+            "anthropic",
+            "deepseek",
+            "openrouter",
+            "gemini",
+            "bedrock",
+            "azure_openai",
+            "mistral",
+            "cohere",
+            "groq",
+            "together",
+            "perplexity",
+            "replicate",
+            "xai",
+            "fireworks",
+            "ai21",
+        )
 
         # Always register all providers so admin can see them even when disabled
         if provider_id not in providers_enabled and not is_cloud:
@@ -126,6 +143,7 @@ def get_all_provider_statuses() -> list[ProviderStatus]:
         models = ["<runtime>"]
         try:
             import asyncio
+
             try:
                 loop = asyncio.get_running_loop()
                 if loop.is_running():
@@ -134,15 +152,17 @@ def get_all_provider_statuses() -> list[ProviderStatus]:
                 pass
         except Exception:
             pass
-        statuses.append(ProviderStatus(
-            provider_id=p.provider_id,
-            provider_type=p.provider_type.value,
-            enabled=p.enabled,
-            configured=p.configured,
-            healthy=None,
-            capabilities=caps,
-            models=models,
-        ))
+        statuses.append(
+            ProviderStatus(
+                provider_id=p.provider_id,
+                provider_type=p.provider_type.value,
+                enabled=p.enabled,
+                configured=p.configured,
+                healthy=None,
+                capabilities=caps,
+                models=models,
+            )
+        )
     return statuses
 
 
@@ -152,28 +172,34 @@ async def get_all_provider_health() -> list[ProviderHealth]:
         try:
             h = await p.health_check()
             last_error = h.get("error")
-            if last_error and ("disabled" in str(last_error).lower() or "not configured" in str(last_error).lower()):
+            if last_error and (
+                "disabled" in str(last_error).lower() or "not configured" in str(last_error).lower()
+            ):
                 sanitized = str(last_error)
             elif last_error:
                 sanitized = "health check failed"
             else:
                 sanitized = None
-            results.append(ProviderHealth(
-                provider_id=p.provider_id,
-                enabled=p.enabled,
-                configured=p.configured,
-                healthy=h.get("healthy"),
-                last_error_sanitized=sanitized,
-                latency_ms=h.get("latency_ms"),
-            ))
+            results.append(
+                ProviderHealth(
+                    provider_id=p.provider_id,
+                    enabled=p.enabled,
+                    configured=p.configured,
+                    healthy=h.get("healthy"),
+                    last_error_sanitized=sanitized,
+                    latency_ms=h.get("latency_ms"),
+                )
+            )
         except Exception:
-            results.append(ProviderHealth(
-                provider_id=p.provider_id,
-                enabled=p.enabled,
-                configured=p.configured,
-                healthy=False,
-                last_error_sanitized="health check error",
-            ))
+            results.append(
+                ProviderHealth(
+                    provider_id=p.provider_id,
+                    enabled=p.enabled,
+                    configured=p.configured,
+                    healthy=False,
+                    last_error_sanitized="health check error",
+                )
+            )
     return results
 
 

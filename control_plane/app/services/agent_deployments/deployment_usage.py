@@ -1,7 +1,7 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.core.time import utc_now
 from app.models.agents.agent_deployments import AgentApiDeployment, AgentApiUsageEvent
@@ -20,17 +20,17 @@ class DeploymentUsageService:
     async def record_invocation(
         self,
         deployment: AgentApiDeployment,
-        run_id: Optional[uuid.UUID],
-        endpoint_key_id: Optional[uuid.UUID],
+        run_id: uuid.UUID | None,
+        endpoint_key_id: uuid.UUID | None,
         mode: str,
         status: str,
-        input_text: Optional[str] = None,
-        output_text: Optional[str] = None,
-        latency_ms: Optional[int] = None,
+        input_text: str | None = None,
+        output_text: str | None = None,
+        latency_ms: int | None = None,
         tokens_used: int = 0,
         cost_brl: float = 0.0,
-        error_message: Optional[str] = None,
-        client_ip: Optional[str] = None,
+        error_message: str | None = None,
+        client_ip: str | None = None,
     ) -> AgentApiUsageEvent:
         event = AgentApiUsageEvent(
             deployment_id=deployment.id,
@@ -55,11 +55,11 @@ class DeploymentUsageService:
         self,
         event: AgentApiUsageEvent,
         status: str,
-        output_text: Optional[str] = None,
-        latency_ms: Optional[int] = None,
+        output_text: str | None = None,
+        latency_ms: int | None = None,
         tokens_used: int = 0,
         cost_brl: float = 0.0,
-        error_message: Optional[str] = None,
+        error_message: str | None = None,
     ):
         event.status = status
         event.output_text = output_text[:1000] if output_text else None
@@ -74,9 +74,10 @@ class DeploymentUsageService:
         self,
         deployment_id: uuid.UUID,
         days: int = 30,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get usage statistics for a deployment."""
         from datetime import timedelta
+
         since = utc_now() - timedelta(days=days)
 
         base = select(AgentApiUsageEvent).where(
@@ -85,54 +86,66 @@ class DeploymentUsageService:
         )
 
         # Total invocations
-        total = (await self.db.execute(
-            select(func.count()).select_from(base.subquery())
-        )).scalar() or 0
+        total = (
+            await self.db.execute(select(func.count()).select_from(base.subquery()))
+        ).scalar() or 0
 
         # Successful invocations
-        success = (await self.db.execute(
-            select(func.count()).select_from(
-                select(AgentApiUsageEvent).where(
-                    AgentApiUsageEvent.deployment_id == deployment_id,
-                    AgentApiUsageEvent.created_at >= since,
-                    AgentApiUsageEvent.status == "completed",
-                ).subquery()
+        success = (
+            await self.db.execute(
+                select(func.count()).select_from(
+                    select(AgentApiUsageEvent)
+                    .where(
+                        AgentApiUsageEvent.deployment_id == deployment_id,
+                        AgentApiUsageEvent.created_at >= since,
+                        AgentApiUsageEvent.status == "completed",
+                    )
+                    .subquery()
+                )
             )
-        )).scalar() or 0
+        ).scalar() or 0
 
         # Total cost
-        total_cost = (await self.db.execute(
-            select(func.sum(AgentApiUsageEvent.cost_brl)).where(
-                AgentApiUsageEvent.deployment_id == deployment_id,
-                AgentApiUsageEvent.created_at >= since,
+        total_cost = (
+            await self.db.execute(
+                select(func.sum(AgentApiUsageEvent.cost_brl)).where(
+                    AgentApiUsageEvent.deployment_id == deployment_id,
+                    AgentApiUsageEvent.created_at >= since,
+                )
             )
-        )).scalar() or 0.0
+        ).scalar() or 0.0
 
         # Total tokens
-        total_tokens = (await self.db.execute(
-            select(func.sum(AgentApiUsageEvent.tokens_used)).where(
-                AgentApiUsageEvent.deployment_id == deployment_id,
-                AgentApiUsageEvent.created_at >= since,
+        total_tokens = (
+            await self.db.execute(
+                select(func.sum(AgentApiUsageEvent.tokens_used)).where(
+                    AgentApiUsageEvent.deployment_id == deployment_id,
+                    AgentApiUsageEvent.created_at >= since,
+                )
             )
-        )).scalar() or 0
+        ).scalar() or 0
 
         # Average latency
-        avg_latency = (await self.db.execute(
-            select(func.avg(AgentApiUsageEvent.latency_ms)).where(
-                AgentApiUsageEvent.deployment_id == deployment_id,
-                AgentApiUsageEvent.created_at >= since,
-                AgentApiUsageEvent.latency_ms.isnot(None),
+        avg_latency = (
+            await self.db.execute(
+                select(func.avg(AgentApiUsageEvent.latency_ms)).where(
+                    AgentApiUsageEvent.deployment_id == deployment_id,
+                    AgentApiUsageEvent.created_at >= since,
+                    AgentApiUsageEvent.latency_ms.isnot(None),
+                )
             )
-        )).scalar()
+        ).scalar()
 
         # Sync vs async breakdown
-        sync_count = (await self.db.execute(
-            select(func.count()).where(
-                AgentApiUsageEvent.deployment_id == deployment_id,
-                AgentApiUsageEvent.created_at >= since,
-                AgentApiUsageEvent.mode == "sync",
+        sync_count = (
+            await self.db.execute(
+                select(func.count()).where(
+                    AgentApiUsageEvent.deployment_id == deployment_id,
+                    AgentApiUsageEvent.created_at >= since,
+                    AgentApiUsageEvent.mode == "sync",
+                )
             )
-        )).scalar() or 0
+        ).scalar() or 0
 
         return {
             "period_days": days,

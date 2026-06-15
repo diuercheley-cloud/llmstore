@@ -2,7 +2,8 @@
 import asyncio
 import json
 import logging
-from typing import Any, Awaitable, Callable, Dict, Optional
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 from app.core.config import get_settings
 
@@ -11,6 +12,7 @@ logger = logging.getLogger(__name__)
 try:
     from aio_pika import IncomingMessage, Message, connect_robust
     from aio_pika.abc import AbstractIncomingMessage
+
     HAS_RABBITMQ = True
 except ImportError:
     HAS_RABBITMQ = False
@@ -22,20 +24,26 @@ class RabbitMQAdapter:
     Adapter for RabbitMQ event triggering.
     Supports both real (aio-pika) and simulated modes.
     """
+
     def __init__(self):
         self.settings = get_settings()
         self._connection = None
         self._channel = None
         self._queue = None
         self._running = False
-        self._task: Optional[asyncio.Task] = None
-        self._callback: Optional[Callable[[Dict[str, Any]], Awaitable[None]]] = None
+        self._task: asyncio.Task | None = None
+        self._callback: Callable[[dict[str, Any]], Awaitable[None]] | None = None
 
     def _is_enabled(self) -> bool:
-        return getattr(self.settings, 'rabbitmq_trigger_enabled',
-                       getattr(self.settings, 'agent_event_driven_enabled', False))
+        return getattr(
+            self.settings,
+            "rabbitmq_trigger_enabled",
+            getattr(self.settings, "agent_event_driven_enabled", False),
+        )
 
-    async def start_consumer(self, queue: str, callback: Callable[[Dict[str, Any]], Awaitable[None]]):
+    async def start_consumer(
+        self, queue: str, callback: Callable[[dict[str, Any]], Awaitable[None]]
+    ):
         if not self._is_enabled():
             logger.warning("RabbitMQ trigger is disabled. Skipping consumer start.")
             return
@@ -44,7 +52,7 @@ class RabbitMQAdapter:
         self._running = True
 
         if HAS_RABBITMQ:
-            amqp_url = getattr(self.settings, 'rabbitmq_url', 'amqp://guest:guest@localhost:5672/')
+            amqp_url = getattr(self.settings, "rabbitmq_url", "amqp://guest:guest@localhost:5672/")
             self._connection = await connect_robust(amqp_url)
             self._channel = await self._connection.channel()
             self._queue = await self._channel.declare_queue(queue, durable=True)
@@ -60,7 +68,7 @@ class RabbitMQAdapter:
                     break
                 async with message.process(requeue=True):
                     try:
-                        body = json.loads(message.body.decode('utf-8'))
+                        body = json.loads(message.body.decode("utf-8"))
                         await self._callback(body)
                     except Exception as e:
                         logger.error(f"RabbitMQ callback error: {e}")

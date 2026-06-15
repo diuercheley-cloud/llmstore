@@ -48,7 +48,9 @@ def upgrade() -> None:
         sa.Column("model_manifest_hash", sa.String(length=128), nullable=True),
         sa.Column("model_checksum", sa.String(length=128), nullable=True),
         sa.Column("runtime_config_hash", sa.String(length=128), nullable=True),
-        sa.Column("replay_supported", sa.Boolean(), nullable=False, server_default=sa.text("false")),
+        sa.Column(
+            "replay_supported", sa.Boolean(), nullable=False, server_default=sa.text("false")
+        ),
         sa.Column("replay_status", sa.String(length=32), nullable=False, server_default="original"),
         sa.Column("replay_similarity", sa.Float(), nullable=True),
         sa.Column("replay_distance", sa.Float(), nullable=True),
@@ -123,7 +125,13 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
-    for column in ("backend_name", "runtime_engine", "model_name", "model_manifest_hash", "snapshot_hash"):
+    for column in (
+        "backend_name",
+        "runtime_engine",
+        "model_name",
+        "model_manifest_hash",
+        "snapshot_hash",
+    ):
         op.create_index(
             op.f(f"ix_commercial_inference_runtime_snapshots_{column}"),
             "commercial_inference_runtime_snapshots",
@@ -133,12 +141,24 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    for column in ("snapshot_hash", "model_manifest_hash", "model_name", "runtime_engine", "backend_name"):
-        op.drop_index(op.f(f"ix_commercial_inference_runtime_snapshots_{column}"), table_name="commercial_inference_runtime_snapshots")
+    for column in (
+        "snapshot_hash",
+        "model_manifest_hash",
+        "model_name",
+        "runtime_engine",
+        "backend_name",
+    ):
+        op.drop_index(
+            op.f(f"ix_commercial_inference_runtime_snapshots_{column}"),
+            table_name="commercial_inference_runtime_snapshots",
+        )
     op.drop_table("commercial_inference_runtime_snapshots")
 
     for column in ("replay_result", "replay_type", "reproducibility_record_id"):
-        op.drop_index(op.f(f"ix_commercial_inference_replay_events_{column}"), table_name="commercial_inference_replay_events")
+        op.drop_index(
+            op.f(f"ix_commercial_inference_replay_events_{column}"),
+            table_name="commercial_inference_replay_events",
+        )
     op.drop_table("commercial_inference_replay_events")
 
     for column in (

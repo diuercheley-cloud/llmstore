@@ -21,7 +21,8 @@ async def test_no_cache_header_respected(isolated_db_url):
 
     async with testing_session() as session:
         cache_enabled, semantic_enabled, ttl = await should_cache(
-            session, no_cache=True,
+            session,
+            no_cache=True,
         )
         assert cache_enabled is False
         assert semantic_enabled is False
@@ -67,15 +68,21 @@ async def test_cache_prompt_not_logged(isolated_db_url):
 
     client_id = uuid.uuid4()
     request_hash, _, _ = build_cache_key(
-        model="gemma", endpoint_type="chat",
+        model="gemma",
+        endpoint_type="chat",
         messages=[{"role": "user", "content": "my-secret-prompt"}],
-        temperature=0.7, top_p=0.95, max_tokens=512,
+        temperature=0.7,
+        top_p=0.95,
+        max_tokens=512,
     )
 
     async with testing_session() as session:
         await set_exact(
-            session, client_id=client_id, endpoint_type="chat",
-            model="gemma", request_hash=request_hash,
+            session,
+            client_id=client_id,
+            endpoint_type="chat",
+            model="gemma",
+            request_hash=request_hash,
             request_fingerprint="fp",
             response_payload={"content": "response"},
         )
@@ -99,15 +106,21 @@ async def test_cache_entry_no_prompt_content_in_admin(isolated_db_url):
 
     client_id = uuid.uuid4()
     request_hash, _, _ = build_cache_key(
-        model="gemma", endpoint_type="chat",
+        model="gemma",
+        endpoint_type="chat",
         messages=[{"role": "user", "content": "sensitive data"}],
-        temperature=0.7, top_p=0.95, max_tokens=512,
+        temperature=0.7,
+        top_p=0.95,
+        max_tokens=512,
     )
 
     async with testing_session() as session:
         await set_exact(
-            session, client_id=client_id, endpoint_type="chat",
-            model="gemma", request_hash=request_hash,
+            session,
+            client_id=client_id,
+            endpoint_type="chat",
+            model="gemma",
+            request_hash=request_hash,
             request_fingerprint="fp",
             response_payload={"content": "secret response"},
         )

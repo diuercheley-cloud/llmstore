@@ -1,9 +1,5 @@
-import os
-from typing import Any, Dict, List
-
 import pytest
-
-from app.services.feature_registry import FeatureRegistry, _SURFACE_AREA_MAP
+from app.services.feature_registry import _SURFACE_AREA_MAP, FeatureRegistry
 
 _VALID_LEVELS = {"core", "supported", "beta", "experimental", "deprecated"}
 _VALID_STATUSES = {"supported", "beta", "experimental", "deprecated"}
@@ -60,6 +56,7 @@ def test_no_partial_feature_appears_as_supported_or_core(registry: FeatureRegist
 
 def test_disabled_features_excluded_when_flag_off(monkeypatch):
     from app.core.config import get_settings
+
     get_settings.cache_clear()
 
     monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "false")
@@ -86,6 +83,7 @@ def test_disabled_features_excluded_when_flag_off(monkeypatch):
 
 def test_enabled_features_included_when_flag_on(monkeypatch):
     from app.core.config import get_settings
+
     get_settings.cache_clear()
 
     monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "true")
@@ -114,7 +112,11 @@ def test_capability_level_matches_surface_status(registry: FeatureRegistry):
             continue
         if surface_status == "internal":
             continue
-        expected_status = "supported" if surface_status in ("production_core", "production_optional") else surface_status
+        expected_status = (
+            "supported"
+            if surface_status in ("production_core", "production_optional")
+            else surface_status
+        )
         public = registry._compute_api_status(surface_status)
         assert public == expected_status, (
             f"Capability {c['id']}: surface_status={surface_status} "
@@ -128,6 +130,4 @@ def test_all_features_have_valid_level_and_status(registry: FeatureRegistry):
         assert c["capability_level"] in _VALID_LEVELS, (
             f"Feature {c['id']}: invalid capability_level={c['capability_level']}"
         )
-        assert c["status"] in _VALID_STATUSES, (
-            f"Feature {c['id']}: invalid status={c['status']}"
-        )
+        assert c["status"] in _VALID_STATUSES, f"Feature {c['id']}: invalid status={c['status']}"

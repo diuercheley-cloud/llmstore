@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import AsyncMock
+
+import pytest
 
 
 @pytest.mark.asyncio
@@ -65,7 +66,9 @@ async def test_harness_providers_list(async_client, admin_token_headers, monkeyp
 
 
 @pytest.mark.asyncio
-async def test_harness_provider_models_requires_base_url(async_client, admin_token_headers, monkeypatch):
+async def test_harness_provider_models_requires_base_url(
+    async_client, admin_token_headers, monkeypatch
+):
     monkeypatch.setattr("app.services.auth.is_rbac_admin_enabled", lambda: False)
     response = await async_client.get(
         "/admin/harness/providers/local-openai-compatible/models",
@@ -126,7 +129,9 @@ async def test_harness_runs_empty(async_client, admin_token_headers, monkeypatch
 @pytest.mark.asyncio
 async def test_harness_run_not_found(async_client, admin_token_headers, monkeypatch):
     monkeypatch.setattr("app.services.auth.is_rbac_admin_enabled", lambda: False)
-    response = await async_client.get("/admin/harness/runs/non-existent-id", headers=admin_token_headers)
+    response = await async_client.get(
+        "/admin/harness/runs/non-existent-id", headers=admin_token_headers
+    )
     assert response.status_code == 404
     assert "not found" in response.json()["detail"].lower()
 
@@ -134,21 +139,27 @@ async def test_harness_run_not_found(async_client, admin_token_headers, monkeypa
 @pytest.mark.asyncio
 async def test_harness_cancel_nonexistent_run(async_client, admin_token_headers, monkeypatch):
     monkeypatch.setattr("app.services.auth.is_rbac_admin_enabled", lambda: False)
-    response = await async_client.post("/admin/harness/runs/non-existent-id/cancel", headers=admin_token_headers)
+    response = await async_client.post(
+        "/admin/harness/runs/non-existent-id/cancel", headers=admin_token_headers
+    )
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_harness_delete_nonexistent_run(async_client, admin_token_headers, monkeypatch):
     monkeypatch.setattr("app.services.auth.is_rbac_admin_enabled", lambda: False)
-    response = await async_client.delete("/admin/harness/runs/non-existent-id", headers=admin_token_headers)
+    response = await async_client.delete(
+        "/admin/harness/runs/non-existent-id", headers=admin_token_headers
+    )
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_harness_events_stream_nonexistent(async_client, admin_token_headers, monkeypatch):
     monkeypatch.setattr("app.services.auth.is_rbac_admin_enabled", lambda: False)
-    response = await async_client.get("/admin/harness/runs/non-existent-id/events", headers=admin_token_headers)
+    response = await async_client.get(
+        "/admin/harness/runs/non-existent-id/events", headers=admin_token_headers
+    )
     assert response.status_code == 404
 
 
@@ -248,7 +259,9 @@ async def test_eval_request_invalid_concurrency(async_client, admin_token_header
 
 
 @pytest.mark.asyncio
-async def test_run_request_validation_local_provider_requires_base_url(async_client, admin_token_headers, monkeypatch):
+async def test_run_request_validation_local_provider_requires_base_url(
+    async_client, admin_token_headers, monkeypatch
+):
     monkeypatch.setattr("app.services.auth.is_rbac_admin_enabled", lambda: False)
     response = await async_client.post(
         "/admin/harness/runs",
@@ -260,11 +273,17 @@ async def test_run_request_validation_local_provider_requires_base_url(async_cli
 
 
 @pytest.mark.asyncio
-async def test_eval_request_validation_local_provider_requires_base_url(async_client, admin_token_headers, monkeypatch):
+async def test_eval_request_validation_local_provider_requires_base_url(
+    async_client, admin_token_headers, monkeypatch
+):
     monkeypatch.setattr("app.services.auth.is_rbac_admin_enabled", lambda: False)
     response = await async_client.post(
         "/admin/harness/evals/runs",
-        json={"suite_path": "test.json", "provider": "local-openai-compatible", "config_overrides": {}},
+        json={
+            "suite_path": "test.json",
+            "provider": "local-openai-compatible",
+            "config_overrides": {},
+        },
         headers=admin_token_headers,
     )
     assert response.status_code == 422
@@ -298,7 +317,9 @@ async def test_harness_run_request_with_webhook(async_client, admin_token_header
 @pytest.mark.asyncio
 async def test_harness_list_runs_pagination(async_client, admin_token_headers, monkeypatch):
     monkeypatch.setattr("app.services.auth.is_rbac_admin_enabled", lambda: False)
-    response = await async_client.get("/admin/harness/runs?limit=5&offset=0", headers=admin_token_headers)
+    response = await async_client.get(
+        "/admin/harness/runs?limit=5&offset=0", headers=admin_token_headers
+    )
     assert response.status_code == 200
     data = response.json()
     assert "runs" in data
@@ -306,9 +327,13 @@ async def test_harness_list_runs_pagination(async_client, admin_token_headers, m
 
 
 @pytest.mark.asyncio
-async def test_harness_eval_events_stream_nonexistent(async_client, admin_token_headers, monkeypatch):
+async def test_harness_eval_events_stream_nonexistent(
+    async_client, admin_token_headers, monkeypatch
+):
     monkeypatch.setattr("app.services.auth.is_rbac_admin_enabled", lambda: False)
-    response = await async_client.get("/admin/harness/evals/runs/non-existent-id/events", headers=admin_token_headers)
+    response = await async_client.get(
+        "/admin/harness/evals/runs/non-existent-id/events", headers=admin_token_headers
+    )
     assert response.status_code == 404
 
 
@@ -326,8 +351,8 @@ async def test_harness_page_has_new_elements(async_client):
     assert 'id="chart-toggle"' in html
     assert 'id="trace-count-badge"' in html
     assert 'id="save-preset-btn"' in html
-    assert 'data-theme="dark"' not in html or 'data-theme=' in html
-    assert 'prefers-color-scheme' in html
-    assert 'AbortController' in html
-    assert 'showModal' in html
-    assert 'SLASH_COMMANDS' in html
+    assert 'data-theme="dark"' not in html or "data-theme=" in html
+    assert "prefers-color-scheme" in html
+    assert "AbortController" in html
+    assert "showModal" in html
+    assert "SLASH_COMMANDS" in html

@@ -8,4 +8,3 @@ def verify_replay(policy_dsl: dict, subject: dict, expected_decision: str) -> di
         "decision": result["decision"],
         "replay_safe": result["replay_safe"],
     }
-

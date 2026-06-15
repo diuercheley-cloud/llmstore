@@ -16,6 +16,7 @@ async def test_file_tools():
         assert file_tools.read_file("test.txt") == "content"
         assert "test.txt" in file_tools.list_files()
 
+
 @pytest.mark.asyncio
 async def test_shell_tools_async():
     async with Workspace() as ws:
@@ -26,6 +27,7 @@ async def test_shell_tools_async():
         assert "hi" in result.output
         assert result.returncode == 0
 
+
 def test_shell_tools_sync():
     async def run_test():
         async with Workspace() as ws:
@@ -35,8 +37,11 @@ def test_shell_tools_sync():
             result = shell_tools.run_shell("echo 'hi sync'")
             assert "hi sync" in result.output
             assert result.returncode == 0
+
     import asyncio
+
     asyncio.run(run_test())
+
 
 @pytest.mark.asyncio
 async def test_shell_tools_blocked():

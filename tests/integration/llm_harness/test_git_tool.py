@@ -1,4 +1,3 @@
-
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -42,7 +41,9 @@ class TestGitTool:
     def test_git_error(self, mock_workspace, policy_engine):
         git = GitTools(workspace=mock_workspace, policy_engine=policy_engine)
         with patch("scripts.llm_harness.tools.git.subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="fatal: not a git repo")
+            mock_run.return_value = MagicMock(
+                returncode=1, stdout="", stderr="fatal: not a git repo"
+            )
             result = git.run_git(["log"])
             assert "Error:" in result
             assert "fatal: not a git repo" in result
@@ -53,7 +54,7 @@ class TestGitTool:
             allowed=False, reason="Blocked by test policy"
         )
         git = GitTools(workspace=mock_workspace, policy_engine=policy)
-        
+
         result = git.run_git(["push", "origin", "master"])
         assert "Error: Command blocked by policy" in result
         assert "Blocked by test policy" in result

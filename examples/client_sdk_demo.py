@@ -30,7 +30,7 @@ def main():
         print("\n[2] Sending Chat Completion request...")
         response = client.chat_completions(
             messages=[{"role": "user", "content": "What is the capital of France?"}],
-            model="unsloth/gemma-4-E4B-it-GGUF" # Adjust if needed
+            model="unsloth/gemma-4-E4B-it-GGUF",  # Adjust if needed
         )
         content = response["choices"][0]["message"]["content"]
         print(f"Response: {content}")
@@ -51,12 +51,14 @@ def main():
         test_file = Path("test_rag.txt")
         if not test_file.exists():
             test_file.write_text("The secret code is 12345. Paris is beautiful in spring.")
-        
+
         print(f"\n[5] Uploading RAG document: {test_file}")
         try:
             upload_res = client.rag_upload(test_file)
-            print(f" Upload success: {upload_res.get('original_filename')} (ID: {upload_res.get('id')})")
-            
+            print(
+                f" Upload success: {upload_res.get('original_filename')} (ID: {upload_res.get('id')})"
+            )
+
             print("\n[6] Querying RAG...")
             query_res = client.rag_query("What is the secret code?")
             print(f" Answer: {query_res.get('answer')}")
@@ -69,6 +71,7 @@ def main():
     except Exception as e:
         print(f"\nError: {e}")
         print("\nMake sure the stack is running and your API_KEY is correct.")
+
 
 if __name__ == "__main__":
     main()

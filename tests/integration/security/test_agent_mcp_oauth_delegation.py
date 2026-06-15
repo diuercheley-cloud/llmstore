@@ -38,7 +38,9 @@ async def test_delegation_required_no_grant_fails(session: AsyncSession):
     settings.agent_mcp_user_delegation_required = True
 
     # No grants are present. Identity resolution should raise PermissionError.
-    with pytest.raises(PermissionError, match="Delegation required but no valid delegated grant found"):
+    with pytest.raises(
+        PermissionError, match="Delegation required but no valid delegated grant found"
+    ):
         await resolve_mcp_identity(
             db=session,
             tenant_id="tenant-A",
@@ -68,13 +70,7 @@ async def test_scope_insufficient_fails(session: AsyncSession):
         tenant_id="tenant-A",
         agent_id=None,
         mcp_server="server-1",
-        rules={
-            "tool_policies": {
-                "edit": {
-                    "required_scopes": ["write"]
-                }
-            }
-        }
+        rules={"tool_policies": {"edit": {"required_scopes": ["write"]}}},
     )
     session.add(policy)
     await session.commit()
@@ -123,9 +119,10 @@ async def test_grant_revoked_fails(session: AsyncSession):
         )
 
 
-
 @pytest.mark.asyncio
-async def test_token_not_in_logs_or_responses(session: AsyncSession, admin_client: AsyncClient, admin_token_headers):
+async def test_token_not_in_logs_or_responses(
+    session: AsyncSession, admin_client: AsyncClient, admin_token_headers
+):
     # Test API responses do not leak raw token
     grant_payload = {
         "tenant_id": "tenant-A",
@@ -135,7 +132,7 @@ async def test_token_not_in_logs_or_responses(session: AsyncSession, admin_clien
         "refresh_token": "my-secret-refresh-token",
         "scopes": ["*"],
     }
-    
+
     resp = await admin_client.post(
         "/admin/agents/mcp/oauth/grants",
         headers=admin_token_headers,
@@ -157,7 +154,7 @@ async def test_token_not_in_logs_or_responses(session: AsyncSession, admin_clien
     )
     assert len(MCPOAuthAuditLog.events) > 0
     event = MCPOAuthAuditLog.events[-1]
-    
+
     # Raw token strings should not be in the audit log values
     event_str = str(event)
     assert "my-secret-access-token" not in event_str

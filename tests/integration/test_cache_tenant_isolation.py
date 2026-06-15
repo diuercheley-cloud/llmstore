@@ -84,29 +84,46 @@ async def test_tenant_isolation_with_client_id_filter(isolated_db_url):
 
     async with testing_session() as session:
         await set_exact(
-            session, client_id=client_a, endpoint_type="chat", model="gemma",
-            request_hash=hash_a, request_fingerprint="fp-a",
+            session,
+            client_id=client_a,
+            endpoint_type="chat",
+            model="gemma",
+            request_hash=hash_a,
+            request_fingerprint="fp-a",
             response_payload={"content": "from a"},
         )
         await set_exact(
-            session, client_id=client_b, endpoint_type="chat", model="gemma",
-            request_hash=hash_b, request_fingerprint="fp-b",
+            session,
+            client_id=client_b,
+            endpoint_type="chat",
+            model="gemma",
+            request_hash=hash_b,
+            request_fingerprint="fp-b",
             response_payload={"content": "from b"},
         )
         await session.commit()
 
     async with testing_session() as session:
         result_a = await get_exact(
-            session, client_id=client_a, endpoint_type="chat",
-            model="gemma", request_hash=hash_a,
+            session,
+            client_id=client_a,
+            endpoint_type="chat",
+            model="gemma",
+            request_hash=hash_a,
         )
         result_b = await get_exact(
-            session, client_id=client_b, endpoint_type="chat",
-            model="gemma", request_hash=hash_b,
+            session,
+            client_id=client_b,
+            endpoint_type="chat",
+            model="gemma",
+            request_hash=hash_b,
         )
         result_a_from_b = await get_exact(
-            session, client_id=client_a, endpoint_type="chat",
-            model="gemma", request_hash=hash_b,
+            session,
+            client_id=client_a,
+            endpoint_type="chat",
+            model="gemma",
+            request_hash=hash_b,
         )
         assert result_a.hit is True
         assert result_b.hit is True
@@ -129,18 +146,28 @@ async def test_cache_invalidate_by_client(isolated_db_url):
         model="gemma",
         endpoint_type="chat",
         messages=[{"role": "user", "content": "shared request"}],
-        temperature=0.7, top_p=0.95, max_tokens=512,
+        temperature=0.7,
+        top_p=0.95,
+        max_tokens=512,
     )
 
     async with testing_session() as session:
         await set_exact(
-            session, client_id=client_a, endpoint_type="chat", model="gemma",
-            request_hash=hash_a, request_fingerprint="fp-a",
+            session,
+            client_id=client_a,
+            endpoint_type="chat",
+            model="gemma",
+            request_hash=hash_a,
+            request_fingerprint="fp-a",
             response_payload={"content": "a-data"},
         )
         await set_exact(
-            session, client_id=client_b, endpoint_type="chat", model="gemma",
-            request_hash=hash_a, request_fingerprint="fp-b",
+            session,
+            client_id=client_b,
+            endpoint_type="chat",
+            model="gemma",
+            request_hash=hash_a,
+            request_fingerprint="fp-b",
             response_payload={"content": "b-data"},
         )
         await session.commit()
@@ -151,12 +178,18 @@ async def test_cache_invalidate_by_client(isolated_db_url):
 
     async with testing_session() as session:
         result_a = await get_exact(
-            session, client_id=client_a, endpoint_type="chat",
-            model="gemma", request_hash=hash_a,
+            session,
+            client_id=client_a,
+            endpoint_type="chat",
+            model="gemma",
+            request_hash=hash_a,
         )
         result_b = await get_exact(
-            session, client_id=client_b, endpoint_type="chat",
-            model="gemma", request_hash=hash_a,
+            session,
+            client_id=client_b,
+            endpoint_type="chat",
+            model="gemma",
+            request_hash=hash_a,
         )
         assert result_a.hit is False
         assert result_b.hit is True

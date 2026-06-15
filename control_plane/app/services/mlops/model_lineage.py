@@ -1,5 +1,4 @@
 import uuid
-from typing import Optional
 
 from app.core.time import utc_now
 from app.models.core.mlops import MLModelLineage
@@ -18,8 +17,8 @@ class ModelLineage:
         model_id: str,
         dataset_version_id: uuid.UUID,
         training_job_id: uuid.UUID,
-        experiment_run_id: Optional[uuid.UUID] = None,
-        admin_user_id: Optional[uuid.UUID] = None,
+        experiment_run_id: uuid.UUID | None = None,
+        admin_user_id: uuid.UUID | None = None,
     ) -> MLModelLineage:
         lineage = MLModelLineage(
             id=uuid.uuid4(),
@@ -48,13 +47,13 @@ class ModelLineage:
         )
         return lineage
 
-    async def get_lineage(self, model_id: str) -> Optional[MLModelLineage]:
+    async def get_lineage(self, model_id: str) -> MLModelLineage | None:
         result = await self.session.execute(
             select(MLModelLineage)
             .options(
                 selectinload(MLModelLineage.dataset_version),
                 selectinload(MLModelLineage.training_job),
-                selectinload(MLModelLineage.experiment_run)
+                selectinload(MLModelLineage.experiment_run),
             )
             .where(MLModelLineage.model_id == model_id)
         )

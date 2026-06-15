@@ -7,6 +7,7 @@ app.include_router(router, prefix="/admin/crypto")
 
 client = TestClient(app)
 
+
 def test_get_trust_chain_mock():
     # In a real setup, we would override deps.get_db
     response = client.get("/admin/crypto/trust-chain")

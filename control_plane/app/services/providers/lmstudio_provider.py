@@ -27,11 +27,18 @@ class LMStudioProvider(ProviderAdapter):
         headers = {}
         if self._api_key:
             headers["Authorization"] = f"Bearer {self._api_key}"
-        return httpx.AsyncClient(base_url=self._base_url, timeout=float(self._timeout), headers=headers)
+        return httpx.AsyncClient(
+            base_url=self._base_url, timeout=float(self._timeout), headers=headers
+        )
 
     async def health_check(self) -> dict[str, Any]:
         if not self.enabled:
-            return {"provider_id": "lmstudio", "healthy": None, "latency_ms": 0, "error": "disabled"}
+            return {
+                "provider_id": "lmstudio",
+                "healthy": None,
+                "latency_ms": 0,
+                "error": "disabled",
+            }
         try:
             async with await self._client() as client:
                 # Common endpoints for LM Studio / Local LLMs
@@ -42,7 +49,12 @@ class LMStudioProvider(ProviderAdapter):
                         resp = await client.get("/v1/models")
                     else:
                         raise
-                return {"provider_id": "lmstudio", "healthy": resp.is_success, "latency_ms": 0, "error": None}
+                return {
+                    "provider_id": "lmstudio",
+                    "healthy": resp.is_success,
+                    "latency_ms": 0,
+                    "error": None,
+                }
         except Exception as e:
             return {"provider_id": "lmstudio", "healthy": False, "latency_ms": 0, "error": str(e)}
 

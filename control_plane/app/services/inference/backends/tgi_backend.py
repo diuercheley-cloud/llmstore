@@ -1,5 +1,3 @@
-from typing import Any, Dict, List
-
 from app.services.inference.backends.base import Capability
 from app.services.inference.backends.openai_compatible_backend import OpenAICompatibleBackend
 
@@ -7,12 +5,7 @@ from app.services.inference.backends.openai_compatible_backend import OpenAIComp
 class TGIBackend(OpenAICompatibleBackend):
     def supports_capability(self, capability: Capability) -> bool:
         # TGI specific capabilities
-        supported = {
-            Capability.TEXT,
-            Capability.CHAT,
-            Capability.STREAMING,
-            Capability.BATCHING
-        }
+        supported = {Capability.TEXT, Capability.CHAT, Capability.STREAMING, Capability.BATCHING}
         return capability in supported
 
     async def health(self) -> bool:

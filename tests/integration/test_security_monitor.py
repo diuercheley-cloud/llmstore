@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from app.models.core.security_event import SecurityEvent
 from app.services.security_monitor import prompt_fingerprint, serialize_security_event
@@ -13,7 +13,7 @@ def test_prompt_fingerprint_is_stable():
 
 
 def test_serialize_security_event_preserves_details():
-    now = datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 5, 1, 12, 0, tzinfo=UTC)
     event = SecurityEvent(
         id=uuid.uuid4(),
         client_id=uuid.uuid4(),

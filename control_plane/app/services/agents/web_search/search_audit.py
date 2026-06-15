@@ -1,6 +1,6 @@
 import hashlib
 import uuid
-from typing import Any, Dict, List
+from typing import Any
 
 from app.core.time import utc_now
 from app.models.agents.web_search import AgentWebSearchQuery, AgentWebSearchResult
@@ -21,7 +21,7 @@ class SearchAuditService:
         run_id: uuid.UUID | None,
         query: str,
         provider: str,
-        results: List[Dict[str, Any]],
+        results: list[dict[str, Any]],
     ) -> AgentWebSearchQuery:
         query_hash = self.get_query_hash(query)
 
@@ -54,7 +54,7 @@ class SearchAuditService:
         await db.refresh(query_record)
         return query_record
 
-    async def get_audit_trail(self, db: AsyncSession) -> List[Dict[str, Any]]:
+    async def get_audit_trail(self, db: AsyncSession) -> list[dict[str, Any]]:
         stmt = (
             select(AgentWebSearchQuery)
             .options(selectinload(AgentWebSearchQuery.results))

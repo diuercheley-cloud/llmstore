@@ -54,7 +54,7 @@ export default function Performance() {
   }
 
   useEffect(() => {
-    fetchData()
+    void Promise.resolve().then(() => fetchData())
   }, [])
 
   return (

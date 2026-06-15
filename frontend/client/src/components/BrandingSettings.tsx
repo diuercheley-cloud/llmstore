@@ -34,7 +34,7 @@ export const BrandingSettings = () => {
     }, 1500); // Save after 1.5s of inactivity
 
     return () => clearTimeout(timer);
-  }, [primaryColor, logoUrl]);
+  }, [primaryColor, logoUrl, applyBranding]);
 
   useEffect(() => {
     const currentPrimary = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();

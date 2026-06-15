@@ -12,13 +12,14 @@ except ImportError as e:
     print(f"Error: Could not import app modules. {e}")
     sys.exit(1)
 
+
 def main():
     service = FeatureFlagRegistryService()
-    
+
     print("--- Running Feature Flag Registry Policy Validation ---")
     is_valid, errors = service.validate_registry()
     failed = False
-    
+
     if not is_valid:
         print("\nPolicy Violations Found:")
         for err in errors:
@@ -26,10 +27,10 @@ def main():
         failed = True
     else:
         print("OK: Registry structure and policies are compliant.")
-        
+
     print("\n--- Scanning for Orphaned and Unregistered Flags ---")
     scan_results = service.scan_orphans()
-    
+
     missing = scan_results.get("missing_registration", [])
     if missing:
         print("\nMissing Registrations (found in code or .env.example but not in registry):")
@@ -37,27 +38,30 @@ def main():
             print(f" - [MISSING] {flag}")
     else:
         print("OK: All code and configuration flags are registered.")
-        
+
     orphans = scan_results.get("orphans", [])
     print(f"\n--- Orphaned Flags Report ({len(orphans)} flags) ---")
     if orphans:
-        print("\nOrphaned flags detected! The following registered flags are not referenced in python code, env or docs:")
+        print(
+            "\nOrphaned flags detected! The following registered flags are not referenced in python code, env or docs:"
+        )
         for flag in sorted(orphans):
             print(f" - [ORPHAN] {flag}")
     else:
         print("OK: No orphaned flags detected.")
-        
+
     print("\nSummary:")
     print(f" - Registered: {scan_results.get('registered_count')}")
     print(f" - Env references: {scan_results.get('env_references_count')}")
     print(f" - Code references (approx): {scan_results.get('code_references_count')}")
-    
+
     if failed:
         print("\nFAIL: Feature Flag Governance validation failed.")
         sys.exit(1)
     else:
         print("\nPASS: Feature Flag Governance validation passed.")
         sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

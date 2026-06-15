@@ -1,6 +1,5 @@
 # Owner: platform-ops
 import uuid
-from typing import Optional
 
 from app.api.dependencies import get_current_admin, get_db
 from app.services.runtime.distributed_runtime import DistributedRuntimeService
@@ -9,6 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/runtime/nodes", tags=["distributed_runtime"])
+
 
 class NodeRegisterSchema(BaseModel):
     name: str
@@ -21,6 +21,7 @@ class NodeRegisterSchema(BaseModel):
     capabilities: dict = {}
     trust_level: int = 1
 
+
 class NodeHeartbeatSchema(BaseModel):
     cpu_usage_percent: float = 0.0
     memory_usage_mb: float = 0.0
@@ -28,49 +29,41 @@ class NodeHeartbeatSchema(BaseModel):
     active_requests: int = 0
     metrics: dict = {}
 
+
 @router.post("/register", status_code=status.HTTP_201_CREATED)
-async def register_node(
-    node_data: NodeRegisterSchema,
-    db: AsyncSession = Depends(get_db)
-):
+async def register_node(node_data: NodeRegisterSchema, db: AsyncSession = Depends(get_db)):
     service = DistributedRuntimeService(db)
     node = await service.register_node(node_data.model_dump())
     return node
 
+
 @router.post("/{node_id}/heartbeat")
 async def record_heartbeat(
-    node_id: uuid.UUID,
-    heartbeat_data: NodeHeartbeatSchema,
-    db: AsyncSession = Depends(get_db)
+    node_id: uuid.UUID, heartbeat_data: NodeHeartbeatSchema, db: AsyncSession = Depends(get_db)
 ):
     service = DistributedRuntimeService(db)
     await service.record_heartbeat(node_id, heartbeat_data.model_dump())
     return {"status": "ok"}
 
+
 @router.post("/{node_id}/drain")
 async def drain_node(
-    node_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-    admin=Depends(get_current_admin)
+    node_id: uuid.UUID, db: AsyncSession = Depends(get_db), admin=Depends(get_current_admin)
 ):
     service = DistributedRuntimeService(db)
     await service.drain_node(node_id)
     return {"status": "draining"}
 
+
 @router.get("/")
-async def list_nodes(
-    status: Optional[str] = None,
-    db: AsyncSession = Depends(get_db)
-):
+async def list_nodes(status: str | None = None, db: AsyncSession = Depends(get_db)):
     service = DistributedRuntimeService(db)
     nodes = await service.list_nodes(status)
     return nodes
 
+
 @router.get("/{node_id}")
-async def get_node(
-    node_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db)
-):
+async def get_node(node_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     service = DistributedRuntimeService(db)
     node = await service.get_node(node_id)
     if not node:

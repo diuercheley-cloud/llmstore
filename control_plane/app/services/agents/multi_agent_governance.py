@@ -1,7 +1,7 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from app.models.agents.agents import (
     AgentCollaborationSession,
@@ -16,16 +16,14 @@ from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
+
 class MultiAgentGovernanceService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
     async def check_delegation_allowed(
-        self, 
-        tenant_id: str, 
-        source_agent_id: uuid.UUID, 
-        target_agent_id: uuid.UUID
-    ) -> Tuple[bool, str]:
+        self, tenant_id: str, source_agent_id: uuid.UUID, target_agent_id: uuid.UUID
+    ) -> tuple[bool, str]:
         # Rule: Cross-tenant blocked
         # (Assuming source and target are looked up or passed correctly)
         source = await self.db.get(AgentDefinition, source_agent_id)
@@ -33,7 +31,7 @@ class MultiAgentGovernanceService:
 
         if not source or not target:
             return False, "Agent not found"
-        
+
         if source.tenant_id != target.tenant_id or source.tenant_id != tenant_id:
             return False, "Cross-tenant delegation is strictly prohibited"
 
@@ -43,7 +41,7 @@ class MultiAgentGovernanceService:
                 AgentDelegationPolicy.tenant_id == tenant_id,
                 AgentDelegationPolicy.source_agent_id == source_agent_id,
                 AgentDelegationPolicy.target_agent_id == target_agent_id,
-                AgentDelegationPolicy.is_active == True
+                AgentDelegationPolicy.is_active == True,
             )
         )
         policy = res.scalar_one_or_none()
@@ -53,23 +51,19 @@ class MultiAgentGovernanceService:
         return True, "Delegation allowed"
 
     async def check_shared_memory_access(
-        self, 
-        tenant_id: str, 
-        agent_id: uuid.UUID, 
-        group_id: str, 
-        action: str = "read"
+        self, tenant_id: str, agent_id: uuid.UUID, group_id: str, action: str = "read"
     ) -> bool:
         res = await self.db.execute(
             select(AgentSharedMemoryPolicy).where(
                 AgentSharedMemoryPolicy.tenant_id == tenant_id,
                 AgentSharedMemoryPolicy.agent_id == agent_id,
-                AgentSharedMemoryPolicy.agent_group_id == group_id
+                AgentSharedMemoryPolicy.agent_group_id == group_id,
             )
         )
         policy = res.scalar_one_or_none()
         if not policy:
             return False
-        
+
         if action == "read":
             return policy.can_read
         if action == "write":
@@ -80,72 +74,73 @@ class MultiAgentGovernanceService:
         # Trace back the chain of AgentTraceLink with link_reason="handoff"
         visited_agents = {target_agent_id}
         current_run_id = run_id
-        
+
         # Max depth safety
         for _ in range(20):
-            res = await self.db.execute(
-                select(AgentRun).where(AgentRun.id == current_run_id)
-            )
+            res = await self.db.execute(select(AgentRun).where(AgentRun.id == current_run_id))
             run = res.scalar_one_or_none()
             if not run:
                 break
-            
+
             if run.agent_id in visited_agents:
-                return True # Loop detected
-            
+                return True  # Loop detected
+
             visited_agents.add(run.agent_id)
-            
+
             # Find the parent run
             res_link = await self.db.execute(
                 select(AgentTraceLink).where(
                     AgentTraceLink.linked_trace_id == str(current_run_id),
-                    AgentTraceLink.link_reason == "handoff"
+                    AgentTraceLink.link_reason == "handoff",
                 )
             )
             link = res_link.scalar_one_or_none()
             if not link:
                 break
-            
+
             current_run_id = link.run_id
-            
+
         return False
 
-    async def create_collaboration_session(self, root_run_id: uuid.UUID, tenant_id: str) -> AgentCollaborationSession:
+    async def create_collaboration_session(
+        self, root_run_id: uuid.UUID, tenant_id: str
+    ) -> AgentCollaborationSession:
         session = AgentCollaborationSession(
-            tenant_id=tenant_id,
-            root_run_id=root_run_id,
-            status="active"
+            tenant_id=tenant_id, root_run_id=root_run_id, status="active"
         )
         self.db.add(session)
         await self.db.commit()
         await self.db.refresh(session)
         return session
 
-    async def get_full_trace(self, session_id: uuid.UUID) -> List[Dict[str, Any]]:
+    async def get_full_trace(self, session_id: uuid.UUID) -> list[dict[str, Any]]:
         session = await self.db.get(AgentCollaborationSession, session_id)
         if not session:
             return []
-        
+
         # BFS/DFS traversal of the execution tree starting from root_run_id
         # For simplicity, we'll return a flat list of related runs
         results = []
         queue = [session.root_run_id]
         visited = set()
-        
+
         while queue:
             run_id = queue.pop(0)
-            if run_id in visited: continue
+            if run_id in visited:
+                continue
             visited.add(run_id)
-            
+
             run = await self.db.get(AgentRun, run_id)
             if run:
-                results.append({
-                    "run_id": str(run.id),
-                    "agent_id": str(run.agent_id),
-                    "status": run.status,
-                    "started_at": run.started_at.isoformat()
-                })
-                
+                results.append(
+                    {
+                        "run_id": str(run.id),
+                        "agent_id": str(run.agent_id),
+                        "status": run.status,
+                        "started_at": run.started_at.isoformat(),
+                    }
+                )
+
                 # Find children
                 res_links = await self.db.execute(
                     select(AgentTraceLink).where(AgentTraceLink.run_id == run_id)

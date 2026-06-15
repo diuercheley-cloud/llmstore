@@ -1,0 +1,178 @@
+[
+  {
+    "check_id": "bash.lang.security.ifs-tampering.ifs-tampering",
+    "path": "scripts/dev/export-usage.sh"
+  },
+  {
+    "check_id": "bash.lang.security.ifs-tampering.ifs-tampering",
+    "path": "scripts/validators/generate-client-ready-report.sh"
+  },
+  {
+    "check_id": "bash.lang.security.ifs-tampering.ifs-tampering",
+    "path": "scripts/validators/validate-client-ready-report.sh"
+  },
+  {
+    "check_id": "bash.lang.security.ifs-tampering.ifs-tampering",
+    "path": "scripts/validators/validate-release-artifacts-security.sh"
+  },
+  {
+    "check_id": "generic.nginx.security.missing-internal.missing-internal",
+    "path": "docker/reverse-proxy/nginx-http.conf"
+  },
+  {
+    "check_id": "generic.nginx.security.missing-internal.missing-internal",
+    "path": "docker/reverse-proxy/nginx-tls.conf"
+  },
+  {
+    "check_id": "generic.secrets.security.detected-mailgun-api-key.detected-mailgun-api-key",
+    "path": "control_plane/app/services/mlops/finetuning_service.py"
+  },
+  {
+    "check_id": "python-shell-true",
+    "path": "scripts/llm_harness/cli_commands.py"
+  },
+  {
+    "check_id": "python-shell-true",
+    "path": "scripts/llm_harness/sandbox.py"
+  },
+  {
+    "check_id": "python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute",
+    "path": "control_plane/app/api/operations_plugin_runtime_admin.py"
+  },
+  {
+    "check_id": "python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2",
+    "path": "control_plane/app/services/agents/reasoning/prompt_runtime.py"
+  },
+  {
+    "check_id": "python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2",
+    "path": "control_plane/app/services/prompts/prompt_template_engine.py"
+  },
+  {
+    "check_id": "python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2",
+    "path": "scripts/llm_harness/reporter.py"
+  },
+  {
+    "check_id": "python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected",
+    "path": "control_plane/app/services/notifications/email_provider.py"
+  },
+  {
+    "check_id": "python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected",
+    "path": "control_plane/app/services/notifications/push_provider.py"
+  },
+  {
+    "check_id": "python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected",
+    "path": "scripts/deploy/curl"
+  },
+  {
+    "check_id": "python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected",
+    "path": "scripts/dev/run_free_model.py"
+  },
+  {
+    "check_id": "python.lang.security.audit.exec-detected.exec-detected",
+    "path": "control_plane/app/compat/autogen/importers.py"
+  },
+  {
+    "check_id": "python.lang.security.audit.exec-detected.exec-detected",
+    "path": "control_plane/app/compat/crewai/importers.py"
+  },
+  {
+    "check_id": "python.lang.security.audit.exec-detected.exec-detected",
+    "path": "control_plane/app/compat/langgraph/importers.py"
+  },
+  {
+    "check_id": "python.lang.security.audit.exec-detected.exec-detected",
+    "path": "scripts/llm_harness/compat/autogen/importers.py"
+  },
+  {
+    "check_id": "python.lang.security.audit.exec-detected.exec-detected",
+    "path": "scripts/llm_harness/compat/crewai/importers.py"
+  },
+  {
+    "check_id": "python.lang.security.audit.exec-detected.exec-detected",
+    "path": "scripts/llm_harness/compat/langgraph/importers.py"
+  },
+  {
+    "check_id": "python.lang.security.audit.logging.logger-credential-leak.python-logger-credential-disclosure",
+    "path": "control_plane/app/services/agents/provider_validation.py"
+  },
+  {
+    "check_id": "python.lang.security.audit.logging.logger-credential-leak.python-logger-credential-disclosure",
+    "path": "control_plane/app/services/providers/registry.py"
+  },
+  {
+    "check_id": "python.lang.security.audit.logging.logger-credential-leak.python-logger-credential-disclosure",
+    "path": "control_plane/app/services/security/secrets_manager.py"
+  },
+  {
+    "check_id": "python.lang.security.audit.non-literal-import.non-literal-import",
+    "path": "control_plane/app/router_registry.py"
+  },
+  {
+    "check_id": "python.lang.security.audit.non-literal-import.non-literal-import",
+    "path": "scripts/validators/validate_domain_contracts.py"
+  },
+  {
+    "check_id": "python.lang.security.audit.non-literal-import.non-literal-import",
+    "path": "scripts/validators/validate_invariants.py"
+  },
+  {
+    "check_id": "python.lang.security.audit.subprocess-shell-true.subprocess-shell-true",
+    "path": "scripts/llm_harness/cli_commands.py"
+  },
+  {
+    "check_id": "python.lang.security.audit.subprocess-shell-true.subprocess-shell-true",
+    "path": "scripts/llm_harness/sandbox.py"
+  },
+  {
+    "check_id": "python.lang.security.insecure-hash-algorithms.insecure-hash-algorithm-sha1",
+    "path": "control_plane/app/services/public_onboarding.py"
+  },
+  {
+    "check_id": "python.lang.security.insecure-uuid-version.insecure-uuid-version",
+    "path": "control_plane/app/services/multimodal/vision_runtime.py"
+  },
+  {
+    "check_id": "python.lang.security.unverified-ssl-context.unverified-ssl-context",
+    "path": "scripts/deploy/curl"
+  },
+  {
+    "check_id": "python.sqlalchemy.performance.performance-improvements.len-all-count",
+    "path": "control_plane/app/services/agents/debugger/debug_diff.py"
+  },
+  {
+    "check_id": "python.sqlalchemy.performance.performance-improvements.len-all-count",
+    "path": "control_plane/app/services/agents/tenant_agentic_readiness.py"
+  },
+  {
+    "check_id": "python.sqlalchemy.performance.performance-improvements.len-all-count",
+    "path": "control_plane/app/services/inference/agent_governance.py"
+  },
+  {
+    "check_id": "python.sqlalchemy.performance.performance-improvements.len-all-count",
+    "path": "control_plane/app/services/inference/confidential_runtime.py"
+  },
+  {
+    "check_id": "python.sqlalchemy.performance.performance-improvements.len-all-count",
+    "path": "control_plane/app/services/inference/sovereign_appliance.py"
+  },
+  {
+    "check_id": "python.sqlalchemy.security.audit.avoid-sqlalchemy-text.avoid-sqlalchemy-text",
+    "path": "control_plane/app/services/agents/knowledge_graph/providers/postgres_graph.py"
+  },
+  {
+    "check_id": "python.sqlalchemy.security.audit.avoid-sqlalchemy-text.avoid-sqlalchemy-text",
+    "path": "control_plane/app/services/agents/tool_adapters/database_read_tool.py"
+  },
+  {
+    "check_id": "python.sqlalchemy.security.audit.avoid-sqlalchemy-text.avoid-sqlalchemy-text",
+    "path": "control_plane/app/services/backup/staging.py"
+  },
+  {
+    "check_id": "python.sqlalchemy.security.audit.avoid-sqlalchemy-text.avoid-sqlalchemy-text",
+    "path": "control_plane/app/services/rag/graph_rag.py"
+  },
+  {
+    "check_id": "python.sqlalchemy.security.audit.avoid-sqlalchemy-text.avoid-sqlalchemy-text",
+    "path": "control_plane/app/services/vectorstores/pgvector_store.py"
+  }
+]

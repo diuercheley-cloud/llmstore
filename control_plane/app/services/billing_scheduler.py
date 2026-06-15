@@ -46,5 +46,5 @@ async def billing_scheduler_loop(stop_event: asyncio.Event | None = None) -> Non
             logger.exception("billing cycle failed", extra={"extra_data": {"error": str(exc)}})
         try:
             await asyncio.wait_for(stop_event.wait(), timeout=3600)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             continue

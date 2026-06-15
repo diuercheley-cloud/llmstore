@@ -15,8 +15,8 @@ class PromotionGate:
             # Mark as promoted
             experiment.status = "promoted"
             experiment.ended_at = utc_now()
-            
-            # Implementation would then update the Route/Model settings 
+
+            # Implementation would then update the Route/Model settings
             # to permanently use the promoted variant's configuration.
             await self.db.flush()
 

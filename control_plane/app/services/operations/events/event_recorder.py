@@ -1,7 +1,14 @@
 from app.services.governance.policy_engine.policy_parser import hash_payload
 
 
-def build_event_hash(client_id: str, event_name: str, event_version: str, subject_type: str, subject_ref: str, previous_event_hash: str | None) -> str:
+def build_event_hash(
+    client_id: str,
+    event_name: str,
+    event_version: str,
+    subject_type: str,
+    subject_ref: str,
+    previous_event_hash: str | None,
+) -> str:
     return hash_payload(
         {
             "client_id": client_id,
@@ -12,4 +19,3 @@ def build_event_hash(client_id: str, event_name: str, event_version: str, subjec
             "previous_event_hash": previous_event_hash,
         }
     )
-

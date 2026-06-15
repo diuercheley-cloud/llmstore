@@ -1,6 +1,5 @@
 # Owner: agent-platform
 import random
-from typing import Dict, List, Optional
 
 from app.services.agents.telemetry.span_priority import (
     SpanPriority,
@@ -11,7 +10,7 @@ from app.services.agents.telemetry.span_priority import (
 
 class SpanSampler:
     def __init__(self):
-        self._sample_rates: Dict[SpanPriority, float] = {
+        self._sample_rates: dict[SpanPriority, float] = {
             SpanPriority.CRITICAL: 1.0,
             SpanPriority.HIGH: 1.0,
             SpanPriority.NORMAL: 0.5,
@@ -24,7 +23,7 @@ class SpanSampler:
     def get_sample_rate(self, priority: SpanPriority) -> float:
         return self._sample_rates.get(priority, 0.5)
 
-    def should_sample(self, span_type: str, priority: Optional[SpanPriority] = None) -> bool:
+    def should_sample(self, span_type: str, priority: SpanPriority | None = None) -> bool:
         if priority is None:
             priority = classify_span_priority(span_type)
         rate = self._sample_rates.get(priority, 0.5)
@@ -36,25 +35,23 @@ class SpanSampler:
 
     def select_spans_to_drop(
         self,
-        queue: List[Dict],
+        queue: list[dict],
         target_remove: int,
-    ) -> List[int]:
-        indices_by_priority: Dict[SpanPriority, List[int]] = {
-            p: [] for p in SpanPriority
-        }
+    ) -> list[int]:
+        indices_by_priority: dict[SpanPriority, list[int]] = {p: [] for p in SpanPriority}
         for idx, span in enumerate(queue):
             span_type = span.get("type", "")
             priority = classify_span_priority(span_type)
             if not should_never_drop(priority):
                 indices_by_priority[priority].append(idx)
 
-        to_drop: List[int] = []
+        to_drop: list[int] = []
         for priority in sorted(SpanPriority, reverse=True):
             if len(to_drop) >= target_remove:
                 break
             indices = indices_by_priority.get(priority, [])
             if priority == SpanPriority.DEBUG:
-                to_drop.extend(indices[:target_remove - len(to_drop)])
+                to_drop.extend(indices[: target_remove - len(to_drop)])
             elif priority == SpanPriority.NORMAL:
                 sample_count = min(len(indices), target_remove - len(to_drop))
                 to_drop.extend(random.sample(indices, sample_count))

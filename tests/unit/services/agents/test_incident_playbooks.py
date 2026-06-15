@@ -1,36 +1,34 @@
 import uuid
-import pytest
-from datetime import datetime
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
+import pytest
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.agents.agents import (
-    AgentTool,
     AgentApprovalRequest,
-    AgentRun,
     AgentDefinition,
-    AgentMemoryQuarantine,
-    AgentQueueThrottle,
-    AgentMemoryItem,
     AgentIncident,
     AgentMemoryPolicy,
+    AgentRun,
+    AgentTool,
 )
 from app.models.core.admin_rbac import (
-    AdminUser,
-    AdminRoleModel,
-    AdminUserRole,
     AdminPermission,
+    AdminRoleModel,
     AdminRolePermission,
+    AdminUser,
+    AdminUserRole,
 )
-from app.services.agents.incident_action_executor import IncidentActionExecutor
 from app.services.agents.agent_incident_playbooks import AgentIncidentPlaybookService
 from app.services.agents.agent_memory import AgentMemoryService
 from app.services.agents.agent_state import create_agent_run
-from app.storage import resolve_storage_backend
+from app.services.agents.incident_action_executor import IncidentActionExecutor
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-async def setup_rbac_user(session: AsyncSession, username: str, permissions: list[str]) -> AdminUser:
+
+async def setup_rbac_user(
+    session: AsyncSession, username: str, permissions: list[str]
+) -> AdminUser:
     """Helper to set up an AdminUser with roles and permissions."""
     user = AdminUser(
         id=uuid.uuid4(),
@@ -471,7 +469,9 @@ async def test_rbac_permissions_validation(session: AsyncSession):
         executor = IncidentActionExecutor(session)
 
         # Attempt disable_tool with unauthorized user - should raise ValueError
-        with pytest.raises(ValueError, match="does not have required 'governance:write' permission"):
+        with pytest.raises(
+            ValueError, match="does not have required 'governance:write' permission"
+        ):
             await executor.disable_tool(
                 tool_id="rbac_test_tool",
                 performed_by="non_gov_user",

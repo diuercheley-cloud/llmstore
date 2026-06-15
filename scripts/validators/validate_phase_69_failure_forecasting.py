@@ -11,10 +11,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 REQUIRED_PATHS: dict[str, Path] = {
-    "Phase 69 Doc": REPO_ROOT
-    / "docs"
-    / "phases"
-    / "phase_69_predictive_failure_signals.md",
+    "Phase 69 Doc": REPO_ROOT / "docs" / "phases" / "phase_69_predictive_failure_signals.md",
     "Failure Signals Model": REPO_ROOT
     / "control_plane"
     / "app"
@@ -49,45 +46,24 @@ REQUIRED_PATHS: dict[str, Path] = {
     / "operations"
     / "forecasting"
     / "audit_events.py",
-    "Operations Admin API": REPO_ROOT
-    / "control_plane"
-    / "app"
-    / "api"
-    / "operations_admin.py",
+    "Operations Admin API": REPO_ROOT / "control_plane" / "app" / "api" / "operations_admin.py",
     "Alembic Migration": REPO_ROOT
     / "control_plane"
     / "alembic"
     / "versions"
     / "phase69_failure_signals.py",
-    "Model Tests": REPO_ROOT
-    / "tests"
-    / "operations"
-    / "test_failure_signal_models.py",
-    "Engine Tests": REPO_ROOT
-    / "tests"
-    / "operations"
-    / "test_deterministic_forecasting_engine.py",
-    "Risk Scoring Tests": REPO_ROOT
-    / "tests"
-    / "operations"
-    / "test_failure_risk_scoring.py",
-    "Receipts Tests": REPO_ROOT
-    / "tests"
-    / "operations"
-    / "test_failure_forecasting_receipts.py",
+    "Model Tests": REPO_ROOT / "tests" / "operations" / "test_failure_signal_models.py",
+    "Engine Tests": REPO_ROOT / "tests" / "operations" / "test_deterministic_forecasting_engine.py",
+    "Risk Scoring Tests": REPO_ROOT / "tests" / "operations" / "test_failure_risk_scoring.py",
+    "Receipts Tests": REPO_ROOT / "tests" / "operations" / "test_failure_forecasting_receipts.py",
     "Audit Events Tests": REPO_ROOT
     / "tests"
     / "operations"
     / "test_failure_forecasting_audit_events.py",
-    "API Tests": REPO_ROOT
-    / "tests"
-    / "operations"
-    / "test_failure_forecasting_api.py",
+    "API Tests": REPO_ROOT / "tests" / "operations" / "test_failure_forecasting_api.py",
 }
 
-REQUIRED_MAKE_TARGETS = (
-    "validate-phase-69-failure-forecasting",
-)
+REQUIRED_MAKE_TARGETS = ("validate-phase-69-failure-forecasting",)
 
 # Targeted list — do NOT run tests/integration/operations/ broadly to avoid
 # excessive execution in the validate-architecture aggregate.
@@ -122,9 +98,7 @@ def validate_makefile_targets() -> list[dict[str, str]]:
     content = makefile.read_text(encoding="utf-8")
     for target in REQUIRED_MAKE_TARGETS:
         if f"{target}:" not in content:
-            failures.append(
-                {"path": "Makefile", "issue": f"missing target: {target}"}
-            )
+            failures.append({"path": "Makefile", "issue": f"missing target: {target}"})
     return failures
 
 

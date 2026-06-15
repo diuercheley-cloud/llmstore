@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..base import BaseAdapter
 
@@ -9,10 +9,10 @@ class ConversableAgent(BaseAdapter):
         self,
         name: str,
         system_message: str = "A helpful assistant.",
-        llm_config: Optional[Dict[str, Any]] = None,
+        llm_config: dict[str, Any] | None = None,
         human_input_mode: str = "NEVER",
-        max_consecutive_auto_reply: Optional[int] = None,
-        code_execution_config: Optional[Dict[str, Any]] = None,
+        max_consecutive_auto_reply: int | None = None,
+        code_execution_config: dict[str, Any] | None = None,
     ):
         self.name = name
         self.system_message = system_message
@@ -20,7 +20,7 @@ class ConversableAgent(BaseAdapter):
         self.human_input_mode = human_input_mode
         self.max_consecutive_auto_reply = max_consecutive_auto_reply
         self.code_execution_config = code_execution_config
-        self.chat_history: Dict[str, List[Dict[str, Any]]] = {}
+        self.chat_history: dict[str, list[dict[str, Any]]] = {}
         self.id = uuid.uuid4()
 
     def send(self, message: Any, recipient: "ConversableAgent", request_reply: bool = True):
@@ -32,7 +32,7 @@ class ConversableAgent(BaseAdapter):
 
     def receive(
         self,
-        message: Dict[str, Any],
+        message: dict[str, Any],
         sender: "ConversableAgent",
         request_reply: bool = True,
     ):
@@ -47,16 +47,16 @@ class ConversableAgent(BaseAdapter):
 
     def generate_reply(
         self,
-        messages: List[Dict[str, Any]],
+        messages: list[dict[str, Any]],
         sender: "ConversableAgent",
-    ) -> Optional[str]:
+    ) -> str | None:
         last_message = messages[-1]["content"] if messages else ""
         return f"Simulated reply from {self.name} responding to: '{last_message[:100]}'"
 
     def initiate_chat(self, recipient: "ConversableAgent", message: str, max_turns: int = 1):
         self.send(message, recipient, request_reply=True)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "system_message": self.system_message,
@@ -73,9 +73,9 @@ class UserProxyAgent(ConversableAgent):
         name: str,
         system_message: str = "",
         human_input_mode: str = "ALWAYS",
-        max_consecutive_auto_reply: Optional[int] = None,
-        llm_config: Optional[Dict[str, Any]] = None,
-        code_execution_config: Optional[Dict[str, Any]] = None,
+        max_consecutive_auto_reply: int | None = None,
+        llm_config: dict[str, Any] | None = None,
+        code_execution_config: dict[str, Any] | None = None,
     ):
         super().__init__(
             name=name,
@@ -88,9 +88,9 @@ class UserProxyAgent(ConversableAgent):
 
     def generate_reply(
         self,
-        messages: List[Dict[str, Any]],
+        messages: list[dict[str, Any]],
         sender: ConversableAgent,
-    ) -> Optional[str]:
+    ) -> str | None:
         last_message = messages[-1]["content"] if messages else ""
         return f"UserProxy ({self.name}) acknowledged: '{last_message[:100]}'"
 
@@ -100,8 +100,8 @@ class AssistantAgent(ConversableAgent):
         self,
         name: str,
         system_message: str = "A helpful AI assistant.",
-        llm_config: Optional[Dict[str, Any]] = None,
-        code_execution_config: Optional[Dict[str, Any]] = None,
+        llm_config: dict[str, Any] | None = None,
+        code_execution_config: dict[str, Any] | None = None,
     ):
         super().__init__(
             name=name,
@@ -113,9 +113,9 @@ class AssistantAgent(ConversableAgent):
 
     def generate_reply(
         self,
-        messages: List[Dict[str, Any]],
+        messages: list[dict[str, Any]],
         sender: ConversableAgent,
-    ) -> Optional[str]:
+    ) -> str | None:
         last_message = messages[-1]["content"] if messages else ""
         return f"Assistant ({self.name}) response to: '{last_message[:100]}'"
 
@@ -123,8 +123,8 @@ class AssistantAgent(ConversableAgent):
 class GroupChat(BaseAdapter):
     def __init__(
         self,
-        agents: List[ConversableAgent],
-        messages: Optional[List[Dict[str, Any]]] = None,
+        agents: list[ConversableAgent],
+        messages: list[dict[str, Any]] | None = None,
         max_round: int = 10,
         speaker_selection_method: str = "auto",
     ):
@@ -133,7 +133,7 @@ class GroupChat(BaseAdapter):
         self.max_round = max_round
         self.speaker_selection_method = speaker_selection_method
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "agents": [a.name for a in self.agents],
             "max_round": self.max_round,

@@ -20,7 +20,9 @@ class AESGCM:
 
         keystream = _expand_keystream(self.key, nonce, len(data))
         ciphertext = bytes(a ^ b for a, b in zip(data, keystream))
-        tag = hmac.new(self.key, nonce + (associated_data or b"") + ciphertext, hashlib.sha256).digest()[:16]
+        tag = hmac.new(
+            self.key, nonce + (associated_data or b"") + ciphertext, hashlib.sha256
+        ).digest()[:16]
         return ciphertext + tag
 
     def decrypt(self, nonce: bytes, data: bytes, associated_data: bytes | None) -> bytes:
@@ -28,7 +30,9 @@ class AESGCM:
             return self._impl.decrypt(nonce, data, associated_data)
 
         ciphertext, tag = data[:-16], data[-16:]
-        expected = hmac.new(self.key, nonce + (associated_data or b"") + ciphertext, hashlib.sha256).digest()[:16]
+        expected = hmac.new(
+            self.key, nonce + (associated_data or b"") + ciphertext, hashlib.sha256
+        ).digest()[:16]
         if not hmac.compare_digest(tag, expected):
             raise ValueError("invalid authentication tag")
         keystream = _expand_keystream(self.key, nonce, len(ciphertext))

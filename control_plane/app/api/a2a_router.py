@@ -4,7 +4,7 @@ Implements both client and server sides of the Google A2A spec.
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from app.api import deps
 from app.core.config import get_settings
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1", tags=["a2a-protocol"])
 
-_a2a_servers: Dict[str, A2AServer] = {}
+_a2a_servers: dict[str, A2AServer] = {}
 
 
 def register_a2a_server(server: A2AServer):
@@ -76,7 +76,7 @@ async def a2a_discover(agent_id: str):
 @router.post("/a2a/send")
 async def a2a_send_task(
     target_url: str = "",
-    task_data: Dict[str, Any] = {},
+    task_data: dict[str, Any] = {},
 ):
     """Send a task to a remote agent via A2A protocol."""
     settings = get_settings()
@@ -103,10 +103,12 @@ async def a2a_send_task(
     )
 
     if "message" in task_data:
-        task.history.append(A2AMessage(
-            role=A2AMessageRole.USER,
-            parts=[A2APart.from_text(task_data["message"])],
-        ))
+        task.history.append(
+            A2AMessage(
+                role=A2AMessageRole.USER,
+                parts=[A2APart.from_text(task_data["message"])],
+            )
+        )
 
     result = await client.send_task(target_url, task)
     await client.close()

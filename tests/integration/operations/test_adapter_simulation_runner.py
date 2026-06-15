@@ -12,12 +12,13 @@ def test_simulation_runner_simulate_step():
         sandbox_mode="simulation",
         allowed_capabilities=["restart"],
         approval_verified=True,
-        gates_verified=True
+        gates_verified=True,
     )
     step = {"action_type": "restart", "target_domain": "worker"}
     res = runner.simulate_step(ctx, step)
     assert res["result_status"] == "success"
     assert res["simulated_output_json"]["simulated_action"] == "restart"
+
 
 def test_simulation_runner_denied_step():
     runner = AdapterSandboxSimulationRunner()
@@ -27,7 +28,7 @@ def test_simulation_runner_denied_step():
         sandbox_mode="simulation",
         allowed_capabilities=[],
         approval_verified=True,
-        gates_verified=True
+        gates_verified=True,
     )
     step = {"action_type": "restart", "target_domain": "worker"}
     res = runner.simulate_step(ctx, step)

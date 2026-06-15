@@ -20,7 +20,9 @@ class CommercialPortalAuditAccessLog(Base):
         nullable=False,
         index=True,
     )
-    actor_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
+    actor_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True, index=True
+    )
     actor_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     resource_type: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     resource_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
@@ -28,7 +30,9 @@ class CommercialPortalAuditAccessLog(Base):
     ip_masked: Mapped[str | None] = mapped_column(String(64), nullable=True)
     user_agent_sanitized: Mapped[str | None] = mapped_column(String(255), nullable=True)
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False, index=True
+    )
 
     client = relationship("Client")
 
@@ -51,7 +55,11 @@ class CommercialPortalSavedReport(Base):
     generated_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
     storage_ref: Mapped[str | None] = mapped_column(String(512), nullable=True)
     immutable_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
-    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False, index=True
+    )
+    expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
 
     client = relationship("Client")

@@ -21,7 +21,9 @@ def _dialect_name() -> str:
 
 
 def _uuid_type():
-    return postgresql.UUID(as_uuid=True) if _dialect_name() == "postgresql" else sa.String(length=36)
+    return (
+        postgresql.UUID(as_uuid=True) if _dialect_name() == "postgresql" else sa.String(length=36)
+    )
 
 
 def _json_type():
@@ -63,12 +65,24 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_commercial_runtime_attestations_lookup", "commercial_runtime_attestations",
-                    ["cluster_id", "node_id", "status"], unique=False)
-    op.create_index("ix_commercial_runtime_attestations_chain", "commercial_runtime_attestations",
-                    ["immutable_hash", "previous_hash"], unique=False)
-    op.create_index("ix_commercial_runtime_attestations_trust", "commercial_runtime_attestations",
-                    ["trusted", "trust_score", "drift_detected"], unique=False)
+    op.create_index(
+        "ix_commercial_runtime_attestations_lookup",
+        "commercial_runtime_attestations",
+        ["cluster_id", "node_id", "status"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_commercial_runtime_attestations_chain",
+        "commercial_runtime_attestations",
+        ["immutable_hash", "previous_hash"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_commercial_runtime_attestations_trust",
+        "commercial_runtime_attestations",
+        ["trusted", "trust_score", "drift_detected"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_attestation_evidence",
@@ -95,10 +109,18 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_commercial_attestation_evidence_chain", "commercial_attestation_evidence",
-                    ["evidence_hash", "previous_evidence_hash", "chain_position"], unique=False)
-    op.create_index("ix_commercial_attestation_evidence_scope", "commercial_attestation_evidence",
-                    ["cluster_id", "evidence_type", "status"], unique=False)
+    op.create_index(
+        "ix_commercial_attestation_evidence_chain",
+        "commercial_attestation_evidence",
+        ["evidence_hash", "previous_evidence_hash", "chain_position"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_commercial_attestation_evidence_scope",
+        "commercial_attestation_evidence",
+        ["cluster_id", "evidence_type", "status"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_attestation_policies",
@@ -124,8 +146,12 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_commercial_attestation_policies_active", "commercial_attestation_policies",
-                    ["policy_name", "is_active", "policy_hash"], unique=False)
+    op.create_index(
+        "ix_commercial_attestation_policies_active",
+        "commercial_attestation_policies",
+        ["policy_name", "is_active", "policy_hash"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_runtime_measurements",
@@ -151,10 +177,18 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_commercial_runtime_measurements_chain", "commercial_runtime_measurements",
-                    ["measurement_hash", "previous_measurement_hash", "measurement_type"], unique=False)
-    op.create_index("ix_commercial_runtime_measurements_scope", "commercial_runtime_measurements",
-                    ["cluster_id", "measurement_type", "status"], unique=False)
+    op.create_index(
+        "ix_commercial_runtime_measurements_chain",
+        "commercial_runtime_measurements",
+        ["measurement_hash", "previous_measurement_hash", "measurement_type"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_commercial_runtime_measurements_scope",
+        "commercial_runtime_measurements",
+        ["cluster_id", "measurement_type", "status"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_attestation_challenges",
@@ -162,7 +196,9 @@ def upgrade() -> None:
         sa.Column("node_id", sa.String(length=255), nullable=True, index=True),
         sa.Column("cluster_id", sa.String(length=255), nullable=False, index=True),
         sa.Column("tenant_id", sa.String(length=64), nullable=True, index=True),
-        sa.Column("challenge_nonce", sa.String(length=128), nullable=False, unique=True, index=True),
+        sa.Column(
+            "challenge_nonce", sa.String(length=128), nullable=False, unique=True, index=True
+        ),
         sa.Column("challenge_type", sa.String(length=32), nullable=False),
         sa.Column("challenge_data_json", _json_type(), nullable=False),
         sa.Column("response_data_json", _json_type(), nullable=False),
@@ -178,25 +214,53 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_commercial_attestation_challenges_nonce", "commercial_attestation_challenges",
-                    ["challenge_nonce", "status", "expires_at"], unique=False)
-    op.create_index("ix_commercial_attestation_challenges_scope", "commercial_attestation_challenges",
-                    ["cluster_id", "node_id", "status"], unique=False)
+    op.create_index(
+        "ix_commercial_attestation_challenges_nonce",
+        "commercial_attestation_challenges",
+        ["challenge_nonce", "status", "expires_at"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_commercial_attestation_challenges_scope",
+        "commercial_attestation_challenges",
+        ["cluster_id", "node_id", "status"],
+        unique=False,
+    )
 
 
 def downgrade() -> None:
-    op.drop_index("ix_commercial_attestation_challenges_scope", table_name="commercial_attestation_challenges")
-    op.drop_index("ix_commercial_attestation_challenges_nonce", table_name="commercial_attestation_challenges")
+    op.drop_index(
+        "ix_commercial_attestation_challenges_scope", table_name="commercial_attestation_challenges"
+    )
+    op.drop_index(
+        "ix_commercial_attestation_challenges_nonce", table_name="commercial_attestation_challenges"
+    )
     op.drop_table("commercial_attestation_challenges")
-    op.drop_index("ix_commercial_runtime_measurements_scope", table_name="commercial_runtime_measurements")
-    op.drop_index("ix_commercial_runtime_measurements_chain", table_name="commercial_runtime_measurements")
+    op.drop_index(
+        "ix_commercial_runtime_measurements_scope", table_name="commercial_runtime_measurements"
+    )
+    op.drop_index(
+        "ix_commercial_runtime_measurements_chain", table_name="commercial_runtime_measurements"
+    )
     op.drop_table("commercial_runtime_measurements")
-    op.drop_index("ix_commercial_attestation_policies_active", table_name="commercial_attestation_policies")
+    op.drop_index(
+        "ix_commercial_attestation_policies_active", table_name="commercial_attestation_policies"
+    )
     op.drop_table("commercial_attestation_policies")
-    op.drop_index("ix_commercial_attestation_evidence_scope", table_name="commercial_attestation_evidence")
-    op.drop_index("ix_commercial_attestation_evidence_chain", table_name="commercial_attestation_evidence")
+    op.drop_index(
+        "ix_commercial_attestation_evidence_scope", table_name="commercial_attestation_evidence"
+    )
+    op.drop_index(
+        "ix_commercial_attestation_evidence_chain", table_name="commercial_attestation_evidence"
+    )
     op.drop_table("commercial_attestation_evidence")
-    op.drop_index("ix_commercial_runtime_attestations_trust", table_name="commercial_runtime_attestations")
-    op.drop_index("ix_commercial_runtime_attestations_chain", table_name="commercial_runtime_attestations")
-    op.drop_index("ix_commercial_runtime_attestations_lookup", table_name="commercial_runtime_attestations")
+    op.drop_index(
+        "ix_commercial_runtime_attestations_trust", table_name="commercial_runtime_attestations"
+    )
+    op.drop_index(
+        "ix_commercial_runtime_attestations_chain", table_name="commercial_runtime_attestations"
+    )
+    op.drop_index(
+        "ix_commercial_runtime_attestations_lookup", table_name="commercial_runtime_attestations"
+    )
     op.drop_table("commercial_runtime_attestations")

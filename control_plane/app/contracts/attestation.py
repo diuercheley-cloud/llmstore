@@ -1,4 +1,4 @@
-from typing import Any, Dict, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from app.contracts.base import BaseContract, ContractCapability
 from pydantic import BaseModel
@@ -7,22 +7,24 @@ from pydantic import BaseModel
 class AttestationReport(BaseModel):
     subject: str
     timestamp: str
-    measurements: Dict[str, Any]
+    measurements: dict[str, Any]
     policy_result: str
     signature: str
     certificate_chain: str
+
 
 class AttestationCapabilities(ContractCapability):
     hardware_trust: bool = False
     pki_integration: bool = False
     enforcement_mode: bool = False
 
+
 @runtime_checkable
 class AttestationContract(BaseContract, Protocol):
     """
     Contract for System and Node Attestation.
     """
-    
+
     async def generate_report(self) -> AttestationReport:
         """Generates a new attestation report for the current node."""
         ...

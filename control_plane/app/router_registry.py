@@ -1,16 +1,17 @@
 import importlib
-import pkgutil
 import logging
-from typing import Any
-from fastapi import APIRouter, FastAPI
+import pkgutil
+
 from app.core.config import get_settings
+from fastapi import APIRouter, FastAPI
 
 logger = logging.getLogger(__name__)
+
 
 def register_routers(app: FastAPI, package_name: str = "app.api") -> None:
     """
     Dynamically discover and register all FastAPI routers in a package.
-    Respects 'REQUIRED_FLAG' (string) or 'is_enabled(settings)' (callable) 
+    Respects 'REQUIRED_FLAG' (string) or 'is_enabled(settings)' (callable)
     module-level attributes for feature flagging.
     """
     try:
@@ -25,15 +26,15 @@ def register_routers(app: FastAPI, package_name: str = "app.api") -> None:
     for _, module_name, _ in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
         try:
             module = importlib.import_module(module_name)
-            
+
             # Check for feature flag
             if hasattr(module, "REQUIRED_FLAG"):
-                flag_name = getattr(module, "REQUIRED_FLAG")
+                flag_name = module.REQUIRED_FLAG
                 if not getattr(settings, flag_name, False):
                     continue
-            
+
             if hasattr(module, "is_enabled"):
-                is_enabled_fn = getattr(module, "is_enabled")
+                is_enabled_fn = module.is_enabled
                 if not is_enabled_fn(settings):
                     continue
 
@@ -52,7 +53,9 @@ def register_routers(app: FastAPI, package_name: str = "app.api") -> None:
                             kwargs["prefix"] = prefix
                         if tags and not attr.tags:
                             kwargs["tags"] = tags
-                            
+
                         app.include_router(attr, **kwargs)
         except Exception as e:
-            logger.warning(f"Skipping router auto-discovery for module {module_name} due to error: {e}")
+            logger.warning(
+                f"Skipping router auto-discovery for module {module_name} due to error: {e}"
+            )

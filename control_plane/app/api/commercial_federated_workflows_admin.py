@@ -4,10 +4,12 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from app.services.runtime_dependencies import get_db_session
+from app.models.commercial.commercial_federated_workflows import (
+    CommercialWorkflowReplayFederationReport,
+)
 from app.models.core.client import Client
-from app.models.commercial.commercial_federated_workflows import CommercialWorkflowReplayFederationReport
 from app.services.auth import require_admin, require_client
+from app.services.runtime_dependencies import get_db_session
 from app.services.workflows.federated_consensus import FederatedWorkflowConsensusService
 from app.services.workflows.federated_execution import FederatedWorkflowExecutionService
 from app.services.workflows.federated_replay import FederatedWorkflowReplayService
@@ -28,7 +30,9 @@ class FederatedExecutionPayload(BaseModel):
     execution_id: uuid.UUID
     region_id: str = Field(min_length=1)
     cluster_id: str = Field(min_length=1)
-    federation_mode: str = Field(default="local_only", pattern="^(local_only|push|pull|hybrid|sovereign_airgap)$")
+    federation_mode: str = Field(
+        default="local_only", pattern="^(local_only|push|pull|hybrid|sovereign_airgap)$"
+    )
     sovereign_mode: str = Field(default="disabled")
     client_id: str | None = None
     peer_clusters: list[dict[str, str]] | None = None
@@ -103,7 +107,9 @@ async def list_federation_executions(
 
 
 @router.post("/admin/workflows/federation/executions", dependencies=[Depends(require_admin)])
-async def create_federation_execution(payload: FederatedExecutionPayload, db: AsyncSession = Depends(get_db_session)):
+async def create_federation_execution(
+    payload: FederatedExecutionPayload, db: AsyncSession = Depends(get_db_session)
+):
     row = await _execution.register_execution(
         db,
         execution_id=payload.execution_id,
@@ -119,7 +125,10 @@ async def create_federation_execution(payload: FederatedExecutionPayload, db: As
     return _fed_summary(row)
 
 
-@router.post("/admin/workflows/federation/executions/{federated_execution_id}/lease", dependencies=[Depends(require_admin)])
+@router.post(
+    "/admin/workflows/federation/executions/{federated_execution_id}/lease",
+    dependencies=[Depends(require_admin)],
+)
 async def acquire_federation_lease(
     federated_execution_id: uuid.UUID,
     payload: FederatedLeasePayload,
@@ -144,12 +153,16 @@ async def acquire_federation_lease(
 @router.get("/admin/workflows/federation/replay", dependencies=[Depends(require_admin)])
 async def list_federation_replays(db: AsyncSession = Depends(get_db_session)):
     rows = (
-        await db.execute(
-            CommercialWorkflowReplayFederationReport.__table__.select().order_by(
-                CommercialWorkflowReplayFederationReport.created_at.desc()
+        (
+            await db.execute(
+                CommercialWorkflowReplayFederationReport.__table__.select().order_by(
+                    CommercialWorkflowReplayFederationReport.created_at.desc()
+                )
             )
         )
-    ).mappings().all()
+        .mappings()
+        .all()
+    )
     return {
         "items": [
             {
@@ -161,7 +174,10 @@ async def list_federation_replays(db: AsyncSession = Depends(get_db_session)):
     }
 
 
-@router.post("/admin/workflows/federation/replay/{federated_execution_id}", dependencies=[Depends(require_admin)])
+@router.post(
+    "/admin/workflows/federation/replay/{federated_execution_id}",
+    dependencies=[Depends(require_admin)],
+)
 async def create_federation_replay(
     federated_execution_id: uuid.UUID,
     payload: FederatedReplayPayload,
@@ -199,7 +215,10 @@ async def get_federation_consensus(
     return await _consensus.validate_consensus(db, federated_execution_id=federated_execution_id)
 
 
-@router.post("/admin/workflows/federation/consensus/{federated_execution_id}", dependencies=[Depends(require_admin)])
+@router.post(
+    "/admin/workflows/federation/consensus/{federated_execution_id}",
+    dependencies=[Depends(require_admin)],
+)
 async def reconcile_consensus(
     federated_execution_id: uuid.UUID,
     db: AsyncSession = Depends(get_db_session),
@@ -209,7 +228,10 @@ async def reconcile_consensus(
     return result
 
 
-@router.post("/admin/workflows/federation/reconcile/{federated_execution_id}", dependencies=[Depends(require_admin)])
+@router.post(
+    "/admin/workflows/federation/reconcile/{federated_execution_id}",
+    dependencies=[Depends(require_admin)],
+)
 async def reconcile_federated_execution(
     federated_execution_id: uuid.UUID,
     db: AsyncSession = Depends(get_db_session),

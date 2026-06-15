@@ -1,14 +1,15 @@
-import os
-import subprocess
-import sqlite3
-import hashlib
 import inspect
+import os
+import sqlite3
+import subprocess
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 from urllib.parse import urlparse
+
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class DatabaseBackupProvider(ABC):
     def __init__(self, db: AsyncSession, db_url: str):
@@ -16,7 +17,7 @@ class DatabaseBackupProvider(ABC):
         self.db_url = db_url
 
     @abstractmethod
-    async def dump_database(self, dest_file: Path) -> Dict[str, Any]:
+    async def dump_database(self, dest_file: Path) -> dict[str, Any]:
         """
         Dumps the database to dest_file and returns metadata.
         """
@@ -44,7 +45,7 @@ class SQLiteBackupProvider(DatabaseBackupProvider):
         if engine is not None and hasattr(engine, "dispose"):
             await engine.dispose()
 
-    async def dump_database(self, dest_file: Path) -> Dict[str, Any]:
+    async def dump_database(self, dest_file: Path) -> dict[str, Any]:
         # Perform consistent SQLite backup using backup API
         raw_conn = await self.db.connection()
         if hasattr(raw_conn, "get_raw_connection"):
@@ -69,7 +70,7 @@ class SQLiteBackupProvider(DatabaseBackupProvider):
                     raw_sqlite = dbapi_conn._conn
                 else:
                     raw_sqlite = dbapi_conn
-                
+
                 def _sync_backup(connection):
                     conn_to_use = connection.connection
                     if hasattr(conn_to_use, "dbapi_connection"):
@@ -79,13 +80,16 @@ class SQLiteBackupProvider(DatabaseBackupProvider):
                     if hasattr(conn_to_use, "_conn"):
                         conn_to_use = conn_to_use._conn
                     conn_to_use.backup(dest_conn)
+
                 await raw_conn.run_sync(_sync_backup)
         finally:
             dest_conn.close()
 
         # Validate dump
         if not self._validate_dump(dest_file):
-            raise ValueError("SQLite backup validation failed: integrity check failed or empty file.")
+            raise ValueError(
+                "SQLite backup validation failed: integrity check failed or empty file."
+            )
 
         alembic_head = await self.get_alembic_head()
 
@@ -104,7 +108,11 @@ class SQLiteBackupProvider(DatabaseBackupProvider):
         from urllib.parse import urlparse
 
         def _sqlite_path_from_url() -> Path | None:
-            if "mode=memory" in self.db_url or "cache=shared" in self.db_url and "file:" in self.db_url:
+            if (
+                "mode=memory" in self.db_url
+                or "cache=shared" in self.db_url
+                and "file:" in self.db_url
+            ):
                 return None
             parsed = urlparse(self.db_url.replace("sqlite+aiosqlite:///", "sqlite:///"))
             if parsed.scheme != "sqlite":
@@ -141,15 +149,18 @@ class SQLiteBackupProvider(DatabaseBackupProvider):
             dbapi_conn = dbapi_conn.dbapi_connection
 
         if hasattr(dbapi_conn, "_execute") and hasattr(dbapi_conn, "_conn"):
+
             def perform_restore():
                 src_conn = sqlite3.connect(str(src_file))
                 try:
                     src_conn.backup(dbapi_conn._conn)
                 finally:
                     src_conn.close()
+
             await dbapi_conn._execute(perform_restore)
             await self._dispose_engine()
         else:
+
             def _sync_restore(connection):
                 conn_to_use = connection.connection
                 if hasattr(conn_to_use, "dbapi_connection"):
@@ -158,12 +169,13 @@ class SQLiteBackupProvider(DatabaseBackupProvider):
                     conn_to_use = conn_to_use._connection
                 if hasattr(conn_to_use, "_conn"):
                     conn_to_use = conn_to_use._conn
-                
+
                 src_conn = sqlite3.connect(str(src_file))
                 try:
                     src_conn.backup(conn_to_use)
                 finally:
                     src_conn.close()
+
             await raw_conn.run_sync(_sync_restore)
             await self._dispose_engine()
 
@@ -182,7 +194,7 @@ class SQLiteBackupProvider(DatabaseBackupProvider):
 
 
 class PostgresBackupProvider(DatabaseBackupProvider):
-    def _parse_url(self) -> Dict[str, Any]:
+    def _parse_url(self) -> dict[str, Any]:
         clean_url = self.db_url.replace("postgresql+asyncpg://", "postgresql://")
         parsed = urlparse(clean_url)
         username = parsed.username
@@ -198,7 +210,7 @@ class PostgresBackupProvider(DatabaseBackupProvider):
             "dbname": dbname,
         }
 
-    async def dump_database(self, dest_file: Path) -> Dict[str, Any]:
+    async def dump_database(self, dest_file: Path) -> dict[str, Any]:
         params = self._parse_url()
         env = os.environ.copy()
         if params["password"]:
@@ -206,12 +218,17 @@ class PostgresBackupProvider(DatabaseBackupProvider):
 
         cmd = [
             "pg_dump",
-            "-h", params["host"],
-            "-p", str(params["port"]),
-            "-U", params["username"],
-            "-F", "c",
-            "-f", str(dest_file),
-            params["dbname"]
+            "-h",
+            params["host"],
+            "-p",
+            str(params["port"]),
+            "-U",
+            params["username"],
+            "-F",
+            "c",
+            "-f",
+            str(dest_file),
+            params["dbname"],
         ]
 
         # Run pg_dump
@@ -255,14 +272,18 @@ class PostgresBackupProvider(DatabaseBackupProvider):
         # pg_restore cmd
         cmd = [
             "pg_restore",
-            "-h", params["host"],
-            "-p", str(params["port"]),
-            "-U", params["username"],
-            "-d", params["dbname"],
+            "-h",
+            params["host"],
+            "-p",
+            str(params["port"]),
+            "-U",
+            params["username"],
+            "-d",
+            params["dbname"],
             "--clean",
             "--no-owner",
             "--no-privileges",
-            str(src_file)
+            str(src_file),
         ]
 
         process = subprocess.run(cmd, env=env, capture_output=True, text=True)

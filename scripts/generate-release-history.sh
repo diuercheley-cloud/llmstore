@@ -1,0 +1,1 @@
+archive/release/generate-release-history.sh

@@ -11,6 +11,7 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 logger = logging.getLogger(__name__)
 
+
 class JaegerExporterService:
     def setup(self, provider):
         settings = get_settings()
@@ -18,12 +19,14 @@ class JaegerExporterService:
             return
 
         if not JaegerExporter:
-            logger.warning("Jaeger exporter is enabled in settings but opentelemetry-exporter-jaeger package is not installed.")
+            logger.warning(
+                "Jaeger exporter is enabled in settings but opentelemetry-exporter-jaeger package is not installed."
+            )
             return
 
         agent_host = os.environ.get("JAEGER_AGENT_HOST", "localhost")
         agent_port = int(os.environ.get("JAEGER_AGENT_PORT", 6831))
-        
+
         exporter = JaegerExporter(
             agent_host_name=agent_host,
             agent_port=agent_port,

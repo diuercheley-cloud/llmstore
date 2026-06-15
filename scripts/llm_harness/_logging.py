@@ -36,8 +36,6 @@ class StructuredLogger(logging.Handler):
             sys.stderr.write(err_json + "\n")
 
 
-
-
 def setup_logging(
     level: int | None = None,
     structured: bool = True,

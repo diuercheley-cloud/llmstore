@@ -4,7 +4,9 @@ from typing import Any
 
 
 class ReleaseNotesGenerator:
-    def generate_deterministic_notes(self, manifest: dict[str, Any], changelog: list[dict[str, Any]]) -> str:
+    def generate_deterministic_notes(
+        self, manifest: dict[str, Any], changelog: list[dict[str, Any]]
+    ) -> str:
         lines = [
             f"# Release Notes - {manifest['version']}",
             "",

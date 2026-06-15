@@ -21,11 +21,11 @@ class TestAdapterPromotionAPI:
             manifest_hash="phash",
             immutable_hash="imm_phash",
             capabilities_json={},
-            denied_capabilities_json={}
+            denied_capabilities_json={},
         )
         session.add(manifest)
         await session.flush()
-        
+
         entry = SignedAdapterRegistryEntry(
             client_id=client_id,
             adapter_name="promo_adapter",
@@ -36,7 +36,7 @@ class TestAdapterPromotionAPI:
             registry_status="approved",
             registry_hash="rhash",
             signature="sig",
-            immutable_hash="e_imm"
+            immutable_hash="e_imm",
         )
         session.add(entry)
         await session.commit()
@@ -57,11 +57,11 @@ class TestAdapterPromotionAPI:
                     "sandbox_simulation_passed": True,
                     "no_policy_violations": True,
                     "staging_simulation_passed": True,
-                    "production_approval_granted": True
-                }
+                    "production_approval_granted": True,
+                },
             }
             response = await ac.post("/admin/operations/adapter-promotion/workflows", json=payload)
-            
+
         assert response.status_code == 200
         data = response.json()
         assert data["workflow"]["adapter_name"] == "promo_adapter"

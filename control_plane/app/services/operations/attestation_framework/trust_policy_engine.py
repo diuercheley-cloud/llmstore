@@ -8,7 +8,9 @@ from app.models.operations.attestation_framework import (
 
 
 class AttestationTrustPolicyEngine:
-    def evaluate_attestation(self, attestation: SovereignExecutionAttestation, policy: AttestationTrustPolicy) -> dict[str, Any]:
+    def evaluate_attestation(
+        self, attestation: SovereignExecutionAttestation, policy: AttestationTrustPolicy
+    ) -> dict[str, Any]:
         allowed_types = policy.allowed_attestation_types_json.get("allowed", [])
         reasons: list[str] = []
         if attestation.attestation_type not in allowed_types:
@@ -23,7 +25,9 @@ class AttestationTrustPolicyEngine:
             reasons.append("chain_integrity_missing")
         return {"allowed": not reasons, "reasons": reasons, "subject": attestation.id}
 
-    def evaluate_bundle(self, bundle: AttestationFederationBundle, policy: AttestationTrustPolicy) -> dict[str, Any]:
+    def evaluate_bundle(
+        self, bundle: AttestationFederationBundle, policy: AttestationTrustPolicy
+    ) -> dict[str, Any]:
         reasons: list[str] = []
         if not policy.federation_allowed:
             reasons.append("federation_not_allowed")

@@ -40,9 +40,7 @@ def test_runner_script_runs_quick():
     print(f"STDOUT:\n{result.stdout}")
     print(f"STDERR:\n{result.stderr}")
     # Should exit 0 (GO or GO_WITH_WARNINGS) -- quick mode may skip some
-    assert result.returncode in (0,), (
-        f"Runner script failed with exit code {result.returncode}"
-    )
+    assert result.returncode in (0,), f"Runner script failed with exit code {result.returncode}"
 
 
 def test_runner_generates_artifact_json():
@@ -75,15 +73,29 @@ def test_artifact_json_is_valid():
     data = json.loads(fp.read_text(encoding="utf-8"))
 
     required = [
-        "report_type", "generated_at", "timestamp", "version",
-        "blocker_fails", "blocker_warns", "nonblocker_warns",
-        "blocker_fail_list", "warning_list", "go_decision",
+        "report_type",
+        "generated_at",
+        "timestamp",
+        "version",
+        "blocker_fails",
+        "blocker_warns",
+        "nonblocker_warns",
+        "blocker_fail_list",
+        "warning_list",
+        "go_decision",
     ]
     for field in required:
         assert field in data, f"Missing field: {field}"
 
     assert data["report_type"] == "v1.7-consolidated-checklist"
-    valid_decisions = ("GO", "GO_WITH_WARNINGS", "GO_WITH_ACCEPTED_WARNINGS", "V1_7_READY_WITH_ACCEPTED_WARNINGS", "NO_GO", "PENDENTE")
+    valid_decisions = (
+        "GO",
+        "GO_WITH_WARNINGS",
+        "GO_WITH_ACCEPTED_WARNINGS",
+        "V1_7_READY_WITH_ACCEPTED_WARNINGS",
+        "NO_GO",
+        "PENDENTE",
+    )
     assert data["go_decision"] in valid_decisions
 
 
@@ -132,11 +144,14 @@ def test_artifact_go_decision_consistent():
     decision = data.get("go_decision", "")
 
     if bf > 0:
-        assert decision == "NO_GO", (
-            f"Blocker fails={bf} but decision='{decision}'; expected NO_GO"
-        )
+        assert decision == "NO_GO", f"Blocker fails={bf} but decision='{decision}'; expected NO_GO"
     elif data.get("blocker_warns", 0) > 0 or data.get("nonblocker_warns", 0) > 0:
-        valid_go = ("GO_WITH_WARNINGS", "GO_WITH_ACCEPTED_WARNINGS", "V1_7_READY_WITH_ACCEPTED_WARNINGS", "NO_GO")
+        valid_go = (
+            "GO_WITH_WARNINGS",
+            "GO_WITH_ACCEPTED_WARNINGS",
+            "V1_7_READY_WITH_ACCEPTED_WARNINGS",
+            "NO_GO",
+        )
         assert decision in valid_go, (
             f"Warnings present but decision='{decision}'; expected one of {valid_go}"
         )

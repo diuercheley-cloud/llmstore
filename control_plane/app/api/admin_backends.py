@@ -7,22 +7,15 @@ import uuid
 from app.api.deps import get_circuit_breaker, get_inference_proxy
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.services.runtime_dependencies import get_db_session
 from app.models.core.inference_backend import InferenceBackend
-from app.models.core.model_backend_route import ModelBackendRoute
 from app.models.core.model_registry import ModelRegistry
-from app.models.core.security_event import SecurityEvent
 from app.schemas.admin import InferenceBackendCreate, InferenceBackendPatch
 from app.services.admin_model_management import (
     backend_container_snapshot,
-    backend_runtime_capabilities,
     backend_service_name,
     run_backend_docker_command,
 )
 from app.services.auth import require_admin
-from app.services.backend_registry import ensure_default_backends
-from app.services.inference_proxy import InferenceProxy
-from app.services.security_monitor import log_security_event
 from app.services.backend_lifecycle.manager import BackendLifecycleManager
 from app.services.backend_lifecycle.providers import (
     DockerProvider,
@@ -30,11 +23,14 @@ from app.services.backend_lifecycle.providers import (
     LocalProcessProvider,
     ProviderUnavailableError,
 )
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from app.services.backend_registry import ensure_default_backends
+from app.services.inference_proxy import InferenceProxy
+from app.services.model_policy import MODEL_REGISTRY_ROUTING_LOADS
+from app.services.runtime_dependencies import get_db_session
+from app.services.security_monitor import log_security_event
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.services.model_policy import MODEL_REGISTRY_ROUTING_LOADS
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/admin", tags=["admin-backends"], dependencies=[Depends(require_admin)])
@@ -91,7 +87,9 @@ def _select_lifecycle_provider(backend: InferenceBackend) -> str:
     return "local_process"
 
 
-def _build_lifecycle_manager(session: AsyncSession, backend: InferenceBackend | None = None) -> BackendLifecycleManager:
+def _build_lifecycle_manager(
+    session: AsyncSession, backend: InferenceBackend | None = None
+) -> BackendLifecycleManager:
     provider_type = "local_process"
     if backend is not None:
         provider_type = _select_lifecycle_provider(backend)
@@ -137,18 +135,38 @@ async def list_backends(
 ):
     await ensure_default_backends(session)
     await session.commit()
-    rows = (await session.execute(select(InferenceBackend).order_by(InferenceBackend.created_at.asc()))).scalars().all()
+    rows = (
+        (
+            await session.execute(
+                select(InferenceBackend).order_by(InferenceBackend.created_at.asc())
+            )
+        )
+        .scalars()
+        .all()
+    )
     health_results = await asyncio.gather(*[proxy.health_backend(item) for item in rows])
     return [_serialize_backend_admin(item, health) for item, health in zip(rows, health_results)]
 
 
 @router.post("/backends", status_code=201)
-async def create_backend(payload: InferenceBackendCreate, session: AsyncSession = Depends(get_db_session)):
-    existing = await session.execute(select(InferenceBackend).where(InferenceBackend.name == payload.name))
+async def create_backend(
+    payload: InferenceBackendCreate, session: AsyncSession = Depends(get_db_session)
+):
+    existing = await session.execute(
+        select(InferenceBackend).where(InferenceBackend.name == payload.name)
+    )
     if existing.scalar_one_or_none() is not None:
         raise HTTPException(status_code=409, detail="backend name already exists")
     if payload.is_default:
-        defaults = (await session.execute(select(InferenceBackend).where(InferenceBackend.is_default.is_(True)))).scalars().all()
+        defaults = (
+            (
+                await session.execute(
+                    select(InferenceBackend).where(InferenceBackend.is_default.is_(True))
+                )
+            )
+            .scalars()
+            .all()
+        )
         for item in defaults:
             item.is_default = False
     backend = InferenceBackend(**payload.model_dump())
@@ -185,9 +203,9 @@ async def test_backend_connection(
             pass
     ok = await proxy.health_url(base_url, payload.healthcheck_path)
     if not ok and payload.provider == "openai_compatible":
-         ok = await proxy.health_url(base_url, "/v1/models")
-         if not ok:
-             ok = await proxy.health_url(base_url, "/models")
+        ok = await proxy.health_url(base_url, "/v1/models")
+        if not ok:
+            ok = await proxy.health_url(base_url, "/models")
     return {"ok": ok}
 
 
@@ -218,11 +236,23 @@ async def patch_backend(
         raise HTTPException(status_code=404, detail="backend not found")
     patch_data = payload.model_dump(exclude_unset=True)
     if "name" in patch_data and patch_data["name"] != backend.name:
-        existing = await session.execute(select(InferenceBackend).where(InferenceBackend.name == patch_data["name"]))
+        existing = await session.execute(
+            select(InferenceBackend).where(InferenceBackend.name == patch_data["name"])
+        )
         if existing.scalar_one_or_none() is not None:
             raise HTTPException(status_code=409, detail="backend name already exists")
     if patch_data.get("is_default") is True:
-        defaults = (await session.execute(select(InferenceBackend).where(InferenceBackend.is_default.is_(True), InferenceBackend.id != backend_id))).scalars().all()
+        defaults = (
+            (
+                await session.execute(
+                    select(InferenceBackend).where(
+                        InferenceBackend.is_default.is_(True), InferenceBackend.id != backend_id
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
         for item in defaults:
             item.is_default = False
     for key, value in patch_data.items():
@@ -272,9 +302,13 @@ async def backend_logs(
     service_name = backend_service_name(backend)
     if not service_name:
         raise HTTPException(status_code=409, detail="backend is not mapped to a compose service")
-    result = run_backend_docker_command(backend, "logs", "--tail", str(tail), service_name, timeout_seconds=30)
+    result = run_backend_docker_command(
+        backend, "logs", "--tail", str(tail), service_name, timeout_seconds=30
+    )
     if not result.ok:
-        raise HTTPException(status_code=409, detail=result.detail or result.stderr or "backend logs unavailable")
+        raise HTTPException(
+            status_code=409, detail=result.detail or result.stderr or "backend logs unavailable"
+        )
     return {
         "backend_id": str(backend.id),
         "backend_name": backend.name,
@@ -403,7 +437,15 @@ async def backends_health(
     session: AsyncSession = Depends(get_db_session),
     proxy: InferenceProxy = Depends(get_inference_proxy),
 ):
-    rows = (await session.execute(select(InferenceBackend).order_by(InferenceBackend.created_at.asc()))).scalars().all()
+    rows = (
+        (
+            await session.execute(
+                select(InferenceBackend).order_by(InferenceBackend.created_at.asc())
+            )
+        )
+        .scalars()
+        .all()
+    )
     return {
         "generated_at": utc_now().isoformat(),
         "backends": await asyncio.gather(*[proxy.health_backend(item) for item in rows]),
@@ -416,17 +458,27 @@ async def backends_routing(
     proxy: InferenceProxy = Depends(get_inference_proxy),
 ):
     backend_rows = (
-        await session.execute(select(InferenceBackend).order_by(InferenceBackend.created_at.asc()))
-    ).scalars().all()
+        (
+            await session.execute(
+                select(InferenceBackend).order_by(InferenceBackend.created_at.asc())
+            )
+        )
+        .scalars()
+        .all()
+    )
     backend_health_list = await asyncio.gather(*[proxy.health_backend(row) for row in backend_rows])
     backend_health = {item["backend_id"]: item for item in backend_health_list}
     models = (
-        await session.execute(
-            select(ModelRegistry)
-            .options(*MODEL_REGISTRY_ROUTING_LOADS)
-            .order_by(ModelRegistry.created_at.asc())
+        (
+            await session.execute(
+                select(ModelRegistry)
+                .options(*MODEL_REGISTRY_ROUTING_LOADS)
+                .order_by(ModelRegistry.created_at.asc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     model_rows = []
     summary = {"healthy": 0, "degraded": 0, "unhealthy": 0, "disabled": 0}
     for item in models:

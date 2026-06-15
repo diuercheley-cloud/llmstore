@@ -142,6 +142,7 @@ class SandboxRunner:
         Main asynchronous implementation.
         """
         from .tracing import Tracer
+
         with Tracer().trace_span("sandbox_run", attributes={"command": command}):
             if not self.use_docker:
                 return await self._run_local_async(command, timeout)
@@ -150,18 +151,14 @@ class SandboxRunner:
         self.active_containers.add(container_name)
 
         final_cmd = self._build_docker_command(command, container_name)
-        logger.info(
-            f"Executing in Docker sandbox (async): {command} [Name: {container_name}]"
-        )
+        logger.info(f"Executing in Docker sandbox (async): {command} [Name: {container_name}]")
 
         process = await asyncio.create_subprocess_shell(
             final_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
 
         try:
-            stdout, stderr = await asyncio.wait_for(
-                process.communicate(), timeout=timeout
-            )
+            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
             rc = process.returncode if process.returncode is not None else 0
             return rc, stdout.decode(errors="replace"), stderr.decode(errors="replace")
         except TimeoutError:
@@ -173,9 +170,7 @@ class SandboxRunner:
         finally:
             self._sync_cleanup_container(container_name)
 
-    async def _run_local_async(
-        self, command: str, timeout: int = 30
-    ) -> tuple[int, str, str]:
+    async def _run_local_async(self, command: str, timeout: int = 30) -> tuple[int, str, str]:
         logger.info(f"Executing in local sandbox (async): {command}")
 
         # Use process groups for cleanup on Unix-like systems
@@ -191,9 +186,7 @@ class SandboxRunner:
             **kwargs,
         )
         try:
-            stdout, stderr = await asyncio.wait_for(
-                process.communicate(), timeout=timeout
-            )
+            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
             rc = process.returncode if process.returncode is not None else 0
             return rc, stdout.decode(errors="replace"), stderr.decode(errors="replace")
         except TimeoutError:
@@ -219,9 +212,7 @@ class SandboxRunner:
         self.active_containers.add(container_name)
 
         final_cmd = self._build_docker_command(command, container_name)
-        logger.info(
-            f"Executing in Docker sandbox (sync): {command} [Name: {container_name}]"
-        )
+        logger.info(f"Executing in Docker sandbox (sync): {command} [Name: {container_name}]")
 
         try:
             result = subprocess.run(

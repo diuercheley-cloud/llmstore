@@ -26,16 +26,21 @@ async def db_session():
 @pytest.fixture
 def fake_client_id():
     import uuid
+
     return uuid.uuid4()
 
 
 @pytest.mark.asyncio
 async def test_idempotency_prevents_duplicate_credit(db_session, fake_client_id):
     key = "idem-credit-001"
-    tx1 = await credit_manual(db_session, fake_client_id, Decimal("100.0000"), reason="first", idempotency_key=key)
+    tx1 = await credit_manual(
+        db_session, fake_client_id, Decimal("100.0000"), reason="first", idempotency_key=key
+    )
     await db_session.commit()
     balance_after_first = await get_balance(db_session, fake_client_id)
-    tx2 = await credit_manual(db_session, fake_client_id, Decimal("200.0000"), reason="second", idempotency_key=key)
+    tx2 = await credit_manual(
+        db_session, fake_client_id, Decimal("200.0000"), reason="second", idempotency_key=key
+    )
     await db_session.commit()
     balance_after_second = await get_balance(db_session, fake_client_id)
     assert tx1.id == tx2.id
@@ -47,10 +52,14 @@ async def test_idempotency_prevents_duplicate_credit(db_session, fake_client_id)
 @pytest.mark.asyncio
 async def test_idempotency_prevents_duplicate_adjustment(db_session, fake_client_id):
     key = "idem-adjust-001"
-    tx1 = await adjustment(db_session, fake_client_id, Decimal("50.0000"), reason="bonus", idempotency_key=key)
+    tx1 = await adjustment(
+        db_session, fake_client_id, Decimal("50.0000"), reason="bonus", idempotency_key=key
+    )
     await db_session.commit()
     balance_after_first = await get_balance(db_session, fake_client_id)
-    tx2 = await adjustment(db_session, fake_client_id, Decimal("999.0000"), reason="hacker", idempotency_key=key)
+    tx2 = await adjustment(
+        db_session, fake_client_id, Decimal("999.0000"), reason="hacker", idempotency_key=key
+    )
     await db_session.commit()
     balance_after_second = await get_balance(db_session, fake_client_id)
     assert tx1.id == tx2.id

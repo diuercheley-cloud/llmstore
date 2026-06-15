@@ -16,7 +16,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _canonical_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+    )
 
 
 def _hash_bytes(data: bytes) -> str:
@@ -45,22 +47,24 @@ async def create_attestation_policy(
     require_for_sovereign: bool = False,
     require_for_sensitive_tenants: bool = False,
 ) -> CommercialAttestationPolicy:
-    policy_data = sanitize_report_payload({
-        "policy_name": policy_name,
-        "policy_version": policy_version,
-        "min_trust_score": min_trust_score,
-        "max_drift_threshold": max_drift_threshold,
-        "require_signed_evidence": require_signed_evidence,
-        "require_measurement_chain": require_measurement_chain,
-        "require_model_binding": require_model_binding,
-        "require_workflow_binding": require_workflow_binding,
-        "allowed_enclave_types": allowed_enclave_types or [],
-        "allowed_platform_types": allowed_platform_types or [],
-        "enforcement_mode": enforcement_mode,
-        "block_untrusted": block_untrusted,
-        "require_for_sovereign": require_for_sovereign,
-        "require_for_sensitive_tenants": require_for_sensitive_tenants,
-    })
+    policy_data = sanitize_report_payload(
+        {
+            "policy_name": policy_name,
+            "policy_version": policy_version,
+            "min_trust_score": min_trust_score,
+            "max_drift_threshold": max_drift_threshold,
+            "require_signed_evidence": require_signed_evidence,
+            "require_measurement_chain": require_measurement_chain,
+            "require_model_binding": require_model_binding,
+            "require_workflow_binding": require_workflow_binding,
+            "allowed_enclave_types": allowed_enclave_types or [],
+            "allowed_platform_types": allowed_platform_types or [],
+            "enforcement_mode": enforcement_mode,
+            "block_untrusted": block_untrusted,
+            "require_for_sovereign": require_for_sovereign,
+            "require_for_sensitive_tenants": require_for_sensitive_tenants,
+        }
+    )
     policy_hash = _hash_payload(policy_data)
 
     record = CommercialAttestationPolicy(
@@ -117,9 +121,13 @@ async def evaluate_attestation_against_policy(
 
     reasons: list[str] = []
     if attestation.trust_score < policy.min_trust_score:
-        reasons.append(f"trust_score_below_minimum: {attestation.trust_score} < {policy.min_trust_score}")
+        reasons.append(
+            f"trust_score_below_minimum: {attestation.trust_score} < {policy.min_trust_score}"
+        )
     if attestation.drift_score > policy.max_drift_threshold:
-        reasons.append(f"drift_score_above_threshold: {attestation.drift_score} > {policy.max_drift_threshold}")
+        reasons.append(
+            f"drift_score_above_threshold: {attestation.drift_score} > {policy.max_drift_threshold}"
+        )
     if policy.allowed_enclave_types_json:
         if attestation.enclave_type not in policy.allowed_enclave_types_json:
             reasons.append(f"enclave_type_not_allowed: {attestation.enclave_type}")
@@ -169,7 +177,11 @@ async def block_untrusted_runtimes(
             raise ValueError("No attestation records available for enforce mode")
         return {"allowed": effective_mode != "disabled", "status": "unknown", "records": 0}
 
-    untrusted = [r for r in records if not r.trusted or r.status in ("untrusted", "drift", "expired", "revoked")]
+    untrusted = [
+        r
+        for r in records
+        if not r.trusted or r.status in ("untrusted", "drift", "expired", "revoked")
+    ]
     if untrusted and effective_mode == "enforce":
         raise ValueError(
             f"Runtime attestation enforcement blocked: {len(untrusted)} untrusted runtime(s) present"
@@ -246,7 +258,9 @@ async def require_attestation_for_sovereign(
 
     if not attestation:
         if effective_mode == "enforce":
-            raise ValueError(f"No trusted attestation for sovereign runtime in cluster {cluster_id}")
+            raise ValueError(
+                f"No trusted attestation for sovereign runtime in cluster {cluster_id}"
+            )
         return {"required": True, "compliant": False, "reason": "no_trusted_attestation"}
 
     return {
@@ -274,17 +288,21 @@ async def measure_loaded_models_integrity(
         expected_hash = mh.get("expected_hash")
         observed_hash = mh.get("observed_hash")
         drift = expected_hash and observed_hash and expected_hash != observed_hash
-        results.append({
-            "model_id": model_id,
-            "expected_hash": expected_hash,
-            "observed_hash": observed_hash,
-            "drift_detected": bool(drift),
-        })
+        results.append(
+            {
+                "model_id": model_id,
+                "expected_hash": expected_hash,
+                "observed_hash": observed_hash,
+                "drift_detected": bool(drift),
+            }
+        )
 
     any_drift = any(r["drift_detected"] for r in results)
     if any_drift:
         attestation.drift_detected = True
-        attestation.drift_score = sum(1 for r in results if r["drift_detected"]) / max(len(results), 1)
+        attestation.drift_score = sum(1 for r in results if r["drift_detected"]) / max(
+            len(results), 1
+        )
         attestation.status = "drift"
         attestation.trusted = False
         await db.flush()
@@ -311,22 +329,31 @@ async def verify_inference_adapter_integrity(
 
 
 async def summarize_integrity_status(db: AsyncSession) -> dict[str, Any]:
-    total_attestations = (await db.execute(
-        select(func.count(CommercialRuntimeAttestation.id))
-    )).scalar() or 0
-    trusted_count = (await db.execute(
-        select(func.count(CommercialRuntimeAttestation.id))
-        .where(CommercialRuntimeAttestation.trusted.is_(True))
-    )).scalar() or 0
-    drift_count = (await db.execute(
-        select(func.count(CommercialRuntimeAttestation.id))
-        .where(CommercialRuntimeAttestation.drift_detected.is_(True))
-    )).scalar() or 0
+    total_attestations = (
+        await db.execute(select(func.count(CommercialRuntimeAttestation.id)))
+    ).scalar() or 0
+    trusted_count = (
+        await db.execute(
+            select(func.count(CommercialRuntimeAttestation.id)).where(
+                CommercialRuntimeAttestation.trusted.is_(True)
+            )
+        )
+    ).scalar() or 0
+    drift_count = (
+        await db.execute(
+            select(func.count(CommercialRuntimeAttestation.id)).where(
+                CommercialRuntimeAttestation.drift_detected.is_(True)
+            )
+        )
+    ).scalar() or 0
 
-    policy_count = (await db.execute(
-        select(func.count(CommercialAttestationPolicy.id))
-        .where(CommercialAttestationPolicy.is_active.is_(True))
-    )).scalar() or 0
+    policy_count = (
+        await db.execute(
+            select(func.count(CommercialAttestationPolicy.id)).where(
+                CommercialAttestationPolicy.is_active.is_(True)
+            )
+        )
+    ).scalar() or 0
 
     return {
         "total_attestations": int(total_attestations),

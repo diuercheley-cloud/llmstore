@@ -43,22 +43,17 @@ def _has_real_secret(text: str) -> list[str]:
 
 
 class TestHybridPlatformSecurity:
-
     def test_e2e_script_no_secrets(self):
         """The E2E validation script itself should not contain real secrets."""
         content = E2E_SCRIPT.read_text()
         findings = _has_real_secret(content)
-        assert len(findings) == 0, (
-            f"E2E script contains potential secrets: {findings}"
-        )
+        assert len(findings) == 0, f"E2E script contains potential secrets: {findings}"
 
     def test_report_script_no_secrets(self):
         """The report validation script should not contain real secrets."""
         content = REPORT_SCRIPT.read_text()
         findings = _has_real_secret(content)
-        assert len(findings) == 0, (
-            f"Report script contains potential secrets: {findings}"
-        )
+        assert len(findings) == 0, f"Report script contains potential secrets: {findings}"
 
     def test_e2e_script_no_api_key_hardcoding(self):
         """E2E script should not hardcode real API keys."""
@@ -71,13 +66,9 @@ class TestHybridPlatformSecurity:
                 r'(api_key|API_KEY|apikey|api-key)\s*[=:]\s*["\']?(sk-[a-zA-Z0-9])',
                 stripped,
             ):
-                is_safe = any(
-                    safe in stripped.lower() for safe in SAFE_TOKENS
-                )
+                is_safe = any(safe in stripped.lower() for safe in SAFE_TOKENS)
                 if not is_safe:
-                    pytest.fail(
-                        f"Line {i}: Potentially hardcoded API key: {stripped[:100]}"
-                    )
+                    pytest.fail(f"Line {i}: Potentially hardcoded API key: {stripped[:100]}")
 
     def test_e2e_script_admin_token_not_hardcoded(self):
         """E2E script should not hardcode admin tokens (use test token or env)."""
@@ -90,22 +81,14 @@ class TestHybridPlatformSecurity:
                 stripped,
             ):
                 if "test-admin-token" not in stripped and "admin-token-example" not in stripped:
-                    pytest.fail(
-                        f"Line {i}: Potentially hardcoded admin token: {stripped[:100]}"
-                    )
+                    pytest.fail(f"Line {i}: Potentially hardcoded admin token: {stripped[:100]}")
 
     def test_e2e_script_no_sk_pattern_leaks(self):
         """Check that the script doesn't accidentally leak 'sk-' patterns in output."""
         content = E2E_SCRIPT.read_text()
         findings = re.findall(r'"sk-[a-zA-Z0-9]+"', content)
-        dangerous = [
-            f
-            for f in findings
-            if not any(safe in f for safe in SAFE_TOKENS)
-        ]
-        assert len(dangerous) == 0, (
-            f"Script contains potentially leaked sk- patterns: {dangerous}"
-        )
+        dangerous = [f for f in findings if not any(safe in f for safe in SAFE_TOKENS)]
+        assert len(dangerous) == 0, f"Script contains potentially leaked sk- patterns: {dangerous}"
 
     def test_artifacts_no_secrets(self):
         """Generated artifact JSON reports should not contain secrets."""
@@ -123,9 +106,7 @@ class TestHybridPlatformSecurity:
                 continue
             content = report_path.read_text()
             findings = _has_real_secret(content)
-            assert len(findings) == 0, (
-                f"{report_path.name} contains potential secrets: {findings}"
-            )
+            assert len(findings) == 0, f"{report_path.name} contains potential secrets: {findings}"
 
     def test_artifacts_no_bearer_token_leak(self):
         """Check that 'Bearer' in artifacts only has masked tokens."""
@@ -140,18 +121,14 @@ class TestHybridPlatformSecurity:
             if not report_path.exists():
                 continue
             content = report_path.read_text()
-            bearer_matches = re.findall(
-                r"Bearer\s+([a-zA-Z0-9._-]{10,})", content
-            )
+            bearer_matches = re.findall(r"Bearer\s+([a-zA-Z0-9._-]{10,})", content)
             for match in bearer_matches:
                 if match in SAFE_TOKENS:
                     continue
                 # Check if it's a masked token
                 if "masked" in match.lower() or "redacted" in match.lower():
                     continue
-                pytest.fail(
-                    f"{fname}: Possible Bearer token leak: 'Bearer {match[:20]}...'"
-                )
+                pytest.fail(f"{fname}: Possible Bearer token leak: 'Bearer {match[:20]}...'")
 
     def test_check_secrets_all_passes(self):
         """check-secrets --all should pass for the scripts."""
@@ -165,15 +142,13 @@ class TestHybridPlatformSecurity:
             # Show only the last 30 lines of output for debugging
             output_lines = result.stdout.strip().split("\n")
             last_lines = "\n".join(output_lines[-30:])
-            pytest.fail(
-                f"check-secrets --all failed (exit {result.returncode}):\n{last_lines}"
-            )
+            pytest.fail(f"check-secrets --all failed (exit {result.returncode}):\n{last_lines}")
 
     def test_e2e_script_uses_env_vars_not_hardcoded_creds(self):
         """E2E script should use env vars for credentials."""
         content = E2E_SCRIPT.read_text()
         # Should reference os.environ or $VAR for sensitive values
-        assert "os.environ" in content or '\\${' in content or '${' in content, (
+        assert "os.environ" in content or "\\${" in content or "${" in content, (
             "Script should use environment variables for configuration"
         )
 
@@ -192,9 +167,7 @@ class TestHybridPlatformSecurity:
             if log_file.is_file():
                 content = log_file.read_text(errors="ignore")
                 findings = _has_real_secret(content)
-                assert len(findings) == 0, (
-                    f"{log_file.name} contains potential secrets: {findings}"
-                )
+                assert len(findings) == 0, f"{log_file.name} contains potential secrets: {findings}"
 
     def test_security_report_from_e2e_is_pass(self):
         """The security report generated during E2E should be PASS."""
@@ -230,6 +203,4 @@ class TestHybridPlatformSecurity:
         with open(report_json) as f:
             data = json.load(f)
         score = data.get("score", "")
-        assert score != "FAIL", (
-            "Security report must not be FAIL"
-        )
+        assert score != "FAIL", "Security report must not be FAIL"

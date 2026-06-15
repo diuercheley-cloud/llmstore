@@ -27,7 +27,9 @@ def test_makefile_has_validate_customer_demo_target():
     assert os.path.isfile(MAKEFILE_PATH)
     with open(MAKEFILE_PATH) as f:
         content = f.read()
-    assert "validate-customer-demo:" in content, "Target validate-customer-demo nao encontrado no Makefile"
+    assert "validate-customer-demo:" in content, (
+        "Target validate-customer-demo nao encontrado no Makefile"
+    )
 
 
 def test_script_no_real_secrets():
@@ -35,8 +37,8 @@ def test_script_no_real_secrets():
     with open(SCRIPT_PATH) as f:
         content = f.read()
     patterns = [
-        re.compile(r'sk-[a-zA-Z0-9]{20,}'),
-        re.compile(r'ADMIN_TOKEN=[a-zA-Z0-9._-]{12,}'),
+        re.compile(r"sk-[a-zA-Z0-9]{20,}"),
+        re.compile(r"ADMIN_TOKEN=[a-zA-Z0-9._-]{12,}"),
     ]
     for pattern in patterns:
         matches = pattern.findall(content)
@@ -50,11 +52,17 @@ def test_reset_demo_dry_run_default():
     """Reset demo sem --yes deve ser dry-run."""
     result = subprocess.run(
         ["bash", SCRIPT_PATH, "--no-build", "--quick", "--reset-demo"],
-        capture_output=True, text=True
+        capture_output=True,
+        text=True,
     )
     output = result.stdout.lower()
     # Should indicate dry-run or simulation mode
-    assert "dry-run" in output or "simulado" in output or "Skipped" in output or result.returncode in (0, 1, 2)
+    assert (
+        "dry-run" in output
+        or "simulado" in output
+        or "Skipped" in output
+        or result.returncode in (0, 1, 2)
+    )
 
 
 def test_script_does_not_depend_on_internet():
@@ -62,7 +70,7 @@ def test_script_does_not_depend_on_internet():
     with open(SCRIPT_PATH) as f:
         content = f.read()
     # Check for external URLs
-    external_urls = re.findall(r'https?://(?!localhost|127\.0\.0\.1)\S+', content)
+    external_urls = re.findall(r"https?://(?!localhost|127\.0\.0\.1)\S+", content)
     non_demo_urls = [u for u in external_urls if "example" not in u]
     # Allow these as they are for report generation
     assert len(non_demo_urls) == 0, f"URLs externas encontradas: {non_demo_urls}"
@@ -73,13 +81,20 @@ def test_script_does_not_expose_admin_token():
     with open(SCRIPT_PATH) as f:
         content = f.read()
     # Check for lines that set ADMIN_TOKEN to a literal value
-    lines_with_admin = [l for l in content.split('\n') if 'ADMIN_TOKEN=' in l]
+    lines_with_admin = [l for l in content.split("\n") if "ADMIN_TOKEN=" in l]
     for line in lines_with_admin:
         # Skip export/read patterns
-        if 'grep' in line or 'cut' in line or '${' in line or 'ADMIN_TOKEN:-}' in line or 'ADMIN_TOKEN=""' in line or "ADMIN_TOKEN=''" in line:
+        if (
+            "grep" in line
+            or "cut" in line
+            or "${" in line
+            or "ADMIN_TOKEN:-}" in line
+            or 'ADMIN_TOKEN=""' in line
+            or "ADMIN_TOKEN=''" in line
+        ):
             continue
         # Skip comments
-        if line.strip().startswith('#'):
+        if line.strip().startswith("#"):
             continue
         assert False, f"ADMIN_TOKEN possivelmente hardcoded: {line.strip()}"
 

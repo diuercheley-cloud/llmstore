@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 import pytest_asyncio
@@ -18,77 +18,72 @@ async def session(isolated_db_url):
         yield s
     await engine.dispose()
 
+
 @pytest.mark.asyncio
 async def test_create_checkpoint(session: AsyncSession):
-    start = datetime.now(timezone.utc) - timedelta(days=1)
-    end = datetime.now(timezone.utc)
+    start = datetime.now(UTC) - timedelta(days=1)
+    end = datetime.now(UTC)
     checkpoint = await transparency_gossip.create_consistency_checkpoint(
-        session,
-        "merkle_timeline",
-        start,
-        end
+        session, "merkle_timeline", start, end
     )
     assert checkpoint.root_hash is not None
     assert checkpoint.checkpoint_type == "merkle_timeline"
+
 
 @pytest.mark.asyncio
 async def test_checkpoint_ingest_and_export(session: AsyncSession):
     payload = {
         "checkpoint_type": "receipt_chain",
-        "period_start": (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat(),
-        "period_end": datetime.now(timezone.utc).isoformat(),
+        "period_start": (datetime.now(UTC) - timedelta(hours=2)).isoformat(),
+        "period_end": datetime.now(UTC).isoformat(),
         "root_hash": "a" * 64,
-        "witness_summary": {"count": 5}
+        "witness_summary": {"count": 5},
     }
     checkpoint = await transparency_gossip.ingest_checkpoint(session, payload)
     assert checkpoint.root_hash == "a" * 64
-    
+
     exported = await transparency_gossip.export_checkpoint(checkpoint)
     assert exported["root_hash"] == "a" * 64
     assert exported["checkpoint_type"] == "receipt_chain"
 
+
 @pytest.mark.asyncio
 async def test_split_view_detection(session: AsyncSession):
-    start = datetime.now(timezone.utc) - timedelta(hours=1)
-    end = datetime.now(timezone.utc)
-    
+    start = datetime.now(UTC) - timedelta(hours=1)
+    end = datetime.now(UTC)
+
     # 1. Create first checkpoint
     cp1 = CommercialConsistencyCheckpoint(
-        checkpoint_type="merkle_timeline",
-        period_start=start,
-        period_end=end,
-        root_hash="hash_a"
+        checkpoint_type="merkle_timeline", period_start=start, period_end=end, root_hash="hash_a"
     )
     session.add(cp1)
     await session.commit()
-    
+
     # 2. Ingest conflicting checkpoint
     payload = {
         "checkpoint_type": "merkle_timeline",
         "period_start": start.isoformat(),
         "period_end": end.isoformat(),
-        "root_hash": "hash_b"
+        "root_hash": "hash_b",
     }
     cp2 = await transparency_gossip.ingest_checkpoint(session, payload)
-    
+
     # 3. Verify alert was created
     from app.models.commercial.commercial_transparency import CommercialTransparencySplitViewAlert
     from sqlalchemy.future import select
+
     result = await session.execute(select(CommercialTransparencySplitViewAlert))
     alert = result.scalar_one_or_none()
-    
+
     assert alert is not None
     assert alert.alert_type == "checkpoint_conflict"
     assert alert.expected_hash == "hash_a"
     assert alert.observed_hash == "hash_b"
 
+
 @pytest.mark.asyncio
 async def test_gossip_dry_run(session: AsyncSession):
-    payload = {
-        "peer_id": "cluster-east-1",
-        "checkpoint_hash": "some_hash",
-        "gossip_type": "push"
-    }
+    payload = {"peer_id": "cluster-east-1", "checkpoint_hash": "some_hash", "gossip_type": "push"}
     record = await transparency_gossip.gossip_with_peer(session, "cluster-east-1", payload)
     assert record.source_peer_id == "cluster-east-1"
-    assert record.verification_status == "unknown" # No local checkpoint matches
+    assert record.verification_status == "unknown"  # No local checkpoint matches

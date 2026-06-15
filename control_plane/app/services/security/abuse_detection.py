@@ -186,7 +186,11 @@ async def record_abuse_event(
 
     logger.warning(
         "abuse event: signal=%s severity=%s action=%s dry_run=%s client=%s",
-        signal, severity, action, dry_run, str(client_id) if client_id else None,
+        signal,
+        severity,
+        action,
+        dry_run,
+        str(client_id) if client_id else None,
     )
 
     if action == "suspend_client" and client_id and not dry_run:
@@ -220,7 +224,8 @@ async def check_rate_limit_abuse(
         return None
 
     event, action = await record_abuse_event(
-        session, redis,
+        session,
+        redis,
         signal="requests_per_minute_above_plan",
         title=f"Requests/min ({current_count}) above plan limit ({limit_per_minute})",
         client_id=client_id,
@@ -254,14 +259,19 @@ async def check_token_abuse(
         return None
 
     event, action = await record_abuse_event(
-        session, redis,
+        session,
+        redis,
         signal="tokens_per_minute_above_plan",
         title=f"Token usage ({tokens_used}) at {daily_ratio:.1%} of daily limit ({daily_limit})",
         client_id=client_id,
         api_key_prefix=api_key_prefix,
         source_ip=source_ip,
         endpoint="token_quota",
-        details={"tokens_used": tokens_used, "daily_limit": daily_limit, "ratio": round(daily_ratio, 4)},
+        details={
+            "tokens_used": tokens_used,
+            "daily_limit": daily_limit,
+            "ratio": round(daily_ratio, 4),
+        },
     )
     return action
 
@@ -290,7 +300,8 @@ async def check_auth_error_burst(
         return None
 
     event, action = await record_abuse_event(
-        session, redis,
+        session,
+        redis,
         signal="repeated_auth_errors",
         title=f"{total} auth errors from {source_ip}",
         client_id=client_id,
@@ -329,7 +340,8 @@ async def check_repeated_giant_prompt(
         return None
 
     event, action = await record_abuse_event(
-        session, redis,
+        session,
+        redis,
         signal="repeated_giant_prompts",
         title=f"Large prompt ({prompt_tokens}t) repeated {seen}x",
         client_id=client_id,
@@ -366,7 +378,8 @@ async def check_request_loop(
         return None
 
     event, action = await record_abuse_event(
-        session, redis,
+        session,
+        redis,
         signal="request_loop",
         title=f"Same request repeated {seen}x in 10min",
         client_id=client_id,
@@ -401,13 +414,18 @@ async def check_cache_miss_abuse(
         return None
 
     event, action = await record_abuse_event(
-        session, redis,
+        session,
+        redis,
         signal="high_cache_miss_repetitive",
         title=f"High cache miss ratio ({miss_ratio:.0%}) with repetitive pattern",
         client_id=client_id,
         api_key_prefix=api_key_prefix,
         endpoint="cache",
-        details={"cache_hits": cache_hits, "cache_misses": cache_misses, "miss_ratio": round(miss_ratio, 4)},
+        details={
+            "cache_hits": cache_hits,
+            "cache_misses": cache_misses,
+            "miss_ratio": round(miss_ratio, 4),
+        },
     )
     return action
 
@@ -431,7 +449,8 @@ async def check_cloud_without_balance(
         return None
 
     event, action = await record_abuse_event(
-        session, redis,
+        session,
+        redis,
         signal="cloud_without_balance",
         title="Cloud request attempted with insufficient wallet balance",
         client_id=client_id,
@@ -461,7 +480,8 @@ async def check_cost_spike(
         return None
 
     event, action = await record_abuse_event(
-        session, redis,
+        session,
+        redis,
         signal="high_estimated_cost",
         title=f"Estimated cost spike: BRL {recent_cost_brl:.2f} in short period",
         client_id=client_id,
@@ -496,7 +516,8 @@ async def check_streaming_abort(
         return None
 
     event, action = await record_abuse_event(
-        session, redis,
+        session,
+        redis,
         signal="repeated_streaming_abort",
         title=f"Streaming aborted {total}x in 5min",
         client_id=client_id,
@@ -530,7 +551,8 @@ async def check_rag_upload_abuse(
         return None
 
     event, action = await record_abuse_event(
-        session, redis,
+        session,
+        redis,
         signal="excessive_rag_upload",
         title=f"RAG upload burst: {total} uploads in 5min",
         client_id=client_id,
@@ -561,7 +583,8 @@ async def check_tts_abuse(
         return None
 
     event, action = await record_abuse_event(
-        session, redis,
+        session,
+        redis,
         signal="excessive_tts_chars",
         title=f"TTS chars ({chars_total}) above monthly limit ({monthly_limit})",
         client_id=client_id,

@@ -1,8 +1,7 @@
-from fastapi import APIRouter, FastAPI
-from fastapi.routing import APIRoute
-
 from app.bootstrap.routers import _secure_include_router
 from app.services.auth import require_admin
+from fastapi import APIRouter, FastAPI
+from fastapi.routing import APIRoute
 
 
 def _dependency_calls(route: APIRoute):

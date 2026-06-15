@@ -1,12 +1,13 @@
 import uuid
+
 import pytest
 import pytest_asyncio
+from app.db.base import Base
+from app.db.session import SessionLocal, engine
+from app.models.agents.agents import AgentDefinition, AgentIncident, AgentTool
 from fastapi import status
 from httpx import AsyncClient
 
-from app.db.base import Base
-from app.db.session import engine, SessionLocal
-from app.models.agents.agents import AgentDefinition, AgentTool, AgentIncident
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_incident_api_db(monkeypatch):
@@ -14,6 +15,7 @@ async def setup_incident_api_db(monkeypatch):
     monkeypatch.setenv("AGENT_EXECUTION_PLANE_ENABLED", "true")
     monkeypatch.setenv("AGENT_EXECUTION_ENABLED", "true")
     from app.core.config import get_settings
+
     get_settings.cache_clear()
 
     async with engine.begin() as conn:
@@ -68,8 +70,8 @@ async def test_run_playbook_api_unauthorized(async_client: AsyncClient, admin_to
         json={
             "playbook_id": "tool-cascade-failure",
             "performed_by": "unauthorized_user",
-            "confirmation": True
-        }
+            "confirmation": True,
+        },
     )
     assert resp.status_code == status.HTTP_400_BAD_REQUEST
     assert "permission" in resp.json()["detail"].lower()
@@ -123,8 +125,8 @@ async def test_run_playbook_api_success_flow(async_client: AsyncClient, admin_to
             "playbook_id": "tool-cascade-failure",
             "performed_by": "admin_write",
             "confirmation": True,
-            "dry_run": True
-        }
+            "dry_run": True,
+        },
     )
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
@@ -148,8 +150,8 @@ async def test_run_playbook_api_success_flow(async_client: AsyncClient, admin_to
             "playbook_id": "tool-cascade-failure",
             "performed_by": "admin_write",
             "confirmation": True,
-            "dry_run": False
-        }
+            "dry_run": False,
+        },
     )
     assert resp2.status_code == status.HTTP_200_OK
     data2 = resp2.json()

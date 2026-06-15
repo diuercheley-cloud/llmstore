@@ -94,7 +94,7 @@ REQUIRED_PATTERNS = {
     ],
     "control_plane/app/main.py": [
         "operations_compatibility_admin_router",
-        "app.include_router(operations_compatibility_admin_router, tags=[\"operations-compatibility\"])",
+        'app.include_router(operations_compatibility_admin_router, tags=["operations-compatibility"])',
     ],
     "control_plane/app/static/admin/index.html": [
         "Compatibility Contracts & Version Negotiation",

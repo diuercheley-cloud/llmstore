@@ -2,12 +2,12 @@
 import uuid
 from typing import Any
 
+from app.services.runtime_dependencies import get_db
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from ..api.dependencies import get_admin_user
-from app.services.runtime_dependencies import get_db
 from ..models.commercial.commercial_attestation_runtime import (
     CommercialAttestationChallenge,
     CommercialAttestationEvidence,
@@ -197,7 +197,9 @@ async def list_evidence(
     return [
         {
             "id": str(item.id),
-            "runtime_attestation_id": str(item.runtime_attestation_id) if item.runtime_attestation_id else None,
+            "runtime_attestation_id": str(item.runtime_attestation_id)
+            if item.runtime_attestation_id
+            else None,
             "evidence_type": item.evidence_type,
             "evidence_hash": item.evidence_hash,
             "chain_position": item.chain_position,

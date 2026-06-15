@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from app.core.config import get_settings
 from app.services.tokenizer_service import TokenizerService
@@ -7,6 +7,7 @@ from app.utils.token_estimator import estimate_prompt_tokens
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
+
 
 class ContextManager:
     def __init__(self):
@@ -17,11 +18,11 @@ class ContextManager:
 
     async def manage(
         self,
-        messages: List[Dict[str, Any]],
+        messages: list[dict[str, Any]],
         requested_max_tokens: int | None = None,
         model_id: str | None = None,
         tokenizer: TokenizerService | None = None,
-    ) -> Tuple[List[Dict[str, Any]], int, Dict[str, Any]]:
+    ) -> tuple[list[dict[str, Any]], int, dict[str, Any]]:
         """
         Manage chat context to optimize inference quality and performance.
         Returns (processed_messages, final_max_tokens, metrics).
@@ -47,17 +48,17 @@ class ContextManager:
             "truncated": False,
             "simple_input_mode": False,
         }
-        
+
         # ... rest of the method logic should use tokenizer if available ...
         # For simplicity in this step, I'll keep using estimate_prompt_tokens inside the loop
         # but I should ideally use the tokenizer if provided.
-        
+
         async def _count(msgs):
             if tokenizer:
                 res = await tokenizer.count_chat_tokens(msgs, model=model_id)
                 return res.input_tokens
             return estimate_prompt_tokens(messages=msgs)
-        
+
         # 1. Clean messages (remove empty, duplicates, and very short repeated content)
         seen_content = set()
         processed_messages = []
@@ -65,12 +66,12 @@ class ContextManager:
             content = str(m.get("content", "")).strip()
             if not content:
                 continue
-            
+
             # Simple deduplication for exact repeated content (especially very short ones <= 2 chars)
             if content in seen_content and (len(content) <= 2 or m["role"] == "user"):
                 metrics["truncated"] = True
                 continue
-            
+
             processed_messages.append(m)
             seen_content.add(content)
 
@@ -90,11 +91,11 @@ class ContextManager:
         # 3. Consolidate and truncate system prompt
         system_messages = [m for m in processed_messages if m["role"] == "system"]
         other_messages = [m for m in processed_messages if m["role"] != "system"]
-        
+
         if system_messages:
             system_content = "\n\n".join([str(m["content"]) for m in system_messages])
             if len(system_content) > self.max_system_chars:
-                system_content = system_content[:self.max_system_chars]
+                system_content = system_content[: self.max_system_chars]
                 metrics["truncated"] = True
             processed_messages = [{"role": "system", "content": system_content}] + other_messages
         else:
@@ -104,17 +105,20 @@ class ContextManager:
         if not metrics["simple_input_mode"] and len(processed_messages) > 1:
             system_msg = [m for m in processed_messages if m["role"] == "system"]
             non_system = [m for m in processed_messages if m["role"] != "system"]
-            
-            if len(non_system) > self.max_history_messages + 1: # +1 for the current user msg
-                non_system = non_system[-(self.max_history_messages + 1):]
+
+            if len(non_system) > self.max_history_messages + 1:  # +1 for the current user msg
+                non_system = non_system[-(self.max_history_messages + 1) :]
                 metrics["truncated"] = True
-            
+
             processed_messages = system_msg + non_system
 
         # 5. Limit by tokens (MAX_CONTEXT_TOKENS = 2048)
-        while await _count(processed_messages) > self.max_context_tokens and len(processed_messages) > 2:
+        while (
+            await _count(processed_messages) > self.max_context_tokens
+            and len(processed_messages) > 2
+        ):
             if processed_messages[0]["role"] == "system":
-                processed_messages.pop(1) # Remove oldest history
+                processed_messages.pop(1)  # Remove oldest history
             else:
                 processed_messages.pop(0)
             metrics["truncated"] = True
@@ -127,12 +131,13 @@ class ContextManager:
         final_max_tokens = requested_max_tokens
         if final_max_tokens is None or final_max_tokens <= 0:
             final_max_tokens = 256
-        
+
         if final_max_tokens > 512:
             final_max_tokens = 512
             metrics["truncated"] = True
-        
+
         return processed_messages, final_max_tokens, metrics
+
 
 def get_context_manager():
     return ContextManager()

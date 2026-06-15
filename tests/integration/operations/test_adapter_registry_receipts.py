@@ -19,7 +19,7 @@ class TestAdapterRegistryReceipts:
             adapter_name="test",
             adapter_version="1.0",
             manifest_hash="mhash",
-            registry_hash="rhash"
+            registry_hash="rhash",
         )
         receipt = build_registry_entry_receipt(entry)
         assert receipt.receipt_type == "adapter_registry_entry"
@@ -33,7 +33,7 @@ class TestAdapterRegistryReceipts:
             client_id=client_id,
             registry_entry_id=uuid.uuid4(),
             decision_type="approve",
-            decision_status="accepted"
+            decision_status="accepted",
         )
         receipt = build_registry_decision_receipt(decision)
         assert receipt.receipt_type == "adapter_registry_decision"

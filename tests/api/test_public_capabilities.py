@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 import pytest
 
 VALID_LEVELS = {"core", "supported", "beta", "experimental", "deprecated"}
@@ -60,12 +58,10 @@ async def test_all_capability_levels_are_valid(async_client):
 
     for feature in payload["features"]:
         assert feature["capability_level"] in VALID_LEVELS, (
-            f"Invalid capability_level={feature['capability_level']} "
-            f"for feature {feature['id']}"
+            f"Invalid capability_level={feature['capability_level']} for feature {feature['id']}"
         )
         assert feature["status"] in VALID_STATUSES, (
-            f"Invalid status={feature['status']} "
-            f"for feature {feature['id']}"
+            f"Invalid status={feature['status']} for feature {feature['id']}"
         )
 
 
@@ -80,6 +76,7 @@ async def test_capabilities_includes_openai_api(async_client):
 @pytest.mark.asyncio
 async def test_capabilities_respects_feature_flags(monkeypatch, async_client):
     from app.core.config import get_settings
+
     get_settings.cache_clear()
 
     monkeypatch.setenv("AGENT_RUNTIME_ENABLED", "false")

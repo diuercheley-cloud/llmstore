@@ -39,6 +39,7 @@ async def test_hybrid_rag_admin_no_internal_pricing(admin_client: AsyncClient):
 @pytest.mark.asyncio
 async def test_internal_margin_not_in_client_portal_html():
     from pathlib import Path
+
     candidates = [
         Path("control_plane/app/static/portal/index.html"),
         Path("app/static/portal/index.html"),

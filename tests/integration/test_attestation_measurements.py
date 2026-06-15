@@ -33,6 +33,7 @@ async def test_snapshot_runtime_measurement(session: AsyncSession):
 async def test_snapshot_measurement_with_drift(session: AsyncSession):
     import os
     import tempfile
+
     with tempfile.NamedTemporaryFile(delete=False, suffix=".bin") as f:
         f.write(b"test content")
         tmp_path = f.name
@@ -126,8 +127,12 @@ async def test_snapshot_environment_fingerprint(session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_get_measurement_history(session: AsyncSession):
-    await snapshot_runtime_measurement(session, cluster_id="cluster-i", measurement_type="runtime_binary")
-    await snapshot_runtime_measurement(session, cluster_id="cluster-i", measurement_type="policy_bundle")
+    await snapshot_runtime_measurement(
+        session, cluster_id="cluster-i", measurement_type="runtime_binary"
+    )
+    await snapshot_runtime_measurement(
+        session, cluster_id="cluster-i", measurement_type="policy_bundle"
+    )
 
     history = await get_measurement_history(session, cluster_id="cluster-i")
     assert len(history) == 2

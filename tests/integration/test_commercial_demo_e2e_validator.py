@@ -14,7 +14,10 @@ def test_script_exists():
 def test_help_flag():
     result = subprocess.run(
         ["bash", str(SCRIPT), "--help"],
-        cwd=ROOT, capture_output=True, text=True, timeout=30,
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        timeout=30,
     )
     assert result.returncode == 0
     output = result.stdout.lower()
@@ -28,7 +31,10 @@ def test_help_flag():
 def test_unknown_flag():
     result = subprocess.run(
         ["bash", str(SCRIPT), "--unknown-flag"],
-        cwd=ROOT, capture_output=True, text=True, timeout=30,
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        timeout=30,
     )
     assert result.returncode != 0
 
@@ -36,7 +42,10 @@ def test_unknown_flag():
 def test_base_url_flag():
     result = subprocess.run(
         ["bash", str(SCRIPT), "--base-url", "http://localhost:99999", "--help"],
-        cwd=ROOT, capture_output=True, text=True, timeout=30,
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        timeout=30,
     )
     assert result.returncode == 0
 

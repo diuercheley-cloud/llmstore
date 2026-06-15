@@ -31,10 +31,13 @@ async def ensure_default_model(session: AsyncSession) -> ModelRegistry:
     )
     if "fallback-local" in backends:
         await _ensure_fallback_route(session, gemma_model, backends["fallback-local"])
-    
+
     import logging
+
     logger = logging.getLogger(__name__)
-    logger.info(f"Seeding models. LMStudio enabled: {settings.lmstudio_enabled}, backends: {list(backends.keys())}")
+    logger.info(
+        f"Seeding models. LMStudio enabled: {settings.lmstudio_enabled}, backends: {list(backends.keys())}"
+    )
 
     if settings.lmstudio_enabled and "lmstudio-local" in backends:
         logger.info(f"Seeding LMStudio model: {settings.lmstudio_chat_model}")
@@ -67,18 +70,28 @@ async def ensure_default_model(session: AsyncSession) -> ModelRegistry:
             is_default=True,
             is_active=True,
             provider="vllm",
-            metadata=json.dumps({
-                "recommended_quantization": "",
-                "gpu_profile": "",
-                "backend": "vllm",
-                "backend_name": "vllm-local",
-                "architecture": "opt",
-            }),
+            metadata=json.dumps(
+                {
+                    "recommended_quantization": "",
+                    "gpu_profile": "",
+                    "backend": "vllm",
+                    "backend_name": "vllm-local",
+                    "architecture": "opt",
+                }
+            ),
         )
         gemma_model.is_default = False
     existing_defaults = (
-        await session.execute(select(ModelRegistry).where(ModelRegistry.id != gemma_model.id, ModelRegistry.is_default.is_(True)))
-    ).scalars().all()
+        (
+            await session.execute(
+                select(ModelRegistry).where(
+                    ModelRegistry.id != gemma_model.id, ModelRegistry.is_default.is_(True)
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
     for item in existing_defaults:
         item.is_default = False
     return gemma_model
@@ -119,7 +132,9 @@ async def _ensure_model_entry(
         select(ModelRegistry)
         .options(
             selectinload(ModelRegistry.inference_backend),
-            selectinload(ModelRegistry.backend_routes).selectinload(ModelBackendRoute.inference_backend),
+            selectinload(ModelRegistry.backend_routes).selectinload(
+                ModelBackendRoute.inference_backend
+            ),
         )
         .where(or_(ModelRegistry.model_id == model_id, ModelRegistry.model_alias == model_alias))
     )
@@ -169,7 +184,9 @@ async def _ensure_model_entry(
     return model
 
 
-async def _ensure_fallback_route(session: AsyncSession, model: ModelRegistry, backend: InferenceBackend) -> None:
+async def _ensure_fallback_route(
+    session: AsyncSession, model: ModelRegistry, backend: InferenceBackend
+) -> None:
     result = await session.execute(
         select(ModelBackendRoute).where(
             ModelBackendRoute.model_registry_id == model.id,
@@ -196,7 +213,9 @@ async def _ensure_fallback_route(session: AsyncSession, model: ModelRegistry, ba
         route.state = "healthy"
 
 
-async def _ensure_default_route(session: AsyncSession, model: ModelRegistry, backend: InferenceBackend) -> None:
+async def _ensure_default_route(
+    session: AsyncSession, model: ModelRegistry, backend: InferenceBackend
+) -> None:
     result = await session.execute(
         select(ModelBackendRoute).where(
             ModelBackendRoute.model_registry_id == model.id,

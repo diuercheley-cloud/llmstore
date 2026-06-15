@@ -1,32 +1,32 @@
 import os
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import UTC, datetime
+from typing import Any
 
 import yaml
 from app.services.feature_flag_registry import FeatureFlagRegistryService
 
 
 class FeatureFlagAuditService:
-    def __init__(self, registry_path: Optional[str] = None):
+    def __init__(self, registry_path: str | None = None):
         base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../"))
         if registry_path is None:
             registry_path = os.path.join(base_dir, "config/feature-flags.yaml")
         self.registry_path = registry_path
         self.registry_service = FeatureFlagRegistryService(registry_path=registry_path)
 
-    def load_raw_flags(self) -> List[Dict[str, Any]]:
+    def load_raw_flags(self) -> list[dict[str, Any]]:
         if not os.path.exists(self.registry_path):
             return []
-        with open(self.registry_path, "r", encoding="utf-8") as f:
+        with open(self.registry_path, encoding="utf-8") as f:
             try:
                 data = yaml.safe_load(f)
                 return data if isinstance(data, list) else []
             except Exception:
                 return []
 
-    def perform_audit(self) -> Dict[str, Any]:
+    def perform_audit(self) -> dict[str, Any]:
         raw_flags = self.load_raw_flags()
-        
+
         # 1. Detect Duplicates
         duplicates = []
         seen_names = set()
@@ -41,11 +41,14 @@ class FeatureFlagAuditService:
         # 2. Scan for orphans using the registry service
         scan_results = self.registry_service.scan_orphans()
         orphans_list = scan_results.get("orphans", [])
-        
+
         # Filter orphans to only include active/experimental flags that are unused
-        registered_status = {f.get("name", "").upper(): f.get("status", "active").lower() for f in raw_flags}
+        registered_status = {
+            f.get("name", "").upper(): f.get("status", "active").lower() for f in raw_flags
+        }
         actual_orphans = [
-            o for o in orphans_list 
+            o
+            for o in orphans_list
             if registered_status.get(o.upper(), "active") in ("active", "experimental")
         ]
         orphans_set = {o.upper() for o in actual_orphans}
@@ -62,12 +65,12 @@ class FeatureFlagAuditService:
             "experimental": [],
             "deprecated": [],
             "orphaned": [],
-            "internal_only": []
+            "internal_only": [],
         }
 
         for flag in raw_flags:
             name = flag.get("name", "UNNAMED").upper()
-            
+
             # Docs validation (description or safe_default_reason or registry rules)
             description = flag.get("description", "")
             if not description and not flag.get("safe_default_reason"):
@@ -85,7 +88,7 @@ class FeatureFlagAuditService:
 
             # Classification rules:
             status = flag.get("status", "active").lower()
-            
+
             if status == "deprecated":
                 classified_flags["deprecated"].append(flag)
             elif status == "internal":
@@ -105,16 +108,16 @@ class FeatureFlagAuditService:
             "sem_docs": sorted(sem_docs),
             "sem_owner": sorted(sem_owner),
             "sem_safe_default_reason": sorted(sem_safe_default_reason),
-            "classification": classified_flags
+            "classification": classified_flags,
         }
 
-    def generate_report(self, audit_results: Dict[str, Any]) -> str:
+    def generate_report(self, audit_results: dict[str, Any]) -> str:
         report_dir = os.path.abspath(os.path.join(self.registry_path, "../../artifacts/platform"))
         os.makedirs(report_dir, exist_ok=True)
         report_path = os.path.join(report_dir, "feature-flag-audit.md")
 
-        timestamp = datetime.now(timezone.utc).isoformat()
-        
+        timestamp = datetime.now(UTC).isoformat()
+
         # Build Markdown content
         md = f"""# Feature Flag Governance Audit Report
 
@@ -193,28 +196,36 @@ Flags that do not declare an owner team or service path.
 
         md += "\n### Experimental Flags\n"
         if audit_results["classification"]["experimental"]:
-            for f in sorted(audit_results["classification"]["experimental"], key=lambda x: x.get("name", "")):
+            for f in sorted(
+                audit_results["classification"]["experimental"], key=lambda x: x.get("name", "")
+            ):
                 md += f"- `{f.get('name')}` (Owner: `{f.get('owner')}`)\n"
         else:
             md += "- None\n"
 
         md += "\n### Deprecated Flags\n"
         if audit_results["classification"]["deprecated"]:
-            for f in sorted(audit_results["classification"]["deprecated"], key=lambda x: x.get("name", "")):
+            for f in sorted(
+                audit_results["classification"]["deprecated"], key=lambda x: x.get("name", "")
+            ):
                 md += f"- `{f.get('name')}` (Replacement: `{f.get('replacement') or 'None'}`)\n"
         else:
             md += "- None\n"
 
         md += "\n### Orphaned Flags\n"
         if audit_results["classification"]["orphaned"]:
-            for f in sorted(audit_results["classification"]["orphaned"], key=lambda x: x.get("name", "")):
+            for f in sorted(
+                audit_results["classification"]["orphaned"], key=lambda x: x.get("name", "")
+            ):
                 md += f"- `{f.get('name')}` (Status: `{f.get('status')}`, Owner: `{f.get('owner')}`)\n"
         else:
             md += "- None\n"
 
         md += "\n### Internal Only Flags\n"
         if audit_results["classification"]["internal_only"]:
-            for f in sorted(audit_results["classification"]["internal_only"], key=lambda x: x.get("name", "")):
+            for f in sorted(
+                audit_results["classification"]["internal_only"], key=lambda x: x.get("name", "")
+            ):
                 md += f"- `{f.get('name')}` (Owner: `{f.get('owner')}`)\n"
         else:
             md += "- None\n"
@@ -224,7 +235,7 @@ Flags that do not declare an owner team or service path.
 
         return report_path
 
-    def cleanup_orphaned_flags(self, mode: str = "deprecate") -> Tuple[int, List[str]]:
+    def cleanup_orphaned_flags(self, mode: str = "deprecate") -> tuple[int, list[str]]:
         """
         Cleans up orphaned flags from the registry.
         mode can be:

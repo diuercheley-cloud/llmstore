@@ -4,22 +4,22 @@ from app.services.auth import (
     AdminRole,
     admin_key_scheme,
     get_admin_role,
-    require_admin,
+    require_admin,  # noqa: F401
     require_admin_permission,
-    require_admin_role,
+    require_admin_role,  # noqa: F401
     require_client,
     require_superadmin,
 )
-from app.services.embeddings import EmbeddingService
-from app.services.runtime_dependencies import get_db_session as get_db_session_dependency
-from app.services.runtime_dependencies import get_redis as get_redis_dependency
-from app.services.runtime_dependencies import get_semantic_cache as get_semantic_cache_dependency
 from app.services.backend_lifecycle.manager import BackendLifecycleManager
 from app.services.backend_lifecycle.providers import LocalProcessProvider
 from app.services.backend_slot_manager import BackendSlotManager
 from app.services.circuit_breaker import CircuitBreaker
-from app.services.inference_proxy import InferenceProxy, get_inference_proxy
+from app.services.embeddings import EmbeddingService
+from app.services.inference_proxy import InferenceProxy, get_inference_proxy  # noqa: F401
 from app.services.queue_manager import QueueManager
+from app.services.runtime_dependencies import get_db_session as get_db_session_dependency
+from app.services.runtime_dependencies import get_redis as get_redis_dependency
+from app.services.runtime_dependencies import get_semantic_cache as get_semantic_cache_dependency
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -80,7 +80,9 @@ async def get_admin_user(
 
 
 class AdminUserContext:
-    def __init__(self, tenant_id: str = "default", email: str = "admin@example.com", role: str = "superadmin"):
+    def __init__(
+        self, tenant_id: str = "default", email: str = "admin@example.com", role: str = "superadmin"
+    ):
         self.tenant_id = tenant_id
         self.email = email
         self.role = role

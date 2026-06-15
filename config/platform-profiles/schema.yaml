@@ -139,6 +139,11 @@ valid_flags:
     description: Enable abuse detection checks
     override_allowed: true
     high_risk: false
+  ABUSE_DRY_RUN:
+    type: boolean
+    description: Run abuse detection in dry-run mode
+    override_allowed: true
+    high_risk: false
   DISTRIBUTED_RUNTIME_ENABLED:
     type: boolean
     description: Enables distributed runtime configuration

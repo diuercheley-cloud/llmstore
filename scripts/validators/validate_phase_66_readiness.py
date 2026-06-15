@@ -45,7 +45,12 @@ def validate_required_paths() -> list[dict[str, str]]:
     failures: list[dict[str, str]] = []
     for name, path in REQUIRED_PATHS.items():
         if not path.exists():
-            failures.append({"path": str(path.relative_to(REPO_ROOT)), "issue": f"missing required artifact: {name}"})
+            failures.append(
+                {
+                    "path": str(path.relative_to(REPO_ROOT)),
+                    "issue": f"missing required artifact: {name}",
+                }
+            )
     return failures
 
 
@@ -64,7 +69,10 @@ def validate_makefile_targets() -> list[dict[str, str]]:
 def run_local_validator(script_name: str) -> dict[str, str] | None:
     script_path = REPO_ROOT / "scripts" / script_name
     if not script_path.exists():
-        return {"path": str(script_path.relative_to(REPO_ROOT)), "issue": "missing offline validation script"}
+        return {
+            "path": str(script_path.relative_to(REPO_ROOT)),
+            "issue": "missing offline validation script",
+        }
 
     result = subprocess.run(
         [sys.executable, str(script_path)],
@@ -117,4 +125,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

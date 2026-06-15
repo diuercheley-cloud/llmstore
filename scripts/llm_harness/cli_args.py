@@ -6,6 +6,7 @@ def add_config_args(parser: argparse.ArgumentParser):
     parser.add_argument("--config", help="Path to config file")
     parser.add_argument("--debug", action="store_true", help="Show verbose stack traces on error")
 
+
 def add_provider_args(
     parser: argparse.ArgumentParser, default_code_agent=None, default_allow_stub=False
 ):
@@ -105,27 +106,22 @@ def add_provider_args(
         type=int,
         help="Maximum tokens for LLM response (required for reasoning models like Qwen3)",
     )
+    parser.add_argument("--model-profile", help="Model profile to use for routing/execution")
     parser.add_argument(
-        "--model-profile",
-        help="Model profile to use for routing/execution"
-    )
-    parser.add_argument(
-        "--fallback-model-profile",
-        help="Fallback model profile if primary model profile fails"
+        "--fallback-model-profile", help="Fallback model profile if primary model profile fails"
     )
     parser.add_argument(
         "--allow-cloud-models",
         action="store_true",
         default=None,
-        help="Allow executing tasks using cloud models"
+        help="Allow executing tasks using cloud models",
     )
     parser.add_argument(
         "--deny-cloud-models",
         action="store_false",
         dest="allow_cloud_models",
-        help="Deny executing tasks using cloud models"
+        help="Deny executing tasks using cloud models",
     )
-
 
 
 def add_sandbox_args(parser: argparse.ArgumentParser):
@@ -148,6 +144,7 @@ def add_sandbox_args(parser: argparse.ArgumentParser):
     )
     parser.add_argument("--proxy-url", help="Proxy URL for sandbox network")
 
+
 def add_policy_args(parser: argparse.ArgumentParser, default_self_heal=None):
     """Arguments related to self-healing policy and execution behaviors."""
     parser.add_argument(
@@ -163,6 +160,7 @@ def add_policy_args(parser: argparse.ArgumentParser, default_self_heal=None):
         help="Allow short-circuiting task execution for tests",
     )
 
+
 def add_report_args(parser: argparse.ArgumentParser):
     """Arguments related to output generation and report configuration."""
     parser.add_argument(
@@ -175,6 +173,7 @@ def add_report_args(parser: argparse.ArgumentParser):
         help="Maximum characters of shell tool output before truncation",
     )
 
+
 def add_cache_args(parser: argparse.ArgumentParser):
     """Arguments related to prompt/response caching."""
     parser.add_argument(
@@ -185,6 +184,7 @@ def add_cache_args(parser: argparse.ArgumentParser):
     parser.add_argument("--cache-dir", help="Cache directory")
     parser.add_argument("--no-cache", action="store_true", help="Disable cache")
 
+
 def add_execution_args(parser: argparse.ArgumentParser, default_loop_timeout=None):
     """Execution control arguments like timeouts."""
     parser.add_argument(
@@ -194,11 +194,13 @@ def add_execution_args(parser: argparse.ArgumentParser, default_loop_timeout=Non
         help="Timeout in seconds for execution loop",
     )
 
+
 def add_pricing_args(parser: argparse.ArgumentParser):
     """Arguments related to pricing and usage limits."""
     parser.add_argument("--pricing-file", help="Path to pricing JSON file")
     parser.add_argument("--max-cost-per-run", type=float, help="Maximum allowed cost per run")
     parser.add_argument("--max-tokens-per-run", type=int, help="Maximum allowed tokens per run")
+
 
 def add_memory_args(parser: argparse.ArgumentParser):
     """Arguments related to persistent memory."""
@@ -214,6 +216,7 @@ def add_memory_args(parser: argparse.ArgumentParser):
         type=int,
         help="How many days to keep memory entries",
     )
+
 
 def add_agent_args(parser: argparse.ArgumentParser):
     """Arguments related to agent orchestration."""
@@ -231,6 +234,7 @@ def add_agent_args(parser: argparse.ArgumentParser):
         "--agent-registry-file",
         help="Path to agent registry YAML file",
     )
+
 
 def add_agents_args(parser: argparse.ArgumentParser):
     """Arguments for advanced multi-agent orchestration command."""
@@ -250,6 +254,7 @@ def add_agents_args(parser: argparse.ArgumentParser):
     # Explain
     explain_parser = agents_subparsers.add_parser("explain", help="Explain team structure")
     explain_parser.add_argument("team_file", help="Path to team YAML file")
+
 
 def add_approval_args(parser: argparse.ArgumentParser):
     """Arguments related to action approval."""
@@ -277,6 +282,7 @@ def add_approval_args(parser: argparse.ArgumentParser):
         help="Allow editing action payloads before approval in interactive mode",
     )
 
+
 def add_checkpoint_args(parser: argparse.ArgumentParser):
     """Arguments related to checkpoint/resume."""
     parser.add_argument("--checkpoint-dir", help="Checkpoint directory")
@@ -286,6 +292,7 @@ def add_checkpoint_args(parser: argparse.ArgumentParser):
         action="store_true",
         help="Automatically save checkpoint after each step",
     )
+
 
 def add_tracking_args(parser: argparse.ArgumentParser):
     """Arguments related to experiment tracking."""
@@ -298,11 +305,10 @@ def add_tracking_args(parser: argparse.ArgumentParser):
     parser.add_argument("--mlflow-tracking-uri", help="MLflow tracking URI")
     parser.add_argument("--mlflow-experiment", help="MLflow experiment name")
 
+
 def add_eval_args(parser: argparse.ArgumentParser):
     """Arguments specific to the evaluation commands."""
-    parser.add_argument(
-        "--max-steps", type=int, default=10, help="Max steps per case"
-    )
+    parser.add_argument("--max-steps", type=int, default=10, help="Max steps per case")
     parser.add_argument(
         "--report",
         choices=["json", "markdown", "both"],

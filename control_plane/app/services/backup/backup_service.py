@@ -1,20 +1,23 @@
-import io
+import hashlib
 import json
+import logging
 import os
 import shutil
-import hashlib
 import time
-import logging
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from app.core.config import get_settings
+from app.core.metrics import (
+    BACKUP_DURATION_SECONDS,
+    BACKUP_FAILURE_TOTAL,
+)
+from app.core.request_context import get_correlation_id
 from app.db.base import Base
 from app.schemas.backup import (
-    BackupComponent,
     BackupCreateRequest,
     BackupManifest,
     BackupRestoreRequest,
@@ -22,52 +25,49 @@ from app.schemas.backup import (
     BackupSummary,
     BackupVerificationResult,
 )
-from app.core.request_context import get_correlation_id
-from app.core.metrics import (
-    BACKUP_DURATION_SECONDS,
-    BACKUP_FAILURE_TOTAL,
-    RESTORE_DURATION_SECONDS,
-    RESTORE_FAILURE_TOTAL,
-    MEASURED_RTO_SECONDS,
-)
-from sqlalchemy import select, text
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .archive import ArchiveService
 from .audit import BackupAuditEmitter
 from .crypto import BackupCryptoService
 from .database_providers import PostgresBackupProvider, SQLiteBackupProvider
+from .errors import BackupManifestError, BackupValidationError
 from .manifest import ManifestService
 from .planner import RestorePlanner
 from .redaction import ConfigRedactor
 from .verification import BackupVerificationService
-from .errors import BackupError, RestoreLockError, BackupValidationError, BackupManifestError
+
 
 def _sha256_bytes(payload: bytes) -> str:
     import hashlib
+
     return hashlib.sha256(payload).hexdigest()
+
 
 class BackupService:
     def __init__(
-        self, 
+        self,
         db: AsyncSession,
-        crypto: Optional[BackupCryptoService] = None,
-        audit: Optional[BackupAuditEmitter] = None,
-        manifest_provider: Optional[ManifestService] = None,
-        archive_provider: Optional[ArchiveService] = None,
-        verification_provider: Optional[BackupVerificationService] = None,
-        planner_provider: Optional[RestorePlanner] = None,
+        crypto: BackupCryptoService | None = None,
+        audit: BackupAuditEmitter | None = None,
+        manifest_provider: ManifestService | None = None,
+        archive_provider: ArchiveService | None = None,
+        verification_provider: BackupVerificationService | None = None,
+        planner_provider: RestorePlanner | None = None,
     ):
         self.db = db
         self.settings = get_settings()
-        self.backup_root = Path(self.settings.disaster_recovery_backup_dir or "/tmp/agent-backups") / "system"
+        self.backup_root = (
+            Path(self.settings.disaster_recovery_backup_dir or "/tmp/agent-backups") / "system"
+        )
         self.repo_root = Path(
             getattr(self.settings, "llmstack_backup_source_root", None)
             or os.getenv("LLMSTACK_BACKUP_SOURCE_ROOT")
             or "/home/kleber/llm-inference-stack"
         )
         self.backup_root.mkdir(parents=True, exist_ok=True)
-        
+
         self.crypto = crypto or BackupCryptoService()
         self._fernet = self.crypto._fernet
         self.audit = audit or BackupAuditEmitter(db)
@@ -90,21 +90,23 @@ class BackupService:
             },
         )
 
-    async def create_backup(self, request: BackupCreateRequest | None = None, actor: str = "system") -> BackupManifest:
+    async def create_backup(
+        self, request: BackupCreateRequest | None = None, actor: str = "system"
+    ) -> BackupManifest:
         start_time = time.time()
-        self._log(logging.INFO, f"Starting backup creation", actor=actor)
+        self._log(logging.INFO, "Starting backup creation", actor=actor)
         try:
             req = request or BackupCreateRequest()
             scope = req.scope
             if req.full is True:
                 scope = "full"
-                
+
             if scope not in ("logical-agent-backup", "full"):
                 raise BackupValidationError(f"Unsupported backup scope: {scope}")
-                
+
             backup_id = f"backup-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}-{os.urandom(3).hex()}"
             redactor = ConfigRedactor()
-            
+
             if scope == "full":
                 tmp_dir = Path(tempfile.mkdtemp(prefix="db-dump-"))
                 db_dump_path = tmp_dir / "db.dump"
@@ -117,7 +119,9 @@ class BackupService:
 
                     def _subset_payload(table_names: list[str]) -> bytes:
                         tables = database_payload.get("tables", {})
-                        subset_tables = {name: tables.get(name, []) for name in table_names if name in tables}
+                        subset_tables = {
+                            name: tables.get(name, []) for name in table_names if name in tables
+                        }
                         item_count = sum(len(rows) for rows in subset_tables.values())
                         return json.dumps(
                             {
@@ -168,13 +172,17 @@ class BackupService:
             components = self.manifest_service.build_components(payload_parts)
             archive_bytes = self._build_archive(payload_parts)
             encrypted_payload = self.crypto.encrypt(archive_bytes)
-     
+
             manifest = BackupManifest(
                 backup_id=backup_id,
                 scope=scope,
                 coverage="full" if scope == "full" else "partial",
-                included=["database", "configs", "feature_flags"] if scope == "full" else ["agents", "workflows", "embedding metadata", "configs", "feature_flags"],
-                excluded=[] if scope == "full" else ["auth", "tenants", "billing", "audit", "policies", "persisted config"],
+                included=["database", "configs", "feature_flags"]
+                if scope == "full"
+                else ["agents", "workflows", "embedding metadata", "configs", "feature_flags"],
+                excluded=[]
+                if scope == "full"
+                else ["auth", "tenants", "billing", "audit", "policies", "persisted config"],
                 excluded_sensitive_files=getattr(redactor, "excluded_files", []),
                 redacted_config_keys=redactor.get_redacted_keys(),
                 components=components,
@@ -204,15 +212,25 @@ class BackupService:
             manifest.auto_verification_status = verification.status
             manifest.last_verified_at = verification.verified_at
             self.manifest_service.write(self.backup_root, manifest)
-            
+
             duration = time.time() - start_time
             BACKUP_DURATION_SECONDS.observe(duration)
-            self._log(logging.INFO, f"Backup successful: {backup_id}", backup_id=backup_id, duration=duration)
-            
+            self._log(
+                logging.INFO,
+                f"Backup successful: {backup_id}",
+                backup_id=backup_id,
+                duration=duration,
+            )
+
             await self.audit.log_immutable_event(
-                action="backup_created", actor=actor, backup_id=backup_id,
-                key_id=manifest.key_id, source="active_system", target=manifest.payload_file,
-                result="success", checksum=manifest.archive_checksum,
+                action="backup_created",
+                actor=actor,
+                backup_id=backup_id,
+                key_id=manifest.key_id,
+                source="active_system",
+                target=manifest.payload_file,
+                result="success",
+                checksum=manifest.archive_checksum,
             )
             await self.db.commit()
             return manifest
@@ -222,20 +240,22 @@ class BackupService:
             self._log(logging.ERROR, f"Backup failed: {e}", actor=actor, error_code=error_code)
             raise e
 
-    async def list_backups(self) -> List[BackupSummary]:
+    async def list_backups(self) -> list[BackupSummary]:
         backups = []
         for backup_dir in self.backup_root.iterdir():
             if backup_dir.is_dir() and backup_dir.name.startswith("backup-"):
                 try:
                     manifest = self.manifest_service.read(self.backup_root, backup_dir.name)
-                    backups.append(BackupSummary(
-                        id=manifest.backup_id,
-                        created_at=manifest.created_at,
-                        component_count=len(manifest.components),
-                        status="valid", # Simplification
-                        scope=manifest.scope,
-                        archive_checksum=manifest.archive_checksum,
-                    ))
+                    backups.append(
+                        BackupSummary(
+                            id=manifest.backup_id,
+                            created_at=manifest.created_at,
+                            component_count=len(manifest.components),
+                            status="valid",  # Simplification
+                            scope=manifest.scope,
+                            archive_checksum=manifest.archive_checksum,
+                        )
+                    )
                 except Exception:
                     continue
         return sorted(backups, key=lambda x: x.created_at, reverse=True)
@@ -248,21 +268,33 @@ class BackupService:
     async def get_backup(self, backup_id: str, actor: str = "system") -> BackupManifest:
         manifest = self._read_manifest(backup_id)
         await self.audit.log_immutable_event(
-            action="backup_downloaded", actor=actor, backup_id=backup_id,
-            key_id=manifest.key_id, source="active_system", target="download",
-            result="success", checksum=manifest.archive_checksum,
+            action="backup_downloaded",
+            actor=actor,
+            backup_id=backup_id,
+            key_id=manifest.key_id,
+            source="active_system",
+            target="download",
+            result="success",
+            checksum=manifest.archive_checksum,
         )
         await self.db.commit()
         return manifest
 
-    async def verify_backup(self, backup_id: str, actor: str = "system") -> BackupVerificationResult:
+    async def verify_backup(
+        self, backup_id: str, actor: str = "system"
+    ) -> BackupVerificationResult:
         try:
             manifest = self._read_manifest(backup_id)
         except BackupManifestError as exc:
             from app.core.metrics import BACKUP_VERIFICATION_FAILURE_TOTAL
 
             BACKUP_VERIFICATION_FAILURE_TOTAL.labels(reason="manifest_invalid").inc()
-            self._log(logging.WARNING, f"Backup manifest verification failed for {backup_id}", backup_id=backup_id, error_code=exc.error_code)
+            self._log(
+                logging.WARNING,
+                f"Backup manifest verification failed for {backup_id}",
+                backup_id=backup_id,
+                error_code=exc.error_code,
+            )
             raise
         payload_path = self.backup_root / backup_id / manifest.payload_file
         try:
@@ -275,7 +307,7 @@ class BackupService:
                 f"Backup payload not found: {backup_id}",
                 details={"backup_id": backup_id, "path": str(payload_path)},
             ) from exc
-        
+
         result = await self.verifier.verify(manifest, encrypted_payload)
 
         await self.audit.log_immutable_event(
@@ -291,9 +323,12 @@ class BackupService:
         await self.db.commit()
         return result
 
-    async def restore_backup(self, backup_id: str, request: BackupRestoreRequest | None = None) -> BackupRestoreResult:
+    async def restore_backup(
+        self, backup_id: str, request: BackupRestoreRequest | None = None
+    ) -> BackupRestoreResult:
         # Legacy entry point, now mostly handled by RestoreStagingService for critical paths
         from .restore_staging_service import RestoreStagingService
+
         service = RestoreStagingService(self.db, backup_service=self)
         return await service.restore_with_staging(backup_id, request)
 
@@ -311,7 +346,7 @@ class BackupService:
         parts = self._extract_payload_parts(backup_id, manifest)
         await self._apply_restore(manifest, parts)
 
-    async def _apply_restore(self, manifest: BackupManifest, parts: Dict[str, Any]) -> None:
+    async def _apply_restore(self, manifest: BackupManifest, parts: dict[str, Any]) -> None:
         if manifest.scope == "full":
             provider = self._get_database_provider()
             tmp_dir = Path(tempfile.mkdtemp(prefix="db-restore-direct-"))
@@ -323,19 +358,19 @@ class BackupService:
                 shutil.rmtree(tmp_dir, ignore_errors=True)
         else:
             await self._restore_database(parts.get("database.json", {}))
-        
+
         if "configs.json" in parts:
             for entry in parts["configs.json"].get("files", []):
                 target = self._resolve_restore_path(entry["path"])
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_text(entry["content"], encoding="utf-8")
-        
+
         if "feature_flags.json" in parts:
             self._restore_feature_flags(parts["feature_flags.json"])
-        
+
         await self.db.commit()
 
-    async def _restore_database(self, db_data: Dict[str, Any]) -> None:
+    async def _restore_database(self, db_data: dict[str, Any]) -> None:
         if not db_data or "tables" not in db_data:
             return
         models = self._database_models()
@@ -349,7 +384,7 @@ class BackupService:
     def _read_manifest(self, backup_id: str) -> BackupManifest:
         return self.manifest_service.read(self.backup_root, backup_id)
 
-    def _extract_payload_parts(self, backup_id: str, manifest: BackupManifest) -> Dict[str, Any]:
+    def _extract_payload_parts(self, backup_id: str, manifest: BackupManifest) -> dict[str, Any]:
         payload_path = self.backup_root / backup_id / manifest.payload_file
         try:
             encrypted_payload = payload_path.read_bytes()
@@ -361,7 +396,9 @@ class BackupService:
         archive_bytes = self.crypto.decrypt(encrypted_payload)
         return self.archive_service.extract(archive_bytes)
 
-    async def _build_payload_parts(self, redactor: Optional[ConfigRedactor] = None) -> Dict[str, bytes]:
+    async def _build_payload_parts(
+        self, redactor: ConfigRedactor | None = None
+    ) -> dict[str, bytes]:
         # Logical backup builder
         if redactor is None:
             redactor = ConfigRedactor()
@@ -372,15 +409,23 @@ class BackupService:
             stmt = select(model)
             res = await self.db.execute(stmt)
             rows = res.scalars().all()
-            db_data["tables"][model.__tablename__] = [self._serialize_row(model, row) for row in rows]
+            db_data["tables"][model.__tablename__] = [
+                self._serialize_row(model, row) for row in rows
+            ]
             db_data["item_count"] += len(rows)
-        
-        parts["database.json"] = json.dumps(self._serialize_value(db_data), sort_keys=True).encode("utf-8")
-        parts["configs.json"] = json.dumps(self._serialize_value(self._dump_configs(redactor)), sort_keys=True).encode("utf-8")
-        parts["feature_flags.json"] = json.dumps(self._serialize_value(self._dump_feature_flags()), sort_keys=True).encode("utf-8")
+
+        parts["database.json"] = json.dumps(self._serialize_value(db_data), sort_keys=True).encode(
+            "utf-8"
+        )
+        parts["configs.json"] = json.dumps(
+            self._serialize_value(self._dump_configs(redactor)), sort_keys=True
+        ).encode("utf-8")
+        parts["feature_flags.json"] = json.dumps(
+            self._serialize_value(self._dump_feature_flags()), sort_keys=True
+        ).encode("utf-8")
         return parts
 
-    def _database_models(self) -> List[Any]:
+    def _database_models(self) -> list[Any]:
         # Keep the logical backup focused on the DR-relevant domain set.
         allowed_tables = {
             "agent_definitions",
@@ -407,17 +452,19 @@ class BackupService:
             if getattr(mapper.class_, "__tablename__", "") in allowed_tables
         ]
 
-    def _serialize_row(self, model: Any, row: Any) -> Dict[str, Any]:
+    def _serialize_row(self, model: Any, row: Any) -> dict[str, Any]:
         data = {}
         for column in model.__table__.columns:
             data[column.name] = getattr(row, column.name)
         return data
 
-    def _deserialize_row(self, model: Any, data: Dict[str, Any]) -> Dict[str, Any]:
-        from datetime import date as date_cls, datetime as datetime_cls
+    def _deserialize_row(self, model: Any, data: dict[str, Any]) -> dict[str, Any]:
+        from datetime import date as date_cls
+        from datetime import datetime as datetime_cls
+
         from sqlalchemy import types as sa_types
 
-        result: Dict[str, Any] = {}
+        result: dict[str, Any] = {}
         for column in model.__table__.columns:
             value = data.get(column.name)
             if value is None:
@@ -460,30 +507,39 @@ class BackupService:
             return str(val)
         return val
 
-    def _dump_configs(self, redactor: ConfigRedactor) -> Dict[str, Any]:
+    def _dump_configs(self, redactor: ConfigRedactor) -> dict[str, Any]:
         configs = {"files": []}
         if self.repo_root.exists():
             for f in self.repo_root.iterdir():
-                if f.is_file() and f.name.startswith(".env") and not f.name.endswith(".example") and not f.name.endswith(".template"):
+                if (
+                    f.is_file()
+                    and f.name.startswith(".env")
+                    and not f.name.endswith(".example")
+                    and not f.name.endswith(".template")
+                ):
                     redactor.excluded_files.append(f.name)
         config_dir = self.repo_root / "config"
         if config_dir.exists():
             for f in config_dir.glob("*.yaml"):
                 content = f.read_text(encoding="utf-8")
-                configs["files"].append({
-                    "path": str(f.relative_to(self.repo_root)),
-                    "content": redactor.redact_file_content(f, content)
-                })
+                configs["files"].append(
+                    {
+                        "path": str(f.relative_to(self.repo_root)),
+                        "content": redactor.redact_file_content(f, content),
+                    }
+                )
         version_file = self.repo_root / "VERSION"
         if version_file.exists():
-            configs["files"].append({
-                "path": str(version_file.relative_to(self.repo_root)),
-                "content": version_file.read_text(encoding="utf-8"),
-            })
+            configs["files"].append(
+                {
+                    "path": str(version_file.relative_to(self.repo_root)),
+                    "content": version_file.read_text(encoding="utf-8"),
+                }
+            )
         return configs
 
-    def _dump_feature_flags(self) -> Dict[str, Any]:
-        return {"flags": {}} # Placeholder
+    def _dump_feature_flags(self) -> dict[str, Any]:
+        return {"flags": {}}  # Placeholder
 
     def _resolve_restore_path(self, rel_path: str) -> Path:
         candidate = (self.repo_root / rel_path).resolve()
@@ -492,11 +548,11 @@ class BackupService:
             raise ValueError("Directory traversal sequence detected in backup payload path.")
         return candidate
 
-    def _restore_feature_flags(self, data: Dict[str, Any]) -> None:
-        pass # Placeholder
+    def _restore_feature_flags(self, data: dict[str, Any]) -> None:
+        pass  # Placeholder
 
-    def _build_archive(self, payload_parts: Dict[str, Any]) -> bytes:
-        normalized_parts: Dict[str, bytes] = {}
+    def _build_archive(self, payload_parts: dict[str, Any]) -> bytes:
+        normalized_parts: dict[str, bytes] = {}
         for name, payload in payload_parts.items():
             if isinstance(payload, bytes):
                 normalized_parts[name] = payload
@@ -508,4 +564,6 @@ class BackupService:
 
     def _sign_payload(self, payload: dict[str, Any]) -> str:
         return self.crypto.sign_payload(payload)
+
+
 import tempfile

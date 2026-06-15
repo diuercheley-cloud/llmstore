@@ -2,12 +2,12 @@
 Owner: agent-platform
 Status: beta
 """
+
 import hashlib
 import json
 import logging
 import math
 import uuid
-from typing import List
 
 from app.core.config import get_settings
 from app.models.agents.agents import AgentMemoryIndex, AgentMemoryItem, AgentMemorySearchEvent
@@ -18,7 +18,7 @@ from sqlalchemy.future import select
 logger = logging.getLogger(__name__)
 
 
-def cosine_similarity(a: List[float], b: List[float]) -> float:
+def cosine_similarity(a: list[float], b: list[float]) -> float:
     dot = sum(x * y for x, y in zip(a, b))
     norm_a = math.sqrt(sum(x * x for x in a))
     norm_b = math.sqrt(sum(y * y for y in b))
@@ -27,7 +27,7 @@ def cosine_similarity(a: List[float], b: List[float]) -> float:
     return dot / (norm_a * norm_b)
 
 
-def get_mock_embedding(text: str, dimensions: int = 384) -> List[float]:
+def get_mock_embedding(text: str, dimensions: int = 384) -> list[float]:
     hash_bytes = hashlib.sha256(text.encode("utf-8")).digest()
     embedding = []
     current_hash = hash_bytes
@@ -35,8 +35,8 @@ def get_mock_embedding(text: str, dimensions: int = 384) -> List[float]:
         for i in range(0, len(current_hash), 4):
             if len(embedding) >= dimensions:
                 break
-            val = int.from_bytes(current_hash[i:i+4], "big")
-            float_val = (val / 0xFFFFFFFF)  # [0, 1] range
+            val = int.from_bytes(current_hash[i : i + 4], "big")
+            float_val = val / 0xFFFFFFFF  # [0, 1] range
             embedding.append(round(float(float_val), 6))
         if len(embedding) < dimensions:
             current_hash = hashlib.sha256(current_hash).digest()
@@ -56,6 +56,7 @@ class MemoryIndexingService:
         if provider == "local":
             try:
                 from app.services.embeddings import get_embedding_service
+
                 self._embedding_service = get_embedding_service()
                 return self._embedding_service
             except Exception:
@@ -63,7 +64,7 @@ class MemoryIndexingService:
         self._embedding_service = None
         return None
 
-    async def _compute_embedding(self, text: str) -> List[float]:
+    async def _compute_embedding(self, text: str) -> list[float]:
         svc = await self._get_embedding_service()
         if svc:
             try:
@@ -75,18 +76,14 @@ class MemoryIndexingService:
     async def index_item(self, tenant_id: str, agent_id: uuid.UUID, item: AgentMemoryItem):
         content = item.raw_content or ""
         embedding = await self._compute_embedding(content)
-        
+
         # Store in Vector DB
         store = VectorStoreFactory.get_instance(session=self.db)
         await store.upsert(
             collection_name="agent_memory",
             id=str(item.id),
             vector=embedding,
-            metadata={
-                "tenant_id": tenant_id,
-                "agent_id": str(agent_id),
-                "content": content
-            }
+            metadata={"tenant_id": tenant_id, "agent_id": str(agent_id), "content": content},
         )
 
         # Update status in local DB
@@ -102,7 +99,7 @@ class MemoryIndexingService:
                 vector_id=f"vec_{item.id}",
             )
             self.db.add(index)
-        
+
         index.index_status = "completed"
         index.embedding = json.dumps(embedding)
         await self.db.flush()
@@ -114,7 +111,7 @@ class MemoryIndexingService:
         query: str,
         limit: int = 10,
         semantic: bool = False,
-    ) -> List[AgentMemoryItem]:
+    ) -> list[AgentMemoryItem]:
         query_hash = hashlib.sha256(query.encode()).hexdigest()
 
         if semantic:
@@ -138,7 +135,7 @@ class MemoryIndexingService:
         agent_id: uuid.UUID,
         query: str,
         limit: int = 10,
-    ) -> List[AgentMemoryItem]:
+    ) -> list[AgentMemoryItem]:
         stmt = (
             select(AgentMemoryItem)
             .where(
@@ -157,7 +154,7 @@ class MemoryIndexingService:
         agent_id: uuid.UUID,
         query: str,
         limit: int = 10,
-    ) -> List[AgentMemoryItem]:
+    ) -> list[AgentMemoryItem]:
         query_emb = await self._compute_embedding(query)
 
         store = VectorStoreFactory.get_instance(session=self.db)
@@ -165,7 +162,7 @@ class MemoryIndexingService:
             collection_name="agent_memory",
             vector=query_emb,
             limit=limit,
-            filters={"tenant_id": tenant_id, "agent_id": str(agent_id)}
+            filters={"tenant_id": tenant_id, "agent_id": str(agent_id)},
         )
 
         item_ids = []
@@ -174,7 +171,7 @@ class MemoryIndexingService:
                 item_ids.append(uuid.UUID(hit["id"]))
             except (ValueError, KeyError, TypeError):
                 continue
-        
+
         if not item_ids:
             return []
 

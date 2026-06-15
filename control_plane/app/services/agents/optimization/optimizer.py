@@ -1,6 +1,5 @@
 import logging
 import uuid
-from typing import List, Tuple
 
 from app.core.config import get_settings
 from app.models.agents.agent_optimization import (
@@ -19,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class AgentOptimizerCoordinator:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -28,7 +28,7 @@ class AgentOptimizerCoordinator:
 
     async def run_optimization_experiment(
         self, tenant_id: str, agent_id: uuid.UUID
-    ) -> Tuple[AgentOptimizationExperiment, List[AgentOptimizationCandidate]]:
+    ) -> tuple[AgentOptimizationExperiment, list[AgentOptimizationCandidate]]:
         """
         Runs an auto-optimization experiment:
         1. Collects failed evals/runs.
@@ -36,11 +36,16 @@ class AgentOptimizerCoordinator:
         3. Creates the database entries.
         """
         settings = get_settings()
-        if not settings.agent_auto_optimization_enabled or not settings.agent_dspy_optimizer_enabled:
+        if (
+            not settings.agent_auto_optimization_enabled
+            or not settings.agent_dspy_optimizer_enabled
+        ):
             raise PermissionError("Auto-optimization / DSPy optimizer is disabled by feature flag.")
 
         # 1. Fetch active AgentDefinition
-        res_agent = await self.db.execute(select(AgentDefinition).where(AgentDefinition.id == agent_id))
+        res_agent = await self.db.execute(
+            select(AgentDefinition).where(AgentDefinition.id == agent_id)
+        )
         agent = res_agent.scalar_one_or_none()
         if not agent:
             raise ValueError(f"Agent Definition with ID {agent_id} not found.")
@@ -84,8 +89,8 @@ class AgentOptimizerCoordinator:
             metrics_baseline={
                 "instructions": agent.instructions,
                 "allowed_tools": agent.allowed_tools or [],
-                "policy_id": agent.policy_id
-            }
+                "policy_id": agent.policy_id,
+            },
         )
         self.db.add(experiment)
         await self.db.flush()
@@ -99,7 +104,7 @@ class AgentOptimizerCoordinator:
             tenant_id=tenant_id,
             agent_id=agent_id,
             candidate_type="prompt",
-            status="pending"
+            status="pending",
         )
         self.db.add(p_cand)
         await self.db.flush()
@@ -107,7 +112,7 @@ class AgentOptimizerCoordinator:
         prompt_detail = AgentPromptCandidate(
             candidate_id=p_cand.id,
             prompt_text=opt_prompt_text,
-            improved_instructions=f"Optimized instructions based on {len(all_failures)} failure logs."
+            improved_instructions=f"Optimized instructions based on {len(all_failures)} failure logs.",
         )
         self.db.add(prompt_detail)
         candidates.append(p_cand)
@@ -119,15 +124,12 @@ class AgentOptimizerCoordinator:
             tenant_id=tenant_id,
             agent_id=agent_id,
             candidate_type="tool_selection",
-            status="pending"
+            status="pending",
         )
         self.db.add(t_cand)
         await self.db.flush()
 
-        tool_detail = AgentToolSelectionCandidate(
-            candidate_id=t_cand.id,
-            allowed_tools=opt_tools
-        )
+        tool_detail = AgentToolSelectionCandidate(candidate_id=t_cand.id, allowed_tools=opt_tools)
         self.db.add(tool_detail)
         candidates.append(t_cand)
 
@@ -139,15 +141,12 @@ class AgentOptimizerCoordinator:
             tenant_id=tenant_id,
             agent_id=agent_id,
             candidate_type="policy",
-            status="pending"
+            status="pending",
         )
         self.db.add(pol_cand)
         await self.db.flush()
 
-        policy_detail = AgentPolicyCandidate(
-            candidate_id=pol_cand.id,
-            policy_rules=opt_rules
-        )
+        policy_detail = AgentPolicyCandidate(candidate_id=pol_cand.id, policy_rules=opt_rules)
         self.db.add(policy_detail)
         candidates.append(pol_cand)
 

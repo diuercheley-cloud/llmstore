@@ -56,7 +56,11 @@ def test_openai_compatible_provider_validation():
         agent._validate_config()
 
     # 3. Missing API key
-    config = {"base_url": "http://localhost:8000", "model": "gpt-4", "api_key_env": "NON_EXISTENT_KEY_VAR"}
+    config = {
+        "base_url": "http://localhost:8000",
+        "model": "gpt-4",
+        "api_key_env": "NON_EXISTENT_KEY_VAR",
+    }
     agent = create_code_agent("openai-compatible", config)
     with pytest.raises(ValueError, match="API key not found in environment variable"):
         agent._validate_config()
@@ -161,7 +165,7 @@ def test_provider_json_action_parsing_valid(valid_json: str):
     agent = create_code_agent("stub", {})
     transformed_str = agent._validate_and_transform_action(valid_json)
     transformed = json.loads(transformed_str)
-    
+
     # Assert normalized fields exist
     assert "action_type" in transformed
     assert transformed["action_type"] in {"plan", "read_file", "apply_patch", "run_tests", "final"}

@@ -10,8 +10,7 @@ OFFLINE_ARGS = ["--offline", "--skip-rag", "--skip-tts", "--skip-lmstudio"]
 def test_no_secrets_in_json_report():
     with tempfile.TemporaryDirectory() as tmpdir:
         subprocess.run(
-            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS],
-            capture_output=True, timeout=30
+            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS], capture_output=True, timeout=30
         )
         dirs = sorted([d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))])
         assert len(dirs) > 0
@@ -31,10 +30,18 @@ def test_no_secrets_in_json_report():
                 safe = any(
                     marker in m
                     for marker in [
-                        "masked", "xxxx", "example", "test", "changeme",
-                        "your-api", "sk-demo-xxxx", "sk-example",
-                        "sk-local-example", "admin-token-123",
-                        "test-admin-token", "sk-demo",
+                        "masked",
+                        "xxxx",
+                        "example",
+                        "test",
+                        "changeme",
+                        "your-api",
+                        "sk-demo-xxxx",
+                        "sk-example",
+                        "sk-local-example",
+                        "admin-token-123",
+                        "test-admin-token",
+                        "sk-demo",
                     ]
                 )
                 if not safe:
@@ -44,8 +51,7 @@ def test_no_secrets_in_json_report():
 def test_no_secrets_in_md_report():
     with tempfile.TemporaryDirectory() as tmpdir:
         subprocess.run(
-            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS],
-            capture_output=True, timeout=30
+            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS], capture_output=True, timeout=30
         )
         dirs = sorted([d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))])
         assert len(dirs) > 0
@@ -59,8 +65,7 @@ def test_no_secrets_in_md_report():
 def test_has_psp_pix_limitation():
     with tempfile.TemporaryDirectory() as tmpdir:
         subprocess.run(
-            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS],
-            capture_output=True, timeout=30
+            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS], capture_output=True, timeout=30
         )
         dirs = sorted([d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))])
         assert len(dirs) > 0
@@ -75,8 +80,7 @@ def test_has_psp_pix_limitation():
 def test_has_fictional_data_disclaimer():
     with tempfile.TemporaryDirectory() as tmpdir:
         subprocess.run(
-            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS],
-            capture_output=True, timeout=30
+            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS], capture_output=True, timeout=30
         )
         dirs = sorted([d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))])
         assert len(dirs) > 0
@@ -92,8 +96,7 @@ def test_has_fictional_data_disclaimer():
 def test_json_does_not_contain_env_values():
     with tempfile.TemporaryDirectory() as tmpdir:
         subprocess.run(
-            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS],
-            capture_output=True, timeout=30
+            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS], capture_output=True, timeout=30
         )
         dirs = sorted([d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))])
         assert len(dirs) > 0
@@ -109,15 +112,15 @@ def test_json_does_not_contain_env_values():
             r"SECRET_KEY=",
         ]
         for pattern in env_patterns:
-            assert not re.search(pattern, content), \
+            assert not re.search(pattern, content), (
                 f"Potential env secret leaked in JSON: {pattern}"
+            )
 
 
 def test_md_contains_security_report_reference():
     with tempfile.TemporaryDirectory() as tmpdir:
         subprocess.run(
-            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS],
-            capture_output=True, timeout=30
+            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS], capture_output=True, timeout=30
         )
         dirs = sorted([d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))])
         assert len(dirs) > 0
@@ -131,8 +134,7 @@ def test_md_contains_security_report_reference():
 def test_md_contains_no_absolute_security_guarantee():
     with tempfile.TemporaryDirectory() as tmpdir:
         subprocess.run(
-            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS],
-            capture_output=True, timeout=30
+            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS], capture_output=True, timeout=30
         )
         dirs = sorted([d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))])
         assert len(dirs) > 0
@@ -153,8 +155,7 @@ def test_md_contains_no_absolute_security_guarantee():
 def test_logs_directory_created():
     with tempfile.TemporaryDirectory() as tmpdir:
         subprocess.run(
-            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS],
-            capture_output=True, timeout=30
+            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS], capture_output=True, timeout=30
         )
         dirs = sorted([d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))])
         assert len(dirs) > 0
@@ -166,8 +167,7 @@ def test_logs_directory_created():
 def test_manifests_correct_paths():
     with tempfile.TemporaryDirectory() as tmpdir:
         subprocess.run(
-            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS],
-            capture_output=True, timeout=30
+            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS], capture_output=True, timeout=30
         )
         dirs = sorted([d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))])
         assert len(dirs) > 0

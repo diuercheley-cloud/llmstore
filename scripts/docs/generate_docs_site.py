@@ -6,13 +6,12 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from pathlib import Path
 import re
 import sys
-from typing import Iterable
+from collections.abc import Iterable
+from pathlib import Path
 
 import yaml
-
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOCS_ROOT = REPO_ROOT / "docs"
@@ -29,20 +28,38 @@ SYNC_MAP = {
     PORTAL_ROOT / "getting-started" / "installation.md": DOCS_ROOT / "INSTALL.md",
     PORTAL_ROOT / "getting-started" / "install-wizard.md": DOCS_ROOT / "INSTALL_WIZARD.md",
     PORTAL_ROOT / "getting-started" / "operational-profiles.md": DOCS_ROOT / "PROFILES.md",
-    PORTAL_ROOT / "architecture" / "platform-overview.md": DOCS_ROOT / "architecture" / "platform_overview.md",
-    PORTAL_ROOT / "architecture" / "domain-map.md": DOCS_ROOT / "architecture" / "platform_domain_map.md",
+    PORTAL_ROOT / "architecture" / "platform-overview.md": DOCS_ROOT
+    / "architecture"
+    / "platform_overview.md",
+    PORTAL_ROOT / "architecture" / "domain-map.md": DOCS_ROOT
+    / "architecture"
+    / "platform_domain_map.md",
     PORTAL_ROOT / "agents" / "agent-runtime.md": DOCS_ROOT / "agents" / "agent-runtime.md",
     PORTAL_ROOT / "agents" / "tool-execution.md": DOCS_ROOT / "agents" / "tool-execution.md",
-    PORTAL_ROOT / "rag" / "knowledge-base-ingestion.md": DOCS_ROOT / "rag" / "knowledge-base-ingestion.md",
+    PORTAL_ROOT / "rag" / "knowledge-base-ingestion.md": DOCS_ROOT
+    / "rag"
+    / "knowledge-base-ingestion.md",
     PORTAL_ROOT / "rag" / "vector-db-providers.md": DOCS_ROOT / "rag" / "vector-db-providers.md",
     PORTAL_ROOT / "security" / "admin-rbac.md": DOCS_ROOT / "security" / "admin-rbac.md",
-    PORTAL_ROOT / "security" / "agent-spend-controls.md": DOCS_ROOT / "security" / "agent-spend-controls.md",
-    PORTAL_ROOT / "governance" / "data-governance.md": DOCS_ROOT / "governance" / "data_governance.md",
-    PORTAL_ROOT / "governance" / "supply-chain-governance.md": DOCS_ROOT / "governance" / "supply_chain_governance.md",
-    PORTAL_ROOT / "operations" / "platform-runbook.md": DOCS_ROOT / "operations" / "platform_runbook.md",
-    PORTAL_ROOT / "operations" / "profile-selection.md": DOCS_ROOT / "operations" / "profile-selection.md",
+    PORTAL_ROOT / "security" / "agent-spend-controls.md": DOCS_ROOT
+    / "security"
+    / "agent-spend-controls.md",
+    PORTAL_ROOT / "governance" / "data-governance.md": DOCS_ROOT
+    / "governance"
+    / "data_governance.md",
+    PORTAL_ROOT / "governance" / "supply-chain-governance.md": DOCS_ROOT
+    / "governance"
+    / "supply_chain_governance.md",
+    PORTAL_ROOT / "operations" / "platform-runbook.md": DOCS_ROOT
+    / "operations"
+    / "platform_runbook.md",
+    PORTAL_ROOT / "operations" / "profile-selection.md": DOCS_ROOT
+    / "operations"
+    / "profile-selection.md",
     PORTAL_ROOT / "api" / "supported-surface.md": DOCS_ROOT / "api" / "supported-api-surface.md",
-    PORTAL_ROOT / "releases" / "latest-release-notes.md": DOCS_ROOT / "releases" / "latest_release_notes.md",
+    PORTAL_ROOT / "releases" / "latest-release-notes.md": DOCS_ROOT
+    / "releases"
+    / "latest_release_notes.md",
     PORTAL_ROOT / "releases" / "release-process.md": DOCS_ROOT / "releases" / "release_process.md",
 }
 
@@ -104,11 +121,7 @@ def sync_doc(target: Path, source: Path) -> str:
     body = source.read_text(encoding="utf-8").rstrip()
     body = rewrite_links(body, source, target)
     source_rel = source.relative_to(REPO_ROOT).as_posix()
-    return (
-        f"<!-- synced_from: {source_rel} -->\n\n"
-        f"> Source of truth: `{source_rel}`\n\n"
-        f"{body}\n"
-    )
+    return f"<!-- synced_from: {source_rel} -->\n\n> Source of truth: `{source_rel}`\n\n{body}\n"
 
 
 def generate_profiles_reference() -> str:
@@ -136,9 +149,7 @@ def generate_profiles_reference() -> str:
         "| --- | --- | --- |",
     ]
     for profile in profiles:
-        enabled = sorted(
-            name for name, enabled in profile["features"].items() if enabled is True
-        )
+        enabled = sorted(name for name, enabled in profile["features"].items() if enabled is True)
         summary_lines.append(
             f"| `{profile['name']}` | {profile['description']} | {', '.join(enabled) or '-'} |"
         )
@@ -146,8 +157,7 @@ def generate_profiles_reference() -> str:
     detail_sections: list[str] = []
     for profile in profiles:
         settings = "\n".join(
-            f"- `{key}` = `{value}`"
-            for key, value in sorted(profile["settings"].items())
+            f"- `{key}` = `{value}`" for key, value in sorted(profile["settings"].items())
         )
         features = "\n".join(
             f"- `{key}`: `{'enabled' if value else 'disabled'}`"
@@ -171,10 +181,7 @@ def generate_profiles_reference() -> str:
         "---\n\n"
         "# Profiles Reference\n\n"
         "This page is generated from the official operational profile manifests.\n\n"
-        "## Summary\n\n"
-        + "\n".join(summary_lines)
-        + "\n\n"
-        + "\n\n".join(detail_sections)
+        "## Summary\n\n" + "\n".join(summary_lines) + "\n\n" + "\n\n".join(detail_sections)
     )
 
 
@@ -211,7 +218,9 @@ def render_outputs() -> dict[Path, str]:
         outputs[target] = sync_doc(target, source)
 
     outputs[REFERENCE_ROOT / "profiles.md"] = generate_profiles_reference()
-    outputs[PORTAL_ROOT / "releases" / "latest-release-manifest.md"] = generate_release_manifest_page()
+    outputs[PORTAL_ROOT / "releases" / "latest-release-manifest.md"] = (
+        generate_release_manifest_page()
+    )
 
     return outputs
 
@@ -225,7 +234,9 @@ def iter_mismatches(rendered: dict[Path, str]) -> Iterable[Path]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--check", action="store_true", help="Fail if the generated portal is out of date.")
+    parser.add_argument(
+        "--check", action="store_true", help="Fail if the generated portal is out of date."
+    )
     args = parser.parse_args()
 
     rendered = render_outputs()

@@ -7,7 +7,10 @@ from app.contracts.backend_lifecycle import (
     BackendObservedState,
     LifecycleActionResult,
 )
-from app.services.backend_lifecycle.providers.base import BaseLifecycleProvider, ProviderUnavailableError
+from app.services.backend_lifecycle.providers.base import (
+    BaseLifecycleProvider,
+    ProviderUnavailableError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +26,7 @@ class KubernetesProvider(BaseLifecycleProvider):
             return
         try:
             from kubernetes import client, config
+
             try:
                 config.load_incluster_config()
             except Exception:
@@ -53,7 +57,9 @@ class KubernetesProvider(BaseLifecycleProvider):
             provider_type="kubernetes",
         )
 
-    async def get_observed_state(self, backend_id: UUID, desired: BackendDesiredState) -> BackendObservedState:
+    async def get_observed_state(
+        self, backend_id: UUID, desired: BackendDesiredState
+    ) -> BackendObservedState:
         self._ensure_client()
         if self._client is None:
             return BackendObservedState(
@@ -87,7 +93,9 @@ class KubernetesProvider(BaseLifecycleProvider):
                 error=str(exc),
             )
 
-    async def start_backend(self, backend_id: UUID, desired: BackendDesiredState) -> LifecycleActionResult:
+    async def start_backend(
+        self, backend_id: UUID, desired: BackendDesiredState
+    ) -> LifecycleActionResult:
         self._ensure_client()
         if self._client is None:
             raise ProviderUnavailableError("kubernetes", "kubernetes client unavailable")
@@ -96,15 +104,24 @@ class KubernetesProvider(BaseLifecycleProvider):
             body = {"spec": {"replicas": 1}}
             self._client.patch_namespaced_deployment_scale(name, self._namespace, body)
             return LifecycleActionResult(
-                success=True, action="start", backend_id=backend_id, message=f"scaled up {name}",
+                success=True,
+                action="start",
+                backend_id=backend_id,
+                message=f"scaled up {name}",
             )
         except Exception as exc:
             logger.error("k8s start failed: %s", exc)
             return LifecycleActionResult(
-                success=False, action="start", backend_id=backend_id, message=str(exc), error=str(exc),
+                success=False,
+                action="start",
+                backend_id=backend_id,
+                message=str(exc),
+                error=str(exc),
             )
 
-    async def stop_backend(self, backend_id: UUID, desired: BackendDesiredState) -> LifecycleActionResult:
+    async def stop_backend(
+        self, backend_id: UUID, desired: BackendDesiredState
+    ) -> LifecycleActionResult:
         self._ensure_client()
         if self._client is None:
             raise ProviderUnavailableError("kubernetes", "kubernetes client unavailable")
@@ -113,15 +130,24 @@ class KubernetesProvider(BaseLifecycleProvider):
             body = {"spec": {"replicas": 0}}
             self._client.patch_namespaced_deployment_scale(name, self._namespace, body)
             return LifecycleActionResult(
-                success=True, action="stop", backend_id=backend_id, message=f"scaled down {name}",
+                success=True,
+                action="stop",
+                backend_id=backend_id,
+                message=f"scaled down {name}",
             )
         except Exception as exc:
             logger.error("k8s stop failed: %s", exc)
             return LifecycleActionResult(
-                success=False, action="stop", backend_id=backend_id, message=str(exc), error=str(exc),
+                success=False,
+                action="stop",
+                backend_id=backend_id,
+                message=str(exc),
+                error=str(exc),
             )
 
-    async def restart_backend(self, backend_id: UUID, desired: BackendDesiredState) -> LifecycleActionResult:
+    async def restart_backend(
+        self, backend_id: UUID, desired: BackendDesiredState
+    ) -> LifecycleActionResult:
         self._ensure_client()
         if self._client is None:
             raise ProviderUnavailableError("kubernetes", "kubernetes client unavailable")

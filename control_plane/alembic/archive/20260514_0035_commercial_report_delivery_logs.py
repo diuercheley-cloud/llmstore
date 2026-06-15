@@ -28,7 +28,12 @@ def upgrade() -> None:
         sa.Column("attachment_names_json", sa.JSON(), nullable=True),
         sa.Column("retries", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("error_message", sa.String(length=500), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("CURRENT_TIMESTAMP"),
+        ),
         sa.Column("delivered_at", sa.DateTime(timezone=True), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -53,7 +58,16 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index("ix_commercial_report_delivery_logs_created_at", table_name="commercial_report_delivery_logs")
-    op.drop_index("ix_commercial_report_delivery_logs_delivery_status", table_name="commercial_report_delivery_logs")
-    op.drop_index("ix_commercial_report_delivery_logs_schedule_id", table_name="commercial_report_delivery_logs")
+    op.drop_index(
+        "ix_commercial_report_delivery_logs_created_at",
+        table_name="commercial_report_delivery_logs",
+    )
+    op.drop_index(
+        "ix_commercial_report_delivery_logs_delivery_status",
+        table_name="commercial_report_delivery_logs",
+    )
+    op.drop_index(
+        "ix_commercial_report_delivery_logs_schedule_id",
+        table_name="commercial_report_delivery_logs",
+    )
     op.drop_table("commercial_report_delivery_logs")

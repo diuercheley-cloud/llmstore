@@ -8,15 +8,15 @@ import json
 import logging
 import re
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from app.core.config import get_settings
-from app.models.core.admin_action_log import AdminActionLog
 from app.models.commercial.commercial_report_delivery_log import CommercialReportDeliveryLog
 from app.models.commercial.commercial_report_schedule import CommercialReportSchedule
 from app.models.commercial.commercial_routing_config import CommercialRoutingConfig
 from app.models.commercial.commercial_routing_event import CommercialRoutingEvent
+from app.models.core.admin_action_log import AdminActionLog
 from app.services.routing.commercial_executive_dashboard import CommercialExecutiveDashboardService
 from app.services.routing.commercial_report_email import (
     AllowlistError,
@@ -76,7 +76,7 @@ PROHIBITED_EXPORT_KEYS = {
 
 
 def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _round_float(value: Any, digits: int = 2) -> float:
@@ -92,9 +92,9 @@ def _normalize_window(
     end = date_to or _utc_now()
     start = date_from or (end - timedelta(hours=hours))
     if start.tzinfo is None:
-        start = start.replace(tzinfo=timezone.utc)
+        start = start.replace(tzinfo=UTC)
     if end.tzinfo is None:
-        end = end.replace(tzinfo=timezone.utc)
+        end = end.replace(tzinfo=UTC)
     if start >= end:
         raise HTTPException(status_code=400, detail="date_from must be earlier than date_to")
     return start, end
@@ -116,7 +116,9 @@ def _sanitize_scalar(key: str, value: Any) -> Any:
     if value is None:
         return None
     lowered_key = key.lower()
-    if lowered_key in PROHIBITED_EXPORT_KEYS or any(part in lowered_key for part in SECRET_KEY_PATTERNS):
+    if lowered_key in PROHIBITED_EXPORT_KEYS or any(
+        part in lowered_key for part in SECRET_KEY_PATTERNS
+    ):
         return REDACTION
     if isinstance(value, str):
         for pattern in SECRET_VALUE_PATTERNS:
@@ -265,9 +267,9 @@ def export_executive_report_html(report: dict[str, Any], *, preview: bool = Fals
         <div class="card"><div class="label">Rolled Back</div><div class="value">{canaries.get("rolled_back_canaries_count", 0)}</div></div>
       </div>
       <h2>Anomalies</h2>
-      <ul>{"".join(f"<li>{html.escape(item.get('message', ''))}</li>" for item in anomalies[:(5 if preview else 20)]) or "<li>None</li>"}</ul>
+      <ul>{"".join(f"<li>{html.escape(item.get('message', ''))}</li>" for item in anomalies[: (5 if preview else 20)]) or "<li>None</li>"}</ul>
       <h2>Recommendations</h2>
-      <ul>{"".join(f"<li>{html.escape(item.get('title', ''))}: {html.escape(item.get('action', ''))}</li>" for item in recommendations[:(5 if preview else 20)]) or "<li>None</li>"}</ul>
+      <ul>{"".join(f"<li>{html.escape(item.get('title', ''))}: {html.escape(item.get('action', ''))}</li>" for item in recommendations[: (5 if preview else 20)]) or "<li>None</li>"}</ul>
       <h2>Security Observations</h2>
       <ul>
         <li>Secrets, prompts, full responses, raw payloads and authorization headers are excluded from exports.</li>
@@ -310,7 +312,10 @@ class CommercialReportExportService:
         provider: str | None,
         model: str | None,
     ) -> list[dict[str, Any]]:
-        filters = [CommercialRoutingEvent.created_at >= start, CommercialRoutingEvent.created_at < end]
+        filters = [
+            CommercialRoutingEvent.created_at >= start,
+            CommercialRoutingEvent.created_at < end,
+        ]
         if client_id:
             filters.append(CommercialRoutingEvent.client_id == client_id)
         if provider:
@@ -387,7 +392,8 @@ class CommercialReportExportService:
             row.provider: row for row in (await self.db.execute(provider_query(start, end))).all()
         }
         previous_rows = {
-            row.provider: row for row in (await self.db.execute(provider_query(prev_start, start))).all()
+            row.provider: row
+            for row in (await self.db.execute(provider_query(prev_start, start))).all()
         }
 
         def calc(curr: float, prev: float) -> float:
@@ -400,7 +406,9 @@ class CommercialReportExportService:
             previous = previous_rows.get(provider_name)
             if previous is None:
                 continue
-            margin_drift = calc(float(current.avg_margin_pct or 0), float(previous.avg_margin_pct or 0))
+            margin_drift = calc(
+                float(current.avg_margin_pct or 0), float(previous.avg_margin_pct or 0)
+            )
             cost_drift = calc(float(current.avg_cost or 0), float(previous.avg_cost or 0))
             latency_drift = calc(float(current.avg_latency or 0), float(previous.avg_latency or 0))
             if (
@@ -416,11 +424,16 @@ class CommercialReportExportService:
                         "latency_drift_percent": latency_drift,
                     }
                 )
-        drift_rows.sort(key=lambda item: abs(item["cost_drift_percent"]) + abs(item["margin_drift_percent"]), reverse=True)
+        drift_rows.sort(
+            key=lambda item: abs(item["cost_drift_percent"]) + abs(item["margin_drift_percent"]),
+            reverse=True,
+        )
         return drift_rows[:limit]
 
     async def _canary_summary_for_report(self, *, start: datetime) -> dict[str, Any]:
-        active_stmt = select(func.count(CommercialRoutingConfig.id)).where(CommercialRoutingConfig.canary_enabled.is_(True))
+        active_stmt = select(func.count(CommercialRoutingConfig.id)).where(
+            CommercialRoutingConfig.canary_enabled.is_(True)
+        )
         completed_stmt = select(func.count(CommercialRoutingConfig.id)).where(
             CommercialRoutingConfig.canary_promotion_status == "completed"
         )
@@ -454,8 +467,12 @@ class CommercialReportExportService:
         model: str | None = None,
     ) -> dict[str, Any]:
         start, end = _normalize_window(hours=hours, date_from=date_from, date_to=date_to)
-        profitability = await self.dashboard.get_profitability_overview(start, client_id, provider, model, date_to=end)
-        drift = await self.dashboard.get_drift_overview(start, client_id, provider, model, date_to=end)
+        profitability = await self.dashboard.get_profitability_overview(
+            start, client_id, provider, model, date_to=end
+        )
+        drift = await self.dashboard.get_drift_overview(
+            start, client_id, provider, model, date_to=end
+        )
         top_clients = await self._query_clients(
             start=start,
             end=end,
@@ -474,7 +491,9 @@ class CommercialReportExportService:
             provider=provider,
             model=model,
         )
-        top_providers = await self.dashboard.summarize_providers_profitability(start, limit=10, client_id=client_id, provider=provider, model=model, date_to=end)
+        top_providers = await self.dashboard.summarize_providers_profitability(
+            start, limit=10, client_id=client_id, provider=provider, model=model, date_to=end
+        )
         provider_drift = await self._query_provider_drift(
             start=start,
             end=end,
@@ -484,7 +503,9 @@ class CommercialReportExportService:
         )
         canaries = await self._canary_summary_for_report(start=start)
         anomalies = await self.dashboard.detect_anomalies(start, profitability, drift)
-        recommendations = await self.dashboard.generate_executive_recommendations(anomalies, canaries)
+        recommendations = await self.dashboard.generate_executive_recommendations(
+            anomalies, canaries
+        )
         report = {
             "generated_at_utc": _utc_now().isoformat(),
             "period": {
@@ -517,7 +538,9 @@ class CommercialReportExportService:
         }
         return sanitize_report_payload(report)
 
-    async def create_schedule(self, payload: dict[str, Any], *, actor: str | None) -> CommercialReportSchedule:
+    async def create_schedule(
+        self, payload: dict[str, Any], *, actor: str | None
+    ) -> CommercialReportSchedule:
         schedule = CommercialReportSchedule(
             name=payload["name"],
             enabled=bool(payload.get("enabled", True)),
@@ -537,21 +560,39 @@ class CommercialReportExportService:
         return schedule
 
     def _parse_recipients(self, recipients: list[str] | None) -> list[str]:
-        return [recipient.strip() for recipient in (recipients or []) if recipient and recipient.strip()]
+        return [
+            recipient.strip() for recipient in (recipients or []) if recipient and recipient.strip()
+        ]
 
     def _subject_for_schedule(self, schedule: CommercialReportSchedule) -> str:
         return f"Commercial Executive Report - {schedule.name}"
 
     def _attachment_for_report(self, report: dict[str, Any], report_format: str) -> EmailAttachment:
         if report_format == "json":
-            return EmailAttachment("executive-report.json", export_executive_report_json(report), "application/json")
+            return EmailAttachment(
+                "executive-report.json", export_executive_report_json(report), "application/json"
+            )
         if report_format == "csv":
-            return EmailAttachment("executive-report.csv", export_executive_report_csv(report).encode("utf-8"), "text/csv")
+            return EmailAttachment(
+                "executive-report.csv",
+                export_executive_report_csv(report).encode("utf-8"),
+                "text/csv",
+            )
         if report_format == "html":
-            return EmailAttachment("executive-report.html", export_executive_report_html(report).encode("utf-8"), "text/html")
+            return EmailAttachment(
+                "executive-report.html",
+                export_executive_report_html(report).encode("utf-8"),
+                "text/html",
+            )
         if report_format == "pdf":
-            return EmailAttachment("executive-report.pdf", export_executive_report_pdf_optional(report), "application/pdf")
-        raise HTTPException(status_code=400, detail="Unsupported format. Use json, csv, html or pdf.")
+            return EmailAttachment(
+                "executive-report.pdf",
+                export_executive_report_pdf_optional(report),
+                "application/pdf",
+            )
+        raise HTTPException(
+            status_code=400, detail="Unsupported format. Use json, csv, html or pdf."
+        )
 
     async def _create_delivery_log(
         self,
@@ -593,20 +634,32 @@ class CommercialReportExportService:
         return ".".join([head, *parts[1:]])
 
     def _resolve_manual_delivery_mode(self) -> str:
-        if not self.settings.commercial_report_email_enabled or self.settings.commercial_report_email_mode == "disabled":
+        if (
+            not self.settings.commercial_report_email_enabled
+            or self.settings.commercial_report_email_mode == "disabled"
+        ):
             return "disabled"
         if self.settings.commercial_report_email_mode == "dry_run":
             return "dry_run"
-        if self.settings.commercial_report_email_mode == "smtp" and self.settings.commercial_report_send_real_email:
+        if (
+            self.settings.commercial_report_email_mode == "smtp"
+            and self.settings.commercial_report_send_real_email
+        ):
             return "smtp"
         return "blocked"
 
     def _resolve_automatic_delivery_mode(self) -> str:
-        if not self.settings.commercial_report_email_enabled or self.settings.commercial_report_email_mode == "disabled":
+        if (
+            not self.settings.commercial_report_email_enabled
+            or self.settings.commercial_report_email_mode == "disabled"
+        ):
             return "disabled"
         if self.settings.commercial_report_email_mode == "dry_run":
             return "dry_run"
-        if self.settings.commercial_report_email_mode == "smtp" and self.settings.commercial_report_send_real_email:
+        if (
+            self.settings.commercial_report_email_mode == "smtp"
+            and self.settings.commercial_report_send_real_email
+        ):
             return "smtp"
         return "blocked"
 
@@ -838,8 +891,17 @@ class CommercialReportExportService:
             package_type="billing_change",
             summary=f"Real report email send for schedule {schedule_name}",
             before_state={"schedule_id": str(schedule_id), "delivery_mode": delivery_mode},
-            after_state={"subject": subject, "recipients": recipients, "report_format": report_format},
-            payload={"schedule_id": str(schedule_id), "recipients": recipients, "delivery_mode": delivery_mode, "report_format": report_format},
+            after_state={
+                "subject": subject,
+                "recipients": recipients,
+                "report_format": report_format,
+            },
+            payload={
+                "schedule_id": str(schedule_id),
+                "recipients": recipients,
+                "delivery_mode": delivery_mode,
+                "report_format": report_format,
+            },
             related_ids={"schedule_id": str(schedule_id), "delivery_id": str(pending.id)},
             file_refs={"attachments": [attachment.filename]},
         )
@@ -878,11 +940,15 @@ class CommercialReportExportService:
         except SMTPAuthFailure as exc:
             pending.delivery_status = "failed"
             pending.error_message = str(exc)
-            raise HTTPException(status_code=502, detail="SMTP auth failure while sending commercial report email") from exc
+            raise HTTPException(
+                status_code=502, detail="SMTP auth failure while sending commercial report email"
+            ) from exc
         except SMTPTLSFailure as exc:
             pending.delivery_status = "failed"
             pending.error_message = str(exc)
-            raise HTTPException(status_code=502, detail="SMTP TLS failure while sending commercial report email") from exc
+            raise HTTPException(
+                status_code=502, detail="SMTP TLS failure while sending commercial report email"
+            ) from exc
         except CommercialReportEmailError as exc:
             pending.delivery_status = "failed"
             pending.error_message = str(exc)
@@ -898,27 +964,33 @@ class CommercialReportExportService:
             raise HTTPException(status_code=404, detail="Report schedule not found")
         return schedule
 
-    def compute_next_run_at(self, schedule: CommercialReportSchedule, *, reference: datetime) -> datetime:
-        ref = reference.astimezone(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    def compute_next_run_at(
+        self, schedule: CommercialReportSchedule, *, reference: datetime
+    ) -> datetime:
+        ref = reference.astimezone(UTC).replace(minute=0, second=0, microsecond=0)
         if schedule.frequency == "weekly":
             day = 0 if schedule.day_of_week is None else max(0, min(6, schedule.day_of_week))
             days_ahead = (day - ref.weekday()) % 7
             candidate = (ref + timedelta(days=days_ahead)).replace(hour=schedule.hour_utc)
-            if candidate <= reference.astimezone(timezone.utc):
+            if candidate <= reference.astimezone(UTC):
                 candidate += timedelta(days=7)
             return candidate
         day = 1 if schedule.day_of_month is None else max(1, min(28, schedule.day_of_month))
         candidate = ref.replace(day=day, hour=schedule.hour_utc)
-        if candidate <= reference.astimezone(timezone.utc):
+        if candidate <= reference.astimezone(UTC):
             year = candidate.year + (1 if candidate.month == 12 else 0)
             month = 1 if candidate.month == 12 else candidate.month + 1
             candidate = candidate.replace(year=year, month=month, day=day)
         return candidate
 
-    async def set_schedule_enabled(self, schedule_id: uuid.UUID, enabled: bool) -> CommercialReportSchedule:
+    async def set_schedule_enabled(
+        self, schedule_id: uuid.UUID, enabled: bool
+    ) -> CommercialReportSchedule:
         schedule = await self.get_schedule(schedule_id)
         schedule.enabled = enabled
-        schedule.next_run_at = self.compute_next_run_at(schedule, reference=_utc_now()) if enabled else None
+        schedule.next_run_at = (
+            self.compute_next_run_at(schedule, reference=_utc_now()) if enabled else None
+        )
         await self.db.commit()
         await self.db.refresh(schedule)
         return schedule
@@ -945,7 +1017,9 @@ class CommercialReportExportService:
         )
         now = _utc_now()
         schedule.last_run_at = now
-        schedule.next_run_at = self.compute_next_run_at(schedule, reference=now) if schedule.enabled else None
+        schedule.next_run_at = (
+            self.compute_next_run_at(schedule, reference=now) if schedule.enabled else None
+        )
         await self.db.commit()
         return {
             "schedule_id": str(schedule.id),
@@ -970,7 +1044,9 @@ class CommercialReportExportService:
                 schedule_id=schedule.id,
                 report_format="html",
                 recipients=recipients,
-                delivery_mode="dry_run" if self.settings.commercial_report_email_mode == "dry_run" else self._resolve_manual_delivery_mode(),
+                delivery_mode="dry_run"
+                if self.settings.commercial_report_email_mode == "dry_run"
+                else self._resolve_manual_delivery_mode(),
                 delivery_status="blocked",
                 subject=f"Commercial Executive Report - {schedule.name} Test",
                 attachment_names=["executive-report.html"],
@@ -1019,7 +1095,9 @@ class CommercialReportExportService:
             stmt = stmt.where(CommercialReportDeliveryLog.delivery_status == status)
         if recipient:
             stmt = stmt.where(
-                func.lower(cast(CommercialReportDeliveryLog.recipients_json, String)).like(f"%{recipient.lower()}%")
+                func.lower(cast(CommercialReportDeliveryLog.recipients_json, String)).like(
+                    f"%{recipient.lower()}%"
+                )
             )
         if date_from:
             stmt = stmt.where(CommercialReportDeliveryLog.created_at >= date_from)
@@ -1030,15 +1108,37 @@ class CommercialReportExportService:
 
         counts_stmt = select(
             func.count(CommercialReportDeliveryLog.id).label("total"),
-            func.sum(case((CommercialReportDeliveryLog.delivery_status == "sent", 1), else_=0)).label("sent"),
-            func.sum(case((CommercialReportDeliveryLog.delivery_status == "dry_run", 1), else_=0)).label("dry_run"),
-            func.sum(case((CommercialReportDeliveryLog.delivery_status == "blocked", 1), else_=0)).label("blocked"),
-            func.sum(case((CommercialReportDeliveryLog.delivery_status == "failed", 1), else_=0)).label("failed"),
+            func.sum(
+                case((CommercialReportDeliveryLog.delivery_status == "sent", 1), else_=0)
+            ).label("sent"),
+            func.sum(
+                case((CommercialReportDeliveryLog.delivery_status == "dry_run", 1), else_=0)
+            ).label("dry_run"),
+            func.sum(
+                case((CommercialReportDeliveryLog.delivery_status == "blocked", 1), else_=0)
+            ).label("blocked"),
+            func.sum(
+                case((CommercialReportDeliveryLog.delivery_status == "failed", 1), else_=0)
+            ).label("failed"),
             func.sum(case((CommercialReportDeliveryLog.retries > 0, 1), else_=0)).label("retries"),
-            func.sum(case((CommercialReportDeliveryLog.error_message.like("auth_failure:%"), 1), else_=0)).label("auth_failures"),
-            func.sum(case((CommercialReportDeliveryLog.error_message.like("tls_failure:%"), 1), else_=0)).label("tls_failures"),
-            func.sum(case((CommercialReportDeliveryLog.error_message.like("blocked_by_security:%"), 1), else_=0)).label("blocked_by_security"),
-            func.sum(case((CommercialReportDeliveryLog.error_message.like("blocked_by_allowlist:%"), 1), else_=0)).label("blocked_by_allowlist"),
+            func.sum(
+                case((CommercialReportDeliveryLog.error_message.like("auth_failure:%"), 1), else_=0)
+            ).label("auth_failures"),
+            func.sum(
+                case((CommercialReportDeliveryLog.error_message.like("tls_failure:%"), 1), else_=0)
+            ).label("tls_failures"),
+            func.sum(
+                case(
+                    (CommercialReportDeliveryLog.error_message.like("blocked_by_security:%"), 1),
+                    else_=0,
+                )
+            ).label("blocked_by_security"),
+            func.sum(
+                case(
+                    (CommercialReportDeliveryLog.error_message.like("blocked_by_allowlist:%"), 1),
+                    else_=0,
+                )
+            ).label("blocked_by_allowlist"),
         )
         counts = (await self.db.execute(counts_stmt)).one()
         return {
@@ -1091,7 +1191,9 @@ class CommercialReportExportService:
                 delivery_mode=self._resolve_automatic_delivery_mode(),
             )
             schedule.last_run_at = now
-            schedule.next_run_at = self.compute_next_run_at(schedule, reference=now) if schedule.enabled else None
+            schedule.next_run_at = (
+                self.compute_next_run_at(schedule, reference=now) if schedule.enabled else None
+            )
             results.append(result)
             logger.info("commercial report schedule evaluated", extra={"extra_data": result})
         await self.db.commit()

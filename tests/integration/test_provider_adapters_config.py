@@ -13,7 +13,12 @@ class TestProviderAdaptersConfig:
         assert val.lower() in ("false", "0", "no")
 
     def test_no_api_keys_exposed_in_env(self):
-        sensitive = ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "DEEPSEEK_API_KEY", "OPENROUTER_API_KEY"]
+        sensitive = [
+            "OPENAI_API_KEY",
+            "ANTHROPIC_API_KEY",
+            "DEEPSEEK_API_KEY",
+            "OPENROUTER_API_KEY",
+        ]
         for key in sensitive:
             val = os.environ.get(key, "")
             # In test environment, no real keys should be set

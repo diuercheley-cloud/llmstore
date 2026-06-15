@@ -1,7 +1,7 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import Any, List, Optional
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -28,19 +28,25 @@ logger = logging.getLogger(__name__)
 
 class BaseEvalProvider:
     """Base interface for evaluation providers."""
+
     async def resolve_llm_provider(self, db: AsyncSession, mock_responses: list) -> Any:
         raise NotImplementedError()
 
-    async def execute_run(self, db: AsyncSession, run_id: uuid.UUID, agent_id: uuid.UUID, llm_provider: Any) -> None:
+    async def execute_run(
+        self, db: AsyncSession, run_id: uuid.UUID, agent_id: uuid.UUID, llm_provider: Any
+    ) -> None:
         raise NotImplementedError()
 
 
 class MockEvalProvider(BaseEvalProvider):
     """Explicit provider for local testing and CI pipeline runs."""
+
     async def resolve_llm_provider(self, db: AsyncSession, mock_responses: list) -> Any:
         return MockLLMProvider(responses=mock_responses)
 
-    async def execute_run(self, db: AsyncSession, run_id: uuid.UUID, agent_id: uuid.UUID, llm_provider: Any) -> None:
+    async def execute_run(
+        self, db: AsyncSession, run_id: uuid.UUID, agent_id: uuid.UUID, llm_provider: Any
+    ) -> None:
         executor = AgentExecutor(db, run_id, llm_provider=llm_provider)
         while True:
             should_continue = await executor.execute_step()
@@ -50,30 +56,42 @@ class MockEvalProvider(BaseEvalProvider):
 
 class GatewayEvalProvider(BaseEvalProvider):
     """Provider utilizing the internal AgentRuntime execution loop."""
+
     async def resolve_llm_provider(self, db: AsyncSession, mock_responses: list) -> Any:
         from app.services.agents.agent_llm_provider import GatewayAgentLLMProvider
         from app.services.inference_proxy import get_inference_proxy
+
         proxy = get_inference_proxy()
         return GatewayAgentLLMProvider(db, proxy)
 
-    async def execute_run(self, db: AsyncSession, run_id: uuid.UUID, agent_id: uuid.UUID, llm_provider: Any) -> None:
+    async def execute_run(
+        self, db: AsyncSession, run_id: uuid.UUID, agent_id: uuid.UUID, llm_provider: Any
+    ) -> None:
         from app.services.agents import agent_runtime
+
         await agent_runtime.run_execution_loop(db, run_id, llm_provider=llm_provider)
 
 
 class RealProviderEvalProvider(BaseEvalProvider):
     """Opt-in provider for evaluating against external model APIs directly."""
+
     async def resolve_llm_provider(self, db: AsyncSession, mock_responses: list) -> Any:
         settings = get_settings()
         if not settings.agent_eval_real_provider_enabled:
-            raise ValueError("Real provider evals are disabled. Set AGENT_EVAL_REAL_PROVIDER_ENABLED=true to enable.")
+            raise ValueError(
+                "Real provider evals are disabled. Set AGENT_EVAL_REAL_PROVIDER_ENABLED=true to enable."
+            )
         from app.services.agents.agent_llm_provider import GatewayAgentLLMProvider
         from app.services.inference_proxy import get_inference_proxy
+
         proxy = get_inference_proxy()
         return GatewayAgentLLMProvider(db, proxy)
 
-    async def execute_run(self, db: AsyncSession, run_id: uuid.UUID, agent_id: uuid.UUID, llm_provider: Any) -> None:
+    async def execute_run(
+        self, db: AsyncSession, run_id: uuid.UUID, agent_id: uuid.UUID, llm_provider: Any
+    ) -> None:
         from app.services.agents import agent_runtime
+
         await agent_runtime.run_execution_loop(db, run_id, llm_provider=llm_provider)
 
 
@@ -94,7 +112,9 @@ class AgentEvalService:
         self.db = db
         self.settings = get_settings()
 
-    async def create_suite(self, agent_id: uuid.UUID, name: str, description: Optional[str] = None) -> AgentEvalSuite:
+    async def create_suite(
+        self, agent_id: uuid.UUID, name: str, description: str | None = None
+    ) -> AgentEvalSuite:
         suite = AgentEvalSuite(agent_id=agent_id, name=name, description=description)
         self.db.add(suite)
         await self.db.commit()
@@ -124,21 +144,22 @@ class AgentEvalService:
         return case
 
     async def run_eval_suite(
-        self,
-        suite_id: uuid.UUID,
-        metadata: Optional[dict] = None,
-        allow_paid_provider: bool = False
+        self, suite_id: uuid.UUID, metadata: dict | None = None, allow_paid_provider: bool = False
     ) -> AgentEvalRun:
         res = await self.db.execute(select(AgentEvalSuite).where(AgentEvalSuite.id == suite_id))
         suite = res.scalar_one_or_none()
         if not suite:
             raise ValueError("Suite not found")
 
-        res_entry = await self.db.execute(select(AgentRegistryEntry).where(AgentRegistryEntry.id == suite.agent_id))
+        res_entry = await self.db.execute(
+            select(AgentRegistryEntry).where(AgentRegistryEntry.id == suite.agent_id)
+        )
         agent = res_entry.scalar_one_or_none()
         model_id = "unknown"
         if agent:
-            res_def = await self.db.execute(select(AgentDefinition).where(AgentDefinition.id == agent.agent_id))
+            res_def = await self.db.execute(
+                select(AgentDefinition).where(AgentDefinition.id == agent.agent_id)
+            )
             agent_def = res_def.scalar_one_or_none()
             if agent_def:
                 model_id = agent_def.model_id
@@ -157,13 +178,17 @@ class AgentEvalService:
         await self.db.refresh(eval_run)
 
         # Fetch cases
-        res_cases = await self.db.execute(select(AgentEvalCase).where(AgentEvalCase.suite_id == suite_id))
+        res_cases = await self.db.execute(
+            select(AgentEvalCase).where(AgentEvalCase.suite_id == suite_id)
+        )
         cases = res_cases.scalars().all()
         eval_run.total_count = len(cases)
 
         for case in cases:
             try:
-                result = await self._run_case(eval_run.id, case, suite.agent_id, allow_paid_provider=allow_paid_provider)
+                result = await self._run_case(
+                    eval_run.id, case, suite.agent_id, allow_paid_provider=allow_paid_provider
+                )
                 if result.passed:
                     eval_run.passed_count += 1
                 else:
@@ -172,13 +197,10 @@ class AgentEvalService:
                 logger.exception(f"Failed to run eval case {case.id}")
                 eval_run.failed_count += 1
                 fail_res = AgentEvalResult(
-                    run_id=eval_run.id,
-                    case_id=case.id,
-                    passed=False,
-                    failure_details=str(e)
+                    run_id=eval_run.id, case_id=case.id, passed=False, failure_details=str(e)
                 )
                 self.db.add(fail_res)
-            
+
             await self.db.commit()
 
         eval_run.status = "completed"
@@ -192,8 +214,8 @@ class AgentEvalService:
         agent_id: uuid.UUID,
         dataset_id: uuid.UUID,
         version: str,
-        metadata: Optional[dict] = None,
-        allow_paid_provider: bool = False
+        metadata: dict | None = None,
+        allow_paid_provider: bool = False,
     ) -> AgentEvalRun:
         res_version = await self.db.execute(
             select(AgentEvalDatasetVersion)
@@ -204,37 +226,43 @@ class AgentEvalService:
         if not dataset_version:
             raise ValueError(f"Dataset version '{version}' not found for dataset: {dataset_id}")
 
-        res_dataset = await self.db.execute(select(AgentEvalDataset).where(AgentEvalDataset.id == dataset_id))
+        res_dataset = await self.db.execute(
+            select(AgentEvalDataset).where(AgentEvalDataset.id == dataset_id)
+        )
         dataset = res_dataset.scalar_one_or_none()
         dataset_name = dataset.name if dataset else "Unknown"
 
         suite = await self.create_suite(
             agent_id=agent_id,
             name=f"Dataset: {dataset_name} - Version: {version}",
-            description=f"Auto-generated suite for dataset evaluation version {version}"
+            description=f"Auto-generated suite for dataset evaluation version {version}",
         )
 
         for case_data in dataset_version.cases_json:
             await self.create_case(suite.id, case_data)
 
-        return await self.run_eval_suite(suite.id, metadata, allow_paid_provider=allow_paid_provider)
+        return await self.run_eval_suite(
+            suite.id, metadata, allow_paid_provider=allow_paid_provider
+        )
 
     async def _run_case(
         self,
         eval_run_id: uuid.UUID,
         case: AgentEvalCase,
         agent_id: uuid.UUID,
-        allow_paid_provider: bool = False
+        allow_paid_provider: bool = False,
     ) -> AgentEvalResult:
         mock_responses = []
         should_auto_satisfy = case.tags and "auto_satisfy" in case.tags
-        
+
         if should_auto_satisfy and "final_answer_contains" in str(case.assertions):
             for assertion in case.assertions:
                 if assertion["type"] == "final_answer_contains":
-                    mock_responses.append({"type": "final", "output": f"The answer is {assertion['value']}"})
+                    mock_responses.append(
+                        {"type": "final", "output": f"The answer is {assertion['value']}"}
+                    )
                     break
-        
+
         if not mock_responses:
             mock_responses = [{"type": "final", "output": "Default eval mock response"}]
 
@@ -246,12 +274,12 @@ class AgentEvalService:
         run = await agent_state.create_agent_run(
             self.db, agent_id, "eval-tenant", case.input_text, correlation_id=f"eval-{eval_run_id}"
         )
-        
+
         start_time = utc_now()
         await provider.execute_run(self.db, run.id, agent_id, resolved_llm_provider)
         end_time = utc_now()
         latency_ms = int((end_time - start_time).total_seconds() * 1000)
-        
+
         await self.db.refresh(run)
         steps = await agent_state.get_run_steps(self.db, run.id)
 
@@ -266,10 +294,10 @@ class AgentEvalService:
             await self.db.commit()
             # Refresh to ensure assertion checker sees updated metadata
             steps = await agent_state.get_run_steps(self.db, run.id)
-        
+
         assertion_results = []
         all_passed = True
-        
+
         final_answer = ""
         for s in reversed(steps):
             if s.step_type == "final":
@@ -280,17 +308,31 @@ class AgentEvalService:
 
         for assertion in case.assertions:
             pass_assertion, msg = self._check_assertion(assertion, run, steps, final_answer)
-            assertion_results.append({"type": assertion["type"], "passed": pass_assertion, "message": msg})
+            assertion_results.append(
+                {"type": assertion["type"], "passed": pass_assertion, "message": msg}
+            )
             if not pass_assertion:
                 all_passed = False
-  
+
         if case.max_steps and run.total_steps > case.max_steps:
             all_passed = False
-            assertion_results.append({"type": "max_steps", "passed": False, "message": f"Steps {run.total_steps} > {case.max_steps}"})
-            
+            assertion_results.append(
+                {
+                    "type": "max_steps",
+                    "passed": False,
+                    "message": f"Steps {run.total_steps} > {case.max_steps}",
+                }
+            )
+
         if case.max_cost_brl and run.estimated_cost_brl > case.max_cost_brl:
             all_passed = False
-            assertion_results.append({"type": "max_cost", "passed": False, "message": f"Cost {run.estimated_cost_brl} > {case.max_cost_brl}"})
+            assertion_results.append(
+                {
+                    "type": "max_cost",
+                    "passed": False,
+                    "message": f"Cost {run.estimated_cost_brl} > {case.max_cost_brl}",
+                }
+            )
 
         eval_result = AgentEvalResult(
             run_id=eval_run_id,
@@ -301,13 +343,15 @@ class AgentEvalService:
             latency_ms=latency_ms,
             total_tokens=run.total_tokens,
             total_cost_brl=run.estimated_cost_brl,
-            run_id_ref=run.id
+            run_id_ref=run.id,
         )
         self.db.add(eval_result)
         await self.db.commit()
         return eval_result
 
-    def _check_assertion(self, assertion: dict, run: AgentRun, steps: List[AgentRunStep], final_answer: str) -> (bool, str):
+    def _check_assertion(
+        self, assertion: dict, run: AgentRun, steps: list[AgentRunStep], final_answer: str
+    ) -> (bool, str):
         a_type = assertion["type"]
         val = assertion.get("value")
 
@@ -316,6 +360,7 @@ class AgentEvalService:
         # ---------------------------------------------------------
         if a_type == "structured_output":
             import json
+
             try:
                 json.loads(final_answer)
                 return True, "Final answer is valid JSON structure"
@@ -340,7 +385,10 @@ class AgentEvalService:
             if mem_steps:
                 return True, f"Memory use verified: {len(mem_steps)} memory operations"
             for s in steps:
-                if s.step_metadata and ("memory" in str(s.step_metadata).lower() or "read_memory" in str(s.step_metadata).lower()):
+                if s.step_metadata and (
+                    "memory" in str(s.step_metadata).lower()
+                    or "read_memory" in str(s.step_metadata).lower()
+                ):
                     return True, "Memory use verified via step metadata"
             return False, "No memory use detected in run steps"
 
@@ -358,13 +406,14 @@ class AgentEvalService:
 
         if a_type == "no_secret_output":
             import re
+
             secret_patterns = [
                 r"(?i)api[_-]?key",
                 r"(?i)secret",
                 r"(?i)password",
                 r"(?i)token",
                 r"SG\.[a-zA-Z0-9_-]{22}\.[a-zA-Z0-9_-]{43}",
-                r"AIza[0-9A-Za-z-_]{35}"
+                r"AIza[0-9A-Za-z-_]{35}",
             ]
             for pattern in secret_patterns:
                 if re.search(pattern, final_answer):
@@ -374,12 +423,18 @@ class AgentEvalService:
         if a_type == "tenant_isolation":
             expected_tenant = "eval-tenant"
             if run.tenant_id != expected_tenant:
-                return False, f"Tenant isolation breach: run tenant '{run.tenant_id}' does not match expected '{expected_tenant}'"
+                return (
+                    False,
+                    f"Tenant isolation breach: run tenant '{run.tenant_id}' does not match expected '{expected_tenant}'",
+                )
             for s in steps:
                 if s.step_metadata and "tenant" in str(s.step_metadata).lower():
                     metadata_str = str(s.step_metadata)
                     if "tenant" in metadata_str and expected_tenant not in metadata_str:
-                        return False, "Tenant isolation breach: cross-tenant reference detected in step metadata"
+                        return (
+                            False,
+                            "Tenant isolation breach: cross-tenant reference detected in step metadata",
+                        )
             return True, "Tenant isolation verified"
 
         # ---------------------------------------------------------
@@ -431,13 +486,17 @@ class AgentEvalService:
 
         return True, f"Assertion {a_type} passed (default)"
 
-    async def set_baseline(self, agent_id: uuid.UUID, run_id: uuid.UUID, set_by: str) -> AgentEvalBaseline:
+    async def set_baseline(
+        self, agent_id: uuid.UUID, run_id: uuid.UUID, set_by: str
+    ) -> AgentEvalBaseline:
         res = await self.db.execute(select(AgentEvalRun).where(AgentEvalRun.id == run_id))
         run = res.scalar_one_or_none()
         if not run:
             raise ValueError("Eval run not found")
-        
-        res_entry = await self.db.execute(select(AgentRegistryEntry).where(AgentRegistryEntry.id == agent_id))
+
+        res_entry = await self.db.execute(
+            select(AgentRegistryEntry).where(AgentRegistryEntry.id == agent_id)
+        )
         agent = res_entry.scalar_one_or_none()
         if not agent:
             agent = await agent_state.get_agent_definition(self.db, agent_id)
@@ -445,10 +504,12 @@ class AgentEvalService:
                 raise ValueError("Agent not found")
 
         pass_rate = run.passed_count / run.total_count if run.total_count > 0 else 0
-        
-        res_base = await self.db.execute(select(AgentEvalBaseline).where(AgentEvalBaseline.agent_id == agent_id))
+
+        res_base = await self.db.execute(
+            select(AgentEvalBaseline).where(AgentEvalBaseline.agent_id == agent_id)
+        )
         baseline = res_base.scalar_one_or_none()
-        
+
         version_str = getattr(agent, "semantic_version", getattr(agent, "version", "unknown"))
 
         if baseline:
@@ -465,14 +526,16 @@ class AgentEvalService:
                 score=pass_rate,
                 pass_rate=pass_rate,
                 version=version_str,
-                set_by=set_by
+                set_by=set_by,
             )
             self.db.add(baseline)
-        
+
         await self.db.commit()
         await self.db.refresh(baseline)
         return baseline
 
-    async def get_baseline(self, agent_id: uuid.UUID) -> Optional[AgentEvalBaseline]:
-        res = await self.db.execute(select(AgentEvalBaseline).where(AgentEvalBaseline.agent_id == agent_id))
+    async def get_baseline(self, agent_id: uuid.UUID) -> AgentEvalBaseline | None:
+        res = await self.db.execute(
+            select(AgentEvalBaseline).where(AgentEvalBaseline.agent_id == agent_id)
+        )
         return res.scalar_one_or_none()

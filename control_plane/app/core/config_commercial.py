@@ -33,358 +33,923 @@ class CommercialSettings(BaseSettings):
     commercial_agent_tool_approval_required: bool = True
     commercial_workflow_determinism_enabled: bool = False
     commercial_workflow_enforce_reproducibility: bool = True
-    commercial_workflow_checkpoint_frequency: int = 1 # every N steps
+    commercial_workflow_checkpoint_frequency: int = 1  # every N steps
     commercial_workflow_drift_threshold: float = 0.01
     commercial_appliance_mode_enabled: bool = False
     commercial_appliance_id: str = "appliance-000"
     commercial_appliance_deployment_tier: str = "regulated"
     commercial_appliance_require_removable_media: bool = False
     # QoS Phase 25
-    commercial_qos_fairness_enabled: bool = Field(default=True, alias="COMMERCIAL_QOS_FAIRNESS_ENABLED")
-    commercial_qos_fairness_collection_interval_seconds: int = Field(default=60, alias="COMMERCIAL_QOS_FAIRNESS_COLLECTION_INTERVAL_SECONDS")
-    commercial_qos_starvation_threshold_seconds: int = Field(default=1800, alias="COMMERCIAL_QOS_STARVATION_THRESHOLD_SECONDS")
-    commercial_qos_priority_inversion_alert: bool = Field(default=True, alias="COMMERCIAL_QOS_PRIORITY_INVERSION_ALERT")
-    commercial_qos_chargeback_enabled: bool = Field(default=True, alias="COMMERCIAL_QOS_CHARGEBACK_ENABLED")
-    commercial_qos_chargeback_mode: str = Field(default="report_only", alias="COMMERCIAL_QOS_CHARGEBACK_MODE")
-    commercial_qos_priority_slot_cost_brl_per_second: float = Field(default=0.001, alias="COMMERCIAL_QOS_PRIORITY_SLOT_COST_BRL_PER_SECOND")
+    commercial_qos_fairness_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_QOS_FAIRNESS_ENABLED"
+    )
+    commercial_qos_fairness_collection_interval_seconds: int = Field(
+        default=60, alias="COMMERCIAL_QOS_FAIRNESS_COLLECTION_INTERVAL_SECONDS"
+    )
+    commercial_qos_starvation_threshold_seconds: int = Field(
+        default=1800, alias="COMMERCIAL_QOS_STARVATION_THRESHOLD_SECONDS"
+    )
+    commercial_qos_priority_inversion_alert: bool = Field(
+        default=True, alias="COMMERCIAL_QOS_PRIORITY_INVERSION_ALERT"
+    )
+    commercial_qos_chargeback_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_QOS_CHARGEBACK_ENABLED"
+    )
+    commercial_qos_chargeback_mode: str = Field(
+        default="report_only", alias="COMMERCIAL_QOS_CHARGEBACK_MODE"
+    )
+    commercial_qos_priority_slot_cost_brl_per_second: float = Field(
+        default=0.001, alias="COMMERCIAL_QOS_PRIORITY_SLOT_COST_BRL_PER_SECOND"
+    )
     # Commercial QoS Billing Phase 26
-    commercial_qos_billing_enabled: bool = Field(default=False, alias="COMMERCIAL_QOS_BILLING_ENABLED")
+    commercial_qos_billing_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_QOS_BILLING_ENABLED"
+    )
     # disabled|report_only|invoice_line_item|wallet_debit_opt_in
-    commercial_qos_billing_mode: str = Field(default="report_only", alias="COMMERCIAL_QOS_BILLING_MODE")
-    commercial_qos_billing_debit_wallet: bool = Field(default=False, alias="COMMERCIAL_QOS_BILLING_DEBIT_WALLET")
-    commercial_qos_billing_include_opportunity_cost: bool = Field(default=False, alias="COMMERCIAL_QOS_BILLING_INCLUDE_OPPORTUNITY_COST")
-    commercial_qos_billing_min_amount_brl: float = Field(default=0.01, alias="COMMERCIAL_QOS_BILLING_MIN_AMOUNT_BRL")
-    commercial_qos_billing_max_daily_debit_brl_per_client: float = Field(default=100.0, alias="COMMERCIAL_QOS_BILLING_MAX_DAILY_DEBIT_BRL_PER_CLIENT")
-    commercial_qos_billing_invoice_line_item: bool = Field(default=True, alias="COMMERCIAL_QOS_BILLING_INVOICE_LINE_ITEM")
+    commercial_qos_billing_mode: str = Field(
+        default="report_only", alias="COMMERCIAL_QOS_BILLING_MODE"
+    )
+    commercial_qos_billing_debit_wallet: bool = Field(
+        default=False, alias="COMMERCIAL_QOS_BILLING_DEBIT_WALLET"
+    )
+    commercial_qos_billing_include_opportunity_cost: bool = Field(
+        default=False, alias="COMMERCIAL_QOS_BILLING_INCLUDE_OPPORTUNITY_COST"
+    )
+    commercial_qos_billing_min_amount_brl: float = Field(
+        default=0.01, alias="COMMERCIAL_QOS_BILLING_MIN_AMOUNT_BRL"
+    )
+    commercial_qos_billing_max_daily_debit_brl_per_client: float = Field(
+        default=100.0, alias="COMMERCIAL_QOS_BILLING_MAX_DAILY_DEBIT_BRL_PER_CLIENT"
+    )
+    commercial_qos_billing_invoice_line_item: bool = Field(
+        default=True, alias="COMMERCIAL_QOS_BILLING_INVOICE_LINE_ITEM"
+    )
     # Phase 27: Financial Reconciliation + Dispute Management
-    commercial_financial_reconciliation_enabled: bool = Field(default=True, alias="COMMERCIAL_FINANCIAL_RECONCILIATION_ENABLED")
-    commercial_financial_reconciliation_threshold_percent: float = Field(default=2.0, alias="COMMERCIAL_FINANCIAL_RECONCILIATION_THRESHOLD_PERCENT")
-    commercial_financial_dispute_enabled: bool = Field(default=True, alias="COMMERCIAL_FINANCIAL_DISPUTE_ENABLED")
-    commercial_financial_audit_chain_enabled: bool = Field(default=True, alias="COMMERCIAL_FINANCIAL_AUDIT_CHAIN_ENABLED")
-    commercial_financial_manual_credit_enabled: bool = Field(default=False, alias="COMMERCIAL_FINANCIAL_MANUAL_CREDIT_ENABLED")
-    commercial_compliance_controls_enabled: bool = Field(default=True, alias="COMMERCIAL_COMPLIANCE_CONTROLS_ENABLED")
-    commercial_compliance_mode: str = Field(default="report_only", alias="COMMERCIAL_COMPLIANCE_MODE")
-    commercial_compliance_require_evidence: bool = Field(default=True, alias="COMMERCIAL_COMPLIANCE_REQUIRE_EVIDENCE")
-    commercial_compliance_default_approver_count: int = Field(default=1, alias="COMMERCIAL_COMPLIANCE_DEFAULT_APPROVER_COUNT")
-    commercial_compliance_segregation_required: bool = Field(default=True, alias="COMMERCIAL_COMPLIANCE_SEGREGATION_REQUIRED")
-    commercial_enterprise_audit_portal_enabled: bool = Field(default=True, alias="COMMERCIAL_ENTERPRISE_AUDIT_PORTAL_ENABLED")
-    commercial_enterprise_audit_export_pdf_enabled: bool = Field(default=False, alias="COMMERCIAL_ENTERPRISE_AUDIT_EXPORT_PDF_ENABLED")
-    commercial_enterprise_audit_log_retention_days: int = Field(default=365, alias="COMMERCIAL_ENTERPRISE_AUDIT_LOG_RETENTION_DAYS")
-    commercial_enterprise_audit_require_rbac: bool = Field(default=True, alias="COMMERCIAL_ENTERPRISE_AUDIT_REQUIRE_RBAC")
-    commercial_operational_controls_enabled: bool = Field(default=True, alias="COMMERCIAL_OPERATIONAL_CONTROLS_ENABLED")
-    commercial_operational_controls_mode: str = Field(default="report_only", alias="COMMERCIAL_OPERATIONAL_CONTROLS_MODE")
-    commercial_operational_control_default_evidence_sla_days: int = Field(default=90, alias="COMMERCIAL_OPERATIONAL_CONTROL_DEFAULT_EVIDENCE_SLA_DAYS")
-    commercial_operational_control_overdue_escalations_enabled: bool = Field(default=True, alias="COMMERCIAL_OPERATIONAL_CONTROL_OVERDUE_ESCALATIONS_ENABLED")
+    commercial_financial_reconciliation_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_FINANCIAL_RECONCILIATION_ENABLED"
+    )
+    commercial_financial_reconciliation_threshold_percent: float = Field(
+        default=2.0, alias="COMMERCIAL_FINANCIAL_RECONCILIATION_THRESHOLD_PERCENT"
+    )
+    commercial_financial_dispute_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_FINANCIAL_DISPUTE_ENABLED"
+    )
+    commercial_financial_audit_chain_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_FINANCIAL_AUDIT_CHAIN_ENABLED"
+    )
+    commercial_financial_manual_credit_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_FINANCIAL_MANUAL_CREDIT_ENABLED"
+    )
+    commercial_compliance_controls_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_COMPLIANCE_CONTROLS_ENABLED"
+    )
+    commercial_compliance_mode: str = Field(
+        default="report_only", alias="COMMERCIAL_COMPLIANCE_MODE"
+    )
+    commercial_compliance_require_evidence: bool = Field(
+        default=True, alias="COMMERCIAL_COMPLIANCE_REQUIRE_EVIDENCE"
+    )
+    commercial_compliance_default_approver_count: int = Field(
+        default=1, alias="COMMERCIAL_COMPLIANCE_DEFAULT_APPROVER_COUNT"
+    )
+    commercial_compliance_segregation_required: bool = Field(
+        default=True, alias="COMMERCIAL_COMPLIANCE_SEGREGATION_REQUIRED"
+    )
+    commercial_enterprise_audit_portal_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_ENTERPRISE_AUDIT_PORTAL_ENABLED"
+    )
+    commercial_enterprise_audit_export_pdf_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_ENTERPRISE_AUDIT_EXPORT_PDF_ENABLED"
+    )
+    commercial_enterprise_audit_log_retention_days: int = Field(
+        default=365, alias="COMMERCIAL_ENTERPRISE_AUDIT_LOG_RETENTION_DAYS"
+    )
+    commercial_enterprise_audit_require_rbac: bool = Field(
+        default=True, alias="COMMERCIAL_ENTERPRISE_AUDIT_REQUIRE_RBAC"
+    )
+    commercial_operational_controls_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_OPERATIONAL_CONTROLS_ENABLED"
+    )
+    commercial_operational_controls_mode: str = Field(
+        default="report_only", alias="COMMERCIAL_OPERATIONAL_CONTROLS_MODE"
+    )
+    commercial_operational_control_default_evidence_sla_days: int = Field(
+        default=90, alias="COMMERCIAL_OPERATIONAL_CONTROL_DEFAULT_EVIDENCE_SLA_DAYS"
+    )
+    commercial_operational_control_overdue_escalations_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_OPERATIONAL_CONTROL_OVERDUE_ESCALATIONS_ENABLED"
+    )
     # Phase 28: Revenue Forecasting + Financial Anomaly Detection
-    commercial_revenue_forecasting_enabled: bool = Field(default=True, alias="COMMERCIAL_REVENUE_FORECASTING_ENABLED")
-    commercial_revenue_forecast_method: str = Field(default="ewma", alias="COMMERCIAL_REVENUE_FORECAST_METHOD")
-    commercial_revenue_forecast_window_days: int = Field(default=30, alias="COMMERCIAL_REVENUE_FORECAST_WINDOW_DAYS")
-    commercial_revenue_forecast_min_samples: int = Field(default=7, alias="COMMERCIAL_REVENUE_FORECAST_MIN_SAMPLES")
-    commercial_financial_anomaly_detection_enabled: bool = Field(default=True, alias="COMMERCIAL_FINANCIAL_ANOMALY_DETECTION_ENABLED")
-    commercial_financial_anomaly_zscore_threshold: float = Field(default=3.0, alias="COMMERCIAL_FINANCIAL_ANOMALY_ZSCORE_THRESHOLD")
-    commercial_financial_anomaly_percent_threshold: float = Field(default=30.0, alias="COMMERCIAL_FINANCIAL_ANOMALY_PERCENT_THRESHOLD")
-    commercial_financial_anomaly_min_samples: int = Field(default=7, alias="COMMERCIAL_FINANCIAL_ANOMALY_MIN_SAMPLES")
-    commercial_revenue_protection_enabled: bool = Field(default=True, alias="COMMERCIAL_REVENUE_PROTECTION_ENABLED")
-    commercial_revenue_protection_mode: str = Field(default="report_only", alias="COMMERCIAL_REVENUE_PROTECTION_MODE")
-    commercial_revenue_protection_allow_enforce: bool = Field(default=False, alias="COMMERCIAL_REVENUE_PROTECTION_ALLOW_ENFORCE")
-    commercial_revenue_protection_cooldown_minutes: int = Field(default=60, alias="COMMERCIAL_REVENUE_PROTECTION_COOLDOWN_MINUTES")
-    commercial_revenue_protection_webhook_enabled: bool = Field(default=False, alias="COMMERCIAL_REVENUE_PROTECTION_WEBHOOK_ENABLED")
-    commercial_revenue_protection_webhook_url: str = Field(default="", alias="COMMERCIAL_REVENUE_PROTECTION_WEBHOOK_URL")
-    commercial_revenue_escalations_enabled: bool = Field(default=True, alias="COMMERCIAL_REVENUE_ESCALATIONS_ENABLED")
-    commercial_revenue_escalations_mode: str = Field(default="dry_run", alias="COMMERCIAL_REVENUE_ESCALATIONS_MODE")
-    commercial_revenue_webhook_enabled: bool = Field(default=False, alias="COMMERCIAL_REVENUE_WEBHOOK_ENABLED")
+    commercial_revenue_forecasting_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_REVENUE_FORECASTING_ENABLED"
+    )
+    commercial_revenue_forecast_method: str = Field(
+        default="ewma", alias="COMMERCIAL_REVENUE_FORECAST_METHOD"
+    )
+    commercial_revenue_forecast_window_days: int = Field(
+        default=30, alias="COMMERCIAL_REVENUE_FORECAST_WINDOW_DAYS"
+    )
+    commercial_revenue_forecast_min_samples: int = Field(
+        default=7, alias="COMMERCIAL_REVENUE_FORECAST_MIN_SAMPLES"
+    )
+    commercial_financial_anomaly_detection_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_FINANCIAL_ANOMALY_DETECTION_ENABLED"
+    )
+    commercial_financial_anomaly_zscore_threshold: float = Field(
+        default=3.0, alias="COMMERCIAL_FINANCIAL_ANOMALY_ZSCORE_THRESHOLD"
+    )
+    commercial_financial_anomaly_percent_threshold: float = Field(
+        default=30.0, alias="COMMERCIAL_FINANCIAL_ANOMALY_PERCENT_THRESHOLD"
+    )
+    commercial_financial_anomaly_min_samples: int = Field(
+        default=7, alias="COMMERCIAL_FINANCIAL_ANOMALY_MIN_SAMPLES"
+    )
+    commercial_revenue_protection_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_REVENUE_PROTECTION_ENABLED"
+    )
+    commercial_revenue_protection_mode: str = Field(
+        default="report_only", alias="COMMERCIAL_REVENUE_PROTECTION_MODE"
+    )
+    commercial_revenue_protection_allow_enforce: bool = Field(
+        default=False, alias="COMMERCIAL_REVENUE_PROTECTION_ALLOW_ENFORCE"
+    )
+    commercial_revenue_protection_cooldown_minutes: int = Field(
+        default=60, alias="COMMERCIAL_REVENUE_PROTECTION_COOLDOWN_MINUTES"
+    )
+    commercial_revenue_protection_webhook_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_REVENUE_PROTECTION_WEBHOOK_ENABLED"
+    )
+    commercial_revenue_protection_webhook_url: str = Field(
+        default="", alias="COMMERCIAL_REVENUE_PROTECTION_WEBHOOK_URL"
+    )
+    commercial_revenue_escalations_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_REVENUE_ESCALATIONS_ENABLED"
+    )
+    commercial_revenue_escalations_mode: str = Field(
+        default="dry_run", alias="COMMERCIAL_REVENUE_ESCALATIONS_MODE"
+    )
+    commercial_revenue_webhook_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_REVENUE_WEBHOOK_ENABLED"
+    )
     commercial_revenue_webhook_url: str = Field(default="", alias="COMMERCIAL_REVENUE_WEBHOOK_URL")
-    commercial_revenue_webhook_signing_secret: str = Field(default="", alias="COMMERCIAL_REVENUE_WEBHOOK_SIGNING_SECRET")
-    commercial_revenue_slack_enabled: bool = Field(default=False, alias="COMMERCIAL_REVENUE_SLACK_ENABLED")
-    commercial_revenue_slack_webhook_url: str = Field(default="", alias="COMMERCIAL_REVENUE_SLACK_WEBHOOK_URL")
-    commercial_revenue_pagerduty_enabled: bool = Field(default=False, alias="COMMERCIAL_REVENUE_PAGERDUTY_ENABLED")
-    commercial_revenue_pagerduty_routing_key: str = Field(default="", alias="COMMERCIAL_REVENUE_PAGERDUTY_ROUTING_KEY")
-    commercial_revenue_email_escalation_enabled: bool = Field(default=False, alias="COMMERCIAL_REVENUE_EMAIL_ESCALATION_ENABLED")
-    commercial_revenue_email_escalation_recipients: str = Field(default="", alias="COMMERCIAL_REVENUE_EMAIL_ESCALATION_RECIPIENTS")
-    commercial_revenue_escalation_cooldown_minutes: int = Field(default=30, alias="COMMERCIAL_REVENUE_ESCALATION_COOLDOWN_MINUTES")
-    commercial_revenue_escalation_max_retries: int = Field(default=3, alias="COMMERCIAL_REVENUE_ESCALATION_MAX_RETRIES")
-    commercial_reproducibility_enabled: bool = Field(default=True, alias="COMMERCIAL_REPRODUCIBILITY_ENABLED")
-    commercial_replay_allow_cross_backend: bool = Field(default=False, alias="COMMERCIAL_REPLAY_ALLOW_CROSS_BACKEND")
+    commercial_revenue_webhook_signing_secret: str = Field(
+        default="", alias="COMMERCIAL_REVENUE_WEBHOOK_SIGNING_SECRET"
+    )
+    commercial_revenue_slack_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_REVENUE_SLACK_ENABLED"
+    )
+    commercial_revenue_slack_webhook_url: str = Field(
+        default="", alias="COMMERCIAL_REVENUE_SLACK_WEBHOOK_URL"
+    )
+    commercial_revenue_pagerduty_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_REVENUE_PAGERDUTY_ENABLED"
+    )
+    commercial_revenue_pagerduty_routing_key: str = Field(
+        default="", alias="COMMERCIAL_REVENUE_PAGERDUTY_ROUTING_KEY"
+    )
+    commercial_revenue_email_escalation_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_REVENUE_EMAIL_ESCALATION_ENABLED"
+    )
+    commercial_revenue_email_escalation_recipients: str = Field(
+        default="", alias="COMMERCIAL_REVENUE_EMAIL_ESCALATION_RECIPIENTS"
+    )
+    commercial_revenue_escalation_cooldown_minutes: int = Field(
+        default=30, alias="COMMERCIAL_REVENUE_ESCALATION_COOLDOWN_MINUTES"
+    )
+    commercial_revenue_escalation_max_retries: int = Field(
+        default=3, alias="COMMERCIAL_REVENUE_ESCALATION_MAX_RETRIES"
+    )
+    commercial_reproducibility_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_REPRODUCIBILITY_ENABLED"
+    )
+    commercial_replay_allow_cross_backend: bool = Field(
+        default=False, alias="COMMERCIAL_REPLAY_ALLOW_CROSS_BACKEND"
+    )
     commercial_replay_max_age_days: int = Field(default=30, alias="COMMERCIAL_REPLAY_MAX_AGE_DAYS")
-    commercial_replay_capture_prompt_hash_only: bool = Field(default=True, alias="COMMERCIAL_REPLAY_CAPTURE_PROMPT_HASH_ONLY")
-    commercial_replay_default_mode: str = Field(default="best_effort", alias="COMMERCIAL_REPLAY_DEFAULT_MODE")
+    commercial_replay_capture_prompt_hash_only: bool = Field(
+        default=True, alias="COMMERCIAL_REPLAY_CAPTURE_PROMPT_HASH_ONLY"
+    )
+    commercial_replay_default_mode: str = Field(
+        default="best_effort", alias="COMMERCIAL_REPLAY_DEFAULT_MODE"
+    )
     # Phase 60: Verifiable AI Execution Proofs + Merkle Audit Timelines
-    commercial_merkle_timelines_enabled: bool = Field(default=True, alias="COMMERCIAL_MERKLE_TIMELINES_ENABLED")
-    commercial_merkle_timeline_window_minutes: int = Field(default=60, alias="COMMERCIAL_MERKLE_TIMELINE_WINDOW_MINUTES")
-    commercial_merkle_timeline_auto_seal: bool = Field(default=False, alias="COMMERCIAL_MERKLE_TIMELINE_AUTO_SEAL")
-    commercial_execution_proofs_enabled: bool = Field(default=True, alias="COMMERCIAL_EXECUTION_PROOFS_ENABLED")
-    commercial_execution_proofs_export_enabled: bool = Field(default=True, alias="COMMERCIAL_EXECUTION_PROOFS_EXPORT_ENABLED")
+    commercial_merkle_timelines_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_MERKLE_TIMELINES_ENABLED"
+    )
+    commercial_merkle_timeline_window_minutes: int = Field(
+        default=60, alias="COMMERCIAL_MERKLE_TIMELINE_WINDOW_MINUTES"
+    )
+    commercial_merkle_timeline_auto_seal: bool = Field(
+        default=False, alias="COMMERCIAL_MERKLE_TIMELINE_AUTO_SEAL"
+    )
+    commercial_execution_proofs_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_EXECUTION_PROOFS_ENABLED"
+    )
+    commercial_execution_proofs_export_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_EXECUTION_PROOFS_EXPORT_ENABLED"
+    )
     # Commercial QoS Phase 24
-    commercial_qos_priority_queue_enabled: bool = Field(default=False, alias="COMMERCIAL_QOS_PRIORITY_QUEUE_ENABLED")
-    commercial_qos_priority_queue_mode: str = Field(default="shadow", alias="COMMERCIAL_QOS_PRIORITY_QUEUE_MODE")
-    commercial_qos_queue_aging_seconds: int = Field(default=300, alias="COMMERCIAL_QOS_QUEUE_AGING_SECONDS")
-    commercial_qos_max_starvation_seconds: int = Field(default=1800, alias="COMMERCIAL_QOS_MAX_STARVATION_SECONDS")
-    commercial_qos_rate_limiting_enabled: bool = Field(default=True, alias="COMMERCIAL_QOS_RATE_LIMITING_ENABLED")
-    commercial_qos_rate_limit_mode: str = Field(default="report_only", alias="COMMERCIAL_QOS_RATE_LIMIT_MODE")
+    commercial_qos_priority_queue_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_QOS_PRIORITY_QUEUE_ENABLED"
+    )
+    commercial_qos_priority_queue_mode: str = Field(
+        default="shadow", alias="COMMERCIAL_QOS_PRIORITY_QUEUE_MODE"
+    )
+    commercial_qos_queue_aging_seconds: int = Field(
+        default=300, alias="COMMERCIAL_QOS_QUEUE_AGING_SECONDS"
+    )
+    commercial_qos_max_starvation_seconds: int = Field(
+        default=1800, alias="COMMERCIAL_QOS_MAX_STARVATION_SECONDS"
+    )
+    commercial_qos_rate_limiting_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_QOS_RATE_LIMITING_ENABLED"
+    )
+    commercial_qos_rate_limit_mode: str = Field(
+        default="report_only", alias="COMMERCIAL_QOS_RATE_LIMIT_MODE"
+    )
     commercial_qos_free_rpm: int = Field(default=10, alias="COMMERCIAL_QOS_FREE_RPM")
     commercial_qos_basic_rpm: int = Field(default=60, alias="COMMERCIAL_QOS_BASIC_RPM")
     commercial_qos_pro_rpm: int = Field(default=300, alias="COMMERCIAL_QOS_PRO_RPM")
     commercial_qos_premium_rpm: int = Field(default=1000, alias="COMMERCIAL_QOS_PREMIUM_RPM")
     commercial_qos_enterprise_rpm: int = Field(default=5000, alias="COMMERCIAL_QOS_ENTERPRISE_RPM")
     # Commercial Guardrails
-    commercial_guardrails_enabled: bool = Field(default=False, alias="COMMERCIAL_GUARDRAILS_ENABLED")
+    commercial_guardrails_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_GUARDRAILS_ENABLED"
+    )
     # Commercial Routing Phase 4
     commercial_routing_enabled: bool = Field(default=False, alias="COMMERCIAL_ROUTING_ENABLED")
-    commercial_routing_default_policy: str = Field(default="disabled", alias="COMMERCIAL_ROUTING_DEFAULT_POLICY")
-    commercial_min_margin_percent: float = Field(default=20.0, alias="COMMERCIAL_MIN_MARGIN_PERCENT")
+    commercial_routing_default_policy: str = Field(
+        default="disabled", alias="COMMERCIAL_ROUTING_DEFAULT_POLICY"
+    )
+    commercial_min_margin_percent: float = Field(
+        default=20.0, alias="COMMERCIAL_MIN_MARGIN_PERCENT"
+    )
     commercial_local_route_bonus: float = Field(default=10.0, alias="COMMERCIAL_LOCAL_ROUTE_BONUS")
     commercial_latency_weight: float = Field(default=0.15, alias="COMMERCIAL_LATENCY_WEIGHT")
     commercial_margin_weight: float = Field(default=0.60, alias="COMMERCIAL_MARGIN_WEIGHT")
     commercial_quality_weight: float = Field(default=0.25, alias="COMMERCIAL_QUALITY_WEIGHT")
     # Commercial Calibration Phase 6
-    commercial_calibration_enabled: bool = Field(default=False, alias="COMMERCIAL_CALIBRATION_ENABLED")
-    commercial_calibration_mode: str = Field(default="recommend_only", alias="COMMERCIAL_CALIBRATION_MODE")
-    commercial_calibration_min_samples: int = Field(default=20, alias="COMMERCIAL_CALIBRATION_MIN_SAMPLES")
-    commercial_calibration_lookback_days: int = Field(default=7, alias="COMMERCIAL_CALIBRATION_LOOKBACK_DAYS")
-    commercial_calibration_max_multiplier: float = Field(default=3.0, alias="COMMERCIAL_CALIBRATION_MAX_MULTIPLIER")
-    commercial_calibration_min_multiplier: float = Field(default=0.5, alias="COMMERCIAL_CALIBRATION_MIN_MULTIPLIER")
-    commercial_calibration_use_trimmed_mean: bool = Field(default=True, alias="COMMERCIAL_CALIBRATION_USE_TRIMMED_MEAN")
-    commercial_calibration_outlier_trim_percent: float = Field(default=5.0, alias="COMMERCIAL_CALIBRATION_OUTLIER_TRIM_PERCENT")
-    commercial_calibration_max_recommended_change_percent: float = Field(default=25.0, alias="COMMERCIAL_CALIBRATION_MAX_RECOMMENDED_CHANGE_PERCENT")
+    commercial_calibration_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_CALIBRATION_ENABLED"
+    )
+    commercial_calibration_mode: str = Field(
+        default="recommend_only", alias="COMMERCIAL_CALIBRATION_MODE"
+    )
+    commercial_calibration_min_samples: int = Field(
+        default=20, alias="COMMERCIAL_CALIBRATION_MIN_SAMPLES"
+    )
+    commercial_calibration_lookback_days: int = Field(
+        default=7, alias="COMMERCIAL_CALIBRATION_LOOKBACK_DAYS"
+    )
+    commercial_calibration_max_multiplier: float = Field(
+        default=3.0, alias="COMMERCIAL_CALIBRATION_MAX_MULTIPLIER"
+    )
+    commercial_calibration_min_multiplier: float = Field(
+        default=0.5, alias="COMMERCIAL_CALIBRATION_MIN_MULTIPLIER"
+    )
+    commercial_calibration_use_trimmed_mean: bool = Field(
+        default=True, alias="COMMERCIAL_CALIBRATION_USE_TRIMMED_MEAN"
+    )
+    commercial_calibration_outlier_trim_percent: float = Field(
+        default=5.0, alias="COMMERCIAL_CALIBRATION_OUTLIER_TRIM_PERCENT"
+    )
+    commercial_calibration_max_recommended_change_percent: float = Field(
+        default=25.0, alias="COMMERCIAL_CALIBRATION_MAX_RECOMMENDED_CHANGE_PERCENT"
+    )
     # Commercial Calibration Auto Apply Phase 8
-    commercial_calibration_auto_apply: bool = Field(default=False, alias="COMMERCIAL_CALIBRATION_AUTO_APPLY")
-    commercial_calibration_auto_apply_mode: str = Field(default="dry_run", alias="COMMERCIAL_CALIBRATION_AUTO_APPLY_MODE")
-    commercial_calibration_auto_apply_max_change_percent: float = Field(default=10.0, alias="COMMERCIAL_CALIBRATION_AUTO_APPLY_MAX_CHANGE_PERCENT")
-    commercial_calibration_auto_apply_min_confidence: str = Field(default="high", alias="COMMERCIAL_CALIBRATION_AUTO_APPLY_MIN_CONFIDENCE")
-    commercial_calibration_auto_apply_min_recent_samples: int = Field(default=20, alias="COMMERCIAL_CALIBRATION_AUTO_APPLY_MIN_RECENT_SAMPLES")
-    commercial_calibration_auto_apply_require_24h_data: bool = Field(default=True, alias="COMMERCIAL_CALIBRATION_AUTO_APPLY_REQUIRE_24H_DATA")
-    commercial_calibration_auto_apply_rate_limit_minutes: int = Field(default=60, alias="COMMERCIAL_CALIBRATION_AUTO_APPLY_RATE_LIMIT_MINUTES")
-    commercial_calibration_canary_default_percent: int = Field(default=5, alias="COMMERCIAL_CALIBRATION_CANARY_DEFAULT_PERCENT")
-    commercial_calibration_canary_max_percent: int = Field(default=25, alias="COMMERCIAL_CALIBRATION_CANARY_MAX_PERCENT")
+    commercial_calibration_auto_apply: bool = Field(
+        default=False, alias="COMMERCIAL_CALIBRATION_AUTO_APPLY"
+    )
+    commercial_calibration_auto_apply_mode: str = Field(
+        default="dry_run", alias="COMMERCIAL_CALIBRATION_AUTO_APPLY_MODE"
+    )
+    commercial_calibration_auto_apply_max_change_percent: float = Field(
+        default=10.0, alias="COMMERCIAL_CALIBRATION_AUTO_APPLY_MAX_CHANGE_PERCENT"
+    )
+    commercial_calibration_auto_apply_min_confidence: str = Field(
+        default="high", alias="COMMERCIAL_CALIBRATION_AUTO_APPLY_MIN_CONFIDENCE"
+    )
+    commercial_calibration_auto_apply_min_recent_samples: int = Field(
+        default=20, alias="COMMERCIAL_CALIBRATION_AUTO_APPLY_MIN_RECENT_SAMPLES"
+    )
+    commercial_calibration_auto_apply_require_24h_data: bool = Field(
+        default=True, alias="COMMERCIAL_CALIBRATION_AUTO_APPLY_REQUIRE_24H_DATA"
+    )
+    commercial_calibration_auto_apply_rate_limit_minutes: int = Field(
+        default=60, alias="COMMERCIAL_CALIBRATION_AUTO_APPLY_RATE_LIMIT_MINUTES"
+    )
+    commercial_calibration_canary_default_percent: int = Field(
+        default=5, alias="COMMERCIAL_CALIBRATION_CANARY_DEFAULT_PERCENT"
+    )
+    commercial_calibration_canary_max_percent: int = Field(
+        default=25, alias="COMMERCIAL_CALIBRATION_CANARY_MAX_PERCENT"
+    )
     # Commercial Canary Auto Promotion Phase 9
-    commercial_canary_auto_promotion_enabled: bool = Field(default=False, alias="COMMERCIAL_CANARY_AUTO_PROMOTION_ENABLED")
-    commercial_canary_auto_promotion_mode: str = Field(default="dry_run", alias="COMMERCIAL_CANARY_AUTO_PROMOTION_MODE")
-    commercial_canary_promotion_steps: str = Field(default="5,10,25,50,100", alias="COMMERCIAL_CANARY_PROMOTION_STEPS")
-    commercial_canary_min_observation_minutes: int = Field(default=60, alias="COMMERCIAL_CANARY_MIN_OBSERVATION_MINUTES")
-    commercial_canary_min_requests_per_step: int = Field(default=100, alias="COMMERCIAL_CANARY_MIN_REQUESTS_PER_STEP")
-    commercial_canary_min_margin_percent: float = Field(default=20.0, alias="COMMERCIAL_CANARY_MIN_MARGIN_PERCENT")
-    commercial_canary_max_error_rate_percent: float = Field(default=2.0, alias="COMMERCIAL_CANARY_MAX_ERROR_RATE_PERCENT")
-    commercial_canary_max_latency_regression_percent: float = Field(default=20.0, alias="COMMERCIAL_CANARY_MAX_LATENCY_REGRESSION_PERCENT")
-    commercial_canary_max_estimation_error_percent: float = Field(default=15.0, alias="COMMERCIAL_CANARY_MAX_ESTIMATION_ERROR_PERCENT")
-    commercial_canary_auto_rollback_enabled: bool = Field(default=True, alias="COMMERCIAL_CANARY_AUTO_ROLLBACK_ENABLED")
+    commercial_canary_auto_promotion_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_CANARY_AUTO_PROMOTION_ENABLED"
+    )
+    commercial_canary_auto_promotion_mode: str = Field(
+        default="dry_run", alias="COMMERCIAL_CANARY_AUTO_PROMOTION_MODE"
+    )
+    commercial_canary_promotion_steps: str = Field(
+        default="5,10,25,50,100", alias="COMMERCIAL_CANARY_PROMOTION_STEPS"
+    )
+    commercial_canary_min_observation_minutes: int = Field(
+        default=60, alias="COMMERCIAL_CANARY_MIN_OBSERVATION_MINUTES"
+    )
+    commercial_canary_min_requests_per_step: int = Field(
+        default=100, alias="COMMERCIAL_CANARY_MIN_REQUESTS_PER_STEP"
+    )
+    commercial_canary_min_margin_percent: float = Field(
+        default=20.0, alias="COMMERCIAL_CANARY_MIN_MARGIN_PERCENT"
+    )
+    commercial_canary_max_error_rate_percent: float = Field(
+        default=2.0, alias="COMMERCIAL_CANARY_MAX_ERROR_RATE_PERCENT"
+    )
+    commercial_canary_max_latency_regression_percent: float = Field(
+        default=20.0, alias="COMMERCIAL_CANARY_MAX_LATENCY_REGRESSION_PERCENT"
+    )
+    commercial_canary_max_estimation_error_percent: float = Field(
+        default=15.0, alias="COMMERCIAL_CANARY_MAX_ESTIMATION_ERROR_PERCENT"
+    )
+    commercial_canary_auto_rollback_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_CANARY_AUTO_ROLLBACK_ENABLED"
+    )
     # Commercial Executive Dashboard Phase 10
-    commercial_executive_dashboard_enabled: bool = Field(default=True, alias="COMMERCIAL_EXECUTIVE_DASHBOARD_ENABLED")
-    commercial_cost_drift_alert_percent: float = Field(default=20.0, alias="COMMERCIAL_COST_DRIFT_ALERT_PERCENT")
-    commercial_margin_drift_alert_percent: float = Field(default=15.0, alias="COMMERCIAL_MARGIN_DRIFT_ALERT_PERCENT")
-    commercial_latency_drift_alert_percent: float = Field(default=25.0, alias="COMMERCIAL_LATENCY_DRIFT_ALERT_PERCENT")
-    commercial_negative_margin_alert: bool = Field(default=True, alias="COMMERCIAL_NEGATIVE_MARGIN_ALERT")
-    commercial_anomaly_lookback_hours: int = Field(default=24, alias="COMMERCIAL_ANOMALY_LOOKBACK_HOURS")
-    commercial_report_email_enabled: bool = Field(default=False, alias="COMMERCIAL_REPORT_EMAIL_ENABLED")
-    commercial_report_email_mode: str = Field(default="disabled", alias="COMMERCIAL_REPORT_EMAIL_MODE")
-    commercial_report_email_provider: str = Field(default="disabled", alias="COMMERCIAL_REPORT_EMAIL_PROVIDER")
-    commercial_report_default_recipients: str = Field(default="", alias="COMMERCIAL_REPORT_DEFAULT_RECIPIENTS")
-    commercial_report_send_real_email: bool = Field(default=False, alias="COMMERCIAL_REPORT_SEND_REAL_EMAIL")
+    commercial_executive_dashboard_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_EXECUTIVE_DASHBOARD_ENABLED"
+    )
+    commercial_cost_drift_alert_percent: float = Field(
+        default=20.0, alias="COMMERCIAL_COST_DRIFT_ALERT_PERCENT"
+    )
+    commercial_margin_drift_alert_percent: float = Field(
+        default=15.0, alias="COMMERCIAL_MARGIN_DRIFT_ALERT_PERCENT"
+    )
+    commercial_latency_drift_alert_percent: float = Field(
+        default=25.0, alias="COMMERCIAL_LATENCY_DRIFT_ALERT_PERCENT"
+    )
+    commercial_negative_margin_alert: bool = Field(
+        default=True, alias="COMMERCIAL_NEGATIVE_MARGIN_ALERT"
+    )
+    commercial_anomaly_lookback_hours: int = Field(
+        default=24, alias="COMMERCIAL_ANOMALY_LOOKBACK_HOURS"
+    )
+    commercial_report_email_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_REPORT_EMAIL_ENABLED"
+    )
+    commercial_report_email_mode: str = Field(
+        default="disabled", alias="COMMERCIAL_REPORT_EMAIL_MODE"
+    )
+    commercial_report_email_provider: str = Field(
+        default="disabled", alias="COMMERCIAL_REPORT_EMAIL_PROVIDER"
+    )
+    commercial_report_default_recipients: str = Field(
+        default="", alias="COMMERCIAL_REPORT_DEFAULT_RECIPIENTS"
+    )
+    commercial_report_send_real_email: bool = Field(
+        default=False, alias="COMMERCIAL_REPORT_SEND_REAL_EMAIL"
+    )
     commercial_report_smtp_host: str = Field(default="", alias="COMMERCIAL_REPORT_SMTP_HOST")
     commercial_report_smtp_port: int = Field(default=587, alias="COMMERCIAL_REPORT_SMTP_PORT")
-    commercial_report_smtp_username: str = Field(default="", alias="COMMERCIAL_REPORT_SMTP_USERNAME")
-    commercial_report_smtp_password: str = Field(default="", alias="COMMERCIAL_REPORT_SMTP_PASSWORD")
+    commercial_report_smtp_username: str = Field(
+        default="", alias="COMMERCIAL_REPORT_SMTP_USERNAME"
+    )
+    commercial_report_smtp_password: str = Field(
+        default="", alias="COMMERCIAL_REPORT_SMTP_PASSWORD"
+    )
     commercial_report_smtp_from: str = Field(default="", alias="COMMERCIAL_REPORT_SMTP_FROM")
-    commercial_report_smtp_use_tls: bool = Field(default=True, alias="COMMERCIAL_REPORT_SMTP_USE_TLS")
-    commercial_report_smtp_use_starttls: bool = Field(default=True, alias="COMMERCIAL_REPORT_SMTP_USE_STARTTLS")
-    commercial_report_smtp_timeout_seconds: int = Field(default=15, alias="COMMERCIAL_REPORT_SMTP_TIMEOUT_SECONDS")
-    commercial_report_email_allowlist: str = Field(default="", alias="COMMERCIAL_REPORT_EMAIL_ALLOWLIST")
-    commercial_report_email_max_recipients: int = Field(default=10, alias="COMMERCIAL_REPORT_EMAIL_MAX_RECIPIENTS")
-    commercial_report_email_retry_count: int = Field(default=3, alias="COMMERCIAL_REPORT_EMAIL_RETRY_COUNT")
-    commercial_report_email_retry_backoff_seconds: int = Field(default=10, alias="COMMERCIAL_REPORT_EMAIL_RETRY_BACKOFF_SECONDS")
-    commercial_distributed_analytics_enabled: bool = Field(default=False, alias="COMMERCIAL_DISTRIBUTED_ANALYTICS_ENABLED")
-    commercial_federation_enabled: bool = Field(default=False, alias="COMMERCIAL_FEDERATION_ENABLED")
+    commercial_report_smtp_use_tls: bool = Field(
+        default=True, alias="COMMERCIAL_REPORT_SMTP_USE_TLS"
+    )
+    commercial_report_smtp_use_starttls: bool = Field(
+        default=True, alias="COMMERCIAL_REPORT_SMTP_USE_STARTTLS"
+    )
+    commercial_report_smtp_timeout_seconds: int = Field(
+        default=15, alias="COMMERCIAL_REPORT_SMTP_TIMEOUT_SECONDS"
+    )
+    commercial_report_email_allowlist: str = Field(
+        default="", alias="COMMERCIAL_REPORT_EMAIL_ALLOWLIST"
+    )
+    commercial_report_email_max_recipients: int = Field(
+        default=10, alias="COMMERCIAL_REPORT_EMAIL_MAX_RECIPIENTS"
+    )
+    commercial_report_email_retry_count: int = Field(
+        default=3, alias="COMMERCIAL_REPORT_EMAIL_RETRY_COUNT"
+    )
+    commercial_report_email_retry_backoff_seconds: int = Field(
+        default=10, alias="COMMERCIAL_REPORT_EMAIL_RETRY_BACKOFF_SECONDS"
+    )
+    commercial_distributed_analytics_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_DISTRIBUTED_ANALYTICS_ENABLED"
+    )
+    commercial_federation_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_FEDERATION_ENABLED"
+    )
     commercial_cluster_id: str = Field(default="local", alias="COMMERCIAL_CLUSTER_ID")
     commercial_cluster_region: str = Field(default="local", alias="COMMERCIAL_CLUSTER_REGION")
-    commercial_cluster_environment: str = Field(default="local", alias="COMMERCIAL_CLUSTER_ENVIRONMENT")
+    commercial_cluster_environment: str = Field(
+        default="local", alias="COMMERCIAL_CLUSTER_ENVIRONMENT"
+    )
     commercial_federation_mode: str = Field(default="disabled", alias="COMMERCIAL_FEDERATION_MODE")
-    commercial_federation_sync_interval_seconds: int = Field(default=300, alias="COMMERCIAL_FEDERATION_SYNC_INTERVAL_SECONDS")
-    commercial_federation_retention_days: int = Field(default=180, alias="COMMERCIAL_FEDERATION_RETENTION_DAYS")
-    commercial_federation_allow_push: bool = Field(default=False, alias="COMMERCIAL_FEDERATION_ALLOW_PUSH")
-    commercial_federation_require_token: bool = Field(default=True, alias="COMMERCIAL_FEDERATION_REQUIRE_TOKEN")
-    commercial_federation_shared_token: str = Field(default="", alias="COMMERCIAL_FEDERATION_SHARED_TOKEN")
-    commercial_leader_election_enabled: bool = Field(default=True, alias="COMMERCIAL_LEADER_ELECTION_ENABLED")
-    commercial_lease_duration_seconds: int = Field(default=60, alias="COMMERCIAL_LEASE_DURATION_SECONDS")
-    commercial_lease_heartbeat_seconds: int = Field(default=15, alias="COMMERCIAL_LEASE_HEARTBEAT_SECONDS")
-    commercial_lease_renew_before_seconds: int = Field(default=20, alias="COMMERCIAL_LEASE_RENEW_BEFORE_SECONDS")
-    commercial_lease_max_clock_skew_seconds: int = Field(default=5, alias="COMMERCIAL_LEASE_MAX_CLOCK_SKEW_SECONDS")
-    commercial_leader_fencing_enabled: bool = Field(default=True, alias="COMMERCIAL_LEADER_FENCING_ENABLED")
-    commercial_node_heartbeat_interval_seconds: int = Field(default=30, alias="COMMERCIAL_NODE_HEARTBEAT_INTERVAL_SECONDS")
-    commercial_node_offline_after_seconds: int = Field(default=120, alias="COMMERCIAL_NODE_OFFLINE_AFTER_SECONDS")
-    commercial_analytics_retention_days: int = Field(default=90, alias="COMMERCIAL_ANALYTICS_RETENTION_DAYS")
-    commercial_routing_decision_retention_days: int = Field(default=30, alias="COMMERCIAL_ROUTING_DECISION_RETENTION_DAYS")
-    commercial_analytics_aggregation_bucket_minutes: int = Field(default=5, alias="COMMERCIAL_ANALYTICS_AGGREGATION_BUCKET_MINUTES")
-    commercial_analytics_dedupe_enabled: bool = Field(default=True, alias="COMMERCIAL_ANALYTICS_DEDUPE_ENABLED")
+    commercial_federation_sync_interval_seconds: int = Field(
+        default=300, alias="COMMERCIAL_FEDERATION_SYNC_INTERVAL_SECONDS"
+    )
+    commercial_federation_retention_days: int = Field(
+        default=180, alias="COMMERCIAL_FEDERATION_RETENTION_DAYS"
+    )
+    commercial_federation_allow_push: bool = Field(
+        default=False, alias="COMMERCIAL_FEDERATION_ALLOW_PUSH"
+    )
+    commercial_federation_require_token: bool = Field(
+        default=True, alias="COMMERCIAL_FEDERATION_REQUIRE_TOKEN"
+    )
+    commercial_federation_shared_token: str = Field(
+        default="", alias="COMMERCIAL_FEDERATION_SHARED_TOKEN"
+    )
+    commercial_leader_election_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_LEADER_ELECTION_ENABLED"
+    )
+    commercial_lease_duration_seconds: int = Field(
+        default=60, alias="COMMERCIAL_LEASE_DURATION_SECONDS"
+    )
+    commercial_lease_heartbeat_seconds: int = Field(
+        default=15, alias="COMMERCIAL_LEASE_HEARTBEAT_SECONDS"
+    )
+    commercial_lease_renew_before_seconds: int = Field(
+        default=20, alias="COMMERCIAL_LEASE_RENEW_BEFORE_SECONDS"
+    )
+    commercial_lease_max_clock_skew_seconds: int = Field(
+        default=5, alias="COMMERCIAL_LEASE_MAX_CLOCK_SKEW_SECONDS"
+    )
+    commercial_leader_fencing_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_LEADER_FENCING_ENABLED"
+    )
+    commercial_node_heartbeat_interval_seconds: int = Field(
+        default=30, alias="COMMERCIAL_NODE_HEARTBEAT_INTERVAL_SECONDS"
+    )
+    commercial_node_offline_after_seconds: int = Field(
+        default=120, alias="COMMERCIAL_NODE_OFFLINE_AFTER_SECONDS"
+    )
+    commercial_analytics_retention_days: int = Field(
+        default=90, alias="COMMERCIAL_ANALYTICS_RETENTION_DAYS"
+    )
+    commercial_routing_decision_retention_days: int = Field(
+        default=30, alias="COMMERCIAL_ROUTING_DECISION_RETENTION_DAYS"
+    )
+    commercial_analytics_aggregation_bucket_minutes: int = Field(
+        default=5, alias="COMMERCIAL_ANALYTICS_AGGREGATION_BUCKET_MINUTES"
+    )
+    commercial_analytics_dedupe_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_ANALYTICS_DEDUPE_ENABLED"
+    )
     # Commercial Global Routing Phase 16
-    commercial_global_routing_enabled: bool = Field(default=False, alias="COMMERCIAL_GLOBAL_ROUTING_ENABLED")
-    commercial_global_routing_mode: str = Field(default="disabled", alias="COMMERCIAL_GLOBAL_ROUTING_MODE")
-    commercial_global_routing_margin_weight: float = Field(default=0.40, alias="COMMERCIAL_GLOBAL_ROUTING_MARGIN_WEIGHT")
-    commercial_global_routing_latency_weight: float = Field(default=0.25, alias="COMMERCIAL_GLOBAL_ROUTING_LATENCY_WEIGHT")
-    commercial_global_routing_health_weight: float = Field(default=0.15, alias="COMMERCIAL_GLOBAL_ROUTING_HEALTH_WEIGHT")
-    commercial_global_routing_region_weight: float = Field(default=0.10, alias="COMMERCIAL_GLOBAL_ROUTING_REGION_WEIGHT")
-    commercial_global_routing_priority_weight: float = Field(default=0.10, alias="COMMERCIAL_GLOBAL_ROUTING_PRIORITY_WEIGHT")
-    commercial_global_routing_require_healthy_cluster: bool = Field(default=True, alias="COMMERCIAL_GLOBAL_ROUTING_REQUIRE_HEALTHY_CLUSTER")
-    commercial_global_routing_allow_cross_region: bool = Field(default=False, alias="COMMERCIAL_GLOBAL_ROUTING_ALLOW_CROSS_REGION")
-    commercial_global_routing_max_latency_ms: int = Field(default=5000, alias="COMMERCIAL_GLOBAL_ROUTING_MAX_LATENCY_MS")
+    commercial_global_routing_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_GLOBAL_ROUTING_ENABLED"
+    )
+    commercial_global_routing_mode: str = Field(
+        default="disabled", alias="COMMERCIAL_GLOBAL_ROUTING_MODE"
+    )
+    commercial_global_routing_margin_weight: float = Field(
+        default=0.40, alias="COMMERCIAL_GLOBAL_ROUTING_MARGIN_WEIGHT"
+    )
+    commercial_global_routing_latency_weight: float = Field(
+        default=0.25, alias="COMMERCIAL_GLOBAL_ROUTING_LATENCY_WEIGHT"
+    )
+    commercial_global_routing_health_weight: float = Field(
+        default=0.15, alias="COMMERCIAL_GLOBAL_ROUTING_HEALTH_WEIGHT"
+    )
+    commercial_global_routing_region_weight: float = Field(
+        default=0.10, alias="COMMERCIAL_GLOBAL_ROUTING_REGION_WEIGHT"
+    )
+    commercial_global_routing_priority_weight: float = Field(
+        default=0.10, alias="COMMERCIAL_GLOBAL_ROUTING_PRIORITY_WEIGHT"
+    )
+    commercial_global_routing_require_healthy_cluster: bool = Field(
+        default=True, alias="COMMERCIAL_GLOBAL_ROUTING_REQUIRE_HEALTHY_CLUSTER"
+    )
+    commercial_global_routing_allow_cross_region: bool = Field(
+        default=False, alias="COMMERCIAL_GLOBAL_ROUTING_ALLOW_CROSS_REGION"
+    )
+    commercial_global_routing_max_latency_ms: int = Field(
+        default=5000, alias="COMMERCIAL_GLOBAL_ROUTING_MAX_LATENCY_MS"
+    )
     # Commercial Global Traffic Shifting Phase 17
-    commercial_global_traffic_shifting_enabled: bool = Field(default=False, alias="COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_ENABLED")
-    commercial_global_traffic_shifting_mode: str = Field(default="dry_run", alias="COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_MODE")
-    commercial_global_traffic_shifting_max_canary_percent: int = Field(default=10, alias="COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_MAX_CANARY_PERCENT")
-    commercial_global_traffic_shifting_default_canary_percent: int = Field(default=1, alias="COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_DEFAULT_CANARY_PERCENT")
-    commercial_global_traffic_shifting_require_healthy_target: bool = Field(default=True, alias="COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_REQUIRE_HEALTHY_TARGET")
-    commercial_global_traffic_shifting_require_admin_approval: bool = Field(default=True, alias="COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_REQUIRE_ADMIN_APPROVAL")
-    commercial_global_traffic_shifting_auto_rollback: bool = Field(default=True, alias="COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_AUTO_ROLLBACK")
-    commercial_global_traffic_shifting_max_error_rate_percent: float = Field(default=2.0, alias="COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_MAX_ERROR_RATE_PERCENT")
-    commercial_global_traffic_shifting_min_margin_percent: float = Field(default=20.0, alias="COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_MIN_MARGIN_PERCENT")
-    commercial_global_traffic_shifting_max_latency_regression_percent: float = Field(default=20.0, alias="COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_MAX_LATENCY_REGRESSION_PERCENT")
+    commercial_global_traffic_shifting_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_ENABLED"
+    )
+    commercial_global_traffic_shifting_mode: str = Field(
+        default="dry_run", alias="COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_MODE"
+    )
+    commercial_global_traffic_shifting_max_canary_percent: int = Field(
+        default=10, alias="COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_MAX_CANARY_PERCENT"
+    )
+    commercial_global_traffic_shifting_default_canary_percent: int = Field(
+        default=1, alias="COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_DEFAULT_CANARY_PERCENT"
+    )
+    commercial_global_traffic_shifting_require_healthy_target: bool = Field(
+        default=True, alias="COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_REQUIRE_HEALTHY_TARGET"
+    )
+    commercial_global_traffic_shifting_require_admin_approval: bool = Field(
+        default=True, alias="COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_REQUIRE_ADMIN_APPROVAL"
+    )
+    commercial_global_traffic_shifting_auto_rollback: bool = Field(
+        default=True, alias="COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_AUTO_ROLLBACK"
+    )
+    commercial_global_traffic_shifting_max_error_rate_percent: float = Field(
+        default=2.0, alias="COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_MAX_ERROR_RATE_PERCENT"
+    )
+    commercial_global_traffic_shifting_min_margin_percent: float = Field(
+        default=20.0, alias="COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_MIN_MARGIN_PERCENT"
+    )
+    commercial_global_traffic_shifting_max_latency_regression_percent: float = Field(
+        default=20.0, alias="COMMERCIAL_GLOBAL_TRAFFIC_SHIFTING_MAX_LATENCY_REGRESSION_PERCENT"
+    )
     # Commercial Cross-Cluster Forwarding Phase 18
-    commercial_cross_cluster_forwarding_enabled: bool = Field(default=False, alias="COMMERCIAL_CROSS_CLUSTER_FORWARDING_ENABLED")
-    commercial_cross_cluster_forwarding_mode: str = Field(default="disabled", alias="COMMERCIAL_CROSS_CLUSTER_FORWARDING_MODE")
-    commercial_cross_cluster_forwarding_timeout_seconds: int = Field(default=2, alias="COMMERCIAL_CROSS_CLUSTER_FORWARDING_TIMEOUT_SECONDS")
-    commercial_cross_cluster_forwarding_stream_timeout_seconds: int = Field(default=30, alias="COMMERCIAL_CROSS_CLUSTER_FORWARDING_STREAM_TIMEOUT_SECONDS")
-    commercial_cross_cluster_forwarding_max_retries: int = Field(default=1, alias="COMMERCIAL_CROSS_CLUSTER_FORWARDING_MAX_RETRIES")
-    commercial_cross_cluster_forwarding_require_mtls: bool = Field(default=False, alias="COMMERCIAL_CROSS_CLUSTER_FORWARDING_REQUIRE_MTLS")
-    commercial_cross_cluster_forwarding_require_jwt: bool = Field(default=True, alias="COMMERCIAL_CROSS_CLUSTER_FORWARDING_REQUIRE_JWT")
-    commercial_cross_cluster_forwarding_circuit_breaker_enabled: bool = Field(default=True, alias="COMMERCIAL_CROSS_CLUSTER_FORWARDING_CIRCUIT_BREAKER_ENABLED")
-    commercial_cross_cluster_forwarding_circuit_breaker_failure_threshold: int = Field(default=5, alias="COMMERCIAL_CROSS_CLUSTER_FORWARDING_CIRCUIT_BREAKER_FAILURE_THRESHOLD")
-    commercial_cross_cluster_forwarding_circuit_breaker_reset_seconds: int = Field(default=60, alias="COMMERCIAL_CROSS_CLUSTER_FORWARDING_CIRCUIT_BREAKER_RESET_SECONDS")
-    commercial_cross_cluster_forwarding_max_shifted_percent: int = Field(default=10, alias="COMMERCIAL_CROSS_CLUSTER_FORWARDING_MAX_SHIFTED_PERCENT")
+    commercial_cross_cluster_forwarding_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_CROSS_CLUSTER_FORWARDING_ENABLED"
+    )
+    commercial_cross_cluster_forwarding_mode: str = Field(
+        default="disabled", alias="COMMERCIAL_CROSS_CLUSTER_FORWARDING_MODE"
+    )
+    commercial_cross_cluster_forwarding_timeout_seconds: int = Field(
+        default=2, alias="COMMERCIAL_CROSS_CLUSTER_FORWARDING_TIMEOUT_SECONDS"
+    )
+    commercial_cross_cluster_forwarding_stream_timeout_seconds: int = Field(
+        default=30, alias="COMMERCIAL_CROSS_CLUSTER_FORWARDING_STREAM_TIMEOUT_SECONDS"
+    )
+    commercial_cross_cluster_forwarding_max_retries: int = Field(
+        default=1, alias="COMMERCIAL_CROSS_CLUSTER_FORWARDING_MAX_RETRIES"
+    )
+    commercial_cross_cluster_forwarding_require_mtls: bool = Field(
+        default=False, alias="COMMERCIAL_CROSS_CLUSTER_FORWARDING_REQUIRE_MTLS"
+    )
+    commercial_cross_cluster_forwarding_require_jwt: bool = Field(
+        default=True, alias="COMMERCIAL_CROSS_CLUSTER_FORWARDING_REQUIRE_JWT"
+    )
+    commercial_cross_cluster_forwarding_circuit_breaker_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_CROSS_CLUSTER_FORWARDING_CIRCUIT_BREAKER_ENABLED"
+    )
+    commercial_cross_cluster_forwarding_circuit_breaker_failure_threshold: int = Field(
+        default=5, alias="COMMERCIAL_CROSS_CLUSTER_FORWARDING_CIRCUIT_BREAKER_FAILURE_THRESHOLD"
+    )
+    commercial_cross_cluster_forwarding_circuit_breaker_reset_seconds: int = Field(
+        default=60, alias="COMMERCIAL_CROSS_CLUSTER_FORWARDING_CIRCUIT_BREAKER_RESET_SECONDS"
+    )
+    commercial_cross_cluster_forwarding_max_shifted_percent: int = Field(
+        default=10, alias="COMMERCIAL_CROSS_CLUSTER_FORWARDING_MAX_SHIFTED_PERCENT"
+    )
     # Commercial Geo Routing Phase 19
-    commercial_geo_routing_enabled: bool = Field(default=False, alias="COMMERCIAL_GEO_ROUTING_ENABLED")
+    commercial_geo_routing_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_GEO_ROUTING_ENABLED"
+    )
     commercial_geo_routing_mode: str = Field(default="dry_run", alias="COMMERCIAL_GEO_ROUTING_MODE")
-    commercial_geo_routing_latency_penalty_weight: float = Field(default=0.35, alias="COMMERCIAL_GEO_ROUTING_LATENCY_PENALTY_WEIGHT")
-    commercial_geo_routing_margin_weight: float = Field(default=0.35, alias="COMMERCIAL_GEO_ROUTING_MARGIN_WEIGHT")
-    commercial_geo_routing_health_weight: float = Field(default=0.15, alias="COMMERCIAL_GEO_ROUTING_HEALTH_WEIGHT")
-    commercial_geo_routing_region_weight: float = Field(default=0.15, alias="COMMERCIAL_GEO_ROUTING_REGION_WEIGHT")
-    commercial_geo_routing_allow_cross_ocean: bool = Field(default=False, alias="COMMERCIAL_GEO_ROUTING_ALLOW_CROSS_OCEAN")
-    commercial_geo_routing_max_region_distance_km: int = Field(default=5000, alias="COMMERCIAL_GEO_ROUTING_MAX_REGION_DISTANCE_KM")
+    commercial_geo_routing_latency_penalty_weight: float = Field(
+        default=0.35, alias="COMMERCIAL_GEO_ROUTING_LATENCY_PENALTY_WEIGHT"
+    )
+    commercial_geo_routing_margin_weight: float = Field(
+        default=0.35, alias="COMMERCIAL_GEO_ROUTING_MARGIN_WEIGHT"
+    )
+    commercial_geo_routing_health_weight: float = Field(
+        default=0.15, alias="COMMERCIAL_GEO_ROUTING_HEALTH_WEIGHT"
+    )
+    commercial_geo_routing_region_weight: float = Field(
+        default=0.15, alias="COMMERCIAL_GEO_ROUTING_REGION_WEIGHT"
+    )
+    commercial_geo_routing_allow_cross_ocean: bool = Field(
+        default=False, alias="COMMERCIAL_GEO_ROUTING_ALLOW_CROSS_OCEAN"
+    )
+    commercial_geo_routing_max_region_distance_km: int = Field(
+        default=5000, alias="COMMERCIAL_GEO_ROUTING_MAX_REGION_DISTANCE_KM"
+    )
     # Commercial Live Balancing Phase 19
-    commercial_live_balancing_enabled: bool = Field(default=False, alias="COMMERCIAL_LIVE_BALANCING_ENABLED")
-    commercial_live_balancing_mode: str = Field(default="dry_run", alias="COMMERCIAL_LIVE_BALANCING_MODE")
-    commercial_live_balancing_rebalance_interval_seconds: int = Field(default=300, alias="COMMERCIAL_LIVE_BALANCING_REBALANCE_INTERVAL_SECONDS")
-    commercial_live_balancing_max_traffic_change_percent: int = Field(default=5, alias="COMMERCIAL_LIVE_BALANCING_MAX_TRAFFIC_CHANGE_PERCENT")
-    commercial_live_balancing_min_margin_percent: float = Field(default=20.0, alias="COMMERCIAL_LIVE_BALANCING_MIN_MARGIN_PERCENT")
-    commercial_live_balancing_max_latency_ms: int = Field(default=5000, alias="COMMERCIAL_LIVE_BALANCING_MAX_LATENCY_MS")
-    commercial_live_balancing_hysteresis_percent: float = Field(default=10.0, alias="COMMERCIAL_LIVE_BALANCING_HYSTERESIS_PERCENT")
-    commercial_live_balancing_min_stable_minutes: int = Field(default=30, alias="COMMERCIAL_LIVE_BALANCING_MIN_STABLE_MINUTES")
+    commercial_live_balancing_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_LIVE_BALANCING_ENABLED"
+    )
+    commercial_live_balancing_mode: str = Field(
+        default="dry_run", alias="COMMERCIAL_LIVE_BALANCING_MODE"
+    )
+    commercial_live_balancing_rebalance_interval_seconds: int = Field(
+        default=300, alias="COMMERCIAL_LIVE_BALANCING_REBALANCE_INTERVAL_SECONDS"
+    )
+    commercial_live_balancing_max_traffic_change_percent: int = Field(
+        default=5, alias="COMMERCIAL_LIVE_BALANCING_MAX_TRAFFIC_CHANGE_PERCENT"
+    )
+    commercial_live_balancing_min_margin_percent: float = Field(
+        default=20.0, alias="COMMERCIAL_LIVE_BALANCING_MIN_MARGIN_PERCENT"
+    )
+    commercial_live_balancing_max_latency_ms: int = Field(
+        default=5000, alias="COMMERCIAL_LIVE_BALANCING_MAX_LATENCY_MS"
+    )
+    commercial_live_balancing_hysteresis_percent: float = Field(
+        default=10.0, alias="COMMERCIAL_LIVE_BALANCING_HYSTERESIS_PERCENT"
+    )
+    commercial_live_balancing_min_stable_minutes: int = Field(
+        default=30, alias="COMMERCIAL_LIVE_BALANCING_MIN_STABLE_MINUTES"
+    )
     # Commercial Capacity Planning Phase 21
-    commercial_capacity_planning_enabled: bool = Field(default=True, alias="COMMERCIAL_CAPACITY_PLANNING_ENABLED")
+    commercial_capacity_planning_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_CAPACITY_PLANNING_ENABLED"
+    )
     commercial_autoscaling_mode: str = Field(default="dry_run", alias="COMMERCIAL_AUTOSCALING_MODE")
-    commercial_capacity_forecast_window_minutes: int = Field(default=60, alias="COMMERCIAL_CAPACITY_FORECAST_WINDOW_MINUTES")
-    commercial_capacity_snapshot_interval_seconds: int = Field(default=30, alias="COMMERCIAL_CAPACITY_SNAPSHOT_INTERVAL_SECONDS")
-    commercial_capacity_retention_days: int = Field(default=30, alias="COMMERCIAL_CAPACITY_RETENTION_DAYS")
+    commercial_capacity_forecast_window_minutes: int = Field(
+        default=60, alias="COMMERCIAL_CAPACITY_FORECAST_WINDOW_MINUTES"
+    )
+    commercial_capacity_snapshot_interval_seconds: int = Field(
+        default=30, alias="COMMERCIAL_CAPACITY_SNAPSHOT_INTERVAL_SECONDS"
+    )
+    commercial_capacity_retention_days: int = Field(
+        default=30, alias="COMMERCIAL_CAPACITY_RETENTION_DAYS"
+    )
     # Commercial Infra Simulation Phase 21.1
-    commercial_infra_simulation_enabled: bool = Field(default=True, alias="COMMERCIAL_INFRA_SIMULATION_ENABLED")
+    commercial_infra_simulation_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_INFRA_SIMULATION_ENABLED"
+    )
     # simulation_only|approval_required|execute_opt_in
-    commercial_infra_execution_mode: str = Field(default="simulation_only", alias="COMMERCIAL_INFRA_EXECUTION_MODE")
-    commercial_safety_gates_enabled: bool = Field(default=True, alias="COMMERCIAL_SAFETY_GATES_ENABLED")
+    commercial_infra_execution_mode: str = Field(
+        default="simulation_only", alias="COMMERCIAL_INFRA_EXECUTION_MODE"
+    )
+    commercial_safety_gates_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_SAFETY_GATES_ENABLED"
+    )
     # Commercial Infra Execution Phase 22
-    commercial_infra_execution_enabled: bool = Field(default=False, alias="COMMERCIAL_INFRA_EXECUTION_ENABLED")
-    commercial_infra_require_approval: bool = Field(default=True, alias="COMMERCIAL_INFRA_REQUIRE_APPROVAL")
-    commercial_infra_require_leader: bool = Field(default=True, alias="COMMERCIAL_INFRA_REQUIRE_LEADER")
-    commercial_infra_require_fencing: bool = Field(default=True, alias="COMMERCIAL_INFRA_REQUIRE_FENCING")
+    commercial_infra_execution_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_INFRA_EXECUTION_ENABLED"
+    )
+    commercial_infra_require_approval: bool = Field(
+        default=True, alias="COMMERCIAL_INFRA_REQUIRE_APPROVAL"
+    )
+    commercial_infra_require_leader: bool = Field(
+        default=True, alias="COMMERCIAL_INFRA_REQUIRE_LEADER"
+    )
+    commercial_infra_require_fencing: bool = Field(
+        default=True, alias="COMMERCIAL_INFRA_REQUIRE_FENCING"
+    )
     # kubernetes,nomad,mock
-    commercial_infra_adapters_enabled: str = Field(default="mock", alias="COMMERCIAL_INFRA_ADAPTERS_ENABLED")
-    commercial_k8s_execution_enabled: bool = Field(default=False, alias="COMMERCIAL_K8S_EXECUTION_ENABLED")
+    commercial_infra_adapters_enabled: str = Field(
+        default="mock", alias="COMMERCIAL_INFRA_ADAPTERS_ENABLED"
+    )
+    commercial_k8s_execution_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_K8S_EXECUTION_ENABLED"
+    )
     commercial_k8s_namespace: str = Field(default="default", alias="COMMERCIAL_K8S_NAMESPACE")
     commercial_k8s_context: str = Field(default="", alias="COMMERCIAL_K8S_CONTEXT")
     commercial_k8s_dry_run: bool = Field(default=True, alias="COMMERCIAL_K8S_DRY_RUN")
-    commercial_nomad_execution_enabled: bool = Field(default=False, alias="COMMERCIAL_NOMAD_EXECUTION_ENABLED")
+    commercial_nomad_execution_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_NOMAD_EXECUTION_ENABLED"
+    )
     commercial_nomad_addr: str = Field(default="", alias="COMMERCIAL_NOMAD_ADDR")
     commercial_nomad_token: str = Field(default="", alias="COMMERCIAL_NOMAD_TOKEN")
     commercial_nomad_dry_run: bool = Field(default=True, alias="COMMERCIAL_NOMAD_DRY_RUN")
     # Proxmox Phase 23
-    commercial_proxmox_execution_enabled: bool = Field(default=False, alias="COMMERCIAL_PROXMOX_EXECUTION_ENABLED")
+    commercial_proxmox_execution_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_PROXMOX_EXECUTION_ENABLED"
+    )
     commercial_proxmox_api_url: str = Field(default="", alias="COMMERCIAL_PROXMOX_API_URL")
     commercial_proxmox_node: str = Field(default="", alias="COMMERCIAL_PROXMOX_NODE")
     commercial_proxmox_token_id: str = Field(default="", alias="COMMERCIAL_PROXMOX_TOKEN_ID")
-    commercial_proxmox_token_secret: str = Field(default="", alias="COMMERCIAL_PROXMOX_TOKEN_SECRET")
+    commercial_proxmox_token_secret: str = Field(
+        default="", alias="COMMERCIAL_PROXMOX_TOKEN_SECRET"
+    )
     commercial_proxmox_verify_tls: bool = Field(default=True, alias="COMMERCIAL_PROXMOX_VERIFY_TLS")
     commercial_proxmox_dry_run: bool = Field(default=True, alias="COMMERCIAL_PROXMOX_DRY_RUN")
-    commercial_proxmox_allowed_vm_ids: str = Field(default="", alias="COMMERCIAL_PROXMOX_ALLOWED_VM_IDS")
-    commercial_proxmox_allowed_ct_ids: str = Field(default="", alias="COMMERCIAL_PROXMOX_ALLOWED_CT_IDS")
+    commercial_proxmox_allowed_vm_ids: str = Field(
+        default="", alias="COMMERCIAL_PROXMOX_ALLOWED_VM_IDS"
+    )
+    commercial_proxmox_allowed_ct_ids: str = Field(
+        default="", alias="COMMERCIAL_PROXMOX_ALLOWED_CT_IDS"
+    )
     # Local GPU Phase 23
-    commercial_local_gpu_execution_enabled: bool = Field(default=False, alias="COMMERCIAL_LOCAL_GPU_EXECUTION_ENABLED")
+    commercial_local_gpu_execution_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_LOCAL_GPU_EXECUTION_ENABLED"
+    )
     commercial_local_gpu_dry_run: bool = Field(default=True, alias="COMMERCIAL_LOCAL_GPU_DRY_RUN")
-    commercial_local_gpu_allowed_actions: str = Field(default="inspect,metrics", alias="COMMERCIAL_LOCAL_GPU_ALLOWED_ACTIONS")
-    commercial_local_gpu_allow_power_limit: bool = Field(default=False, alias="COMMERCIAL_LOCAL_GPU_ALLOW_POWER_LIMIT")
-    commercial_local_gpu_allow_process_kill: bool = Field(default=False, alias="COMMERCIAL_LOCAL_GPU_ALLOW_PROCESS_KILL")
-    commercial_local_gpu_allow_service_restart: bool = Field(default=False, alias="COMMERCIAL_LOCAL_GPU_ALLOW_SERVICE_RESTART")
+    commercial_local_gpu_allowed_actions: str = Field(
+        default="inspect,metrics", alias="COMMERCIAL_LOCAL_GPU_ALLOWED_ACTIONS"
+    )
+    commercial_local_gpu_allow_power_limit: bool = Field(
+        default=False, alias="COMMERCIAL_LOCAL_GPU_ALLOW_POWER_LIMIT"
+    )
+    commercial_local_gpu_allow_process_kill: bool = Field(
+        default=False, alias="COMMERCIAL_LOCAL_GPU_ALLOW_PROCESS_KILL"
+    )
+    commercial_local_gpu_allow_service_restart: bool = Field(
+        default=False, alias="COMMERCIAL_LOCAL_GPU_ALLOW_SERVICE_RESTART"
+    )
     # Phase 35: Enterprise Multi-Region Governance Federation
-    commercial_governance_federation_enabled: bool = Field(default=False, alias="COMMERCIAL_GOVERNANCE_FEDERATION_ENABLED")
-    commercial_governance_federation_mode: str = Field(default="disabled", alias="COMMERCIAL_GOVERNANCE_FEDERATION_MODE")
-    commercial_governance_federation_cluster_id: str = Field(default="local", alias="COMMERCIAL_GOVERNANCE_FEDERATION_CLUSTER_ID")
-    commercial_governance_federation_region: str = Field(default="local", alias="COMMERCIAL_GOVERNANCE_FEDERATION_REGION")
-    commercial_governance_federation_require_signature: bool = Field(default=True, alias="COMMERCIAL_GOVERNANCE_FEDERATION_REQUIRE_SIGNATURE")
-    commercial_governance_federation_require_token: bool = Field(default=True, alias="COMMERCIAL_GOVERNANCE_FEDERATION_REQUIRE_TOKEN")
-    commercial_governance_federation_shared_token: str = Field(default="", alias="COMMERCIAL_GOVERNANCE_FEDERATION_SHARED_TOKEN")
-    commercial_governance_federation_sync_interval_seconds: int = Field(default=300, alias="COMMERCIAL_GOVERNANCE_FEDERATION_SYNC_INTERVAL_SECONDS")
-    commercial_tenant_encryption_enabled: bool = Field(default=True, alias="COMMERCIAL_TENANT_ENCRYPTION_ENABLED")
-    commercial_tenant_encryption_mode: str = Field(default="report_only", alias="COMMERCIAL_TENANT_ENCRYPTION_MODE")
-    commercial_tenant_encryption_require_encrypted_exports: bool = Field(default=False, alias="COMMERCIAL_TENANT_ENCRYPTION_REQUIRE_ENCRYPTED_EXPORTS")
-    commercial_tenant_encryption_auto_rotation_days: int = Field(default=90, alias="COMMERCIAL_TENANT_ENCRYPTION_AUTO_ROTATION_DAYS")
-    commercial_tenant_encryption_block_restricted_exports: bool = Field(default=True, alias="COMMERCIAL_TENANT_ENCRYPTION_BLOCK_RESTRICTED_EXPORTS")
-    commercial_tenant_encryption_master_key: str = Field(default="dev-master-key-must-be-32-chars-long!!", alias="COMMERCIAL_TENANT_ENCRYPTION_MASTER_KEY")
-    commercial_sovereign_governance_enabled: bool = Field(default=True, alias="COMMERCIAL_SOVEREIGN_GOVERNANCE_ENABLED")
-    commercial_airgap_sync_enabled: bool = Field(default=True, alias="COMMERCIAL_AIRGAP_SYNC_ENABLED")
+    commercial_governance_federation_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_GOVERNANCE_FEDERATION_ENABLED"
+    )
+    commercial_governance_federation_mode: str = Field(
+        default="disabled", alias="COMMERCIAL_GOVERNANCE_FEDERATION_MODE"
+    )
+    commercial_governance_federation_cluster_id: str = Field(
+        default="local", alias="COMMERCIAL_GOVERNANCE_FEDERATION_CLUSTER_ID"
+    )
+    commercial_governance_federation_region: str = Field(
+        default="local", alias="COMMERCIAL_GOVERNANCE_FEDERATION_REGION"
+    )
+    commercial_governance_federation_require_signature: bool = Field(
+        default=True, alias="COMMERCIAL_GOVERNANCE_FEDERATION_REQUIRE_SIGNATURE"
+    )
+    commercial_governance_federation_require_token: bool = Field(
+        default=True, alias="COMMERCIAL_GOVERNANCE_FEDERATION_REQUIRE_TOKEN"
+    )
+    commercial_governance_federation_shared_token: str = Field(
+        default="", alias="COMMERCIAL_GOVERNANCE_FEDERATION_SHARED_TOKEN"
+    )
+    commercial_governance_federation_sync_interval_seconds: int = Field(
+        default=300, alias="COMMERCIAL_GOVERNANCE_FEDERATION_SYNC_INTERVAL_SECONDS"
+    )
+    commercial_tenant_encryption_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_TENANT_ENCRYPTION_ENABLED"
+    )
+    commercial_tenant_encryption_mode: str = Field(
+        default="report_only", alias="COMMERCIAL_TENANT_ENCRYPTION_MODE"
+    )
+    commercial_tenant_encryption_require_encrypted_exports: bool = Field(
+        default=False, alias="COMMERCIAL_TENANT_ENCRYPTION_REQUIRE_ENCRYPTED_EXPORTS"
+    )
+    commercial_tenant_encryption_auto_rotation_days: int = Field(
+        default=90, alias="COMMERCIAL_TENANT_ENCRYPTION_AUTO_ROTATION_DAYS"
+    )
+    commercial_tenant_encryption_block_restricted_exports: bool = Field(
+        default=True, alias="COMMERCIAL_TENANT_ENCRYPTION_BLOCK_RESTRICTED_EXPORTS"
+    )
+    commercial_tenant_encryption_master_key: str = Field(
+        default="dev-master-key-must-be-32-chars-long!!",
+        alias="COMMERCIAL_TENANT_ENCRYPTION_MASTER_KEY",
+    )
+    commercial_sovereign_governance_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_SOVEREIGN_GOVERNANCE_ENABLED"
+    )
+    commercial_airgap_sync_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_AIRGAP_SYNC_ENABLED"
+    )
     commercial_airgap_sync_mode: str = Field(default="dry_run", alias="COMMERCIAL_AIRGAP_SYNC_MODE")
-    commercial_airgap_require_signature: bool = Field(default=True, alias="COMMERCIAL_AIRGAP_REQUIRE_SIGNATURE")
-    commercial_airgap_require_encryption: bool = Field(default=True, alias="COMMERCIAL_AIRGAP_REQUIRE_ENCRYPTION")
-    commercial_offline_crl_enabled: bool = Field(default=True, alias="COMMERCIAL_OFFLINE_CRL_ENABLED")
-    commercial_hardware_attestation_enabled: bool = Field(default=False, alias="COMMERCIAL_HARDWARE_ATTESTATION_ENABLED")
-    commercial_hardware_attestation_mode: str = Field(default="report_only", alias="COMMERCIAL_HARDWARE_ATTESTATION_MODE")
+    commercial_airgap_require_signature: bool = Field(
+        default=True, alias="COMMERCIAL_AIRGAP_REQUIRE_SIGNATURE"
+    )
+    commercial_airgap_require_encryption: bool = Field(
+        default=True, alias="COMMERCIAL_AIRGAP_REQUIRE_ENCRYPTION"
+    )
+    commercial_offline_crl_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_OFFLINE_CRL_ENABLED"
+    )
+    commercial_hardware_attestation_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_HARDWARE_ATTESTATION_ENABLED"
+    )
+    commercial_hardware_attestation_mode: str = Field(
+        default="report_only", alias="COMMERCIAL_HARDWARE_ATTESTATION_MODE"
+    )
     # Phase 58: Hardware-backed Attestation Runtime
-    commercial_runtime_attestation_enabled: bool = Field(default=False, alias="COMMERCIAL_RUNTIME_ATTESTATION_ENABLED")
-    commercial_runtime_attestation_mode: str = Field(default="report_only", alias="COMMERCIAL_RUNTIME_ATTESTATION_MODE")
-    commercial_runtime_attestation_enclave_type: str = Field(default="software_attested", alias="COMMERCIAL_RUNTIME_ATTESTATION_ENCLAVE_TYPE")
-    commercial_runtime_attestation_platform_type: str = Field(default="linux_x86_64", alias="COMMERCIAL_RUNTIME_ATTESTATION_PLATFORM_TYPE")
-    commercial_runtime_attestation_require_for_sovereign: bool = Field(default=False, alias="COMMERCIAL_RUNTIME_ATTESTATION_REQUIRE_FOR_SOVEREIGN")
-    commercial_runtime_attestation_require_for_sensitive_tenants: bool = Field(default=False, alias="COMMERCIAL_RUNTIME_ATTESTATION_REQUIRE_FOR_SENSITIVE_TENANTS")
-    commercial_runtime_attestation_min_trust_score: float = Field(default=0.0, alias="COMMERCIAL_RUNTIME_ATTESTATION_MIN_TRUST_SCORE")
-    commercial_runtime_attestation_challenge_ttl_seconds: int = Field(default=60, alias="COMMERCIAL_RUNTIME_ATTESTATION_CHALLENGE_TTL_SECONDS")
-    commercial_runtime_attestation_evidence_ttl_seconds: int = Field(default=3600, alias="COMMERCIAL_RUNTIME_ATTESTATION_EVIDENCE_TTL_SECONDS")
-    commercial_runtime_attestation_max_drift_threshold: float = Field(default=0.1, alias="COMMERCIAL_RUNTIME_ATTESTATION_MAX_DRIFT_THRESHOLD")
-    commercial_runtime_attestation_block_untrusted: bool = Field(default=False, alias="COMMERCIAL_RUNTIME_ATTESTATION_BLOCK_UNTRUSTED")
-    commercial_runtime_attestation_enforce_on_startup: bool = Field(default=False, alias="COMMERCIAL_RUNTIME_ATTESTATION_ENFORCE_ON_STARTUP")
-    commercial_model_supply_chain_enabled: bool = Field(default=True, alias="COMMERCIAL_MODEL_SUPPLY_CHAIN_ENABLED")
-    commercial_model_trust_enforcement_mode: str = Field(default="report_only", alias="COMMERCIAL_MODEL_TRUST_ENFORCEMENT_MODE")
-    commercial_model_require_trusted_for_routing: bool = Field(default=False, alias="COMMERCIAL_MODEL_REQUIRE_TRUSTED_FOR_ROUTING")
-    commercial_model_require_checksum_for_local: bool = Field(default=True, alias="COMMERCIAL_MODEL_REQUIRE_CHECKSUM_FOR_LOCAL")
-    commercial_model_quarantine_on_checksum_mismatch: bool = Field(default=True, alias="COMMERCIAL_MODEL_QUARANTINE_ON_CHECKSUM_MISMATCH")
-    commercial_model_integrity_monitor_enabled: bool = Field(default=True, alias="COMMERCIAL_MODEL_INTEGRITY_MONITOR_ENABLED")
-    commercial_model_integrity_scan_interval_seconds: int = Field(default=3600, alias="COMMERCIAL_MODEL_INTEGRITY_SCAN_INTERVAL_SECONDS")
+    commercial_runtime_attestation_enabled: bool = Field(
+        default=False, alias="COMMERCIAL_RUNTIME_ATTESTATION_ENABLED"
+    )
+    commercial_runtime_attestation_mode: str = Field(
+        default="report_only", alias="COMMERCIAL_RUNTIME_ATTESTATION_MODE"
+    )
+    commercial_runtime_attestation_enclave_type: str = Field(
+        default="software_attested", alias="COMMERCIAL_RUNTIME_ATTESTATION_ENCLAVE_TYPE"
+    )
+    commercial_runtime_attestation_platform_type: str = Field(
+        default="linux_x86_64", alias="COMMERCIAL_RUNTIME_ATTESTATION_PLATFORM_TYPE"
+    )
+    commercial_runtime_attestation_require_for_sovereign: bool = Field(
+        default=False, alias="COMMERCIAL_RUNTIME_ATTESTATION_REQUIRE_FOR_SOVEREIGN"
+    )
+    commercial_runtime_attestation_require_for_sensitive_tenants: bool = Field(
+        default=False, alias="COMMERCIAL_RUNTIME_ATTESTATION_REQUIRE_FOR_SENSITIVE_TENANTS"
+    )
+    commercial_runtime_attestation_min_trust_score: float = Field(
+        default=0.0, alias="COMMERCIAL_RUNTIME_ATTESTATION_MIN_TRUST_SCORE"
+    )
+    commercial_runtime_attestation_challenge_ttl_seconds: int = Field(
+        default=60, alias="COMMERCIAL_RUNTIME_ATTESTATION_CHALLENGE_TTL_SECONDS"
+    )
+    commercial_runtime_attestation_evidence_ttl_seconds: int = Field(
+        default=3600, alias="COMMERCIAL_RUNTIME_ATTESTATION_EVIDENCE_TTL_SECONDS"
+    )
+    commercial_runtime_attestation_max_drift_threshold: float = Field(
+        default=0.1, alias="COMMERCIAL_RUNTIME_ATTESTATION_MAX_DRIFT_THRESHOLD"
+    )
+    commercial_runtime_attestation_block_untrusted: bool = Field(
+        default=False, alias="COMMERCIAL_RUNTIME_ATTESTATION_BLOCK_UNTRUSTED"
+    )
+    commercial_runtime_attestation_enforce_on_startup: bool = Field(
+        default=False, alias="COMMERCIAL_RUNTIME_ATTESTATION_ENFORCE_ON_STARTUP"
+    )
+    commercial_model_supply_chain_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_MODEL_SUPPLY_CHAIN_ENABLED"
+    )
+    commercial_model_trust_enforcement_mode: str = Field(
+        default="report_only", alias="COMMERCIAL_MODEL_TRUST_ENFORCEMENT_MODE"
+    )
+    commercial_model_require_trusted_for_routing: bool = Field(
+        default=False, alias="COMMERCIAL_MODEL_REQUIRE_TRUSTED_FOR_ROUTING"
+    )
+    commercial_model_require_checksum_for_local: bool = Field(
+        default=True, alias="COMMERCIAL_MODEL_REQUIRE_CHECKSUM_FOR_LOCAL"
+    )
+    commercial_model_quarantine_on_checksum_mismatch: bool = Field(
+        default=True, alias="COMMERCIAL_MODEL_QUARANTINE_ON_CHECKSUM_MISMATCH"
+    )
+    commercial_model_integrity_monitor_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_MODEL_INTEGRITY_MONITOR_ENABLED"
+    )
+    commercial_model_integrity_scan_interval_seconds: int = Field(
+        default=3600, alias="COMMERCIAL_MODEL_INTEGRITY_SCAN_INTERVAL_SECONDS"
+    )
     # Phase 41: Cryptographic Inference Receipts
     commercial_receipts_enabled: bool = Field(default=True, alias="COMMERCIAL_RECEIPTS_ENABLED")
-    commercial_receipts_chaining_enabled: bool = Field(default=True, alias="COMMERCIAL_RECEIPTS_CHAINING_ENABLED")
-    commercial_receipts_timestamp_mode: str = Field(default="local", alias="COMMERCIAL_RECEIPTS_TIMESTAMP_MODE")
-    commercial_receipts_export_enabled: bool = Field(default=True, alias="COMMERCIAL_RECEIPTS_EXPORT_ENABLED")
-    commercial_receipts_signature_required: bool = Field(default=False, alias="COMMERCIAL_RECEIPTS_SIGNATURE_REQUIRED")
-    commercial_receipt_signature_algorithm: str = Field(default="ed25519", alias="COMMERCIAL_RECEIPT_SIGNATURE_ALGORITHM")
-    commercial_model_integrity_auto_quarantine: bool = Field(default=False, alias="COMMERCIAL_MODEL_INTEGRITY_AUTO_QUARANTINE")
-    commercial_model_integrity_boot_scan_enabled: bool = Field(default=True, alias="COMMERCIAL_MODEL_INTEGRITY_BOOT_SCAN_ENABLED")
+    commercial_receipts_chaining_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_RECEIPTS_CHAINING_ENABLED"
+    )
+    commercial_receipts_timestamp_mode: str = Field(
+        default="local", alias="COMMERCIAL_RECEIPTS_TIMESTAMP_MODE"
+    )
+    commercial_receipts_export_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_RECEIPTS_EXPORT_ENABLED"
+    )
+    commercial_receipts_signature_required: bool = Field(
+        default=False, alias="COMMERCIAL_RECEIPTS_SIGNATURE_REQUIRED"
+    )
+    commercial_receipt_signature_algorithm: str = Field(
+        default="ed25519", alias="COMMERCIAL_RECEIPT_SIGNATURE_ALGORITHM"
+    )
+    commercial_model_integrity_auto_quarantine: bool = Field(
+        default=False, alias="COMMERCIAL_MODEL_INTEGRITY_AUTO_QUARANTINE"
+    )
+    commercial_model_integrity_boot_scan_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_MODEL_INTEGRITY_BOOT_SCAN_ENABLED"
+    )
     # Phase 59: Offline Sovereign Model Lifecycle Management
-    commercial_model_lifecycle_enabled: bool = Field(default=True, alias="COMMERCIAL_MODEL_LIFECYCLE_ENABLED")
-    commercial_model_lifecycle_mode: str = Field(default="report_only", alias="COMMERCIAL_MODEL_LIFECYCLE_MODE")
-    commercial_model_lifecycle_require_approval: bool = Field(default=True, alias="COMMERCIAL_MODEL_LIFECYCLE_REQUIRE_APPROVAL")
-    commercial_model_lifecycle_require_lineage: bool = Field(default=True, alias="COMMERCIAL_MODEL_LIFECYCLE_REQUIRE_LINEAGE")
-    commercial_model_lifecycle_require_checksum: bool = Field(default=True, alias="COMMERCIAL_MODEL_LIFECYCLE_REQUIRE_CHECKSUM")
-    commercial_model_lifecycle_auto_quarantine: bool = Field(default=False, alias="COMMERCIAL_MODEL_LIFECYCLE_AUTO_QUARANTINE")
-    commercial_model_lifecycle_offline_verification_strict: bool = Field(default=True, alias="COMMERCIAL_MODEL_LIFECYCLE_OFFLINE_VERIFICATION_STRICT")
-    commercial_sovereign_lifecycle_enforce: bool = Field(default=False, alias="COMMERCIAL_SOVEREIGN_LIFECYCLE_ENFORCE")
-    commercial_sovereign_lifecycle_block_unapproved: bool = Field(default=False, alias="COMMERCIAL_SOVEREIGN_LIFECYCLE_BLOCK_UNAPPROVED")
+    commercial_model_lifecycle_enabled: bool = Field(
+        default=True, alias="COMMERCIAL_MODEL_LIFECYCLE_ENABLED"
+    )
+    commercial_model_lifecycle_mode: str = Field(
+        default="report_only", alias="COMMERCIAL_MODEL_LIFECYCLE_MODE"
+    )
+    commercial_model_lifecycle_require_approval: bool = Field(
+        default=True, alias="COMMERCIAL_MODEL_LIFECYCLE_REQUIRE_APPROVAL"
+    )
+    commercial_model_lifecycle_require_lineage: bool = Field(
+        default=True, alias="COMMERCIAL_MODEL_LIFECYCLE_REQUIRE_LINEAGE"
+    )
+    commercial_model_lifecycle_require_checksum: bool = Field(
+        default=True, alias="COMMERCIAL_MODEL_LIFECYCLE_REQUIRE_CHECKSUM"
+    )
+    commercial_model_lifecycle_auto_quarantine: bool = Field(
+        default=False, alias="COMMERCIAL_MODEL_LIFECYCLE_AUTO_QUARANTINE"
+    )
+    commercial_model_lifecycle_offline_verification_strict: bool = Field(
+        default=True, alias="COMMERCIAL_MODEL_LIFECYCLE_OFFLINE_VERIFICATION_STRICT"
+    )
+    commercial_sovereign_lifecycle_enforce: bool = Field(
+        default=False, alias="COMMERCIAL_SOVEREIGN_LIFECYCLE_ENFORCE"
+    )
+    commercial_sovereign_lifecycle_block_unapproved: bool = Field(
+        default=False, alias="COMMERCIAL_SOVEREIGN_LIFECYCLE_BLOCK_UNAPPROVED"
+    )
     # low|medium|high|critical
     commercial_max_blast_radius: str = Field(default="medium", alias="COMMERCIAL_MAX_BLAST_RADIUS")
-    commercial_require_approval_for_critical: bool = Field(default=True, alias="COMMERCIAL_REQUIRE_APPROVAL_FOR_CRITICAL")
-    commercial_max_autoscaling_cost_increase_percent: float = Field(default=20.0, alias="COMMERCIAL_MAX_AUTOSCALING_COST_INCREASE_PERCENT")
-    commercial_max_autoscaling_margin_drop_percent: float = Field(default=10.0, alias="COMMERCIAL_MAX_AUTOSCALING_MARGIN_DROP_PERCENT")
-    commercial_max_autoscaling_sla_risk_percent: float = Field(default=5.0, alias="COMMERCIAL_MAX_AUTOSCALING_SLA_RISK_PERCENT")
-    commercial_sla_risk_alert_percent: float = Field(default=5.0, alias="COMMERCIAL_SLA_RISK_ALERT_PERCENT")
+    commercial_require_approval_for_critical: bool = Field(
+        default=True, alias="COMMERCIAL_REQUIRE_APPROVAL_FOR_CRITICAL"
+    )
+    commercial_max_autoscaling_cost_increase_percent: float = Field(
+        default=20.0, alias="COMMERCIAL_MAX_AUTOSCALING_COST_INCREASE_PERCENT"
+    )
+    commercial_max_autoscaling_margin_drop_percent: float = Field(
+        default=10.0, alias="COMMERCIAL_MAX_AUTOSCALING_MARGIN_DROP_PERCENT"
+    )
+    commercial_max_autoscaling_sla_risk_percent: float = Field(
+        default=5.0, alias="COMMERCIAL_MAX_AUTOSCALING_SLA_RISK_PERCENT"
+    )
+    commercial_sla_risk_alert_percent: float = Field(
+        default=5.0, alias="COMMERCIAL_SLA_RISK_ALERT_PERCENT"
+    )
     commercial_queue_depth_alert: int = Field(default=100, alias="COMMERCIAL_QUEUE_DEPTH_ALERT")
-    commercial_p95_latency_alert_ms: int = Field(default=5000, alias="COMMERCIAL_P95_LATENCY_ALERT_MS")
-    commercial_gpu_utilization_alert_percent: float = Field(default=90.0, alias="COMMERCIAL_GPU_UTILIZATION_ALERT_PERCENT")
+    commercial_p95_latency_alert_ms: int = Field(
+        default=5000, alias="COMMERCIAL_P95_LATENCY_ALERT_MS"
+    )
+    commercial_gpu_utilization_alert_percent: float = Field(
+        default=90.0, alias="COMMERCIAL_GPU_UTILIZATION_ALERT_PERCENT"
+    )
     commercial_rag_vault_enabled: bool = Field(default=False, alias="COMMERCIAL_RAG_VAULT_ENABLED")
-    commercial_rag_vault_policy_mode: str = Field(default="report_only", alias="COMMERCIAL_RAG_VAULT_POLICY_MODE")
-    commercial_rag_vault_require_confidential_runtime: bool = Field(default=False, alias="COMMERCIAL_RAG_VAULT_REQUIRE_CONFIDENTIAL_RUNTIME")
-    commercial_rag_vault_require_signed_documents: bool = Field(default=False, alias="COMMERCIAL_RAG_VAULT_REQUIRE_SIGNED_DOCUMENTS")
-    commercial_rag_vault_max_context_chunks: int = Field(default=20, alias="COMMERCIAL_RAG_VAULT_MAX_CONTEXT_CHUNKS")
-    commercial_rag_vault_enable_poison_detection: bool = Field(default=True, alias="COMMERCIAL_RAG_VAULT_ENABLE_POISON_DETECTION")
-    commercial_rag_vault_enable_immutable_audit: bool = Field(default=True, alias="COMMERCIAL_RAG_VAULT_ENABLE_IMMUTABLE_AUDIT")
+    commercial_rag_vault_policy_mode: str = Field(
+        default="report_only", alias="COMMERCIAL_RAG_VAULT_POLICY_MODE"
+    )
+    commercial_rag_vault_require_confidential_runtime: bool = Field(
+        default=False, alias="COMMERCIAL_RAG_VAULT_REQUIRE_CONFIDENTIAL_RUNTIME"
+    )
+    commercial_rag_vault_require_signed_documents: bool = Field(
+        default=False, alias="COMMERCIAL_RAG_VAULT_REQUIRE_SIGNED_DOCUMENTS"
+    )
+    commercial_rag_vault_max_context_chunks: int = Field(
+        default=20, alias="COMMERCIAL_RAG_VAULT_MAX_CONTEXT_CHUNKS"
+    )
+    commercial_rag_vault_enable_poison_detection: bool = Field(
+        default=True, alias="COMMERCIAL_RAG_VAULT_ENABLE_POISON_DETECTION"
+    )
+    commercial_rag_vault_enable_immutable_audit: bool = Field(
+        default=True, alias="COMMERCIAL_RAG_VAULT_ENABLE_IMMUTABLE_AUDIT"
+    )

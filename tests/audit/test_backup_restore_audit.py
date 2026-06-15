@@ -1,48 +1,51 @@
-import uuid
-import pytest
-import pytest_asyncio
 import json
+import uuid
 from pathlib import Path
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 import app.db.session
-from app.db.base import Base
+import pytest
+import pytest_asyncio
 from app.core.config import get_settings
-from app.models.agents.immutable_audit import ImmutableAuditLog
+from app.db.base import Base
 from app.models.agents.agents import AgentDefinition
+from app.models.agents.immutable_audit import ImmutableAuditLog
+from app.schemas.backup import BackupCreateRequest, BackupRestoreRequest
 from app.services.backup.backup_service import BackupService
 from app.services.backup.restore_staging_service import RestoreStagingService
 from app.services.security.immutable_audit import ImmutableAuditStore
-from app.schemas.backup import BackupCreateRequest, BackupRestoreRequest
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 TEST_DB_FILE = Path("/tmp/test-backup-restore-audit.db")
+
 
 @pytest.fixture(autouse=True)
 def setup_backup_keys(monkeypatch):
     monkeypatch.setenv("BACKUP_ENCRYPTION_KEY", "a" * 32)
     monkeypatch.setenv("BACKUP_SIGNING_KEY", "b" * 32)
 
+
 @pytest_asyncio.fixture(autouse=True)
 async def test_db():
     db_url = f"sqlite+aiosqlite:///{TEST_DB_FILE}"
     engine = create_async_engine(db_url, pool_pre_ping=True)
     session_factory = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-    
+
     app.db.session.engine = engine
     app.db.session.SessionLocal = session_factory
-    
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     yield session_factory
-    
+
     await engine.dispose()
     if TEST_DB_FILE.exists():
         try:
             TEST_DB_FILE.unlink()
         except Exception:
             pass
+
 
 @pytest.mark.asyncio
 async def test_backup_audit_logging_and_tamper_detection(test_db, tmp_path, monkeypatch):
@@ -67,7 +70,7 @@ async def test_backup_audit_logging_and_tamper_detection(test_db, tmp_path, monk
             model_id="mock-model",
             owner="db-test",
             tenant_id="tenant-db",
-            status="active"
+            status="active",
         )
         db.add(agent)
         await db.commit()
@@ -84,12 +87,12 @@ async def test_backup_audit_logging_and_tamper_detection(test_db, tmp_path, monk
         stmt = select(ImmutableAuditLog).order_by(ImmutableAuditLog.id.asc())
         res = await db.execute(stmt)
         logs = res.scalars().all()
-        
+
         # We expect backup_verified (during create_backup verification check) and backup_created
         actions = [log.action for log in logs]
         assert "backup_created" in actions
         assert "backup_verified" in actions
-        
+
         # Check values logged in payload
         created_log = next(log for log in logs if log.action == "backup_created")
         payload = json.loads(created_log.payload)
@@ -154,7 +157,7 @@ async def test_restore_and_rollback_audit_logging(test_db, tmp_path, monkeypatch
             model_id="mock-model",
             owner="db-test",
             tenant_id="tenant-db",
-            status="active"
+            status="active",
         )
         db.add(agent)
         await db.commit()
@@ -178,15 +181,21 @@ async def test_restore_and_rollback_audit_logging(test_db, tmp_path, monkeypatch
     # We expect: restore_requested, restore_approved, restore_started, restore_completed
     async with session_factory() as db:
         staging_svc = RestoreStagingService(db)
-        res = await staging_svc.restore_with_staging(backup_id, BackupRestoreRequest(dry_run=False), actor="restore-operator")
+        res = await staging_svc.restore_with_staging(
+            backup_id, BackupRestoreRequest(dry_run=False), actor="restore-operator"
+        )
         assert res.status == "restored"
 
     async with session_factory() as db:
-        stmt = select(ImmutableAuditLog).where(ImmutableAuditLog.action.like("restore_%")).order_by(ImmutableAuditLog.id.asc())
+        stmt = (
+            select(ImmutableAuditLog)
+            .where(ImmutableAuditLog.action.like("restore_%"))
+            .order_by(ImmutableAuditLog.id.asc())
+        )
         res = await db.execute(stmt)
         logs = res.scalars().all()
         actions = [log.action for log in logs]
-        
+
         assert "restore_requested" in actions
         assert "restore_approved" in actions
         assert "restore_started" in actions
@@ -209,18 +218,21 @@ async def test_restore_and_rollback_audit_logging(test_db, tmp_path, monkeypatch
 
     should_fail = True
     original_write_text = Path.write_text
+
     def patched_write_text(self_path, content, *args, **kwargs):
         nonlocal should_fail
         if should_fail and ("repo/config" in str(self_path) or "repo/VERSION" in str(self_path)):
             should_fail = False
             raise RuntimeError("Simulated config promotion failure")
         return original_write_text(self_path, content, *args, **kwargs)
-    
+
     monkeypatch.setattr(Path, "write_text", patched_write_text)
 
     async with session_factory() as db:
         staging_svc = RestoreStagingService(db)
-        res = await staging_svc.restore_with_staging(backup_id, BackupRestoreRequest(dry_run=False), actor="rollback-operator")
+        res = await staging_svc.restore_with_staging(
+            backup_id, BackupRestoreRequest(dry_run=False), actor="rollback-operator"
+        )
         assert res.status == "failed"
 
     async with session_factory() as db:

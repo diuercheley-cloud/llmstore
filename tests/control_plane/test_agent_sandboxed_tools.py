@@ -1,4 +1,3 @@
-
 import pytest
 from app.core.config import get_settings
 from app.services.agents.tool_adapters.database_read_tool import DatabaseReadToolAdapter
@@ -12,16 +11,17 @@ def setup_flags():
     orig_shell = settings.agent_shell_tool_enabled
     orig_http = settings.agent_http_tool_enabled
     orig_db = settings.agent_db_read_tool_enabled
-    
+
     settings.agent_shell_tool_enabled = True
     settings.agent_http_tool_enabled = True
     settings.agent_db_read_tool_enabled = True
-    
+
     yield
-    
+
     settings.agent_shell_tool_enabled = orig_shell
     settings.agent_http_tool_enabled = orig_http
     settings.agent_db_read_tool_enabled = orig_db
+
 
 @pytest.mark.asyncio
 async def test_shell_blocks_non_allowlisted_command(setup_flags):
@@ -29,11 +29,13 @@ async def test_shell_blocks_non_allowlisted_command(setup_flags):
     with pytest.raises(ValueError, match="not in the allowed shell command list"):
         await adapter.execute(command="rm", args=["-rf", "/"])
 
+
 @pytest.mark.asyncio
 async def test_shell_blocks_sensitive_files(setup_flags):
     adapter = ShellCommandToolAdapter()
     with pytest.raises(ValueError, match="sensitive path detected"):
         await adapter.execute(command="cat", args=[".env"])
+
 
 @pytest.mark.asyncio
 async def test_http_blocks_internal_ips(setup_flags):
@@ -43,6 +45,7 @@ async def test_http_blocks_internal_ips(setup_flags):
     with pytest.raises(ValueError, match="strictly prohibited"):
         await adapter.execute(url="http://169.254.169.254/latest/meta-data")
 
+
 @pytest.mark.asyncio
 async def test_db_read_blocks_mutation(setup_flags):
     adapter = DatabaseReadToolAdapter()
@@ -50,6 +53,7 @@ async def test_db_read_blocks_mutation(setup_flags):
         await adapter.execute(table="agent_runs", query="DELETE FROM agent_runs")
     with pytest.raises(ValueError, match="Only SELECT queries are allowed"):
         await adapter.execute(table="agent_runs", query="UPDATE agent_runs SET status='ok'")
+
 
 @pytest.mark.asyncio
 async def test_db_read_blocks_forbidden_tables(setup_flags):

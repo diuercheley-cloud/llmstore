@@ -53,7 +53,8 @@ async def test_admin_abuse_events_with_token(admin_abuse_env):
 
     async with sessionmaker() as session:
         await record_abuse_event(
-            session, fake_redis,
+            session,
+            fake_redis,
             signal="requests_per_minute_above_plan",
             title="API Test Event",
             client_id=client_id,
@@ -74,7 +75,8 @@ async def test_admin_abuse_summary(admin_abuse_env):
 
     async with sessionmaker() as session:
         await record_abuse_event(
-            session, fake_redis,
+            session,
+            fake_redis,
             signal="cloud_without_balance",
             title="Summary Test",
             client_id=client_id,
@@ -99,13 +101,15 @@ async def test_admin_abuse_events_filter_by_signal(admin_abuse_env):
 
     async with sessionmaker() as session:
         await record_abuse_event(
-            session, fake_redis,
+            session,
+            fake_redis,
             signal="repeated_auth_errors",
             title="Auth Error Event",
             client_id=client_id,
         )
         await record_abuse_event(
-            session, fake_redis,
+            session,
+            fake_redis,
             signal="cloud_without_balance",
             title="Cloud Balance Event",
             client_id=client_id,

@@ -1,8 +1,8 @@
 import json
 import uuid
 from decimal import Decimal
-from unittest.mock import AsyncMock
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 from app.api.deps import get_inference_proxy
@@ -23,7 +23,9 @@ class FakeToolProxy:
         self.payload = payload
         self.calls: list[dict] = []
 
-    def _validate_chat_response_payload(self, payload: dict, *, include_reasoning: bool, backend_name: str) -> None:
+    def _validate_chat_response_payload(
+        self, payload: dict, *, include_reasoning: bool, backend_name: str
+    ) -> None:
         _ = payload, include_reasoning, backend_name
 
     async def chat(self, *args, **kwargs):
@@ -56,8 +58,12 @@ def tools_enabled_plan(monkeypatch):
         embeddings_requests_per_month=1000,
         embeddings_tokens_per_month=1_000_000,
     )
-    monkeypatch.setattr("app.api.client.resolve_effective_plan_for_session", AsyncMock(return_value=plan))
-    monkeypatch.setattr("app.utils.validation.resolve_effective_plan_for_session", AsyncMock(return_value=plan))
+    monkeypatch.setattr(
+        "app.api.client.resolve_effective_plan_for_session", AsyncMock(return_value=plan)
+    )
+    monkeypatch.setattr(
+        "app.utils.validation.resolve_effective_plan_for_session", AsyncMock(return_value=plan)
+    )
     return plan
 
 
@@ -80,8 +86,12 @@ def tools_disabled_plan(monkeypatch):
         embeddings_requests_per_month=1000,
         embeddings_tokens_per_month=1_000_000,
     )
-    monkeypatch.setattr("app.api.client.resolve_effective_plan_for_session", AsyncMock(return_value=plan))
-    monkeypatch.setattr("app.utils.validation.resolve_effective_plan_for_session", AsyncMock(return_value=plan))
+    monkeypatch.setattr(
+        "app.api.client.resolve_effective_plan_for_session", AsyncMock(return_value=plan)
+    )
+    monkeypatch.setattr(
+        "app.utils.validation.resolve_effective_plan_for_session", AsyncMock(return_value=plan)
+    )
     return plan
 
 
@@ -185,7 +195,9 @@ async def test_chat_completions_tools_auto_logs_sanitized(
                                 "type": "function",
                                 "function": {
                                     "name": "weather_mock",
-                                    "arguments": json.dumps({"city": "Sao Paulo", "api_key": "secret-123"}),
+                                    "arguments": json.dumps(
+                                        {"city": "Sao Paulo", "api_key": "secret-123"}
+                                    ),
                                 },
                             }
                         ],
@@ -342,7 +354,10 @@ async def test_chat_completions_tools_specific_choice_forwarded(
                     "type": "function",
                     "function": {
                         "name": "weather_mock",
-                        "parameters": {"type": "object", "properties": {"city": {"type": "string"}}},
+                        "parameters": {
+                            "type": "object",
+                            "properties": {"city": {"type": "string"}},
+                        },
                     },
                 }
             ],
@@ -419,7 +434,10 @@ async def test_chat_completions_tools_supported_for_openrouter(
                     "type": "function",
                     "function": {
                         "name": "weather_mock",
-                        "parameters": {"type": "object", "properties": {"city": {"type": "string"}}},
+                        "parameters": {
+                            "type": "object",
+                            "properties": {"city": {"type": "string"}},
+                        },
                     },
                 }
             ],
@@ -545,7 +563,10 @@ async def test_chat_completions_allows_anyof_tool_schema(
     )
     assert resp.status_code == 200
     forwarded = proxy.calls[-1]["args"][0]
-    assert forwarded["tools"][0]["function"]["parameters"]["properties"]["query"]["anyOf"][0]["type"] == "string"
+    assert (
+        forwarded["tools"][0]["function"]["parameters"]["properties"]["query"]["anyOf"][0]["type"]
+        == "string"
+    )
 
 
 def test_validate_tool_schema_depth_uses_structural_nesting(monkeypatch):
@@ -632,14 +653,20 @@ def test_provider_supports_native_tools_includes_openrouter():
 
 
 def test_model_supports_native_tools_uses_openrouter_supported_parameters():
-    assert model_supports_native_tools(
-        "openrouter",
-        {"supported_parameters": ["max_tokens", "tools", "tool_choice"]},
-    ) is True
-    assert model_supports_native_tools(
-        "openrouter",
-        {"supported_parameters": ["max_tokens", "temperature"]},
-    ) is False
+    assert (
+        model_supports_native_tools(
+            "openrouter",
+            {"supported_parameters": ["max_tokens", "tools", "tool_choice"]},
+        )
+        is True
+    )
+    assert (
+        model_supports_native_tools(
+            "openrouter",
+            {"supported_parameters": ["max_tokens", "temperature"]},
+        )
+        is False
+    )
 
 
 @pytest.mark.asyncio
@@ -753,7 +780,7 @@ async def test_responses_accepts_tools_for_supported_provider(
                                 "type": "function",
                                 "function": {
                                     "name": "weather_mock",
-                                    "arguments": "{\"city\":\"Campinas\"}",
+                                    "arguments": '{"city":"Campinas"}',
                                 },
                             }
                         ],
@@ -788,7 +815,7 @@ async def test_responses_accepts_tools_for_supported_provider(
     assert body["output_text"] == ""
     assert body["output"][0]["type"] == "function_call"
     assert body["output"][0]["name"] == "weather_mock"
-    assert body["output"][0]["arguments"] == "{\"city\":\"Campinas\"}"
+    assert body["output"][0]["arguments"] == '{"city":"Campinas"}'
 
 
 @pytest.mark.asyncio

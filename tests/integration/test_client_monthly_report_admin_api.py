@@ -1,4 +1,3 @@
-
 import pytest
 
 
@@ -28,6 +27,7 @@ async def test_monthly_report_preview_imports():
     """Check that the sales module imports successfully."""
     try:
         from app.api.sales import monthly_report_preview
+
         assert monthly_report_preview is not None
     except ImportError as e:
         pytest.fail(f"Import failed: {e}")
@@ -40,6 +40,7 @@ async def test_monthly_report_preview_response_structure():
     import inspect
 
     from app.api.sales import monthly_report_preview
+
     sig = inspect.signature(monthly_report_preview)
     params = list(sig.parameters.keys())
     assert "client_id" in params
@@ -51,6 +52,7 @@ async def test_monthly_report_preview_response_structure():
 async def test_month_validator_regex():
     """Verify month format validator rejects invalid months."""
     import re
+
     pattern = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
     assert pattern.match("2026-05")
     assert pattern.match("2025-12")

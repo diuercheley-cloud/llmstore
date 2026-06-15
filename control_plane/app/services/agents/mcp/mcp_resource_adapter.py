@@ -5,6 +5,7 @@ MCP Resource Adapter
 Normalises raw resource records from an MCP server into the internal
 canonical format.
 """
+
 from __future__ import annotations
 
 from typing import Any

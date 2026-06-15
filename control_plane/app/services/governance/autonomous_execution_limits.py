@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Any
 
 from app.models.commercial.commercial_attestation_runtime import CommercialRuntimeAttestation
@@ -8,14 +8,18 @@ from app.models.commercial.commercial_autonomous_guardrails import (
     CommercialAutonomousExecutionPolicy,
     CommercialExecutionBlastRadius,
 )
-from app.models.commercial.commercial_confidential_runtime import CommercialConfidentialInferenceSession
+from app.models.commercial.commercial_confidential_runtime import (
+    CommercialConfidentialInferenceSession,
+)
 from app.models.commercial.commercial_governance import CommercialPolicyBundle
 from app.models.commercial.commercial_model_supply_chain import (
     CommercialModelPromotionBundle,
     CommercialSignedModelRegistryEntry,
 )
 from app.models.commercial.commercial_runtime_fabric import CommercialRuntimeFabricHealth
-from app.models.commercial.commercial_sovereign_governance import CommercialHardwareAttestationRecord
+from app.models.commercial.commercial_sovereign_governance import (
+    CommercialHardwareAttestationRecord,
+)
 from app.services.routing.commercial_report_export import sanitize_report_payload
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -36,34 +40,51 @@ class AutonomousExecutionLimitsService:
         tenant_id: str | None = None,
     ) -> CommercialAutonomousExecutionPolicy | None:
         rows = (
-            await db.execute(
-                select(CommercialAutonomousExecutionPolicy)
-                .where(
-                    CommercialAutonomousExecutionPolicy.is_active.is_(True),
-                    CommercialAutonomousExecutionPolicy.action_type == action_type,
+            (
+                await db.execute(
+                    select(CommercialAutonomousExecutionPolicy)
+                    .where(
+                        CommercialAutonomousExecutionPolicy.is_active.is_(True),
+                        CommercialAutonomousExecutionPolicy.action_type == action_type,
+                    )
+                    .order_by(desc(CommercialAutonomousExecutionPolicy.updated_at))
                 )
-                .order_by(desc(CommercialAutonomousExecutionPolicy.updated_at))
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         for row in rows:
             if row.tenant_id and tenant_id and row.tenant_id != tenant_id:
                 continue
             return row
         return None
 
-    async def _active_bundle(self, db: AsyncSession, policy: CommercialAutonomousExecutionPolicy | None) -> CommercialPolicyBundle | None:
+    async def _active_bundle(
+        self, db: AsyncSession, policy: CommercialAutonomousExecutionPolicy | None
+    ) -> CommercialPolicyBundle | None:
         if policy is None or policy.policy_bundle_id is None:
             return (
-                await db.execute(
-                    select(CommercialPolicyBundle)
-                    .where(CommercialPolicyBundle.status == "active")
-                    .order_by(desc(CommercialPolicyBundle.activated_at), desc(CommercialPolicyBundle.created_at))
+                (
+                    await db.execute(
+                        select(CommercialPolicyBundle)
+                        .where(CommercialPolicyBundle.status == "active")
+                        .order_by(
+                            desc(CommercialPolicyBundle.activated_at),
+                            desc(CommercialPolicyBundle.created_at),
+                        )
+                    )
                 )
-            ).scalars().first()
+                .scalars()
+                .first()
+            )
         return await db.get(CommercialPolicyBundle, policy.policy_bundle_id)
 
-    async def _runtime_attestation_status(self, db: AsyncSession, request: dict[str, Any]) -> dict[str, Any]:
-        stmt = select(CommercialRuntimeAttestation).order_by(desc(CommercialRuntimeAttestation.attested_at))
+    async def _runtime_attestation_status(
+        self, db: AsyncSession, request: dict[str, Any]
+    ) -> dict[str, Any]:
+        stmt = select(CommercialRuntimeAttestation).order_by(
+            desc(CommercialRuntimeAttestation.attested_at)
+        )
         cluster_id = request.get("cluster_id")
         node_id = request.get("node_id")
         if cluster_id:
@@ -75,8 +96,12 @@ class AutonomousExecutionLimitsService:
             return {"ok": False, "status": "missing"}
         return {"ok": bool(record.trusted), "status": record.status, "record": record}
 
-    async def _hardware_attestation_status(self, db: AsyncSession, request: dict[str, Any]) -> dict[str, Any]:
-        stmt = select(CommercialHardwareAttestationRecord).order_by(desc(CommercialHardwareAttestationRecord.created_at))
+    async def _hardware_attestation_status(
+        self, db: AsyncSession, request: dict[str, Any]
+    ) -> dict[str, Any]:
+        stmt = select(CommercialHardwareAttestationRecord).order_by(
+            desc(CommercialHardwareAttestationRecord.created_at)
+        )
         cluster_id = request.get("cluster_id")
         node_id = request.get("node_id")
         if cluster_id:
@@ -89,7 +114,9 @@ class AutonomousExecutionLimitsService:
         return {"ok": record.status == "trusted", "status": record.status, "record": record}
 
     async def _quorum_status(self, db: AsyncSession, request: dict[str, Any]) -> dict[str, Any]:
-        stmt = select(CommercialRuntimeFabricHealth).order_by(desc(CommercialRuntimeFabricHealth.last_check))
+        stmt = select(CommercialRuntimeFabricHealth).order_by(
+            desc(CommercialRuntimeFabricHealth.last_check)
+        )
         if request.get("node_id"):
             stmt = stmt.where(CommercialRuntimeFabricHealth.node_id == request["node_id"])
         rows = (await db.execute(stmt)).scalars().all()
@@ -98,7 +125,9 @@ class AutonomousExecutionLimitsService:
         ok = all(bool(row.quarum_status) for row in rows[:3])
         return {"ok": ok, "status": "healthy" if ok else "degraded"}
 
-    async def _confidential_status(self, db: AsyncSession, request: dict[str, Any]) -> dict[str, Any]:
+    async def _confidential_status(
+        self, db: AsyncSession, request: dict[str, Any]
+    ) -> dict[str, Any]:
         if not request.get("confidential_scope"):
             return {"ok": True, "status": "not_required"}
         session_id = request.get("confidential_session_id")
@@ -113,17 +142,25 @@ class AutonomousExecutionLimitsService:
             return {"ok": False, "status": "bypass_blocked"}
         return {"ok": True, "status": session.attestation_status, "session": session}
 
-    async def _model_promotion_status(self, db: AsyncSession, request: dict[str, Any]) -> dict[str, Any]:
+    async def _model_promotion_status(
+        self, db: AsyncSession, request: dict[str, Any]
+    ) -> dict[str, Any]:
         if request.get("action_type") != "model_promotion":
             return {"ok": True, "status": "not_required"}
         bundle_id = request.get("model_promotion_bundle_id")
         registry_entry_id = request.get("registry_entry_id")
         bundle = await db.get(CommercialModelPromotionBundle, bundle_id) if bundle_id else None
-        entry = await db.get(CommercialSignedModelRegistryEntry, registry_entry_id) if registry_entry_id else None
+        entry = (
+            await db.get(CommercialSignedModelRegistryEntry, registry_entry_id)
+            if registry_entry_id
+            else None
+        )
         has_signature = bool((bundle and bundle.signature) or (entry and entry.signature))
         return {"ok": has_signature, "status": "signed" if has_signature else "unsigned"}
 
-    def _within_window(self, policy: CommercialAutonomousExecutionPolicy | None, now: datetime | None = None) -> bool:
+    def _within_window(
+        self, policy: CommercialAutonomousExecutionPolicy | None, now: datetime | None = None
+    ) -> bool:
         if policy is None or not policy.guarded_window_start or not policy.guarded_window_end:
             return True
         now = now or datetime.now(UTC)

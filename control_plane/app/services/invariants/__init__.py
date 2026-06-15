@@ -27,4 +27,3 @@ __all__ = [
     "validate_tenant_scoped_record_has_client_id",
     "validate_exported_sovereign_bundle_sanitized",
 ]
-

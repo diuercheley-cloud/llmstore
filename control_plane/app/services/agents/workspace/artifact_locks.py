@@ -32,16 +32,22 @@ class ArtifactLockManager:
         holder_id: str,
         holder_type: str,
         lock_type: str = "exclusive",
-        expires_in_seconds: int = 300
+        expires_in_seconds: int = 300,
     ) -> AgentArtifactLock:
         """Acquires a pessimistic lock on the artifact. Extends it if already held by the same holder."""
         lock = await ArtifactLockManager.get_lock(db, artifact_id)
         now = utc_now()
-        expires_at = datetime.fromtimestamp(now.timestamp() + expires_in_seconds, now.tzinfo) if expires_in_seconds else None
+        expires_at = (
+            datetime.fromtimestamp(now.timestamp() + expires_in_seconds, now.tzinfo)
+            if expires_in_seconds
+            else None
+        )
 
         if lock:
             if lock.holder_id != holder_id:
-                raise PermissionError(f"Artifact is locked by {lock.holder_type} '{lock.holder_id}' until {lock.expires_at}.")
+                raise PermissionError(
+                    f"Artifact is locked by {lock.holder_type} '{lock.holder_id}' until {lock.expires_at}."
+                )
             # Extend lock
             lock.expires_at = expires_at
             lock.lock_type = lock_type
@@ -52,10 +58,10 @@ class ArtifactLockManager:
                 holder_type=holder_type,
                 lock_type=lock_type,
                 expires_at=expires_at,
-                created_at=now
+                created_at=now,
             )
             db.add(lock)
-        
+
         await db.commit()
         await db.refresh(lock)
         return lock
@@ -65,9 +71,11 @@ class ArtifactLockManager:
         """Releases the pessimistic lock if held by the holder."""
         lock = await ArtifactLockManager.get_lock(db, artifact_id)
         if not lock:
-            return # No active lock to release
+            return  # No active lock to release
         if lock.holder_id != holder_id:
-            raise PermissionError(f"Cannot release lock: held by '{lock.holder_id}', not '{holder_id}'.")
+            raise PermissionError(
+                f"Cannot release lock: held by '{lock.holder_id}', not '{holder_id}'."
+            )
         await db.delete(lock)
         await db.commit()
 
@@ -79,10 +87,16 @@ class ArtifactLockManager:
             raise PermissionError(f"Edits blocked: artifact is locked by '{lock.holder_id}'.")
 
     @staticmethod
-    def verify_optimistic_lock(artifact: AgentSharedArtifact, expected_version_id: uuid.UUID | None = None, expected_version_number: int | None = None) -> None:
+    def verify_optimistic_lock(
+        artifact: AgentSharedArtifact,
+        expected_version_id: uuid.UUID | None = None,
+        expected_version_number: int | None = None,
+    ) -> None:
         """Enforces optimistic lock checking by comparing current version metadata."""
         if expected_version_id is not None and artifact.current_version_id != expected_version_id:
-            raise ValueError("Concurrency conflict: the artifact has been modified (version ID mismatch).")
+            raise ValueError(
+                "Concurrency conflict: the artifact has been modified (version ID mismatch)."
+            )
         if expected_version_number is not None:
             # We can't check version number directly on artifact without loading versions,
             # but if we have the current version loaded we can check.

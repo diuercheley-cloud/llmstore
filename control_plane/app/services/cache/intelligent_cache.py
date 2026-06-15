@@ -112,8 +112,12 @@ def build_cache_key(
         include_reasoning=include_reasoning,
     )
     request_hash = _hash_json(normalized)
-    prefix = f"chat:{model}:{len(messages)}" if messages else f"completion:{model}:{len(prompt or '')}"
-    fingerprint = hashlib.sha256(f"{prefix}:{request_hash}:{client_id or ''}".encode()).hexdigest()[:16]
+    prefix = (
+        f"chat:{model}:{len(messages)}" if messages else f"completion:{model}:{len(prompt or '')}"
+    )
+    fingerprint = hashlib.sha256(f"{prefix}:{request_hash}:{client_id or ''}".encode()).hexdigest()[
+        :16
+    ]
     return request_hash, prefix, fingerprint
 
 
@@ -153,7 +157,9 @@ async def should_cache(
     semantic_enabled = settings.semantic_cache_enabled
     ttl = settings.response_cache_ttl_seconds
     if client_id:
-        policy = await _get_cache_policy(session, client_id=client_id, billing_plan_code=billing_plan_code)
+        policy = await _get_cache_policy(
+            session, client_id=client_id, billing_plan_code=billing_plan_code
+        )
         if policy:
             cache_enabled = policy.cache_enabled
             semantic_enabled = policy.semantic_cache_enabled
@@ -194,7 +200,9 @@ async def get_exact(
     plan_code: str | None = None,
 ) -> CacheLookupResult:
     if not settings.response_cache_enabled:
-        record_cache_result(hit=False, model=model, backend="cache", plan=plan_code, endpoint=endpoint_type)
+        record_cache_result(
+            hit=False, model=model, backend="cache", plan=plan_code, endpoint=endpoint_type
+        )
         return CacheLookupResult(hit=False, cache_type="none")
 
     now = utc_now()
@@ -213,13 +221,17 @@ async def get_exact(
     row = (await session.execute(stmt)).scalar_one_or_none()
 
     if row is None:
-        record_cache_result(hit=False, model=model, backend="cache", plan=plan_code, endpoint=endpoint_type)
+        record_cache_result(
+            hit=False, model=model, backend="cache", plan=plan_code, endpoint=endpoint_type
+        )
         return CacheLookupResult(hit=False, cache_type="none")
 
     row.hit_count += 1
     row.last_hit_at = now
     row.updated_at = now
-    record_cache_result(hit=True, model=model, backend="cache", plan=plan_code, endpoint=endpoint_type)
+    record_cache_result(
+        hit=True, model=model, backend="cache", plan=plan_code, endpoint=endpoint_type
+    )
     return CacheLookupResult(
         hit=True,
         payload=json.loads(row.response_json),
@@ -339,7 +351,9 @@ async def get_semantic(
     rows = (await session.execute(stmt)).scalars().all()
 
     if not rows:
-        record_cache_result(hit=False, model=model, backend="semantic_cache", plan=plan_code, endpoint=endpoint_type)
+        record_cache_result(
+            hit=False, model=model, backend="semantic_cache", plan=plan_code, endpoint=endpoint_type
+        )
         return CacheLookupResult(hit=False, cache_type="semantic")
 
     best_score = 0.0
@@ -362,13 +376,17 @@ async def get_semantic(
             best_row = row
 
     if best_row is None or best_score < threshold:
-        record_cache_result(hit=False, model=model, backend="semantic_cache", plan=plan_code, endpoint=endpoint_type)
+        record_cache_result(
+            hit=False, model=model, backend="semantic_cache", plan=plan_code, endpoint=endpoint_type
+        )
         return CacheLookupResult(hit=False, cache_type="semantic", similarity_score=best_score)
 
     best_row.hit_count += 1
     best_row.last_hit_at = now
     best_row.updated_at = now
-    record_cache_result(hit=True, model=model, backend="semantic_cache", plan=plan_code, endpoint=endpoint_type)
+    record_cache_result(
+        hit=True, model=model, backend="semantic_cache", plan=plan_code, endpoint=endpoint_type
+    )
     return CacheLookupResult(
         hit=True,
         payload=json.loads(best_row.response_json),
@@ -491,33 +509,47 @@ async def invalidate_client_cache(
 async def cache_stats(session: AsyncSession) -> dict:
     now = utc_now()
     exact_rows = (
-        await session.execute(
-            select(
-                func.count(ResponseCache.id).label("entries_total"),
-                func.count().filter(ResponseCache.expires_at <= now).label("expired_entries"),
-                func.coalesce(func.sum(ResponseCache.hit_count), 0).label("cache_reuses"),
-            ).where(ResponseCache.cache_type == "exact")
+        (
+            await session.execute(
+                select(
+                    func.count(ResponseCache.id).label("entries_total"),
+                    func.count().filter(ResponseCache.expires_at <= now).label("expired_entries"),
+                    func.coalesce(func.sum(ResponseCache.hit_count), 0).label("cache_reuses"),
+                ).where(ResponseCache.cache_type == "exact")
+            )
         )
-    ).mappings().first()
+        .mappings()
+        .first()
+    )
 
     semantic_rows = (
-        await session.execute(
-            select(
-                func.count(SemanticCacheEntry.id).label("entries_total"),
-                func.count().filter(SemanticCacheEntry.expires_at <= now).label("expired_entries"),
-                func.coalesce(func.sum(SemanticCacheEntry.hit_count), 0).label("cache_reuses"),
+        (
+            await session.execute(
+                select(
+                    func.count(SemanticCacheEntry.id).label("entries_total"),
+                    func.count()
+                    .filter(SemanticCacheEntry.expires_at <= now)
+                    .label("expired_entries"),
+                    func.coalesce(func.sum(SemanticCacheEntry.hit_count), 0).label("cache_reuses"),
+                )
             )
         )
-    ).mappings().first()
+        .mappings()
+        .first()
+    )
 
     request_rows = (
-        await session.execute(
-            select(
-                func.count(RequestLog.id).label("requests_total"),
-                func.count().filter(RequestLog.cache_hit.is_(True)).label("cache_hits_total"),
+        (
+            await session.execute(
+                select(
+                    func.count(RequestLog.id).label("requests_total"),
+                    func.count().filter(RequestLog.cache_hit.is_(True)).label("cache_hits_total"),
+                )
             )
         )
-    ).mappings().first()
+        .mappings()
+        .first()
+    )
 
     requests_total = int(request_rows["requests_total"] or 0)
     cache_hits_total = int(request_rows["cache_hits_total"] or 0)
@@ -528,13 +560,16 @@ async def cache_stats(session: AsyncSession) -> dict:
         "ttl_seconds": settings.response_cache_ttl_seconds,
         "exact_entries": int(exact_rows["entries_total"] or 0),
         "semantic_entries": int(semantic_rows["entries_total"] or 0),
-        "entries_total": int(exact_rows["entries_total"] or 0) + int(semantic_rows["entries_total"] or 0),
+        "entries_total": int(exact_rows["entries_total"] or 0)
+        + int(semantic_rows["entries_total"] or 0),
         "exact_expired": int(exact_rows["expired_entries"] or 0),
         "semantic_expired": int(semantic_rows["expired_entries"] or 0),
-        "expired_entries": int(exact_rows["expired_entries"] or 0) + int(semantic_rows["expired_entries"] or 0),
+        "expired_entries": int(exact_rows["expired_entries"] or 0)
+        + int(semantic_rows["expired_entries"] or 0),
         "exact_reuses": int(exact_rows["cache_reuses"] or 0),
         "semantic_reuses": int(semantic_rows["cache_reuses"] or 0),
-        "cache_reuses": int(exact_rows["cache_reuses"] or 0) + int(semantic_rows["cache_reuses"] or 0),
+        "cache_reuses": int(exact_rows["cache_reuses"] or 0)
+        + int(semantic_rows["cache_reuses"] or 0),
         "requests_total": requests_total,
         "cache_hits_total": cache_hits_total,
         "cache_misses_total": max(requests_total - cache_hits_total, 0),
@@ -550,7 +585,9 @@ async def list_cache_entries(
     limit: int = 100,
     offset: int = 0,
 ) -> list[dict]:
-    stmt = select(ResponseCache).order_by(ResponseCache.created_at.desc()).limit(limit).offset(offset)
+    stmt = (
+        select(ResponseCache).order_by(ResponseCache.created_at.desc()).limit(limit).offset(offset)
+    )
     if client_id:
         stmt = stmt.where(ResponseCache.client_id == client_id)
     if cache_type:
@@ -567,7 +604,9 @@ async def list_cache_entries(
             "model": row.model,
             "provider": row.provider,
             "request_hash": row.request_hash[:16] + "...",
-            "normalized_prompt_hash": row.normalized_prompt_hash[:16] + "..." if row.normalized_prompt_hash else None,
+            "normalized_prompt_hash": row.normalized_prompt_hash[:16] + "..."
+            if row.normalized_prompt_hash
+            else None,
             "hit_count": row.hit_count,
             "ttl_seconds": row.ttl_seconds,
             "expires_at": row.expires_at.isoformat(),
@@ -578,7 +617,12 @@ async def list_cache_entries(
         result.append(entry)
 
     if cache_type == "semantic" or not cache_type:
-        sstmt = select(SemanticCacheEntry).order_by(SemanticCacheEntry.created_at.desc()).limit(limit).offset(offset)
+        sstmt = (
+            select(SemanticCacheEntry)
+            .order_by(SemanticCacheEntry.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
         if client_id:
             sstmt = sstmt.where(SemanticCacheEntry.client_id == client_id)
         srows = (await session.execute(sstmt)).scalars().all()
@@ -606,7 +650,11 @@ async def list_cache_entries(
 
 
 async def get_cache_policies(session: AsyncSession) -> list[dict]:
-    rows = (await session.execute(select(CachePolicy).order_by(CachePolicy.created_at.desc()))).scalars().all()
+    rows = (
+        (await session.execute(select(CachePolicy).order_by(CachePolicy.created_at.desc())))
+        .scalars()
+        .all()
+    )
     return [
         {
             "id": str(p.id),
@@ -643,7 +691,9 @@ async def ensure_cache_policy(
         ).scalar_one_or_none()
     elif billing_plan_code:
         existing = (
-            await session.execute(select(CachePolicy).where(CachePolicy.billing_plan_code == billing_plan_code))
+            await session.execute(
+                select(CachePolicy).where(CachePolicy.billing_plan_code == billing_plan_code)
+            )
         ).scalar_one_or_none()
     else:
         existing = None

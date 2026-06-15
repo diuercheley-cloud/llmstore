@@ -7,9 +7,8 @@ import asyncio
 import logging
 import uuid
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Dict, List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -40,8 +39,8 @@ class ReviewFinding:
     category: str
     title: str
     description: str
-    location: Optional[str] = None
-    recommendation: Optional[str] = None
+    location: str | None = None
+    recommendation: str | None = None
 
 
 @dataclass
@@ -51,9 +50,9 @@ class Submission:
     submitted_by: str
     status: SubmissionStatus = SubmissionStatus.DRAFT
     id: str = ""
-    findings: List[ReviewFinding] = field(default_factory=list)
-    reviewer_notes: Optional[str] = None
-    reviewed_by: Optional[str] = None
+    findings: list[ReviewFinding] = field(default_factory=list)
+    reviewer_notes: str | None = None
+    reviewed_by: str | None = None
     created_at: str = ""
     updated_at: str = ""
 
@@ -74,12 +73,14 @@ class MarketplaceGovernanceService:
 
     def __init__(self, db: AsyncSession):
         self.db = db
-        self._submissions: Dict[str, Submission] = {}
+        self._submissions: dict[str, Submission] = {}
 
     async def create_submission(self, agent_id: str, version: str, submitted_by: str) -> Submission:
         sub = Submission(agent_id=agent_id, version=version, submitted_by=submitted_by)
         self._submissions[sub.id] = sub
-        logger.info("Marketplace submission created: %s (agent=%s, v=%s)", sub.id, agent_id, version)
+        logger.info(
+            "Marketplace submission created: %s (agent=%s, v=%s)", sub.id, agent_id, version
+        )
         return sub
 
     async def submit_for_review(self, submission_id: str) -> Submission:
@@ -109,10 +110,14 @@ class MarketplaceGovernanceService:
             sub.reviewer_notes = f"Security scan passed: {len(findings)} low/info findings"
 
         sub.updated_at = datetime.now(UTC).isoformat()
-        logger.info("Security scan for %s: status=%s, findings=%d", submission_id, sub.status, len(findings))
+        logger.info(
+            "Security scan for %s: status=%s, findings=%d", submission_id, sub.status, len(findings)
+        )
         return sub
 
-    async def approve_submission(self, submission_id: str, reviewer: str, notes: Optional[str] = None) -> Submission:
+    async def approve_submission(
+        self, submission_id: str, reviewer: str, notes: str | None = None
+    ) -> Submission:
         sub = self._get_submission(submission_id)
         sub.status = SubmissionStatus.APPROVED
         sub.reviewed_by = reviewer
@@ -134,16 +139,18 @@ class MarketplaceGovernanceService:
     async def publish_submission(self, submission_id: str) -> Submission:
         sub = self._get_submission(submission_id)
         if sub.status != SubmissionStatus.APPROVED:
-            raise ValueError(f"Cannot publish submission in status '{sub.status}'. Must be 'approved'.")
+            raise ValueError(
+                f"Cannot publish submission in status '{sub.status}'. Must be 'approved'."
+            )
         sub.status = SubmissionStatus.PUBLISHED
         sub.updated_at = datetime.now(UTC).isoformat()
         logger.info("Submission %s published to marketplace", submission_id)
         return sub
 
-    def get_submission(self, submission_id: str) -> Optional[Submission]:
+    def get_submission(self, submission_id: str) -> Submission | None:
         return self._submissions.get(submission_id)
 
-    def list_submissions(self, status: Optional[SubmissionStatus] = None) -> List[Submission]:
+    def list_submissions(self, status: SubmissionStatus | None = None) -> list[Submission]:
         if status:
             return [s for s in self._submissions.values() if s.status == status]
         return list(self._submissions.values())
@@ -154,53 +161,62 @@ class MarketplaceGovernanceService:
             raise ValueError(f"Submission not found: {submission_id}")
         return sub
 
-    async def _scan_agent(self, agent_id: str) -> List[ReviewFinding]:
+    async def _scan_agent(self, agent_id: str) -> list[ReviewFinding]:
         findings = []
 
         from app.models.agents.agents import AgentDefinition
+
         result = await self.db.execute(
             select(AgentDefinition).where(AgentDefinition.id == agent_id)
         )
         agent = result.scalar_one_or_none()
 
         if not agent:
-            findings.append(ReviewFinding(
-                severity=ReviewSeverity.CRITICAL,
-                category="agent_exists",
-                title="Agent not found",
-                description=f"Agent {agent_id} does not exist in the registry.",
-            ))
+            findings.append(
+                ReviewFinding(
+                    severity=ReviewSeverity.CRITICAL,
+                    category="agent_exists",
+                    title="Agent not found",
+                    description=f"Agent {agent_id} does not exist in the registry.",
+                )
+            )
             return findings
 
         if not agent.system_prompt or len(agent.system_prompt.strip()) < 10:
-            findings.append(ReviewFinding(
-                severity=ReviewSeverity.MEDIUM,
-                category="prompt_quality",
-                title="System prompt too short",
-                description="Agent system prompt is empty or too short (< 10 chars).",
-                recommendation="Provide a meaningful system prompt that defines the agent's purpose.",
-            ))
+            findings.append(
+                ReviewFinding(
+                    severity=ReviewSeverity.MEDIUM,
+                    category="prompt_quality",
+                    title="System prompt too short",
+                    description="Agent system prompt is empty or too short (< 10 chars).",
+                    recommendation="Provide a meaningful system prompt that defines the agent's purpose.",
+                )
+            )
 
         if agent.tools and len(agent.tools) > 0:
             for tool in agent.tools:
                 if isinstance(tool, str) and ("shell" in tool.lower() or "exec" in tool.lower()):
-                    findings.append(ReviewFinding(
-                        severity=ReviewSeverity.HIGH,
-                        category="dangerous_tool",
-                        title=f"Dangerous tool: {tool}",
-                        description=f"Agent uses potentially dangerous tool '{tool}'.",
-                        recommendation="Restrict shell/exec tools or require human approval.",
-                        location=f"tools.{tool}",
-                    ))
+                    findings.append(
+                        ReviewFinding(
+                            severity=ReviewSeverity.HIGH,
+                            category="dangerous_tool",
+                            title=f"Dangerous tool: {tool}",
+                            description=f"Agent uses potentially dangerous tool '{tool}'.",
+                            recommendation="Restrict shell/exec tools or require human approval.",
+                            location=f"tools.{tool}",
+                        )
+                    )
 
         if agent.memory and agent.memory == "long_term":
-            findings.append(ReviewFinding(
-                severity=ReviewSeverity.LOW,
-                category="data_privacy",
-                title="Long-term memory enabled",
-                description="Agent uses long-term memory. Ensure data privacy and consent are configured.",
-                recommendation="Configure memory retention and consent policies.",
-            ))
+            findings.append(
+                ReviewFinding(
+                    severity=ReviewSeverity.LOW,
+                    category="data_privacy",
+                    title="Long-term memory enabled",
+                    description="Agent uses long-term memory. Ensure data privacy and consent are configured.",
+                    recommendation="Configure memory retention and consent policies.",
+                )
+            )
 
         return findings
 
@@ -219,11 +235,15 @@ class MarketplacePublishingAPI:
         sub = await self.governance.run_security_scan(sub.id)
         return asdict(sub)
 
-    async def review_submission(self, submission_id: str, reviewer: str, action: str, reason: Optional[str] = None) -> dict:
+    async def review_submission(
+        self, submission_id: str, reviewer: str, action: str, reason: str | None = None
+    ) -> dict:
         if action == "approve":
             sub = await self.governance.approve_submission(submission_id, reviewer, reason)
         elif action == "reject":
-            sub = await self.governance.reject_submission(submission_id, reviewer, reason or "No reason provided")
+            sub = await self.governance.reject_submission(
+                submission_id, reviewer, reason or "No reason provided"
+            )
         else:
             raise ValueError(f"Unknown action: {action}")
         return asdict(sub)

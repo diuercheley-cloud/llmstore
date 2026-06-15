@@ -33,4 +33,3 @@ __all__ = [
     "PluginSupplyChainReplayVerifier",
     "build_plugin_supply_chain_audit_event",
 ]
-

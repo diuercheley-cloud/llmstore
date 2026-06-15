@@ -88,7 +88,9 @@ async def lookup_exact_cache(
     plan_code: str | None = None,
 ) -> CacheLookupResult:
     if not settings.response_cache_enabled:
-        record_cache_result(hit=False, model=model, backend="cache", plan=plan_code, endpoint=endpoint)
+        record_cache_result(
+            hit=False, model=model, backend="cache", plan=plan_code, endpoint=endpoint
+        )
         return CacheLookupResult(hit=False)
 
     now = utc_now()
@@ -102,7 +104,9 @@ async def lookup_exact_cache(
     )
     row = (await session.execute(stmt)).scalar_one_or_none()
     if row is None:
-        record_cache_result(hit=False, model=model, backend="cache", plan=plan_code, endpoint=endpoint)
+        record_cache_result(
+            hit=False, model=model, backend="cache", plan=plan_code, endpoint=endpoint
+        )
         return CacheLookupResult(hit=False)
 
     row.hit_count += 1
@@ -178,22 +182,30 @@ async def clear_response_cache(session: AsyncSession) -> int:
 async def get_response_cache_stats(session: AsyncSession) -> dict:
     now = utc_now()
     cache_rows = (
-        await session.execute(
-            select(
-                func.count(ResponseCache.id).label("entries_total"),
-                func.count().filter(ResponseCache.expires_at <= now).label("expired_entries"),
-                func.coalesce(func.sum(ResponseCache.hit_count), 0).label("cache_reuses"),
+        (
+            await session.execute(
+                select(
+                    func.count(ResponseCache.id).label("entries_total"),
+                    func.count().filter(ResponseCache.expires_at <= now).label("expired_entries"),
+                    func.coalesce(func.sum(ResponseCache.hit_count), 0).label("cache_reuses"),
+                )
             )
         )
-    ).mappings().first()
+        .mappings()
+        .first()
+    )
     request_rows = (
-        await session.execute(
-            select(
-                func.count(RequestLog.id).label("requests_total"),
-                func.count().filter(RequestLog.cache_hit.is_(True)).label("cache_hits_total"),
+        (
+            await session.execute(
+                select(
+                    func.count(RequestLog.id).label("requests_total"),
+                    func.count().filter(RequestLog.cache_hit.is_(True)).label("cache_hits_total"),
+                )
             )
         )
-    ).mappings().first()
+        .mappings()
+        .first()
+    )
     requests_total = int(request_rows["requests_total"] or 0)
     cache_hits_total = int(request_rows["cache_hits_total"] or 0)
     return {

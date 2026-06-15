@@ -23,9 +23,7 @@ def _lmstudio_config(**overrides):
 class TestLMStudioHealthCheck:
     @pytest.mark.asyncio
     async def test_health_check_reports_healthy(self):
-        agent = create_code_agent(
-            "local-openai-compatible", _lmstudio_config()
-        )
+        agent = create_code_agent("local-openai-compatible", _lmstudio_config())
         health = await agent.health_check()
         assert health["status"] == "healthy"
         assert health["provider"] == "local-openai-compatible"
@@ -44,17 +42,13 @@ class TestLMStudioHealthCheck:
 
     @pytest.mark.asyncio
     async def test_health_check_response_format_not_supported(self):
-        agent = create_code_agent(
-            "local-openai-compatible", _lmstudio_config()
-        )
+        agent = create_code_agent("local-openai-compatible", _lmstudio_config())
         health = await agent.health_check()
         assert health["details"]["supports_response_format"] is False
 
     @pytest.mark.asyncio
     async def test_health_check_lists_models(self):
-        agent = create_code_agent(
-            "local-openai-compatible", _lmstudio_config()
-        )
+        agent = create_code_agent("local-openai-compatible", _lmstudio_config())
         health = await agent.health_check()
         models = health["details"]["available_models"]
         assert isinstance(models, list)
@@ -68,9 +62,7 @@ class TestLMStudioPlainChat:
             "local-openai-compatible",
             _lmstudio_config(plain_chat=True),
         )
-        result = await agent.chat_completion([
-            {"role": "user", "content": "Say hello"}
-        ])
+        result = await agent.chat_completion([{"role": "user", "content": "Say hello"}])
         assert "choices" in result
         content = result["choices"][0]["message"]["content"]
         assert isinstance(content, str)
@@ -82,9 +74,7 @@ class TestLMStudioPlainChat:
             "local-openai-compatible",
             _lmstudio_config(plain_chat=True),
         )
-        result = await agent.chat_completion([
-            {"role": "user", "content": "What is 2+2?"}
-        ])
+        result = await agent.chat_completion([{"role": "user", "content": "What is 2+2?"}])
         content = result["choices"][0]["message"]["content"]
         assert "4" in content
 
@@ -94,9 +84,7 @@ class TestLMStudioPlainChat:
             "local-openai-compatible",
             _lmstudio_config(plain_chat=True),
         )
-        result = await agent.chat_completion([
-            {"role": "user", "content": "Count r in strawberry"}
-        ])
+        result = await agent.chat_completion([{"role": "user", "content": "Count r in strawberry"}])
         msg = result["choices"][0]["message"]
         assert "reasoning_content" in msg
 
@@ -112,9 +100,7 @@ class TestLMStudioPlainChat:
             if method == "GET":
                 mock_resp = MagicMock()
                 mock_resp.status_code = 200
-                mock_resp.json.return_value = {
-                    "data": [{"id": NEMOTRON_MODEL}]
-                }
+                mock_resp.json.return_value = {"data": [{"id": NEMOTRON_MODEL}]}
                 return mock_resp
             post_payloads.append(kwargs.get("json", {}))
             mock_resp = MagicMock()
@@ -137,40 +123,38 @@ class TestLMStudioPlainChat:
 class TestLMStudioCodingAgent:
     @pytest.mark.asyncio
     async def test_coding_agent_returns_action_json(self):
-        agent = create_code_agent(
-            "local-openai-compatible", _lmstudio_config()
+        agent = create_code_agent("local-openai-compatible", _lmstudio_config())
+        result = await agent.chat_completion(
+            [{"role": "user", "content": "List files in current directory"}]
         )
-        result = await agent.chat_completion([
-            {"role": "user", "content": "List files in current directory"}
-        ])
         content = result["choices"][0]["message"]["content"]
         parsed = json.loads(content)
         assert "type" in parsed or "action_type" in parsed
 
     @pytest.mark.asyncio
     async def test_coding_agent_action_type_alias(self):
-        agent = create_code_agent(
-            "local-openai-compatible", _lmstudio_config()
+        agent = create_code_agent("local-openai-compatible", _lmstudio_config())
+        result = await agent.chat_completion(
+            [{"role": "user", "content": "List files in current directory"}]
         )
-        result = await agent.chat_completion([
-            {"role": "user", "content": "List files in current directory"}
-        ])
         content = result["choices"][0]["message"]["content"]
         parsed = json.loads(content)
         action_type = parsed.get("type") or parsed.get("action_type")
         assert action_type in {
-            "plan", "read_file", "write_file", "list_files",
-            "run_shell", "run_tests", "grep", "final",
+            "plan",
+            "read_file",
+            "write_file",
+            "list_files",
+            "run_shell",
+            "run_tests",
+            "grep",
+            "final",
         }
 
     @pytest.mark.asyncio
     async def test_coding_agent_returns_valid_usage(self):
-        agent = create_code_agent(
-            "local-openai-compatible", _lmstudio_config()
-        )
-        result = await agent.chat_completion([
-            {"role": "user", "content": "echo hello"}
-        ])
+        agent = create_code_agent("local-openai-compatible", _lmstudio_config())
+        result = await agent.chat_completion([{"role": "user", "content": "echo hello"}])
         usage = result.get("usage", {})
         assert "total_tokens" in usage
         assert usage["total_tokens"] >= 0
@@ -179,9 +163,7 @@ class TestLMStudioCodingAgent:
 class TestLMStudioModelResolution:
     @pytest.mark.asyncio
     async def test_explicit_model_selected(self):
-        agent = create_code_agent(
-            "local-openai-compatible", _lmstudio_config()
-        )
+        agent = create_code_agent("local-openai-compatible", _lmstudio_config())
         assert agent.model == NEMOTRON_MODEL
 
     @pytest.mark.asyncio
@@ -210,9 +192,7 @@ class TestLMStudioModelResolution:
 class TestLMStudioToolCalling:
     @pytest.mark.asyncio
     async def test_probe_native_tool_calling_result(self):
-        agent = create_code_agent(
-            "local-openai-compatible", _lmstudio_config()
-        )
+        agent = create_code_agent("local-openai-compatible", _lmstudio_config())
         probe = await agent._probe_native_tool_calling()
         assert "supported" in probe
         assert isinstance(probe["supported"], bool)
@@ -239,19 +219,19 @@ class TestLMStudioToolCalling:
             if method == "GET":
                 mock = MagicMock()
                 mock.status_code = 200
-                mock.json.return_value = {
-                    "data": [{"id": NEMOTRON_MODEL}]
-                }
+                mock.json.return_value = {"data": [{"id": NEMOTRON_MODEL}]}
                 return mock
             mock_resp = MagicMock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = {
-                "choices": [{
-                    "message": {
-                        "role": "assistant",
-                        "content": '{"type":"final","payload":{"message":"done"}}',
+                "choices": [
+                    {
+                        "message": {
+                            "role": "assistant",
+                            "content": '{"type":"final","payload":{"message":"done"}}',
+                        }
                     }
-                }],
+                ],
                 "usage": {"total_tokens": 5},
             }
             return mock_resp
@@ -277,11 +257,11 @@ class TestLMStudioSSEParsing:
             async def aiter_lines(self):
                 for line in [
                     'data: {"choices":[{"delta":{"content":"hel"}}]}',
-                    '',
+                    "",
                     'data: {"choices":[{"delta":{"content":"lo"}}]}',
-                    '',
-                    'data: [DONE]',
-                    '',
+                    "",
+                    "data: [DONE]",
+                    "",
                 ]:
                     yield line
 

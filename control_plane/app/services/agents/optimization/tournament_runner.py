@@ -2,7 +2,6 @@
 import asyncio
 import logging
 import uuid
-from typing import Dict, List, Tuple
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -40,7 +39,7 @@ class TournamentRunner:
         self,
         tenant_id: str,
         agent_id: uuid.UUID,
-        candidate_ids: List[uuid.UUID],
+        candidate_ids: list[uuid.UUID],
         parallel_limit: int = 2,
     ) -> AgentOptimizationTournament:
         settings = get_settings()
@@ -64,9 +63,7 @@ class TournamentRunner:
         await self.db.flush()
 
         for idx, cid in enumerate(candidate_ids):
-            stmt = select(AgentOptimizationCandidate).where(
-                AgentOptimizationCandidate.id == cid
-            )
+            stmt = select(AgentOptimizationCandidate).where(AgentOptimizationCandidate.id == cid)
             res_cand = await self.db.execute(stmt)
             candidate = res_cand.scalar_one_or_none()
             if not candidate:
@@ -76,9 +73,7 @@ class TournamentRunner:
                 candidate_id=cid,
                 tenant_id=tenant_id,
                 agent_id=agent_id,
-                label=candidate.candidate_type
-                if candidate.candidate_type
-                else f"candidate-{idx}",
+                label=candidate.candidate_type if candidate.candidate_type else f"candidate-{idx}",
                 status="pending",
             )
             self.db.add(t_candidate)
@@ -126,12 +121,9 @@ class TournamentRunner:
 
     async def _evaluate_all_candidates(
         self, tournament: AgentOptimizationTournament
-    ) -> Dict[uuid.UUID, Dict]:
-        stmt = (
-            select(AgentOptimizationTournamentCandidate)
-            .where(
-                AgentOptimizationTournamentCandidate.tournament_id == tournament.id
-            )
+    ) -> dict[uuid.UUID, dict]:
+        stmt = select(AgentOptimizationTournamentCandidate).where(
+            AgentOptimizationTournamentCandidate.tournament_id == tournament.id
         )
         res_tc = await self.db.execute(stmt)
         t_candidates = list(res_tc.scalars().all())
@@ -139,12 +131,12 @@ class TournamentRunner:
         parallel = bool(get_settings().agent_optimizer_parallel_evals_enabled)
         limit = tournament.parallel_limit if parallel else 1
 
-        metrics_map: Dict[uuid.UUID, Dict] = {}
+        metrics_map: dict[uuid.UUID, dict] = {}
         semaphore = asyncio.Semaphore(limit)
 
         async def _eval_one(
             tc: AgentOptimizationTournamentCandidate,
-        ) -> Tuple[uuid.UUID, Dict]:
+        ) -> tuple[uuid.UUID, dict]:
             async with semaphore:
                 metrics = await self._evaluate_single_candidate(tc, tournament)
                 return tc.id, metrics
@@ -165,7 +157,7 @@ class TournamentRunner:
         self,
         tc: AgentOptimizationTournamentCandidate,
         tournament: AgentOptimizationTournament,
-    ) -> Dict:
+    ) -> dict:
         tc.status = "evaluating"
         await self.db.flush()
 
@@ -241,33 +233,27 @@ class TournamentRunner:
             suite = await self.eval_service.create_suite(
                 agent_id, "Tournament Suite", "Created for tournament evaluation"
             )
-            await self.eval_service.create_case(suite.id, {
-                "name": "Standard Check",
-                "input_text": "Verify system bounds",
-                "assertions": [
-                    {"type": "final_answer_contains", "value": "system"}
-                ],
-            })
+            await self.eval_service.create_case(
+                suite.id,
+                {
+                    "name": "Standard Check",
+                    "input_text": "Verify system bounds",
+                    "assertions": [{"type": "final_answer_contains", "value": "system"}],
+                },
+            )
             await self.db.flush()
         return suite
 
-    async def _compute_results(
-        self, tournament: AgentOptimizationTournament
-    ) -> None:
-        stmt = (
-            select(AgentOptimizationTournamentCandidate)
-            .where(
-                AgentOptimizationTournamentCandidate.tournament_id == tournament.id
-            )
+    async def _compute_results(self, tournament: AgentOptimizationTournament) -> None:
+        stmt = select(AgentOptimizationTournamentCandidate).where(
+            AgentOptimizationTournamentCandidate.tournament_id == tournament.id
         )
         res_tc = await self.db.execute(stmt)
         t_candidates = list(res_tc.scalars().all())
 
-        baseline_metrics = await self._compute_baseline_metrics(
-            tournament.agent_id
-        )
+        baseline_metrics = await self._compute_baseline_metrics(tournament.agent_id)
 
-        metrics_map: Dict[uuid.UUID, Dict] = {}
+        metrics_map: dict[uuid.UUID, dict] = {}
         for tc in t_candidates:
             raw_metrics = {
                 "success_rate": 0.0,
@@ -278,12 +264,8 @@ class TournamentRunner:
                 "policy_denial_rate": 0.0,
                 "safety_failure_rate": 0.0,
             }
-            stmt_r = (
-                select(AgentOptimizationTournamentResult)
-                .where(
-                    AgentOptimizationTournamentResult.tournament_candidate_id
-                    == tc.id
-                )
+            stmt_r = select(AgentOptimizationTournamentResult).where(
+                AgentOptimizationTournamentResult.tournament_candidate_id == tc.id
             )
             res_r = await self.db.execute(stmt_r)
             existing_result = res_r.scalar_one_or_none()
@@ -295,12 +277,9 @@ class TournamentRunner:
             tournament, t_candidates, metrics_map, baseline_metrics
         )
         for r in results:
-            stmt_ex = (
-                select(AgentOptimizationTournamentResult)
-                .where(
-                    AgentOptimizationTournamentResult.tournament_candidate_id
-                    == r.tournament_candidate_id
-                )
+            stmt_ex = select(AgentOptimizationTournamentResult).where(
+                AgentOptimizationTournamentResult.tournament_candidate_id
+                == r.tournament_candidate_id
             )
             existing = await self.db.execute(stmt_ex)
             old = existing.scalar_one_or_none()
@@ -312,9 +291,7 @@ class TournamentRunner:
             else:
                 self.db.add(r)
 
-        pairwise = self.ab_testing.build_pairwise_results(
-            tournament, t_candidates, metrics_map
-        )
+        pairwise = self.ab_testing.build_pairwise_results(tournament, t_candidates, metrics_map)
         for p in pairwise:
             self.db.add(p)
 
@@ -322,27 +299,19 @@ class TournamentRunner:
         if winner:
             tournament.winner_id = winner.tournament_candidate_id
 
-        all_scores = [
-            r.score for r in results if r.score is not None
-        ]
+        all_scores = [r.score for r in results if r.score is not None]
         tournament.confidence_score = self.scoring.compute_confidence_score(
             all_scores,
             winner.score if winner else 0.0,
         )
 
         tournament.ranking = self.ranker.build_ranking_list(results)
-        tournament.rollback_point = await self._capture_rollback_point(
-            tournament.agent_id
-        )
+        tournament.rollback_point = await self._capture_rollback_point(tournament.agent_id)
 
         await self.db.flush()
 
-    async def _compute_baseline_metrics(
-        self, agent_id: uuid.UUID
-    ) -> Dict:
-        stmt = select(AgentEvalSuite).where(
-            AgentEvalSuite.agent_id == agent_id
-        )
+    async def _compute_baseline_metrics(self, agent_id: uuid.UUID) -> dict:
+        stmt = select(AgentEvalSuite).where(AgentEvalSuite.agent_id == agent_id)
         res = await self.db.execute(stmt)
         suite = res.scalar_one_or_none()
         if not suite:
@@ -375,12 +344,8 @@ class TournamentRunner:
             "safety_failure_rate": 0.0,
         }
 
-    async def _capture_rollback_point(
-        self, agent_id: uuid.UUID
-    ) -> Dict:
-        stmt = select(AgentDefinition).where(
-            AgentDefinition.id == agent_id
-        )
+    async def _capture_rollback_point(self, agent_id: uuid.UUID) -> dict:
+        stmt = select(AgentDefinition).where(AgentDefinition.id == agent_id)
         res = await self.db.execute(stmt)
         agent = res.scalar_one_or_none()
         if not agent:
@@ -393,14 +358,10 @@ class TournamentRunner:
             "captured_at": utc_now().isoformat(),
         }
 
-    async def approve_winner(
-        self, tournament_id: uuid.UUID
-    ) -> AgentOptimizationTournament:
+    async def approve_winner(self, tournament_id: uuid.UUID) -> AgentOptimizationTournament:
         settings = get_settings()
         if not settings.agent_optimizer_tournaments_enabled:
-            raise PermissionError(
-                "Tournament evaluation is disabled by feature flag."
-            )
+            raise PermissionError("Tournament evaluation is disabled by feature flag.")
 
         stmt = select(AgentOptimizationTournament).where(
             AgentOptimizationTournament.id == tournament_id
@@ -415,27 +376,19 @@ class TournamentRunner:
                 f"Current status: {tournament.status}"
             )
         if not tournament.winner_id:
-            raise ValueError(
-                "No winner to approve. Run the tournament first."
-            )
+            raise ValueError("No winner to approve. Run the tournament first.")
 
         tournament.approval_status = "approved"
         tournament.approved_at = utc_now()
         await self.db.flush()
         return tournament
 
-    async def apply_winner(
-        self, tournament_id: uuid.UUID
-    ) -> AgentOptimizationTournament:
+    async def apply_winner(self, tournament_id: uuid.UUID) -> AgentOptimizationTournament:
         settings = get_settings()
         if not settings.agent_optimizer_tournaments_enabled:
-            raise PermissionError(
-                "Tournament evaluation is disabled by feature flag."
-            )
+            raise PermissionError("Tournament evaluation is disabled by feature flag.")
         if not settings.agent_optimizer_apply_winner_enabled:
-            raise PermissionError(
-                "Applying tournament winner is disabled by feature flag."
-            )
+            raise PermissionError("Applying tournament winner is disabled by feature flag.")
 
         stmt = select(AgentOptimizationTournament).where(
             AgentOptimizationTournament.id == tournament_id
@@ -445,9 +398,7 @@ class TournamentRunner:
         if not tournament:
             raise ValueError(f"Tournament {tournament_id} not found.")
         if tournament.approval_status != "approved":
-            raise PermissionError(
-                "Winner must be approved before applying."
-            )
+            raise PermissionError("Winner must be approved before applying.")
         if not tournament.winner_id:
             raise ValueError("No winner selected.")
 
@@ -457,9 +408,7 @@ class TournamentRunner:
         res_tc = await self.db.execute(stmt_w)
         t_winner = res_tc.scalar_one_or_none()
         if not t_winner:
-            raise ValueError(
-                f"Winner candidate {tournament.winner_id} not found."
-            )
+            raise ValueError(f"Winner candidate {tournament.winner_id} not found.")
 
         stmt_c = select(AgentOptimizationCandidate).where(
             AgentOptimizationCandidate.id == t_winner.candidate_id
@@ -467,13 +416,9 @@ class TournamentRunner:
         res_cand = await self.db.execute(stmt_c)
         candidate = res_cand.scalar_one_or_none()
         if not candidate:
-            raise ValueError(
-                f"Candidate {t_winner.candidate_id} not found."
-            )
+            raise ValueError(f"Candidate {t_winner.candidate_id} not found.")
 
-        stmt_a = select(AgentDefinition).where(
-            AgentDefinition.id == tournament.agent_id
-        )
+        stmt_a = select(AgentDefinition).where(AgentDefinition.id == tournament.agent_id)
         res_agent = await self.db.execute(stmt_a)
         agent = res_agent.scalar_one_or_none()
         if not agent:

@@ -11,6 +11,7 @@ class TestTools:
     """
     Automated testing tools for agents.
     """
+
     __test__ = False
 
     def __init__(self, sandbox, test_command: str = "pytest"):
@@ -31,10 +32,7 @@ class TestTools:
         logger.info(f"Running pytest on {test_path}")
         report_path = "report.json"
         command_name = self._resolve_test_command()
-        command = (
-            f"{command_name} {test_path} "
-            f"--json-report --json-report-file={report_path}"
-        )
+        command = f"{command_name} {test_path} --json-report --json-report-file={report_path}"
 
         returncode, stdout, stderr = await self.sandbox.run_async(command)
         if returncode != 0 and "--json-report" in stderr:

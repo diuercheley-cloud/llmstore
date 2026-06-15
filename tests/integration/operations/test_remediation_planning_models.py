@@ -24,6 +24,7 @@ class TestRemediationDeterministicHash:
         h2 = compute_deterministic_hash(fields={"a": 2})
         assert h1 != h2
 
+
 @pytest.mark.asyncio
 class TestRemediationPlanningModels:
     async def test_create_remediation_plan(self, session: AsyncSession):
@@ -36,7 +37,7 @@ class TestRemediationPlanningModels:
             risk_level="high",
             blast_radius="medium",
             input_hash="input_h",
-            immutable_hash="immut_h"
+            immutable_hash="immut_h",
         )
         session.add(plan)
         await session.commit()
@@ -53,7 +54,7 @@ class TestRemediationPlanningModels:
     async def test_create_remediation_step(self, session: AsyncSession):
         client_id = uuid.uuid4()
         plan_id = uuid.uuid4()
-        
+
         # Mock plan for FK
         plan = RemediationPlan(
             id=plan_id,
@@ -64,10 +65,10 @@ class TestRemediationPlanningModels:
             risk_level="low",
             blast_radius="low",
             input_hash="ih",
-            immutable_hash="ph"
+            immutable_hash="ph",
         )
         session.add(plan)
-        
+
         step = RemediationStep(
             client_id=client_id,
             plan_id=plan_id,
@@ -77,7 +78,7 @@ class TestRemediationPlanningModels:
             target_ref="auth_breaker",
             description="Isolate auth",
             expected_effect="Isolated",
-            immutable_hash="step_h"
+            immutable_hash="step_h",
         )
         session.add(step)
         await session.commit()
@@ -92,7 +93,7 @@ class TestRemediationPlanningModels:
     async def test_create_approval_requirement(self, session: AsyncSession):
         client_id = uuid.uuid4()
         plan_id = uuid.uuid4()
-        
+
         plan = RemediationPlan(
             id=plan_id,
             client_id=client_id,
@@ -102,23 +103,25 @@ class TestRemediationPlanningModels:
             risk_level="low",
             blast_radius="low",
             input_hash="ih2",
-            immutable_hash="ph2"
+            immutable_hash="ph2",
         )
         session.add(plan)
-        
+
         req = RemediationApprovalRequirement(
             client_id=client_id,
             plan_id=plan_id,
             approval_scope="executive",
             required_role="director",
             reason="High risk",
-            immutable_hash="req_h"
+            immutable_hash="req_h",
         )
         session.add(req)
         await session.commit()
 
         result = await session.execute(
-            select(RemediationApprovalRequirement).where(RemediationApprovalRequirement.plan_id == plan_id)
+            select(RemediationApprovalRequirement).where(
+                RemediationApprovalRequirement.plan_id == plan_id
+            )
         )
         saved = result.scalars().one()
         assert saved.approval_scope == "executive"
@@ -127,7 +130,7 @@ class TestRemediationPlanningModels:
     async def test_create_receipt(self, session: AsyncSession):
         client_id = uuid.uuid4()
         plan_id = uuid.uuid4()
-        
+
         plan = RemediationPlan(
             id=plan_id,
             client_id=client_id,
@@ -137,17 +140,17 @@ class TestRemediationPlanningModels:
             risk_level="low",
             blast_radius="low",
             input_hash="ih3",
-            immutable_hash="ph3"
+            immutable_hash="ph3",
         )
         session.add(plan)
-        
+
         receipt = RemediationPlanReceipt(
             client_id=client_id,
             plan_id=plan_id,
             receipt_type="proposal",
             payload_hash="pay_h",
             immutable_hash="rec_h",
-            signature="sig_h"
+            signature="sig_h",
         )
         session.add(receipt)
         await session.commit()

@@ -2,9 +2,10 @@
 Owner: agent-platform
 Status: beta
 """
+
 import logging
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -13,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
+
 
 class AgentRunTimelineService:
     def __init__(self, db: AsyncSession):
@@ -23,18 +25,18 @@ class AgentRunTimelineService:
         self,
         run_id: uuid.UUID,
         event_type: str,
-        step_id: Optional[uuid.UUID] = None,
-        tool_name: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
-        is_error: bool = False
-    ) -> Optional[AgentTimelineEvent]:
+        step_id: uuid.UUID | None = None,
+        tool_name: str | None = None,
+        details: dict[str, Any] | None = None,
+        is_error: bool = False,
+    ) -> AgentTimelineEvent | None:
         if not self.settings.agent_observability_enabled:
             return None
 
         # Redact secrets
         details_json = details or {}
         if "secret" in str(details_json).lower() or "key" in str(details_json).lower():
-             details_json = {"sanitized": "Details potentially contained secrets and were redacted."}
+            details_json = {"sanitized": "Details potentially contained secrets and were redacted."}
 
         event = AgentTimelineEvent(
             run_id=run_id,
@@ -43,14 +45,14 @@ class AgentRunTimelineService:
             tool_name=tool_name,
             details_json=details_json,
             is_error=is_error,
-            event_time=utc_now()
+            event_time=utc_now(),
         )
         self.db.add(event)
         await self.db.commit()
         await self.db.refresh(event)
         return event
 
-    async def get_timeline(self, run_id: uuid.UUID) -> List[AgentTimelineEvent]:
+    async def get_timeline(self, run_id: uuid.UUID) -> list[AgentTimelineEvent]:
         res = await self.db.execute(
             select(AgentTimelineEvent)
             .where(AgentTimelineEvent.run_id == run_id)

@@ -5,6 +5,7 @@ Revises: phase70_correlation_engine
 Create Date: 2026-05-15 20:00:00.000000
 
 """
+
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
@@ -13,6 +14,7 @@ revision = "phase71_remediation_planning"
 down_revision = "phase70_correlation_engine"
 branch_labels = None
 depends_on = None
+
 
 def upgrade() -> None:
     # 1. RemediationPlan
@@ -28,7 +30,9 @@ def upgrade() -> None:
         sa.Column("requires_approval", sa.Boolean(), nullable=False, server_default="0"),
         sa.Column("advisory_only", sa.Boolean(), nullable=False, server_default="1"),
         sa.Column("dry_run", sa.Boolean(), nullable=False, server_default="1"),
-        sa.Column("deterministic_version", sa.String(length=50), nullable=False, server_default="v1"),
+        sa.Column(
+            "deterministic_version", sa.String(length=50), nullable=False, server_default="v1"
+        ),
         sa.Column("input_hash", sa.String(length=64), nullable=False),
         sa.Column("immutable_hash", sa.String(length=64), nullable=False),
         sa.Column("previous_hash", sa.String(length=64), nullable=True),
@@ -36,12 +40,20 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("immutable_hash")
+        sa.UniqueConstraint("immutable_hash"),
     )
-    op.create_index("ix_remediation_plans_client_id", "remediation_plans", ["client_id"], unique=False)
-    op.create_index("ix_remediation_plans_plan_type", "remediation_plans", ["plan_type"], unique=False)
-    op.create_index("ix_remediation_plans_input_hash", "remediation_plans", ["input_hash"], unique=False)
-    op.create_index("ix_remediation_plans_immutable_hash", "remediation_plans", ["immutable_hash"], unique=False)
+    op.create_index(
+        "ix_remediation_plans_client_id", "remediation_plans", ["client_id"], unique=False
+    )
+    op.create_index(
+        "ix_remediation_plans_plan_type", "remediation_plans", ["plan_type"], unique=False
+    )
+    op.create_index(
+        "ix_remediation_plans_input_hash", "remediation_plans", ["input_hash"], unique=False
+    )
+    op.create_index(
+        "ix_remediation_plans_immutable_hash", "remediation_plans", ["immutable_hash"], unique=False
+    )
     op.create_index("ix_remediation_plans_status", "remediation_plans", ["status"], unique=False)
 
     # 2. RemediationStep
@@ -65,11 +77,15 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["plan_id"], ["remediation_plans.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("immutable_hash")
+        sa.UniqueConstraint("immutable_hash"),
     )
-    op.create_index("ix_remediation_steps_client_id", "remediation_steps", ["client_id"], unique=False)
+    op.create_index(
+        "ix_remediation_steps_client_id", "remediation_steps", ["client_id"], unique=False
+    )
     op.create_index("ix_remediation_steps_plan_id", "remediation_steps", ["plan_id"], unique=False)
-    op.create_index("ix_remediation_steps_immutable_hash", "remediation_steps", ["immutable_hash"], unique=False)
+    op.create_index(
+        "ix_remediation_steps_immutable_hash", "remediation_steps", ["immutable_hash"], unique=False
+    )
 
     # 3. RemediationPlanReceipt
     op.create_table(
@@ -85,11 +101,26 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["plan_id"], ["remediation_plans.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("immutable_hash")
+        sa.UniqueConstraint("immutable_hash"),
     )
-    op.create_index("ix_remediation_plan_receipts_client_id", "remediation_plan_receipts", ["client_id"], unique=False)
-    op.create_index("ix_remediation_plan_receipts_plan_id", "remediation_plan_receipts", ["plan_id"], unique=False)
-    op.create_index("ix_remediation_plan_receipts_immutable_hash", "remediation_plan_receipts", ["immutable_hash"], unique=False)
+    op.create_index(
+        "ix_remediation_plan_receipts_client_id",
+        "remediation_plan_receipts",
+        ["client_id"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_remediation_plan_receipts_plan_id",
+        "remediation_plan_receipts",
+        ["plan_id"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_remediation_plan_receipts_immutable_hash",
+        "remediation_plan_receipts",
+        ["immutable_hash"],
+        unique=False,
+    )
 
     # 4. RemediationApprovalRequirement
     op.create_table(
@@ -105,11 +136,27 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["plan_id"], ["remediation_plans.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("immutable_hash")
+        sa.UniqueConstraint("immutable_hash"),
     )
-    op.create_index("ix_remediation_approval_requirements_client_id", "remediation_approval_requirements", ["client_id"], unique=False)
-    op.create_index("ix_remediation_approval_requirements_plan_id", "remediation_approval_requirements", ["plan_id"], unique=False)
-    op.create_index("ix_remediation_approval_requirements_immutable_hash", "remediation_approval_requirements", ["immutable_hash"], unique=False)
+    op.create_index(
+        "ix_remediation_approval_requirements_client_id",
+        "remediation_approval_requirements",
+        ["client_id"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_remediation_approval_requirements_plan_id",
+        "remediation_approval_requirements",
+        ["plan_id"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_remediation_approval_requirements_immutable_hash",
+        "remediation_approval_requirements",
+        ["immutable_hash"],
+        unique=False,
+    )
+
 
 def downgrade() -> None:
     op.drop_table("remediation_approval_requirements")

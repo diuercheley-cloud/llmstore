@@ -13,7 +13,9 @@ from app.services.operations.reproducible_builds.hash_utils import (
 
 class ReproducibleBuildService:
     @staticmethod
-    def _value(payload: dict[str, Any] | ReproducibleBuildManifest, key: str, default: Any = None) -> Any:
+    def _value(
+        payload: dict[str, Any] | ReproducibleBuildManifest, key: str, default: Any = None
+    ) -> Any:
         if isinstance(payload, dict):
             return payload.get(key, default)
         return getattr(payload, key, default)
@@ -30,7 +32,9 @@ class ReproducibleBuildService:
             "replay_safe": True,
         }
         manifest_hash = compute_build_manifest_hash(logical_payload)
-        immutable_hash = sha256_hex({"kind": "reproducible_build_manifest_immutable", "build_manifest_hash": manifest_hash})
+        immutable_hash = sha256_hex(
+            {"kind": "reproducible_build_manifest_immutable", "build_manifest_hash": manifest_hash}
+        )
         manifest = ReproducibleBuildManifest(
             id=sha256_hex({"kind": "reproducible_build_manifest_id", **logical_payload}),
             client_id=payload["client_id"],
@@ -47,7 +51,9 @@ class ReproducibleBuildService:
         manifest._logical_payload = logical_payload
         return manifest
 
-    def validate_build_manifest(self, payload: dict[str, Any] | ReproducibleBuildManifest) -> dict[str, Any]:
+    def validate_build_manifest(
+        self, payload: dict[str, Any] | ReproducibleBuildManifest
+    ) -> dict[str, Any]:
         build_scope = self._value(payload, "build_scope")
         reproducibility_status = self._value(payload, "reproducibility_status", "proposed")
         replay_safe = self._value(payload, "replay_safe", True)
@@ -73,7 +79,11 @@ class ReproducibleBuildService:
         }
         replayed_hash = compute_build_manifest_hash(logical_payload)
         original_hash = getattr(payload, "build_manifest_hash", replayed_hash)
-        status = "reproducible" if replayed_hash == original_hash and reproducibility_status != "revoked" else "blocked"
+        status = (
+            "reproducible"
+            if replayed_hash == original_hash and reproducibility_status != "revoked"
+            else "blocked"
+        )
         if hasattr(payload, "reproducibility_status"):
             payload.reproducibility_status = status
         return {
@@ -85,7 +95,9 @@ class ReproducibleBuildService:
             "reproducibility_status": status,
         }
 
-    def revoke_build_manifest(self, manifest: ReproducibleBuildManifest, reason: str = "manual revoke") -> dict[str, Any]:
+    def revoke_build_manifest(
+        self, manifest: ReproducibleBuildManifest, reason: str = "manual revoke"
+    ) -> dict[str, Any]:
         manifest.reproducibility_status = "revoked"
         manifest.replay_safe = False
         return {

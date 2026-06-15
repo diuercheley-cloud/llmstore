@@ -1,8 +1,8 @@
 import asyncio
 import logging
 import os
-from datetime import datetime, UTC
-from typing import Any, Dict, List, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from app.core.config import get_settings
 from app.models.operations.chaos import (
@@ -23,11 +23,11 @@ class ChaosEngineeringService:
         self.db = db
         self.settings = get_settings()
 
-    async def list_experiments(self) -> List[ChaosExperiment]:
+    async def list_experiments(self) -> list[ChaosExperiment]:
         result = await self.db.execute(select(ChaosExperiment))
         return result.scalars().all()
 
-    async def get_status(self) -> Dict[str, Any]:
+    async def get_status(self) -> dict[str, Any]:
         enabled = os.getenv("CHAOS_ENABLED", "false").lower() == "true"
         environment = os.getenv("CHAOS_ENVIRONMENT", "test")
         allow_production = os.getenv("CHAOS_ALLOW_PRODUCTION", "false").lower() == "true"
@@ -54,7 +54,7 @@ class ChaosEngineeringService:
             "reason": reason,
         }
 
-    async def list_runs(self, limit: int = 20) -> List[Dict[str, Any]]:
+    async def list_runs(self, limit: int = 20) -> list[dict[str, Any]]:
         result = await self.db.execute(
             select(ChaosRun)
             .options(selectinload(ChaosRun.experiment))
@@ -89,7 +89,10 @@ class ChaosEngineeringService:
             raise ValueError("Chaos Engineering is disabled (CHAOS_ENABLED=false)")
 
         env = os.getenv("CHAOS_ENVIRONMENT", "test")
-        if env == "production" and not os.getenv("CHAOS_ALLOW_PRODUCTION", "false").lower() == "true":
+        if (
+            env == "production"
+            and not os.getenv("CHAOS_ALLOW_PRODUCTION", "false").lower() == "true"
+        ):
             raise ValueError("Chaos Engineering is blocked in production environment")
 
         experiment = await self.db.get(ChaosExperiment, experiment_id)
@@ -97,10 +100,7 @@ class ChaosEngineeringService:
             raise ValueError("Experiment not found")
 
         run = ChaosRun(
-            experiment_id=experiment_id,
-            status="pending",
-            operator_id=operator_id,
-            environment=env
+            experiment_id=experiment_id, status="pending", operator_id=operator_id, environment=env
         )
         self.db.add(run)
         await self.db.commit()
@@ -109,7 +109,7 @@ class ChaosEngineeringService:
 
     async def start_run(self, run_id: str):
         from app.services.chaos.injection import ChaosInjectionRegistry
-        
+
         run = await self.db.get(ChaosRun, run_id, options=[selectinload(ChaosRun.experiment)])
         if not run:
             raise ValueError("Run not found")
@@ -127,38 +127,38 @@ class ChaosEngineeringService:
                 run_id=run_id,
                 injection_type=run.experiment.experiment_type,
                 target="active_system",
-                parameters=run.experiment.injection_config
+                parameters=run.experiment.injection_config,
             )
             self.db.add(injection)
             await self.db.commit()
 
             # Duration of experiment
             duration = run.experiment.timeout_seconds or 60
-            await asyncio.sleep(min(duration, 30)) # Limit auto-completion for safety
+            await asyncio.sleep(min(duration, 30))  # Limit auto-completion for safety
 
             # Deactivate injection
             registry.clear_injections()
-            
+
             injection.rolled_back_at = datetime.now(UTC)
             run.status = "completed"
             run.completed_at = datetime.now(UTC)
-            
+
             # Generate report
             report = ChaosReport(
                 run_id=run_id,
                 summary=f"Experiment {run.experiment.name} executed successfully.",
                 resilience_score=0.90,
                 impact_analysis="Injections were active and system behavior was monitored.",
-                recommendations=["Check metrics for error spikes during this period."]
+                recommendations=["Check metrics for error spikes during this period."],
             )
             self.db.add(report)
-            
+
         except Exception as e:
             logger.error(f"Chaos experiment error: {e}")
             run.status = "failed"
             run.error_message = str(e)
             ChaosInjectionRegistry.get_instance().clear_injections()
-        
+
         await self.db.commit()
 
     async def abort_run(self, run_id: str):
@@ -168,10 +168,8 @@ class ChaosEngineeringService:
             run.completed_at = datetime.now(UTC)
             await self.db.commit()
 
-    async def get_report(self, run_id: str) -> Optional[ChaosReport]:
-        result = await self.db.execute(
-            select(ChaosReport).where(ChaosReport.run_id == run_id)
-        )
+    async def get_report(self, run_id: str) -> ChaosReport | None:
+        result = await self.db.execute(select(ChaosReport).where(ChaosReport.run_id == run_id))
         return result.scalars().first()
 
     async def seed_default_experiments(self):
@@ -183,7 +181,7 @@ class ChaosEngineeringService:
                 "blast_radius": "low",
                 "injection_config": {"timeout": 30, "ratio": 0.2, "target": "openai"},
                 "timeout_seconds": 300,
-                "expected_behavior": "Circuit breaker deve abrir e tráfego deve fluir para standby."
+                "expected_behavior": "Circuit breaker deve abrir e tráfego deve fluir para standby.",
             },
             {
                 "name": "Redis Outage Simulation",
@@ -192,14 +190,16 @@ class ChaosEngineeringService:
                 "blast_radius": "medium",
                 "injection_config": {"mode": "connection_refused"},
                 "timeout_seconds": 120,
-                "expected_behavior": "Stack deve continuar operando via direct-to-DB, com aumento de latência."
-            }
+                "expected_behavior": "Stack deve continuar operando via direct-to-DB, com aumento de latência.",
+            },
         ]
-        
+
         for d in defaults:
-            existing = await self.db.execute(select(ChaosExperiment).where(ChaosExperiment.name == d["name"]))
+            existing = await self.db.execute(
+                select(ChaosExperiment).where(ChaosExperiment.name == d["name"])
+            )
             if not existing.scalars().first():
                 exp = ChaosExperiment(**d)
                 self.db.add(exp)
-        
+
         await self.db.commit()

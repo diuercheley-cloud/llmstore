@@ -22,8 +22,12 @@ class CommercialControlPolicy(Base):
     evidence_required: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     review_frequency: Mapped[str] = mapped_column(String(16), default="quarterly", nullable=False)
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
 
 
 class CommercialEvidencePackage(Base):
@@ -43,7 +47,9 @@ class CommercialEvidencePackage(Base):
     evidence_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     file_refs_json: Mapped[dict | list | None] = mapped_column(JSON, nullable=True)
     immutable_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False, index=True
+    )
 
 
 class CommercialApprovalChain(Base):
@@ -75,7 +81,9 @@ class CommercialApprovalChain(Base):
         nullable=True,
         index=True,
     )
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     policy = relationship("CommercialControlPolicy")
@@ -109,7 +117,9 @@ class CommercialControlAttestation(Base):
         nullable=True,
         index=True,
     )
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
     attested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     policy = relationship("CommercialControlPolicy")
@@ -139,7 +149,9 @@ class CommercialControlException(Base):
     remediation_plan: Mapped[str | None] = mapped_column(Text, nullable=True)
     owner: Mapped[str | None] = mapped_column(String(128), nullable=True)
     due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     policy = relationship("CommercialControlPolicy")
@@ -153,18 +165,30 @@ class CommercialOperationalControl(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     category: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    owner_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
+    owner_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True, index=True
+    )
     owner_email: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     review_frequency: Mapped[str] = mapped_column(String(16), default="quarterly", nullable=False)
     effectiveness_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    effectiveness_status: Mapped[str] = mapped_column(String(24), default="unknown", nullable=False, index=True)
+    effectiveness_status: Mapped[str] = mapped_column(
+        String(24), default="unknown", nullable=False, index=True
+    )
     evidence_sla_days: Mapped[int] = mapped_column(Integer, default=90, nullable=False)
-    last_reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    next_review_due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    last_reviewed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    next_review_due_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
     enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, index=True)
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
 
 
 class CommercialOperationalEvidence(Base):
@@ -182,10 +206,18 @@ class CommercialOperationalEvidence(Base):
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     evidence_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     immutable_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
-    freshness_status: Mapped[str] = mapped_column(String(16), default="fresh", nullable=False, index=True)
-    collected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
-    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    freshness_status: Mapped[str] = mapped_column(
+        String(16), default="fresh", nullable=False, index=True
+    )
+    collected_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
+    expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
     control = relationship("CommercialOperationalControl")
 
@@ -212,7 +244,9 @@ class CommercialOperationalReview(Base):
         nullable=True,
         index=True,
     )
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     control = relationship("CommercialOperationalControl")
@@ -236,8 +270,12 @@ class CommercialOperationalExceptionLink(Base):
         index=True,
     )
     linkage_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
-    remediation_status: Mapped[str] = mapped_column(String(24), default="planned", nullable=False, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    remediation_status: Mapped[str] = mapped_column(
+        String(24), default="planned", nullable=False, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
     control = relationship("CommercialOperationalControl")
     exception = relationship("CommercialControlException")

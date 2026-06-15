@@ -1,6 +1,5 @@
 # Owner: agent-platform
 import uuid
-from typing import Optional
 
 from app.models.agents.agents import AgentRegistryEntry, AgentTool
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,18 +15,18 @@ class PolicyDecision:
         return {
             "allowed": self.allowed,
             "reason": self.reason,
-            "requires_approval": self.requires_approval
+            "requires_approval": self.requires_approval,
         }
 
 
 async def evaluate_tool_policy(
     db: AsyncSession,
     tool: AgentTool,
-    agent: Optional[AgentRegistryEntry] = None,
-    agent_id: Optional[uuid.UUID] = None,
-    tenant_id: Optional[str] = None,
+    agent: AgentRegistryEntry | None = None,
+    agent_id: uuid.UUID | None = None,
+    tenant_id: str | None = None,
     is_dry_run: bool = False,
-    run_id: Optional[uuid.UUID] = None
+    run_id: uuid.UUID | None = None,
 ) -> PolicyDecision:
     """Evaluates tool execution using the unified Policy Engine v2."""
     if not tool.enabled:
@@ -44,23 +43,29 @@ async def evaluate_tool_policy(
         )
 
     from app.services.agents.agent_policy_engine import AgentPolicyEngine, PolicyRequest
-    
+
     policy_engine = AgentPolicyEngine(db)
-    req_agent_id = agent_id or (agent.agent_id if agent else tool.owner_agent_id if hasattr(tool, "owner_agent_id") else uuid.UUID(int=0))
-    
+    req_agent_id = agent_id or (
+        agent.agent_id
+        if agent
+        else tool.owner_agent_id
+        if hasattr(tool, "owner_agent_id")
+        else uuid.UUID(int=0)
+    )
+
     req = PolicyRequest(
         action_type="tool_call",
         subject=tool.name,
         tenant_id=tenant_id or "default",
         agent_id=req_agent_id,
         run_id=run_id,
-        context={"is_dry_run": is_dry_run}
+        context={"is_dry_run": is_dry_run},
     )
-    
+
     decision = await policy_engine.evaluate_action_v2(req)
-    
+
     return PolicyDecision(
         allowed=decision.result != "deny",
         reason=decision.reason or "Policy evaluated",
-        requires_approval=decision.result == "require_approval"
+        requires_approval=decision.result == "require_approval",
     )

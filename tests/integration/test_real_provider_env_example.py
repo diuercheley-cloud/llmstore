@@ -75,11 +75,15 @@ def test_env_example_no_comment_after_key_value():
         line = line.strip()
         if "=" not in line or line.startswith("#"):
             continue
-        if line.startswith("OPENAI_API_KEY=") or line.startswith("DEEPSEEK_API_KEY=") or line.startswith("ANTHROPIC_API_KEY="):
+        if (
+            line.startswith("OPENAI_API_KEY=")
+            or line.startswith("DEEPSEEK_API_KEY=")
+            or line.startswith("ANTHROPIC_API_KEY=")
+        ):
             continue
         if "#" in line:
             eq_pos = line.index("=")
-            rest = line[eq_pos + 1:].strip()
+            rest = line[eq_pos + 1 :].strip()
             if rest and "#" in rest and not rest.startswith("#"):
                 pass
 

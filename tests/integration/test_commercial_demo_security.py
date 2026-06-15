@@ -29,12 +29,14 @@ class TestCommercialDemoSecurityNoSecrets:
                                 continue
                             if "Bearer {DEMO" in line or "Bearer ***" in line:
                                 continue
-                            if "ADMIN_TOKEN}:\"" in line:
+                            if 'ADMIN_TOKEN}:"' in line:
                                 continue
                             if "ADMIN_TOKEN = " in line or "ADMIN_TOKEN=" in line:
                                 if "example" in line.lower() or "change" in line.lower():
                                     continue
-                                pytest.fail(f"Potential secret on line {i} of {f.name}: {line.strip()[:80]}")
+                                pytest.fail(
+                                    f"Potential secret on line {i} of {f.name}: {line.strip()[:80]}"
+                                )
 
     def test_no_real_secrets_in_seed_script(self):
         """Verify seed script doesn't hardcode real secrets."""
@@ -105,10 +107,12 @@ class TestCommercialDemoSecurityIsolation:
             timeout=3,
         )
         output = result.stdout + result.stderr
-        assert "DRY-RUN" in output or "MODO DRY-RUN" in output, \
+        assert "DRY-RUN" in output or "MODO DRY-RUN" in output, (
             "Reset script should default to dry-run mode"
-        assert "Nenhum dado sera alterado" in output or "Nenhum" in output, \
+        )
+        assert "Nenhum dado sera alterado" in output or "Nenhum" in output, (
             "Reset script should indicate no data will be changed"
+        )
 
     def test_seed_script_dry_run_is_safe(self):
         """Seed script with --dry-run should not make API calls."""
@@ -126,8 +130,11 @@ class TestCommercialDemoSecurityNoRealData:
             if f.is_file():
                 content = f.read_text()
                 assert "DEMO" in content, f"Document {f.name} not marked as DEMO"
-                assert "fictício" in content.lower() or "fictional" in content.lower() or "demo" in content.lower(), \
-                    f"Document {f.name} doesn't indicate fictional data"
+                assert (
+                    "fictício" in content.lower()
+                    or "fictional" in content.lower()
+                    or "demo" in content.lower()
+                ), f"Document {f.name} doesn't indicate fictional data"
 
     def test_validate_script_checks_no_real_production(self):
         """Validate script should verify no real/production data is used."""

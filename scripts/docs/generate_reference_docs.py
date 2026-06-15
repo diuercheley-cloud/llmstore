@@ -4,9 +4,9 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from collections import Counter, defaultdict
 from pathlib import Path
-import sys
 from typing import Any
 
 import yaml
@@ -18,7 +18,6 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from control_plane.app.services.config_service import BaseAppConfig
-
 
 GENERATED_FILES = {
     "api": DOCS_ROOT / "API_REFERENCE.md",
@@ -82,7 +81,9 @@ def generate_api_reference() -> str:
     entries = load_yaml(REPO_ROOT / "config" / "api-surface.yaml")
     status_counts = Counter(entry["status"] for entry in entries)
     rows = []
-    for entry in sorted(entries, key=lambda item: (status_rank(item["status"]), item["endpoint"], item["method"])):
+    for entry in sorted(
+        entries, key=lambda item: (status_rank(item["status"]), item["endpoint"], item["method"])
+    ):
         rows.append(
             [
                 entry["endpoint"],
@@ -125,7 +126,15 @@ def field_env_name(field_name: str, field_info: Any) -> str:
     validation_alias = getattr(field_info, "validation_alias", None)
     if validation_alias:
         text = str(validation_alias)
-        parts = [part for part in text.replace("AliasChoices", "").replace("(", "").replace(")", "").replace("'", "").split(",") if part.strip()]
+        parts = [
+            part
+            for part in text.replace("AliasChoices", "")
+            .replace("(", "")
+            .replace(")", "")
+            .replace("'", "")
+            .split(",")
+            if part.strip()
+        ]
         if parts:
             return parts[0].strip()
     return field_name.upper()
@@ -263,11 +272,16 @@ def generate_product_surface() -> str:
     observed_statuses = {item["status"] for item in capabilities}
     summary_rows = [
         [status, count]
-        for status, count in sorted(Counter(item["status"] for item in capabilities).items(), key=lambda item: status_rank(item[0]))
+        for status, count in sorted(
+            Counter(item["status"] for item in capabilities).items(),
+            key=lambda item: status_rank(item[0]),
+        )
     ]
 
     rows = []
-    for capability in sorted(capabilities, key=lambda item: (status_rank(item["status"]), item["name"].lower())):
+    for capability in sorted(
+        capabilities, key=lambda item: (status_rank(item["status"]), item["name"].lower())
+    ):
         rows.append(
             [
                 capability["name"],
@@ -328,7 +342,9 @@ def generate_all() -> dict[Path, str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--check", action="store_true", help="Fail if generated docs are out of date.")
+    parser.add_argument(
+        "--check", action="store_true", help="Fail if generated docs are out of date."
+    )
     args = parser.parse_args()
 
     rendered = generate_all()

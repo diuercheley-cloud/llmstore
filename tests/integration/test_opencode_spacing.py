@@ -20,8 +20,10 @@ def is_spacing_broken(text: str) -> bool:
 
 def test_spacing_heuristic():
     assert is_spacing_broken("IamanAIassistantdesignedtohelpwithsoftwareengineeringtasks.") is True
-    assert is_spacing_broken("I am an AI assistant designed to help with software engineering tasks.") is False
-
+    assert (
+        is_spacing_broken("I am an AI assistant designed to help with software engineering tasks.")
+        is False
+    )
 
 
 def test_gemma_repeat_penalty_applied():

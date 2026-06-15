@@ -13,11 +13,13 @@ def _reset_config():
     # Reset ConfigService instances
     try:
         from control_plane.app.services.config_service import ConfigService as CPConfigService
+
         CPConfigService.reset_instance()
     except ImportError:
         pass
     try:
         from app.services.config_service import ConfigService as AppConfigService
+
         AppConfigService.reset_instance()
     except ImportError:
         pass
@@ -25,11 +27,13 @@ def _reset_config():
     # Clear get_settings cache
     try:
         from control_plane.app.core.config import get_settings as cp_get_settings
+
         cp_get_settings.cache_clear()
     except ImportError:
         pass
     try:
         from app.core.config import get_settings as app_get_settings
+
         app_get_settings.cache_clear()
     except ImportError:
         pass
@@ -43,9 +47,11 @@ async def rbac_env(isolated_db_url, fake_redis, monkeypatch):
 
     _reset_config()
 
-    from app.services.runtime_dependencies import get_db_session as rtd_get_db_session, get_redis as rtd_get_redis
-    from app.db.session import get_db_session as dbs_get_db_session, get_redis as dbs_get_redis
+    from app.db.session import get_db_session as dbs_get_db_session
+    from app.db.session import get_redis as dbs_get_redis
     from app.main import app
+    from app.services.runtime_dependencies import get_db_session as rtd_get_db_session
+    from app.services.runtime_dependencies import get_redis as rtd_get_redis
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
     engine = create_async_engine(isolated_db_url)
@@ -67,7 +73,9 @@ async def rbac_env(isolated_db_url, fake_redis, monkeypatch):
     app.dependency_overrides[rtd_get_redis] = lambda: fake_redis
     app.dependency_overrides[dbs_get_redis] = lambda: fake_redis
 
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         yield {"client": client, "sessionmaker": testing_session_local}
 
     app.dependency_overrides.clear()
@@ -84,9 +92,11 @@ async def legacy_admin_env(isolated_db_url, fake_redis, monkeypatch):
 
     _reset_config()
 
-    from app.services.runtime_dependencies import get_db_session as rtd_get_db_session, get_redis as rtd_get_redis
-    from app.db.session import get_db_session as dbs_get_db_session, get_redis as dbs_get_redis
+    from app.db.session import get_db_session as dbs_get_db_session
+    from app.db.session import get_redis as dbs_get_redis
     from app.main import app
+    from app.services.runtime_dependencies import get_db_session as rtd_get_db_session
+    from app.services.runtime_dependencies import get_redis as rtd_get_redis
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
     engine = create_async_engine(isolated_db_url)
@@ -104,7 +114,9 @@ async def legacy_admin_env(isolated_db_url, fake_redis, monkeypatch):
     app.dependency_overrides[rtd_get_redis] = lambda: fake_redis
     app.dependency_overrides[dbs_get_redis] = lambda: fake_redis
 
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         yield client
 
     app.dependency_overrides.clear()
@@ -199,7 +211,9 @@ async def test_admin_audit_events_are_recorded(rbac_env):
     async with sessionmaker() as session:
         result = await session.execute(select(AdminAuditEvent))
         db_events = result.scalars().all()
-        print(f"\nDEBUG test audit: db_events: {[{'id': str(e.id), 'event_type': e.event_type, 'status': e.status} for e in db_events]}")
+        print(
+            f"\nDEBUG test audit: db_events: {[{'id': str(e.id), 'event_type': e.event_type, 'status': e.status} for e in db_events]}"
+        )
         result = await session.execute(select(AdminAuditEvent.event_type))
         event_types = [row[0] for row in result.all()]
 

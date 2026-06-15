@@ -2,7 +2,6 @@
 from decimal import Decimal
 from uuid import UUID
 
-from app.services.runtime_dependencies import get_db_session
 from app.services.auth import require_admin
 from app.services.billing.wallet_service import (
     adjustment,
@@ -11,6 +10,7 @@ from app.services.billing.wallet_service import (
     list_transactions,
     serialize_transaction,
 )
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -67,6 +67,7 @@ async def admin_list_wallets(
 ):
     from app.models.billing.ai_wallet import AiWallet
     from sqlalchemy import select
+
     result = await session.execute(
         select(AiWallet).order_by(AiWallet.created_at.desc()).offset(offset).limit(limit)
     )
@@ -101,6 +102,7 @@ async def admin_manual_credit(
     session: AsyncSession = Depends(get_db_session),
 ):
     from app.models.core.client import Client
+
     client = await session.get(Client, client_id)
     if client is None:
         raise HTTPException(status_code=404, detail="client not found")
@@ -124,6 +126,7 @@ async def admin_adjustment(
 ):
     from app.models.core.client import Client
     from app.services.billing.wallet_service import InsufficientBalance
+
     client = await session.get(Client, client_id)
     if client is None:
         raise HTTPException(status_code=404, detail="client not found")

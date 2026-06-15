@@ -1,7 +1,6 @@
 import logging
 import uuid
-from datetime import datetime
-from typing import List, Optional, Tuple
+from datetime import UTC, datetime
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -12,6 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
+
 
 class TokenExchangeService:
     def __init__(self, db: AsyncSession):
@@ -24,19 +24,18 @@ class TokenExchangeService:
         tenant_id: str,
         agent_id: uuid.UUID,
         user_id: str,
-        connector_id: Optional[str],
-        scopes: List[str],
-        expires_at: Optional[float] = None,  # epoch seconds or DateTime
-        actor_id: Optional[str] = None,
-        actor_type: Optional[str] = None,
+        connector_id: str | None,
+        scopes: list[str],
+        expires_at: float | None = None,  # epoch seconds or DateTime
+        actor_id: str | None = None,
+        actor_type: str | None = None,
     ) -> AgentTokenGrant:
         """
         Creates a user-delegated token grant permitting an agent to access a connector with specific scopes.
         """
         expires_dt = None
         if expires_at:
-            from datetime import timezone
-            expires_dt = datetime.fromtimestamp(expires_at, tz=timezone.utc)
+            expires_dt = datetime.fromtimestamp(expires_at, tz=UTC)
 
         grant = AgentTokenGrant(
             tenant_id=tenant_id,
@@ -70,8 +69,8 @@ class TokenExchangeService:
         tenant_id: str,
         agent_id: uuid.UUID,
         grant_id: uuid.UUID,
-        actor_id: Optional[str] = None,
-        actor_type: Optional[str] = None,
+        actor_id: str | None = None,
+        actor_type: str | None = None,
     ) -> bool:
         stmt = select(AgentTokenGrant).where(
             AgentTokenGrant.id == grant_id,
@@ -103,17 +102,17 @@ class TokenExchangeService:
         agent_id: uuid.UUID,
         user_id: str,
         connector_id: str,
-        requested_scopes: List[str],
+        requested_scopes: list[str],
         expires_in_seconds: int = 3600,
-        actor_id: Optional[str] = None,
-        actor_type: Optional[str] = None,
-    ) -> Tuple[AgentDelegatedToken, str]:
+        actor_id: str | None = None,
+        actor_type: str | None = None,
+    ) -> tuple[AgentDelegatedToken, str]:
         """
         Exchange a user grant for an expiring, scoped AgentDelegatedToken.
         """
         settings = get_settings()
         if not settings.agent_oauth_on_behalf_of_enabled and not settings.agent_iam_enabled:
-             raise PermissionError("On-Behalf-Of token exchange is disabled by feature flag.")
+            raise PermissionError("On-Behalf-Of token exchange is disabled by feature flag.")
 
         # Find matching active grants for user, agent, tenant, and connector (or wildcard/null)
         stmt = select(AgentTokenGrant).where(

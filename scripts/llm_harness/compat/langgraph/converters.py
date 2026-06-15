@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any
 
 from ...mas.schemas import AgentDefinition, AgentTeam, TeamMember
 from ..base import BaseConverter, ConvertResult
@@ -34,17 +34,19 @@ class LangGraphConverter(BaseConverter[Any, AgentTeam]):
                 error=f"Expected StateGraph or CompiledStateGraph, got {type(source).__name__}",
             )
 
-        warnings: List[str] = []
-        members: List[TeamMember] = []
-        agents: Dict[str, AgentDefinition] = {}
+        warnings: list[str] = []
+        members: list[TeamMember] = []
+        agents: dict[str, AgentDefinition] = {}
 
         for node_name, node_fn in graph.nodes.items():
             agent_def = _infer_agent_from_node(node_name, node_fn)
             agents[node_name] = agent_def
-            members.append(TeamMember(
-                agent_id=node_name,
-                role=node_name,
-            ))
+            members.append(
+                TeamMember(
+                    agent_id=node_name,
+                    role=node_name,
+                )
+            )
 
         if graph.conditional_edges:
             warnings.append(
@@ -74,9 +76,9 @@ class LangGraphConverter(BaseConverter[Any, AgentTeam]):
 
     def convert_batch(
         self,
-        sources: List[Any],
+        sources: list[Any],
         **kwargs: Any,
-    ) -> List[ConvertResult[AgentTeam]]:
+    ) -> list[ConvertResult[AgentTeam]]:
         return [
             self.convert(source, team_name=kwargs.get("team_name", f"graph_{i}"), **kwargs)
             for i, source in enumerate(sources)

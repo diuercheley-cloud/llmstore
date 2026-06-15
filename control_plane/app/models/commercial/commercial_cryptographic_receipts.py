@@ -31,26 +31,38 @@ class CommercialInferenceReceipt(Base):
     response_hash: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     request_payload_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
     response_payload_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
-    runtime_snapshot_hash: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
-    routing_decision_hash: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    runtime_snapshot_hash: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, index=True
+    )
+    routing_decision_hash: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, index=True
+    )
 
     receipt_hash: Mapped[str] = mapped_column(String(128), nullable=False, unique=True, index=True)
-    previous_receipt_hash: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    previous_receipt_hash: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, index=True
+    )
     immutable_hash: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     detached_signature: Mapped[str | None] = mapped_column(Text, nullable=True)
     signature_algorithm: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     timestamp_mode: Mapped[str] = mapped_column(String(32), nullable=False, default="local")
     timestamp_token: Mapped[str | None] = mapped_column(Text, nullable=True)
-    signed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    signed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    verification_status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending", index=True)
+    verification_status: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="pending", index=True
+    )
     tamper_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
 
 class CommercialInferenceReceiptLedgerEvent(Base):
@@ -66,7 +78,9 @@ class CommercialInferenceReceiptLedgerEvent(Base):
     event_type: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     immutable_hash: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
 
 class CommercialInferenceReceiptVerificationReport(Base):
@@ -87,4 +101,6 @@ class CommercialInferenceReceiptVerificationReport(Base):
     replay_match: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     drift_detected: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     report_hash: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )

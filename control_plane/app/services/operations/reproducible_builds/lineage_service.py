@@ -5,7 +5,9 @@ from app.services.operations.reproducible_builds.hash_utils import compute_linea
 
 
 class SourceArtifactLineageService:
-    def create_lineage(self, manifest: Any, source_hash: str, artifact_hash: str) -> SourceArtifactLineage:
+    def create_lineage(
+        self, manifest: Any, source_hash: str, artifact_hash: str
+    ) -> SourceArtifactLineage:
         logical_payload = {
             "client_id": str(manifest.client_id),
             "build_manifest_id": manifest.id,
@@ -22,7 +24,9 @@ class SourceArtifactLineageService:
             artifact_hash=artifact_hash,
             lineage_hash=lineage_hash,
             replay_verifiable=True,
-            immutable_hash=sha256_hex({"kind": "source_artifact_lineage_immutable", "lineage_hash": lineage_hash}),
+            immutable_hash=sha256_hex(
+                {"kind": "source_artifact_lineage_immutable", "lineage_hash": lineage_hash}
+            ),
         )
         lineage._logical_payload = logical_payload
         return lineage
@@ -43,12 +47,16 @@ class SourceArtifactLineageService:
             "verification_status": "passed" if verified else "blocked",
         }
 
-    def validate_lineage_integrity(self, lineage: SourceArtifactLineage, expected_artifact_hash: str) -> dict[str, Any]:
+    def validate_lineage_integrity(
+        self, lineage: SourceArtifactLineage, expected_artifact_hash: str
+    ) -> dict[str, Any]:
         conflict = lineage.artifact_hash != expected_artifact_hash
         return {
             "integrity_ok": not conflict,
             "verification_status": "blocked" if conflict else "passed",
-            "reason": "lineage conflict detected" if conflict else "lineage deterministic and replay-verifiable",
+            "reason": "lineage conflict detected"
+            if conflict
+            else "lineage deterministic and replay-verifiable",
         }
 
     def explain_lineage(self, lineage: SourceArtifactLineage) -> dict[str, Any]:

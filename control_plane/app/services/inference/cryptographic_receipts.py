@@ -23,49 +23,52 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 KEY_PATH_DEFAULT = "config/receipts_private_key.pem"
 
+
 def get_signing_key() -> ed25519.Ed25519PrivateKey:
     key_path_str = os.getenv("CRYPTO_RECEIPTS_PRIVATE_KEY_PATH", KEY_PATH_DEFAULT)
     p = Path(key_path_str)
-    
+
     require_signature = os.getenv("CRYPTO_RECEIPTS_REQUIRE_SIGNATURE", "false").lower() == "true"
-    
+
     if not p.exists():
         if require_signature:
-            raise ValueError("Signing key is missing and CRYPTO_RECEIPTS_REQUIRE_SIGNATURE is enabled.")
-        
+            raise ValueError(
+                "Signing key is missing and CRYPTO_RECEIPTS_REQUIRE_SIGNATURE is enabled."
+            )
+
         # Generate new
         private_key = ed25519.Ed25519PrivateKey.generate()
         pem = private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption()
+            encryption_algorithm=serialization.NoEncryption(),
         )
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_bytes(pem)
         return private_key
-    
-    return serialization.load_pem_private_key(
-        p.read_bytes(),
-        password=None
-    )
+
+    return serialization.load_pem_private_key(p.read_bytes(), password=None)
+
 
 def get_public_key_pem() -> str:
     private_key = get_signing_key()
     public_key = private_key.public_key()
     pem = public_key.public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
+        encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
     )
     return pem.decode("utf-8")
+
 
 def get_key_id() -> str:
     pub_pem = get_public_key_pem()
     return hashlib.sha256(pub_pem.encode("utf-8")).hexdigest()[:16]
 
+
 def sign_payload(receipt_hash: str) -> str:
     private_key = get_signing_key()
     signature_bytes = private_key.sign(receipt_hash.encode("utf-8"))
     return base64.b64encode(signature_bytes).decode("utf-8")
+
 
 def verify_payload_signature(receipt_hash: str, signature_b64: str) -> bool:
     try:
@@ -77,8 +80,11 @@ def verify_payload_signature(receipt_hash: str, signature_b64: str) -> bool:
     except Exception:
         return False
 
+
 def _canonical_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+    )
 
 
 def _sha256(data: str | bytes) -> str:
@@ -132,7 +138,9 @@ def build_receipt_hash(
     payload = {
         "prompt_hash": prompt_hash,
         "response_hash": response_hash,
-        "previous_receipt_hash": previous_receipt_hash if cfg.commercial_receipts_chaining_enabled else None,
+        "previous_receipt_hash": previous_receipt_hash
+        if cfg.commercial_receipts_chaining_enabled
+        else None,
         "request_payload_hash": request_payload_hash,
         "response_payload_hash": response_payload_hash,
         "runtime_snapshot_hash": runtime_snapshot_hash,
@@ -146,25 +154,27 @@ def build_receipt_hash(
 
 
 def summarize_receipt(receipt: CommercialInferenceReceipt) -> dict[str, Any]:
-    return sanitize_report_payload({
-        "id": str(receipt.id),
-        "receipt_hash": receipt.receipt_hash[:16],
-        "previous_receipt_hash": (receipt.previous_receipt_hash or "")[:16] or None,
-        "verification_status": receipt.verification_status,
-        "signature_algorithm": receipt.signature_algorithm,
-        "timestamp_mode": receipt.timestamp_mode,
-        "signed_at": receipt.signed_at.isoformat() if receipt.signed_at else None,
-        "verified_at": receipt.verified_at.isoformat() if receipt.verified_at else None,
-        "has_signature": bool(receipt.detached_signature),
-        "tamper_reason": receipt.tamper_reason,
-        "prompt_hash": receipt.prompt_hash[:16],
-        "response_hash": receipt.response_hash[:16],
-        "runtime_snapshot_hash": (receipt.runtime_snapshot_hash or "")[:16] or None,
-        "routing_decision_hash": (receipt.routing_decision_hash or "")[:16] or None,
-        "immutable_hash": (receipt.immutable_hash or "")[:16] or None,
-        "client_id": receipt.client_id,
-        "model_name": receipt.model_name,
-    })
+    return sanitize_report_payload(
+        {
+            "id": str(receipt.id),
+            "receipt_hash": receipt.receipt_hash[:16],
+            "previous_receipt_hash": (receipt.previous_receipt_hash or "")[:16] or None,
+            "verification_status": receipt.verification_status,
+            "signature_algorithm": receipt.signature_algorithm,
+            "timestamp_mode": receipt.timestamp_mode,
+            "signed_at": receipt.signed_at.isoformat() if receipt.signed_at else None,
+            "verified_at": receipt.verified_at.isoformat() if receipt.verified_at else None,
+            "has_signature": bool(receipt.detached_signature),
+            "tamper_reason": receipt.tamper_reason,
+            "prompt_hash": receipt.prompt_hash[:16],
+            "response_hash": receipt.response_hash[:16],
+            "runtime_snapshot_hash": (receipt.runtime_snapshot_hash or "")[:16] or None,
+            "routing_decision_hash": (receipt.routing_decision_hash or "")[:16] or None,
+            "immutable_hash": (receipt.immutable_hash or "")[:16] or None,
+            "client_id": receipt.client_id,
+            "model_name": receipt.model_name,
+        }
+    )
 
 
 async def generate_inference_receipt(
@@ -306,8 +316,9 @@ async def build_receipt_chain(
         if current.previous_receipt_hash is None:
             break
         result = await session.execute(
-            select(CommercialInferenceReceipt)
-            .where(CommercialInferenceReceipt.receipt_hash == current.previous_receipt_hash)
+            select(CommercialInferenceReceipt).where(
+                CommercialInferenceReceipt.receipt_hash == current.previous_receipt_hash
+            )
         )
         current = result.scalar_one_or_none()
         if current is None:
@@ -337,13 +348,18 @@ async def verify_receipt(
     )
     hash_valid = recomputed_hash == receipt.receipt_hash
 
-    signature_valid = verify_payload_signature(receipt.receipt_hash, receipt.detached_signature) if receipt.detached_signature else False
+    signature_valid = (
+        verify_payload_signature(receipt.receipt_hash, receipt.detached_signature)
+        if receipt.detached_signature
+        else False
+    )
 
     chain_valid = True
     if cfg.commercial_receipts_chaining_enabled and receipt.previous_receipt_hash:
         prev = await session.execute(
-            select(CommercialInferenceReceipt)
-            .where(CommercialInferenceReceipt.receipt_hash == receipt.previous_receipt_hash)
+            select(CommercialInferenceReceipt).where(
+                CommercialInferenceReceipt.receipt_hash == receipt.previous_receipt_hash
+            )
         )
         chain_valid = prev.scalar_one_or_none() is not None
 
@@ -419,7 +435,9 @@ async def validate_receipt_chain(
     for i in range(len(chain) - 1):
         current = chain[i]
         previous = chain[i + 1]
-        if current.get("previous_receipt_hash") and current["previous_receipt_hash"] != previous.get("receipt_hash"):
+        if current.get("previous_receipt_hash") and current[
+            "previous_receipt_hash"
+        ] != previous.get("receipt_hash"):
             chain_valid = False
             broken_links.append(i)
 

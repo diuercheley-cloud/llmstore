@@ -1,13 +1,12 @@
 import logging
 import uuid
-from typing import Any, Optional
-
-from .base import GraphProvider
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 try:
     from neo4j import AsyncGraphDatabase
+
     HAS_NEO4J = True
 except ImportError:
     HAS_NEO4J = False
@@ -22,7 +21,7 @@ class Neo4jGraphProvider:
     Implements GraphProvider protocol.
     """
 
-    def __init__(self, enabled: bool, db: Optional[Any] = None):
+    def __init__(self, enabled: bool, db: Any | None = None):
         if not enabled:
             raise RuntimeError("Neo4j graph provider is disabled by feature flag")
         self._db = db
@@ -34,16 +33,18 @@ class Neo4jGraphProvider:
             from app.services.agents.knowledge_graph.providers.internal_sql_graph import (
                 InternalSQLGraphProvider,
             )
+
             self._internal = InternalSQLGraphProvider(self._db)
         return self._internal
 
     async def _get_driver(self):
         if self._driver is None and HAS_NEO4J:
             from app.core.config import get_settings
+
             settings = get_settings()
-            uri = getattr(settings, 'neo4j_uri', 'bolt://localhost:7687')
-            user = getattr(settings, 'neo4j_user', 'neo4j')
-            password = getattr(settings, 'neo4j_password', '')
+            uri = getattr(settings, "neo4j_uri", "bolt://localhost:7687")
+            user = getattr(settings, "neo4j_user", "neo4j")
+            password = getattr(settings, "neo4j_password", "")
             try:
                 self._driver = AsyncGraphDatabase.driver(uri, auth=(user, password))
                 await self._driver.verify_connectivity()

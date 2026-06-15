@@ -72,8 +72,10 @@ async def test_federated_replay_detects_drift(session):
     replay = await _build_execution(session, session_id="replay-drift", summary="different")
     replay_stage = (
         await session.execute(
-            select(CommercialWorkflowStage)
-            .where(CommercialWorkflowStage.execution_id == replay.id, CommercialWorkflowStage.stage_key == "classify")
+            select(CommercialWorkflowStage).where(
+                CommercialWorkflowStage.execution_id == replay.id,
+                CommercialWorkflowStage.stage_key == "classify",
+            )
         )
     ).scalar_one()
     replay_stage.stage_hash = "f" * 64

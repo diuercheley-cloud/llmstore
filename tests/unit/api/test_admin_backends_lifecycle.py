@@ -1,14 +1,15 @@
-import pytest
 from uuid import uuid4
+
+import pytest
 
 
 @pytest.mark.asyncio
 async def test_lifecycle_reconcile_all_endpoint(admin_client, admin_token_headers):
+    from app.api.deps import get_inference_proxy
     from app.db.base import Base
+    from app.main import app
     from app.models.core.inference_backend import InferenceBackend
     from app.services.runtime_dependencies import get_db_session
-    from app.api.deps import get_inference_proxy
-    from app.main import app
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
@@ -17,14 +18,22 @@ async def test_lifecycle_reconcile_all_endpoint(admin_client, admin_token_header
         await conn.run_sync(Base.metadata.create_all)
 
     async with session_factory() as session:
-        session.add(InferenceBackend(
-            name="test-a", provider="llama.cpp",
-            backend_url="http://localhost:8080", is_active=True,
-        ))
-        session.add(InferenceBackend(
-            name="test-b", provider="vllm",
-            backend_url="http://localhost:8000", is_active=False,
-        ))
+        session.add(
+            InferenceBackend(
+                name="test-a",
+                provider="llama.cpp",
+                backend_url="http://localhost:8080",
+                is_active=True,
+            )
+        )
+        session.add(
+            InferenceBackend(
+                name="test-b",
+                provider="vllm",
+                backend_url="http://localhost:8000",
+                is_active=False,
+            )
+        )
         await session.commit()
 
     async def override_db():

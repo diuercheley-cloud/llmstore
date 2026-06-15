@@ -20,13 +20,13 @@ Public endpoints (endpoint key auth):
   POST /api/agents/{slug}/invoke-sync         - Sync invoke
   GET  /api/agents/{slug}/runs/{run_id}       - Get run status
 """
+
 import logging
 import time
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.core.config import get_settings
-from app.services.runtime_dependencies import get_db_session
 from app.services.agent_deployments.agent_api_deployment import (
     AgentApiDeploymentService,
     DeploymentNotFoundError,
@@ -36,6 +36,7 @@ from app.services.agent_deployments.agent_endpoint_registry import AgentEndpoint
 from app.services.agent_deployments.deployment_sla import DeploymentSlaService
 from app.services.agent_deployments.deployment_usage import DeploymentUsageService
 from app.services.auth import require_admin
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -55,27 +56,27 @@ admin_router = APIRouter(
 class DeploymentCreate(BaseModel):
     slug: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     timeout_seconds: int = 30
     max_concurrency: int = 10
     rate_limit_per_minute: int = 60
     rate_limit_per_day: int = 10000
     retry_max_attempts: int = 0
-    callback_url: Optional[str] = None
+    callback_url: str | None = None
     billing_tier: str = "free"
 
 
 class DeploymentUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    timeout_seconds: Optional[int] = None
-    max_concurrency: Optional[int] = None
-    rate_limit_per_minute: Optional[int] = None
-    rate_limit_per_day: Optional[int] = None
-    retry_max_attempts: Optional[int] = None
-    retry_backoff_ms: Optional[int] = None
-    callback_url: Optional[str] = None
-    billing_tier: Optional[str] = None
+    name: str | None = None
+    description: str | None = None
+    timeout_seconds: int | None = None
+    max_concurrency: int | None = None
+    rate_limit_per_minute: int | None = None
+    rate_limit_per_day: int | None = None
+    retry_max_attempts: int | None = None
+    retry_backoff_ms: int | None = None
+    callback_url: str | None = None
+    billing_tier: str | None = None
 
 
 class RollbackRequest(BaseModel):
@@ -87,7 +88,7 @@ def _check_enabled():
         raise HTTPException(status_code=403, detail="Agent-as-API is disabled")
 
 
-def _serialize_deployment(d) -> Dict[str, Any]:
+def _serialize_deployment(d) -> dict[str, Any]:
     return {
         "id": str(d.id),
         "tenant_id": d.tenant_id,
@@ -142,9 +143,8 @@ async def create_deployment(
         # Get the default key
         from app.models.agents.agent_deployments import AgentApiEndpointKey
         from sqlalchemy import select
-        stmt = select(AgentApiEndpointKey).where(
-            AgentApiEndpointKey.deployment_id == deployment.id
-        )
+
+        stmt = select(AgentApiEndpointKey).where(AgentApiEndpointKey.deployment_id == deployment.id)
         res = await session.execute(stmt)
         key = res.scalar_one_or_none()
 
@@ -333,15 +333,15 @@ public_router = APIRouter(
 
 class InvokeRequest(BaseModel):
     input: str
-    callback_url: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    callback_url: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class InvokeSyncRequest(BaseModel):
     input: str
-    timeout: Optional[int] = None
-    callback_url: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    timeout: int | None = None
+    callback_url: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 async def _authenticate_deployment(request: Request, slug: str):
@@ -352,9 +352,10 @@ async def _authenticate_deployment(request: Request, slug: str):
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
     raw_key = auth_header[7:]
 
-    svc = AgentApiDeploymentService(request.state._db if hasattr(request.state, '_db') else None)
+    svc = AgentApiDeploymentService(request.state._db if hasattr(request.state, "_db") else None)
     # We need the db session - use the request's state or create one
     from app.services.runtime_dependencies import SessionLocal
+
     async with SessionLocal() as db:
         svc = AgentApiDeploymentService(db)
         result = await svc.validate_endpoint_key(raw_key, slug)
@@ -412,7 +413,10 @@ async def invoke_agent(
     await session.commit()
 
     if "error" in response:
-        raise HTTPException(status_code=429 if "limit" in response["error"].lower() else 500, detail=response["error"])
+        raise HTTPException(
+            status_code=429 if "limit" in response["error"].lower() else 500,
+            detail=response["error"],
+        )
     return response
 
 
@@ -454,7 +458,13 @@ async def invoke_agent_sync(
     # Record usage
     usage_svc = DeploymentUsageService(session)
     run_id = response.get("run_id")
-    status = "completed" if response.get("status") == "completed" else "timeout" if "timeout" in str(response.get("error", "")).lower() else "failed"
+    status = (
+        "completed"
+        if response.get("status") == "completed"
+        else "timeout"
+        if "timeout" in str(response.get("error", "")).lower()
+        else "failed"
+    )
     await usage_svc.record_invocation(
         deployment=deployment,
         run_id=uuid.UUID(run_id) if run_id else None,
@@ -471,7 +481,13 @@ async def invoke_agent_sync(
     await session.commit()
 
     if "error" in response:
-        status_code = 429 if "limit" in response["error"].lower() else 504 if "timeout" in response["error"].lower() else 500
+        status_code = (
+            429
+            if "limit" in response["error"].lower()
+            else 504
+            if "timeout" in response["error"].lower()
+            else 500
+        )
         raise HTTPException(status_code=status_code, detail=response["error"])
     return response
 
@@ -499,6 +515,7 @@ async def get_deployment_run(
     deployment, key = result
 
     from app.services.agents import agent_state
+
     run = await agent_state.get_agent_run(session, run_id)
     if not run or str(run.agent_id) != str(deployment.agent_id):
         raise HTTPException(status_code=404, detail="Run not found")

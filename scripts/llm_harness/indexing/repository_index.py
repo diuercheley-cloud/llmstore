@@ -9,10 +9,18 @@ from .storage import IndexStorage
 from .symbol_index import RegexFallbackParser
 
 DEFAULT_IGNORED_DIRS = {
-    ".git", ".venv", "venv", "node_modules", "__pycache__",
-    ".llm_harness_index", ".llm_harness_memory", ".llm_harness_cache",
-    ".cache", "artifacts"
+    ".git",
+    ".venv",
+    "venv",
+    "node_modules",
+    "__pycache__",
+    ".llm_harness_index",
+    ".llm_harness_memory",
+    ".llm_harness_cache",
+    ".cache",
+    "artifacts",
 }
+
 
 class RepositoryIndexer:
     def __init__(self, workspace_root: str = "."):
@@ -26,10 +34,7 @@ class RepositoryIndexer:
         indexed_files = {}
 
         for root, dirs, files in os.walk(self.workspace_root):
-            dirs[:] = [
-                d for d in dirs
-                if d not in DEFAULT_IGNORED_DIRS and not d.startswith(".")
-            ]
+            dirs[:] = [d for d in dirs if d not in DEFAULT_IGNORED_DIRS and not d.startswith(".")]
 
             for file in files:
                 if file.startswith("."):
@@ -48,7 +53,7 @@ class RepositoryIndexer:
                     continue
 
                 try:
-                    with open(full_path, "r", errors="ignore") as f:
+                    with open(full_path, errors="ignore") as f:
                         content = f.read()
                 except Exception:
                     continue
@@ -102,7 +107,7 @@ class RepositoryIndexer:
                     "modified_time": mtime,
                     "imports": symbols_data.get("imports", []),
                     "symbols": list(set(sym_names)),
-                    "ast": symbols_data
+                    "ast": symbols_data,
                 }
 
         self.storage.save_json("repo_index.json", indexed_files)
@@ -113,7 +118,7 @@ class RepositoryIndexer:
         path = os.path.join(self.workspace_root, ".gitignore")
         if os.path.exists(path):
             try:
-                with open(path, "r", encoding="utf-8") as f:
+                with open(path, encoding="utf-8") as f:
                     for line in f:
                         line = line.strip()
                         if line and not line.startswith("#"):
@@ -127,15 +132,14 @@ class RepositoryIndexer:
             if pattern.endswith("/"):
                 pat = pattern.rstrip("/")
                 if (
-                    fnmatch.fnmatch(rel_path, pat) or
-                    fnmatch.fnmatch(rel_path, pat + "/*") or
-                    f"/{pat}/" in f"/{rel_path}/"
+                    fnmatch.fnmatch(rel_path, pat)
+                    or fnmatch.fnmatch(rel_path, pat + "/*")
+                    or f"/{pat}/" in f"/{rel_path}/"
                 ):
                     return True
             else:
-                if (
-                    fnmatch.fnmatch(rel_path, pattern) or
-                    fnmatch.fnmatch(os.path.basename(rel_path), pattern)
+                if fnmatch.fnmatch(rel_path, pattern) or fnmatch.fnmatch(
+                    os.path.basename(rel_path), pattern
                 ):
                     return True
         return False

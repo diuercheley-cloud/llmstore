@@ -2,37 +2,39 @@
 import json
 import logging
 import uuid
-from typing import Any, Dict
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.billing.billing_invoice import BillingInvoice
-from app.models.billing.payments import PaymentAuditEvent, PaymentIntent, PaymentProcessingWebhookEvent
+from app.models.billing.payments import (
+    PaymentAuditEvent,
+    PaymentIntent,
+    PaymentProcessingWebhookEvent,
+)
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger("payment_webhooks")
 
+
 class PaymentWebhookService:
     @staticmethod
     async def process_stripe_webhook(
-        db: AsyncSession,
-        payload_bytes: bytes,
-        signature_header: str
-    ) -> Dict[str, Any]:
+        db: AsyncSession, payload_bytes: bytes, signature_header: str
+    ) -> dict[str, Any]:
         settings = get_settings()
         if not settings.stripe_payment_enabled:
             raise HTTPException(status_code=403, detail="Stripe payment is disabled.")
 
         # 1. Verify webhook signature
         import stripe
+
         stripe.api_key = settings.stripe_secret_key
         try:
             event = stripe.Webhook.construct_event(
-                payload_bytes,
-                signature_header,
-                settings.stripe_webhook_secret
+                payload_bytes, signature_header, settings.stripe_webhook_secret
             )
         except Exception as e:
             logger.warning(f"Stripe Webhook signature verification failed: {e}")
@@ -42,12 +44,14 @@ class PaymentWebhookService:
         provider_event_id = event["id"]
         stmt_dup = select(PaymentProcessingWebhookEvent).where(
             PaymentProcessingWebhookEvent.provider_event_id == provider_event_id,
-            PaymentProcessingWebhookEvent.provider == "stripe"
+            PaymentProcessingWebhookEvent.provider == "stripe",
         )
         res_dup = await db.execute(stmt_dup)
         existing = res_dup.scalar_one_or_none()
         if existing:
-            logger.info(f"Duplicate Stripe webhook received, skipping processing. Event ID: {provider_event_id}")
+            logger.info(
+                f"Duplicate Stripe webhook received, skipping processing. Event ID: {provider_event_id}"
+            )
             return {"status": "idempotent_skip", "event_id": provider_event_id}
 
         # Save webhook event as pending in DB
@@ -57,7 +61,7 @@ class PaymentWebhookService:
             provider_event_id=provider_event_id,
             event_type=event["type"],
             payload_json=json.dumps(event),
-            status="pending"
+            status="pending",
         )
         db.add(webhook_event)
         await db.flush()
@@ -71,7 +75,7 @@ class PaymentWebhookService:
             # Reconcile PaymentIntent in DB
             stmt_intent = select(PaymentIntent).where(
                 PaymentIntent.provider_intent_id == provider_intent_id,
-                PaymentIntent.provider == "stripe"
+                PaymentIntent.provider == "stripe",
             )
             res_intent = await db.execute(stmt_intent)
             intent = res_intent.scalar_one_or_none()
@@ -103,8 +107,8 @@ class PaymentWebhookService:
                         "provider_event_id": provider_event_id,
                         "provider_intent_id": provider_intent_id,
                         "old_status": old_status,
-                        "new_status": new_status
-                    }
+                        "new_status": new_status,
+                    },
                 )
                 db.add(audit)
                 webhook_event.status = "processed"

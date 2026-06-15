@@ -22,11 +22,11 @@ class BillingPlan(Base):
     max_output_tokens: Mapped[int] = mapped_column(Integer, nullable=False)
     max_context_tokens: Mapped[int] = mapped_column(Integer, default=4096, nullable=False)
     allow_streaming: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    
+
     # Request Limits
     requests_per_day: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     requests_per_month: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    
+
     # RAG Limits
     rag_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     rag_max_documents: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -41,13 +41,15 @@ class BillingPlan(Base):
     tts_chars_per_month: Mapped[int] = mapped_column(Integer, default=50000, nullable=False)
     tts_audio_retention_days: Mapped[int] = mapped_column(Integer, default=7, nullable=False)
     tts_max_files: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
-    
+
     # Embeddings Limits
     embeddings_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     embeddings_requests_per_month: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     embeddings_tokens_per_month: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    embeddings_max_inputs_per_request: Mapped[int] = mapped_column(Integer, default=16, nullable=False)
-    
+    embeddings_max_inputs_per_request: Mapped[int] = mapped_column(
+        Integer, default=16, nullable=False
+    )
+
     # Feature Gates
     responses_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     tools_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
@@ -58,9 +60,15 @@ class BillingPlan(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     allowed_models_json: Mapped[str | None] = mapped_column(Text(), nullable=True)
     routing_policy_json: Mapped[str | None] = mapped_column(Text(), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
 
     clients = relationship("Client", back_populates="billing_plan")
-    pricing_rules = relationship("PricingRule", back_populates="billing_plan", cascade="all, delete-orphan")
+    pricing_rules = relationship(
+        "PricingRule", back_populates="billing_plan", cascade="all, delete-orphan"
+    )
     invoices = relationship("BillingInvoice", back_populates="billing_plan")

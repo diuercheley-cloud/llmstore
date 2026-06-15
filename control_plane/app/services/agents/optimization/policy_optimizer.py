@@ -1,12 +1,15 @@
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 from app.models.agents.agents import AgentEvalFailure
 
 logger = logging.getLogger(__name__)
 
+
 class PolicyOptimizer:
-    def optimize_policy(self, current_policy: Dict[str, Any], failures: List[AgentEvalFailure]) -> Dict[str, Any]:
+    def optimize_policy(
+        self, current_policy: dict[str, Any], failures: list[AgentEvalFailure]
+    ) -> dict[str, Any]:
         """
         Generates policy rule improvements to avoid security/policy violations or handle denials.
         """
@@ -26,6 +29,8 @@ class PolicyOptimizer:
                 if offending_tool:
                     if offending_tool not in optimized_policy["approval_tools"]:
                         optimized_policy["approval_tools"].append(offending_tool)
-                        logger.info(f"Adding '{offending_tool}' to approval rules to prevent safety failure.")
+                        logger.info(
+                            f"Adding '{offending_tool}' to approval rules to prevent safety failure."
+                        )
 
         return optimized_policy

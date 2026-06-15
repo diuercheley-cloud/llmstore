@@ -1,5 +1,5 @@
-from datetime import datetime, UTC
-from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
+from datetime import UTC, datetime
+from typing import Any, Protocol, runtime_checkable
 
 from app.contracts.base import BaseContract, ContractCapability
 from pydantic import BaseModel, Field
@@ -9,27 +9,29 @@ class PlatformEvent(BaseModel):
     event_type: str
     severity: str
     title: str
-    details: Dict[str, Any] = Field(default_factory=dict)
+    details: dict[str, Any] = Field(default_factory=dict)
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    client_id: Optional[str] = None
-    request_id: Optional[str] = None
+    client_id: str | None = None
+    request_id: str | None = None
+
 
 class EventCapabilities(ContractCapability):
     async_logging: bool = False
     persistence: bool = False
     realtime_streaming: bool = False
 
+
 @runtime_checkable
 class EventContract(BaseContract, Protocol):
     """
     Contract for Platform Event Logging.
     """
-    
+
     async def log_event(self, event: PlatformEvent) -> bool:
         """Logs a platform event."""
         ...
 
-    async def list_events(self, limit: int = 100) -> List[PlatformEvent]:
+    async def list_events(self, limit: int = 100) -> list[PlatformEvent]:
         """Lists recent platform events."""
         ...
 

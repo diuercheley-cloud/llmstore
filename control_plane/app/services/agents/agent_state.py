@@ -3,7 +3,7 @@ import hashlib
 import json
 import logging
 import uuid
-from typing import Any, List, Optional
+from typing import Any
 
 from app.core.time import utc_now
 from app.models.agents.agents import (
@@ -19,6 +19,7 @@ from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
+
 def compute_sha256(content: Any) -> str:
     """Compute sha256 hash of any input serialized as canonical json or string."""
     if content is None:
@@ -31,6 +32,7 @@ def compute_sha256(content: Any) -> str:
         except Exception:
             serialized = str(content).encode("utf-8")
     return hashlib.sha256(serialized).hexdigest()
+
 
 async def create_agent_definition(db: AsyncSession, data: dict) -> AgentDefinition:
     allowed_tools = data.get("allowed_tools")
@@ -60,21 +62,30 @@ async def create_agent_definition(db: AsyncSession, data: dict) -> AgentDefiniti
     db.add(agent_def)
     await db.commit()
     await db.refresh(agent_def)
-    logger.info(f"Created agent definition: {agent_def.id} (name: {agent_def.name}, version: {agent_def.version})")
+    logger.info(
+        f"Created agent definition: {agent_def.id} (name: {agent_def.name}, version: {agent_def.version})"
+    )
     return agent_def
 
-async def get_agent_definition(db: AsyncSession, agent_id: uuid.UUID) -> Optional[AgentDefinition]:
+
+async def get_agent_definition(db: AsyncSession, agent_id: uuid.UUID) -> AgentDefinition | None:
     res = await db.execute(select(AgentDefinition).where(AgentDefinition.id == agent_id))
     return res.scalar_one_or_none()
 
-async def list_agent_definitions(db: AsyncSession, tenant_id: Optional[str] = None) -> List[AgentDefinition]:
+
+async def list_agent_definitions(
+    db: AsyncSession, tenant_id: str | None = None
+) -> list[AgentDefinition]:
     stmt = select(AgentDefinition)
     if tenant_id is not None:
         stmt = stmt.where(AgentDefinition.tenant_id == tenant_id)
     res = await db.execute(stmt)
     return list(res.scalars().all())
 
-async def update_agent_definition(db: AsyncSession, agent_id: uuid.UUID, data: dict) -> Optional[AgentDefinition]:
+
+async def update_agent_definition(
+    db: AsyncSession, agent_id: uuid.UUID, data: dict
+) -> AgentDefinition | None:
     agent_def = await get_agent_definition(db, agent_id)
     if not agent_def:
         return None
@@ -87,9 +98,10 @@ async def update_agent_definition(db: AsyncSession, agent_id: uuid.UUID, data: d
     logger.info(f"Updated agent definition: {agent_def.id}")
     return agent_def
 
+
 async def check_queue_throttling(db: AsyncSession, agent_id: uuid.UUID, tenant_id: str) -> None:
     from app.models.agents.agents import AgentQueueThrottle, AgentRun
-    from sqlalchemy import select, func
+    from sqlalchemy import func, select
 
     stmt = select(AgentQueueThrottle).where(AgentQueueThrottle.is_active == True)
     res = await db.execute(stmt)
@@ -98,7 +110,7 @@ async def check_queue_throttling(db: AsyncSession, agent_id: uuid.UUID, tenant_i
     for throttle in active_throttles:
         applies = False
         count_stmt = select(func.count(AgentRun.id)).where(AgentRun.status == "queued")
-        
+
         if throttle.target_type == "agent" and throttle.target_id == str(agent_id):
             applies = True
             count_stmt = count_stmt.where(AgentRun.agent_id == agent_id)
@@ -122,18 +134,21 @@ async def check_queue_throttling(db: AsyncSession, agent_id: uuid.UUID, tenant_i
             count_res = await db.execute(count_stmt)
             queued_count = count_res.scalar() or 0
             if queued_count >= throttle.rate_limit:
-                raise ValueError(f"Queue throttle limit exceeded: limit of {throttle.rate_limit} queued runs.")
+                raise ValueError(
+                    f"Queue throttle limit exceeded: limit of {throttle.rate_limit} queued runs."
+                )
+
 
 async def create_agent_run(
     db: AsyncSession,
     agent_id: uuid.UUID,
     tenant_id: str,
     input_text: str,
-    user_id: Optional[str] = None,
-    correlation_id: Optional[str] = None,
-    parent_run_id: Optional[uuid.UUID] = None,
-    session_id: Optional[uuid.UUID] = None,
-    multimodal_asset_id: Optional[uuid.UUID] = None,
+    user_id: str | None = None,
+    correlation_id: str | None = None,
+    parent_run_id: uuid.UUID | None = None,
+    session_id: uuid.UUID | None = None,
+    multimodal_asset_id: uuid.UUID | None = None,
     is_simulation: bool = False,
 ) -> AgentRun:
     await check_queue_throttling(db, agent_id, tenant_id)
@@ -158,14 +173,18 @@ async def create_agent_run(
     db.add(run)
     await db.commit()
     await db.refresh(run)
-    logger.info(f"Created agent run: {run.id} for agent: {agent_id} (input_hash: {input_hash}, session_id: {session_id}, is_simulation: {is_simulation})")
+    logger.info(
+        f"Created agent run: {run.id} for agent: {agent_id} (input_hash: {input_hash}, session_id: {session_id}, is_simulation: {is_simulation})"
+    )
     return run
 
-async def get_agent_run(db: AsyncSession, run_id: uuid.UUID) -> Optional[AgentRun]:
+
+async def get_agent_run(db: AsyncSession, run_id: uuid.UUID) -> AgentRun | None:
     res = await db.execute(select(AgentRun).where(AgentRun.id == run_id))
     return res.scalar_one_or_none()
 
-async def update_run(db: AsyncSession, run_id: uuid.UUID, **kwargs) -> Optional[AgentRun]:
+
+async def update_run(db: AsyncSession, run_id: uuid.UUID, **kwargs) -> AgentRun | None:
     run = await get_agent_run(db, run_id)
     if not run:
         return None
@@ -177,7 +196,10 @@ async def update_run(db: AsyncSession, run_id: uuid.UUID, **kwargs) -> Optional[
     logger.info(f"Updated agent run: {run.id} fields: {list(kwargs.keys())}")
     return run
 
-async def increment_run_metric(db: AsyncSession, run_id: uuid.UUID, metric: str, value: float = 1.0):
+
+async def increment_run_metric(
+    db: AsyncSession, run_id: uuid.UUID, metric: str, value: float = 1.0
+):
     run = await get_agent_run(db, run_id)
     if not run:
         return
@@ -185,6 +207,7 @@ async def increment_run_metric(db: AsyncSession, run_id: uuid.UUID, metric: str,
         current = getattr(run, metric) or 0
         setattr(run, metric, current + value)
     await db.commit()
+
 
 import json as _json
 import sys as _sys
@@ -209,14 +232,14 @@ async def log_run_step(
     input_data: Any,
     output_data: Any,
     status: str = "success",
-    latency_ms: Optional[int] = None,
-    policy_result: Optional[dict] = None,
-    metadata: Optional[dict] = None,
-    error: Optional[str] = None,
+    latency_ms: int | None = None,
+    policy_result: dict | None = None,
+    metadata: dict | None = None,
+    error: str | None = None,
 ) -> AgentRunStep:
     input_hash = compute_sha256(input_data)
     output_hash = compute_sha256(output_data)
-    
+
     step = AgentRunStep(
         run_id=run_id,
         step_number=step_number,
@@ -230,38 +253,49 @@ async def log_run_step(
         error=error,
         created_at=utc_now(),
     )
-    _emit_agent_log(run_id, "run_step", {
-        "step_number": step_number,
-        "step_type": step_type,
-        "status": status,
-        "latency_ms": latency_ms,
-        "input_hash": input_hash,
-        "output_hash": output_hash,
-        "error": error,
-    })
+    _emit_agent_log(
+        run_id,
+        "run_step",
+        {
+            "step_number": step_number,
+            "step_type": step_type,
+            "status": status,
+            "latency_ms": latency_ms,
+            "input_hash": input_hash,
+            "output_hash": output_hash,
+            "error": error,
+        },
+    )
 
     db.add(step)
-    
+
     # Update total steps on the run
     run = await get_agent_run(db, run_id)
     if run:
         run.total_steps = max(run.total_steps, step_number)
-    
+
     await db.commit()
     await db.refresh(step)
-    logger.info(f"Logged step {step_number} ({step_type}) for run {run_id} (status: {status}, input_hash: {input_hash})")
+    logger.info(
+        f"Logged step {step_number} ({step_type}) for run {run_id} (status: {status}, input_hash: {input_hash})"
+    )
     return step
+
 
 async def log_run_event(
     db: AsyncSession,
     run_id: uuid.UUID,
     event_type: str,
-    payload: Optional[dict] = None,
+    payload: dict | None = None,
 ) -> AgentRunEvent:
-    _emit_agent_log(run_id, "run_event", {
-        "event_type": event_type,
-        "payload": payload,
-    })
+    _emit_agent_log(
+        run_id,
+        "run_event",
+        {
+            "event_type": event_type,
+            "payload": payload,
+        },
+    )
 
     event = AgentRunEvent(
         run_id=run_id,
@@ -273,6 +307,7 @@ async def log_run_event(
     await db.commit()
     await db.refresh(event)
     return event
+
 
 async def create_run_checkpoint(
     db: AsyncSession,
@@ -293,7 +328,8 @@ async def create_run_checkpoint(
     logger.info(f"Created checkpoint for run {run_id} at step {step_number}")
     return checkpoint
 
-async def get_run_checkpoints(db: AsyncSession, run_id: uuid.UUID) -> List[AgentRunCheckpoint]:
+
+async def get_run_checkpoints(db: AsyncSession, run_id: uuid.UUID) -> list[AgentRunCheckpoint]:
     res = await db.execute(
         select(AgentRunCheckpoint)
         .where(AgentRunCheckpoint.run_id == run_id)
@@ -301,12 +337,13 @@ async def get_run_checkpoints(db: AsyncSession, run_id: uuid.UUID) -> List[Agent
     )
     return list(res.scalars().all())
 
+
 async def create_run_receipt(
     db: AsyncSession,
     run_id: uuid.UUID,
-    step_number: Optional[int],
+    step_number: int | None,
     receipt_data: dict,
-    signature: Optional[str] = None,
+    signature: str | None = None,
 ) -> AgentRunReceipt:
     receipt = AgentRunReceipt(
         run_id=run_id,
@@ -320,7 +357,8 @@ async def create_run_receipt(
     await db.refresh(receipt)
     return receipt
 
-async def get_run_steps(db: AsyncSession, run_id: uuid.UUID) -> List[AgentRunStep]:
+
+async def get_run_steps(db: AsyncSession, run_id: uuid.UUID) -> list[AgentRunStep]:
     res = await db.execute(
         select(AgentRunStep)
         .where(AgentRunStep.run_id == run_id)

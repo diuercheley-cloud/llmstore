@@ -1,6 +1,5 @@
 """Tests for Together AI billing mapping — cost estimation, pricing engine integration."""
 
-
 from app.services.billing.pricing_engine import estimate_provider_cost
 from app.services.providers.together_provider import TogetherProvider
 

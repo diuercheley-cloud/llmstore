@@ -1,21 +1,22 @@
 # Owner: agent-platform
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.models.agents.agent_workflows import AgentWorkflowRun
 
 logger = logging.getLogger(__name__)
+
 
 class WorkflowBranchingManager:
     """
     Handles complex branching conditions for agent workflows.
     Evaluates context, results, and external signals to determine the next path.
     """
-    
+
     def __init__(self, run: AgentWorkflowRun):
         self.run = run
 
-    def evaluate_condition(self, condition_config: Dict[str, Any], context: Dict[str, Any]) -> bool:
+    def evaluate_condition(self, condition_config: dict[str, Any], context: dict[str, Any]) -> bool:
         """
         Evaluates a condition based on the provided configuration.
         config: {
@@ -72,7 +73,7 @@ class WorkflowBranchingManager:
             logger.error(f"Error during comparison: {e}")
             return False
 
-    def resolve_branch(self, node_config: Dict[str, Any], context: Dict[str, Any]) -> Optional[str]:
+    def resolve_branch(self, node_config: dict[str, Any], context: dict[str, Any]) -> str | None:
         """
         For a 'condition' node, evaluates all branches and returns the key of the target node.
         node_config should contain 'branches': [{"condition": {...}, "target": "node_key"}]
@@ -82,5 +83,5 @@ class WorkflowBranchingManager:
             condition = branch.get("condition")
             if not condition or self.evaluate_condition(condition, context):
                 return branch.get("target")
-        
+
         return node_config.get("default_target")

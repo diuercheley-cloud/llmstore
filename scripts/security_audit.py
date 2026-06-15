@@ -5,18 +5,10 @@ Checks authentication, authorization, cryptography, network,
 container, and configuration security posture.
 """
 
-import ast
-import glob
-import hashlib
-import hmac
-import json
 import os
 import re
-import secrets
-import subprocess
 import sys
-import textwrap
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 RED = "\033[91m"
@@ -69,9 +61,12 @@ def warn(name, detail=""):
 
 def scan_file_for_secrets(filepath):
     secrets_patterns = [
-        (r'(?i)(sk-local-|sk-[a-z]+-)[A-Za-z0-9_-]{20,}', "API key pattern"),
-        (r'(?i)(-----BEGIN\s*(RSA|EC|PRIVATE|OPENSSH)\s+KEY-----)', "Private key"),
-        (r'(?i)(ADMIN_TOKEN|JWT_SECRET|POSTGRES_PASSWORD)\s*=\s*["\']?[^"\'\s]{4,}', "Secret env var"),
+        (r"(?i)(sk-local-|sk-[a-z]+-)[A-Za-z0-9_-]{20,}", "API key pattern"),
+        (r"(?i)(-----BEGIN\s*(RSA|EC|PRIVATE|OPENSSH)\s+KEY-----)", "Private key"),
+        (
+            r'(?i)(ADMIN_TOKEN|JWT_SECRET|POSTGRES_PASSWORD)\s*=\s*["\']?[^"\'\s]{4,}',
+            "Secret env var",
+        ),
     ]
     findings = []
     try:
@@ -111,44 +106,52 @@ def audit_authentication():
 
     subsection("1.1 Timing-safe Token Comparison")
     has_compare_digest = "compare_digest" in content
-    check("Legacy admin token uses hmac.compare_digest",
-          has_compare_digest,
-          "Missing timing-safe comparison enables timing attacks")
+    check(
+        "Legacy admin token uses hmac.compare_digest",
+        has_compare_digest,
+        "Missing timing-safe comparison enables timing attacks",
+    )
 
-    has_direct_compare = re.search(r'token == settings\.admin_(super|write|read)_token', content)
-    check("No direct == comparison of admin tokens",
-          not has_direct_compare or has_compare_digest,
-          f"Direct == found at line {has_direct_compare.start() if has_direct_compare else 'N/A'}")
+    has_direct_compare = re.search(r"token == settings\.admin_(super|write|read)_token", content)
+    check(
+        "No direct == comparison of admin tokens",
+        not has_direct_compare or has_compare_digest,
+        f"Direct == found at line {has_direct_compare.start() if has_direct_compare else 'N/A'}",
+    )
 
     subsection("1.2 API Key Verification")
     has_verify_secret = "verify_secret" in content
-    check("API key uses PBKDF2 + timing-safe verify",
-          has_verify_secret,
-          "Must use verify_secret() from core/security.py")
+    check(
+        "API key uses PBKDF2 + timing-safe verify",
+        has_verify_secret,
+        "Must use verify_secret() from core/security.py",
+    )
 
     subsection("1.3 RBAC Mode")
     rbac_enabled = "is_rbac_admin_enabled" in content
-    check("RBAC authentication path exists",
-          rbac_enabled,
-          "RBAC provides granular permission checks")
+    check(
+        "RBAC authentication path exists", rbac_enabled, "RBAC provides granular permission checks"
+    )
 
     subsection("1.4 SSO Session Validation")
     has_sso_fallback = "_is_valid_sso_session" in content
-    check("SSO session validation implemented",
-          has_sso_fallback,
-          "SSO provides secondary auth mechanism")
+    check(
+        "SSO session validation implemented",
+        has_sso_fallback,
+        "SSO provides secondary auth mechanism",
+    )
 
     subsection("1.5 Key Prefix Lookup Protection")
     has_prefix_lookup = "key_prefix" in content and "verify_secret" in content
-    check("API key uses prefix + full verification",
-          has_prefix_lookup,
-          "Prefix-only lookup would leak keys")
+    check(
+        "API key uses prefix + full verification",
+        has_prefix_lookup,
+        "Prefix-only lookup would leak keys",
+    )
 
     subsection("1.6 Expiration Check")
     has_expiry = "expires_at" in content and "utc_now" in content
-    check("API key expiration enforced",
-          has_expiry,
-          "Expired keys must be rejected")
+    check("API key expiration enforced", has_expiry, "Expired keys must be rejected")
 
 
 # ========== CRYPTOGRAPHY ==========
@@ -164,47 +167,51 @@ def audit_cryptography():
 
     subsection("2.1 Token Generation")
     uses_secrets = "secrets.token_urlsafe" in content
-    check("API keys generated with CSPRNG (secrets.token_urlsafe)",
-          uses_secrets,
-          "Use secrets module, not random")
+    check(
+        "API keys generated with CSPRNG (secrets.token_urlsafe)",
+        uses_secrets,
+        "Use secrets module, not random",
+    )
 
-    has_32_bytes = re.search(r'token_urlsafe\((\d+)\)', content)
+    has_32_bytes = re.search(r"token_urlsafe\((\d+)\)", content)
     if has_32_bytes:
         bytes_count = int(has_32_bytes.group(1))
-        check(f"Token entropy adequate ({bytes_count * 8} bits)",
-              bytes_count >= 24,
-              f"Current: {bytes_count*8} bits, recommended >= 192 bits")
+        check(
+            f"Token entropy adequate ({bytes_count * 8} bits)",
+            bytes_count >= 24,
+            f"Current: {bytes_count * 8} bits, recommended >= 192 bits",
+        )
 
     subsection("2.2 Password Hashing")
     has_pbkdf2 = "pbkdf2_hmac" in content
-    check("PBKDF2 used for secret hashing",
-          has_pbkdf2,
-          "PBKDF2 is NIST-recommended KDF")
+    check("PBKDF2 used for secret hashing", has_pbkdf2, "PBKDF2 is NIST-recommended KDF")
 
-    iter_match = re.search(r'pbkdf2_hmac\([^)]+\)', content)
+    iter_match = re.search(r"pbkdf2_hmac\([^)]+\)", content)
     if iter_match:
         call = iter_match.group(0)
-        num_match = re.search(r',\s*(\d[\d_]*)\)', call)
+        num_match = re.search(r",\s*(\d[\d_]*)\)", call)
         if num_match:
             iterations_str = num_match.group(1)
-            iterations = int(iterations_str.replace('_', '')) if iterations_str else 0
+            iterations = int(iterations_str.replace("_", "")) if iterations_str else 0
         else:
             iterations = 0
     else:
         iterations = 0
-        check(f"PBKDF2 iterations ({iterations:,}) >= NIST minimum",
-              iterations >= 600000,
-              f"NIST SP 800-63B recommends 600,000+ (current: {iterations:,})")
+        check(
+            f"PBKDF2 iterations ({iterations:,}) >= NIST minimum",
+            iterations >= 600000,
+            f"NIST SP 800-63B recommends 600,000+ (current: {iterations:,})",
+        )
 
     uses_compare_digest = "compare_digest" in content
-    check("Timing-safe comparison (hmac.compare_digest)",
-          uses_compare_digest,
-          "Prevents timing side-channel attacks")
+    check(
+        "Timing-safe comparison (hmac.compare_digest)",
+        uses_compare_digest,
+        "Prevents timing side-channel attacks",
+    )
 
     uses_random_salt = "secrets.token_hex" in content
-    check("Random salt per secret hash",
-          uses_random_salt,
-          "Prevents rainbow table attacks")
+    check("Random salt per secret hash", uses_random_salt, "Prevents rainbow table attacks")
 
 
 # ========== MIDDLEWARE / HTTP HEADERS ==========
@@ -230,67 +237,72 @@ def audit_middleware():
 
     for header, expected in headers.items():
         found = header in content
-        check(f"Security header: {header}",
-              found,
-              f"Missing {header} header")
+        check(f"Security header: {header}", found, f"Missing {header} header")
 
     if "Content-Security-Policy" in content:
         has_unsafe_inline = "unsafe-inline" in content
-        check("CSP restricts unsafe-inline",
-              not has_unsafe_inline,
-              "unsafe-inline weakens XSS protection")
+        check(
+            "CSP restricts unsafe-inline",
+            not has_unsafe_inline,
+            "unsafe-inline weakens XSS protection",
+        )
 
         has_unsafe_eval = "unsafe-eval" in content
-        check("CSP restricts unsafe-eval",
-              not has_unsafe_eval,
-              "unsafe-eval allows arbitrary code execution")
+        check(
+            "CSP restricts unsafe-eval",
+            not has_unsafe_eval,
+            "unsafe-eval allows arbitrary code execution",
+        )
 
     subsection("3.1 Rate Limiting")
     has_rate_limit = "enforce_global_rate_limit" in content
-    check("Global rate limiting implemented",
-          has_rate_limit,
-          "Protects against DoS attacks")
+    check("Global rate limiting implemented", has_rate_limit, "Protects against DoS attacks")
 
     has_tenant_rate_limit = "enforce_tenant_rate_limit" in content
-    check("Tenant-level rate limiting",
-          has_tenant_rate_limit,
-          "Prevents noisy neighbor issues")
+    check("Tenant-level rate limiting", has_tenant_rate_limit, "Prevents noisy neighbor issues")
 
     has_ip_rate_limit = "enforce_ip_rate_limit" in content
     if not has_ip_rate_limit:
-        warn("Per-IP rate limiting not in middleware",
-             "Auth endpoints exposed to brute force")
+        warn("Per-IP rate limiting not in middleware", "Auth endpoints exposed to brute force")
     else:
         check("Per-IP rate limiting in middleware", True)
 
     subsection("3.2 Payload Size Validation")
     has_payload_check = "max_request_body_size_bytes" in content
-    check("Payload size validation",
-          has_payload_check,
-          "Prevents resource exhaustion via large payloads")
+    check(
+        "Payload size validation",
+        has_payload_check,
+        "Prevents resource exhaustion via large payloads",
+    )
 
     subsection("3.3 Content-Length Validation")
     has_cl_check = "content_length" in content
-    check("Content-Length header validated",
-          has_cl_check,
-          "Invalid Content-Length can bypass filters")
+    check(
+        "Content-Length header validated", has_cl_check, "Invalid Content-Length can bypass filters"
+    )
 
     subsection("3.4 Correlation ID")
     has_correlation_id = "X-Correlation-ID" in content
-    check("Correlation ID for request tracing",
-          has_correlation_id,
-          "Essential for security incident investigation")
+    check(
+        "Correlation ID for request tracing",
+        has_correlation_id,
+        "Essential for security incident investigation",
+    )
 
     subsection("3.5 IP Spoofing Protection")
     if "x-forwarded-for" in content:
-        warn("X-Forwarded-For used without proxy validation",
-             "Potential IP spoofing vector if not behind trusted proxy")
+        warn(
+            "X-Forwarded-For used without proxy validation",
+            "Potential IP spoofing vector if not behind trusted proxy",
+        )
 
     subsection("3.6 Maintenance Mode")
     has_maintenance = "MaintenanceMode" in content
-    check("Maintenance mode blocks unauthorized access",
-          has_maintenance,
-          "Prevents data corruption during restore operations")
+    check(
+        "Maintenance mode blocks unauthorized access",
+        has_maintenance,
+        "Prevents data corruption during restore operations",
+    )
 
 
 # ========== RATE LIMITING ==========
@@ -305,30 +317,26 @@ def audit_rate_limiting():
     content = rl_file.read_text()
 
     has_global = "enforce_global_rate_limit" in content
-    check("Global rate limit function",
-          has_global)
+    check("Global rate limit function", has_global)
 
     has_tenant = "enforce_tenant_rate_limit" in content
-    check("Tenant rate limit function",
-          has_tenant)
+    check("Tenant rate limit function", has_tenant)
 
     has_ip = "enforce_ip_rate_limit" in content
-    check("Per-IP rate limit function",
-          has_ip)
+    check("Per-IP rate limit function", has_ip)
 
     has_client = "enforce_client_rate_limit" in content
-    check("Per-client rate limit function",
-          has_client)
+    check("Per-client rate limit function", has_client)
 
     has_sliding_window = "time()" in content and "// 60" in content
-    check("Sliding window algorithm",
-          has_sliding_window,
-          "Prevents rate limit reset abuse")
+    check("Sliding window algorithm", has_sliding_window, "Prevents rate limit reset abuse")
 
     has_redis = "redis" in content
-    check("Redis-backed rate limiting (distributed)",
-          has_redis,
-          "Required for multi-replica deployments")
+    check(
+        "Redis-backed rate limiting (distributed)",
+        has_redis,
+        "Required for multi-replica deployments",
+    )
 
 
 # ========== AUTHORIZATION / RBAC ==========
@@ -342,50 +350,61 @@ def audit_authorization():
 
     content = deps_file.read_text()
 
-    check("require_admin dependency exists",
-          "require_admin" in content)
+    check("require_admin dependency exists", "require_admin" in content)
 
-    check("require_superadmin dependency exists",
-          "require_superadmin" in content)
+    check("require_superadmin dependency exists", "require_superadmin" in content)
 
-    check("require_admin_permission dependency exists",
-          "require_admin_permission" in content)
+    check("require_admin_permission dependency exists", "require_admin_permission" in content)
 
-    check("require_client dependency exists",
-          "require_client" not in content or "require_client" in content)
+    check(
+        "require_client dependency exists",
+        "require_client" not in content or "require_client" in content,
+    )
 
     subsection("5.1 RBAC Service")
     rbac_file = CONTROL_PLANE / "app" / "services" / "admin_rbac.py"
     if rbac_file.exists():
         rbac_content = rbac_file.read_text()
         perm_count = len(re.findall(r'"[a-z_]+:[a-z_]+"', rbac_content))
-        check(f"RBAC permissions defined ({perm_count})",
-              perm_count >= 10,
-              "Granular permissions = least privilege")
+        check(
+            f"RBAC permissions defined ({perm_count})",
+            perm_count >= 10,
+            "Granular permissions = least privilege",
+        )
 
-        check("Permission-based request mapping",
-              "resolve_admin_permission_from_request" in rbac_content,
-              "Auto-maps HTTP methods to permissions")
+        check(
+            "Permission-based request mapping",
+            "resolve_admin_permission_from_request" in rbac_content,
+            "Auto-maps HTTP methods to permissions",
+        )
 
-        check("Audit events recorded for auth decisions",
-              "record_admin_audit_event" in rbac_content,
-              "Non-repudiation for admin actions")
+        check(
+            "Audit events recorded for auth decisions",
+            "record_admin_audit_event" in rbac_content,
+            "Non-repudiation for admin actions",
+        )
 
-        check("Superadmin short-circuit exists",
-              "has_permission" in rbac_content,
-              "Superadmins bypass individual permission checks")
+        check(
+            "Superadmin short-circuit exists",
+            "has_permission" in rbac_content,
+            "Superadmins bypass individual permission checks",
+        )
 
     subsection("5.2 Admin RBAC API")
     rbac_api_file = CONTROL_PLANE / "app" / "api" / "admin_rbac.py"
     if rbac_api_file.exists():
         api_content = rbac_api_file.read_text()
-        check("Admin RBAC API requires superadmin",
-              "require_superadmin" in api_content,
-              "Only superadmins can manage RBAC")
+        check(
+            "Admin RBAC API requires superadmin",
+            "require_superadmin" in api_content,
+            "Only superadmins can manage RBAC",
+        )
 
-        check("Audit logging on RBAC changes",
-              "record_admin_audit_event" in api_content or "audit" in api_content.lower(),
-              "All RBAC changes must be audited")
+        check(
+            "Audit logging on RBAC changes",
+            "record_admin_audit_event" in api_content or "audit" in api_content.lower(),
+            "All RBAC changes must be audited",
+        )
 
 
 # ========== SECURITY MONITORING ==========
@@ -399,28 +418,32 @@ def audit_security_monitoring():
 
     content = mon_file.read_text()
 
-    check("Invalid API key attempt tracking",
-          "record_invalid_api_key_attempt" in content)
+    check("Invalid API key attempt tracking", "record_invalid_api_key_attempt" in content)
 
-    check("Repeated large prompt detection",
-          "large_prompt" in content or "repeated" in content)
+    check("Repeated large prompt detection", "large_prompt" in content or "repeated" in content)
 
-    check("IP allowlist/blocklist enforcement",
-          "enforce_client_ip_policy" in content)
+    check("IP allowlist/blocklist enforcement", "enforce_client_ip_policy" in content)
 
-    check("Client suspension/blocking",
-          "is_blocked" in content or "suspended" in content)
+    check("Client suspension/blocking", "is_blocked" in content or "suspended" in content)
 
-    check("Prometheus security metrics",
-          "SECURITY_EVENT_COUNTER" in content or "Counter" in content)
+    check(
+        "Prometheus security metrics", "SECURITY_EVENT_COUNTER" in content or "Counter" in content
+    )
 
-    check("Structured security event logging",
-          "logging.warning" in content or "logger.warning" in content or "logging.error" in content or "logger.error" in content)
+    check(
+        "Structured security event logging",
+        "logging.warning" in content
+        or "logger.warning" in content
+        or "logging.error" in content
+        or "logger.error" in content,
+    )
 
     has_redis_tracking = "redis" in content
-    check("Redis-backed abuse detection (distributed)",
-          has_redis_tracking,
-          "Single-instance tracking fails under load")
+    check(
+        "Redis-backed abuse detection (distributed)",
+        has_redis_tracking,
+        "Single-instance tracking fails under load",
+    )
 
 
 # ========== SANDBOX SECURITY ==========
@@ -431,8 +454,7 @@ def audit_sandbox():
     harness_sandbox = SCRIPTS_DIR / "llm_harness" / "sandbox.py"
 
     sandbox_found = sandbox_dir.exists() or harness_sandbox.exists()
-    check("Sandbox service exists",
-          sandbox_found)
+    check("Sandbox service exists", sandbox_found)
 
     if sandbox_dir.exists():
         providers_dir = sandbox_dir / "providers"
@@ -443,31 +465,35 @@ def audit_sandbox():
             for pf in provider_files:
                 pf_content = pf.read_text()
                 provider_classes += pf_content.count("class ")
-                available_providers += pf_content.count("def is_available") and pf_content.count("return True")
-            check(f"Sandbox provider classes: {provider_classes}",
-                  provider_classes >= 2,
-                  "At least NOOP + one real provider needed")
-            check(f"Available sandbox providers: {available_providers}",
-                  available_providers >= 2,
-                  "At least 2 providers should report is_available()=True")
+                available_providers += pf_content.count("def is_available") and pf_content.count(
+                    "return True"
+                )
+            check(
+                f"Sandbox provider classes: {provider_classes}",
+                provider_classes >= 2,
+                "At least NOOP + one real provider needed",
+            )
+            check(
+                f"Available sandbox providers: {available_providers}",
+                available_providers >= 2,
+                "At least 2 providers should report is_available()=True",
+            )
 
     if harness_sandbox.exists():
         content = harness_sandbox.read_text()
-        check("Docker sandbox with network isolation (network=none)",
-              'network_mode="none"' in content or "network_mode" in content,
-              "Prevents data exfiltration")
+        check(
+            "Docker sandbox with network isolation (network=none)",
+            'network_mode="none"' in content or "network_mode" in content,
+            "Prevents data exfiltration",
+        )
 
-        check("Memory limits on sandbox",
-              "mem_limit" in content or "memory" in content)
+        check("Memory limits on sandbox", "mem_limit" in content or "memory" in content)
 
-        check("CPU limits on sandbox",
-              "cpu" in content)
+        check("CPU limits on sandbox", "cpu" in content)
 
-        check("Container auto-cleanup",
-              "atexit" in content or "cleanup" in content)
+        check("Container auto-cleanup", "atexit" in content or "cleanup" in content)
 
-        check("Timeout enforcement",
-              "timeout" in content)
+        check("Timeout enforcement", "timeout" in content)
 
 
 # ========== POLICY ENGINE ==========
@@ -481,34 +507,41 @@ def audit_policy_engine():
 
     content = policy_file.read_text()
 
-    check("Shell command validation",
-          "evaluate_shell_command" in content,
-          "Validates commands before execution")
+    check(
+        "Shell command validation",
+        "evaluate_shell_command" in content,
+        "Validates commands before execution",
+    )
 
-    check("File path validation",
-          "evaluate_file_path" in content or "_is_within_workspace" in content,
-          "Prevents path traversal")
+    check(
+        "File path validation",
+        "evaluate_file_path" in content or "_is_within_workspace" in content,
+        "Prevents path traversal",
+    )
 
-    check("Hard-deny patterns for dangerous commands",
-          "HARD_DENY_PATTERNS" in content or "sudo" in content,
-          "Blocks sudo, curl|sh, etc.")
+    check(
+        "Hard-deny patterns for dangerous commands",
+        "HARD_DENY_PATTERNS" in content or "sudo" in content,
+        "Blocks sudo, curl|sh, etc.",
+    )
 
-    check("Command allowlist",
-          "allowlist" in content.lower() or "COMMAND_ALLOWLIST" in content)
-    check("Patch policy validation",
-          "evaluate_patch" in content or "_validate_patch" in content,
-          "Prevents unauthorized code changes")
+    check("Command allowlist", "allowlist" in content.lower() or "COMMAND_ALLOWLIST" in content)
+    check(
+        "Patch policy validation",
+        "evaluate_patch" in content or "_validate_patch" in content,
+        "Prevents unauthorized code changes",
+    )
 
     subsection("8.1 LLM Output Sanitization")
     sec_file = SCRIPTS_DIR / "llm_harness" / "_security.py"
     if sec_file.exists():
         sec_content = sec_file.read_text()
-        check("Script tag removal",
-              "script" in sec_content.lower())
-        check("Prompt injection pattern removal",
-              "RESET CONTEXT" in sec_content or "IGNORE" in sec_content)
-        check("javascript: URL stripping",
-              "javascript:" in sec_content)
+        check("Script tag removal", "script" in sec_content.lower())
+        check(
+            "Prompt injection pattern removal",
+            "RESET CONTEXT" in sec_content or "IGNORE" in sec_content,
+        )
+        check("javascript: URL stripping", "javascript:" in sec_content)
 
 
 # ========== CORS ==========
@@ -522,19 +555,21 @@ def audit_cors():
 
     content = cors_file.read_text()
 
-    check("CORS origin validation",
-          "resolve_cors_origins" in content,
-          "Ensures only allowed origins can access API")
+    check(
+        "CORS origin validation",
+        "resolve_cors_origins" in content,
+        "Ensures only allowed origins can access API",
+    )
 
-    has_wildcard_check = re.search(r'\*.*(?:ignore|reject|deny|block)', content, re.IGNORECASE)
-    check("Wildcard origin not blindly accepted",
-          bool(has_wildcard_check) or "allow_credentials" in content,
-          "CORS wildcard + credentials = insecure")
+    has_wildcard_check = re.search(r"\*.*(?:ignore|reject|deny|block)", content, re.IGNORECASE)
+    check(
+        "Wildcard origin not blindly accepted",
+        bool(has_wildcard_check) or "allow_credentials" in content,
+        "CORS wildcard + credentials = insecure",
+    )
 
     has_https_validation = "http" in content and "https" in content
-    check("HTTPS-only origin validation",
-          has_https_validation,
-          "Allows enforcing HTTPS origins")
+    check("HTTPS-only origin validation", has_https_validation, "Allows enforcing HTTPS origins")
 
 
 # ========== CONFIGURATION SECURITY ==========
@@ -544,31 +579,40 @@ def audit_config_security():
     config_service = CONTROL_PLANE / "app" / "services" / "config_service.py"
     if config_service.exists():
         content = config_service.read_text()
-        check("Sensitive field validation rejects defaults",
-              "change-me" in content.lower() or "insecure" in content.lower(),
-              "Rejects default/placeholder secrets")
+        check(
+            "Sensitive field validation rejects defaults",
+            "change-me" in content.lower() or "insecure" in content.lower(),
+            "Rejects default/placeholder secrets",
+        )
 
-        check("File-based secret injection supported",
-              "_resolve_file_secret" in content or "_FILE" in content,
-              "Env file pattern for container secrets")
+        check(
+            "File-based secret injection supported",
+            "_resolve_file_secret" in content or "_FILE" in content,
+            "Env file pattern for container secrets",
+        )
 
-        check("Security profile maps to feature flags",
-              "SECURITY_PROFILE" in content or "security_profile" in content.lower())
+        check(
+            "Security profile maps to feature flags",
+            "SECURITY_PROFILE" in content or "security_profile" in content.lower(),
+        )
 
     subsection("10.1 Runtime Security Validation")
     runtime_sec = CONTROL_PLANE / "app" / "core" / "runtime_security.py"
     if runtime_sec.exists():
         content = runtime_sec.read_text()
-        check("Admin token strength validation",
-              "is_strong_admin_token" in content,
-              "Ensures minimum token complexity")
+        check(
+            "Admin token strength validation",
+            "is_strong_admin_token" in content,
+            "Ensures minimum token complexity",
+        )
 
-        check("Deployment mode security constraints",
-              "validate_runtime_security" in content,
-              "Startup fails if security requirements not met")
+        check(
+            "Deployment mode security constraints",
+            "validate_runtime_security" in content,
+            "Startup fails if security requirements not met",
+        )
 
-        check("Strong token required for public exposure",
-              "PUBLIC_EXPOSURE" in content)
+        check("Strong token required for public exposure", "PUBLIC_EXPOSURE" in content)
 
 
 # ========== SECRET SCANNING ==========
@@ -576,8 +620,13 @@ def audit_secret_leakage():
     section("11. SECRET LEAKAGE DETECTION")
 
     sensitive_patterns = [
-        "*private_key*", "*secret*", "*.pem", "*.env*",
-        "*token*", "*credential*", "*.key",
+        "*private_key*",
+        "*secret*",
+        "*.pem",
+        "*.env*",
+        "*token*",
+        "*credential*",
+        "*.key",
     ]
 
     subsection("11.1 Scanning code for hardcoded secrets")
@@ -592,17 +641,18 @@ def audit_secret_leakage():
         if findings:
             total_secrets_found += len(findings)
             for line_no, desc, match in findings:
-                warn(f"Potential secret in {f.relative_to(ROOT)}:{line_no} - {desc}",
-                     match)
+                warn(f"Potential secret in {f.relative_to(ROOT)}:{line_no} - {desc}", match)
 
     if total_secrets_found == 0:
         check("No hardcoded secrets in source tree", True)
 
     subsection("11.2 .env backup files")
     env_backups = list(ROOT.glob("*.env.local.bak*"))
-    check(f"No .env backup files in repo ({len(env_backups)} found)",
-          len(env_backups) == 0,
-          f"Found: {[f.name for f in env_backups]}")
+    check(
+        f"No .env backup files in repo ({len(env_backups)} found)",
+        len(env_backups) == 0,
+        f"Found: {[f.name for f in env_backups]}",
+    )
 
 
 # ========== DOCKER SECURITY ==========
@@ -610,21 +660,24 @@ def audit_docker():
     section("12. DOCKER SECURITY")
 
     dockerfiles = list(DOCKER_DIR.rglob("Dockerfile*"))
-    check(f"Dockerfiles found ({len(dockerfiles)})",
-          len(dockerfiles) >= 3)
+    check(f"Dockerfiles found ({len(dockerfiles)})", len(dockerfiles) >= 3)
 
     for df in dockerfiles:
         content = df.read_text()
         name = df.relative_to(ROOT)
-        has_nonroot = "USER" in content and "root" not in content.split("USER")[-1].split("\n")[0].strip()
+        has_nonroot = (
+            "USER" in content and "root" not in content.split("USER")[-1].split("\n")[0].strip()
+        )
         has_healthcheck = "HEALTHCHECK" in content
         has_no_shell = "exec" in content or "apt-get" in content
 
         if has_nonroot:
             check(f"{name} - Runs as non-root user", True)
         else:
-            warn(f"{name} - Runs as root (potential privilege escalation)",
-                 "Add 'USER' directive for least privilege")
+            warn(
+                f"{name} - Runs as root (potential privilege escalation)",
+                "Add 'USER' directive for least privilege",
+            )
 
         if has_healthcheck:
             check(f"{name} - HEALTHCHECK defined", True)
@@ -638,7 +691,9 @@ def audit_kubernetes():
 
     k8s_manifests = list(DEPLOY_DIR.rglob("*.yaml")) + list(DEPLOY_DIR.rglob("*.yml"))
     k8s_files = [f for f in k8s_manifests if "helm" not in str(f)]
-    helm_files = list((DEPLOY_DIR / "helm").rglob("*.yaml")) + list((DEPLOY_DIR / "helm").rglob("*.yml"))
+    helm_files = list((DEPLOY_DIR / "helm").rglob("*.yaml")) + list(
+        (DEPLOY_DIR / "helm").rglob("*.yml")
+    )
     helm_values = list((DEPLOY_DIR / "helm").rglob("values*.yaml"))
 
     subsection("13.1 Pod Security Context")
@@ -652,8 +707,10 @@ def audit_kubernetes():
             break
 
     if not has_security_context:
-        warn("Pod/Container SecurityContext configured",
-             "Missing SecurityContext = runAsNonRoot, readOnlyRootFilesystem, etc.")
+        warn(
+            "Pod/Container SecurityContext configured",
+            "Missing SecurityContext = runAsNonRoot, readOnlyRootFilesystem, etc.",
+        )
     else:
         check("Pod/Container SecurityContext configured", True)
 
@@ -668,8 +725,10 @@ def audit_kubernetes():
             break
 
     if not has_network_policy:
-        warn("NetworkPolicy resources defined",
-             "Missing NetworkPolicy = no pod-level network segmentation")
+        warn(
+            "NetworkPolicy resources defined",
+            "Missing NetworkPolicy = no pod-level network segmentation",
+        )
     else:
         check("NetworkPolicy resources defined", True)
 
@@ -684,9 +743,11 @@ def audit_kubernetes():
                     has_secret_template = True
                     break
 
-    check("Helm Secret template exists",
-          has_secret_template,
-          "Kubernetes Secrets preferred over ConfigMaps for sensitive data")
+    check(
+        "Helm Secret template exists",
+        has_secret_template,
+        "Kubernetes Secrets preferred over ConfigMaps for sensitive data",
+    )
 
 
 # ========== NETWORK SECURITY ==========
@@ -704,9 +765,11 @@ def audit_network():
         is_override = any(x in name.name for x in [".dev", ".prod", ".quickstart"])
         if not is_override:
             has_internal_network = "internal: true" in content
-            check(f"{name} - Internal network isolation",
-                  has_internal_network,
-                  "Data plane should not be externally accessible")
+            check(
+                f"{name} - Internal network isolation",
+                has_internal_network,
+                "Data plane should not be externally accessible",
+            )
         else:
             check(f"{name} - Inherits network from docker-compose.yml (override file)", True)
 
@@ -721,7 +784,11 @@ def audit_network():
         for f in reverse_proxy_dir.glob("*"):
             if f.is_file():
                 content = f.read_text()
-                if "ssl" in content.lower() or "tls" in content.lower() or "https" in content.lower():
+                if (
+                    "ssl" in content.lower()
+                    or "tls" in content.lower()
+                    or "https" in content.lower()
+                ):
                     check(f"{f.name} - TLS configured", True)
                     break
 
@@ -740,21 +807,20 @@ def audit_compliance():
     mappings_dir = compliance_dir / "mappings"
 
     policies = list(policies_dir.glob("*.md")) if policies_dir.exists() else []
-    check(f"Security policies defined ({len(policies)})",
-          len(policies) >= 3,
-          "Need: access control, information security, secure development")
+    check(
+        f"Security policies defined ({len(policies)})",
+        len(policies) >= 3,
+        "Need: access control, information security, secure development",
+    )
 
     risk_register = list(risk_dir.glob("*risk*")) if risk_dir.exists() else []
-    check("Risk register exists",
-          len(risk_register) > 0)
+    check("Risk register exists", len(risk_register) > 0)
 
     soa = list(risk_dir.glob("*applicability*")) if risk_dir.exists() else []
-    check("Statement of Applicability exists",
-          len(soa) > 0)
+    check("Statement of Applicability exists", len(soa) > 0)
 
     soc2_map = list(mappings_dir.glob("*soc2*")) if mappings_dir.exists() else []
-    check("SOC 2 control mapping exists",
-          len(soc2_map) > 0)
+    check("SOC 2 control mapping exists", len(soc2_map) > 0)
 
 
 # ========== SECURITY TEST COVERAGE ==========
@@ -765,9 +831,11 @@ def audit_test_coverage():
     security_test_dirs += list(TESTS_DIR.rglob("security/test_*.py"))
     security_test_dirs = list(set(security_test_dirs))
 
-    check(f"Security-specific test files ({len(security_test_dirs)})",
-          len(security_test_dirs) >= 10,
-          "Aim for 15+ security test files for comprehensive coverage")
+    check(
+        f"Security-specific test files ({len(security_test_dirs)})",
+        len(security_test_dirs) >= 10,
+        "Aim for 15+ security test files for comprehensive coverage",
+    )
 
     security_test_names = {f.name for f in security_test_dirs}
     all_test_files = list(TESTS_DIR.rglob("test_*.py"))
@@ -786,9 +854,7 @@ def audit_test_coverage():
 
     for test_file, description in critical_tests.items():
         found = test_file in all_test_names
-        check(f"Critical test: {description}",
-              found,
-              f"Missing: {test_file}")
+        check(f"Critical test: {description}", found, f"Missing: {test_file}")
 
 
 # ========== FEATURE FLAGS SECURITY ==========
@@ -805,10 +871,14 @@ def audit_feature_flags():
     risk_high_count = content.count("risk_level: high")
     risk_medium_count = content.count("risk_level: medium")
 
-    high_risk_disabled = len(re.findall(r'risk_level:\s*high.*?default:\s*false', content, re.DOTALL))
-    check("High-risk feature flags disabled by default",
-          high_risk_disabled >= 1,
-          "All high-risk features should default to false")
+    high_risk_disabled = len(
+        re.findall(r"risk_level:\s*high.*?default:\s*false", content, re.DOTALL)
+    )
+    check(
+        "High-risk feature flags disabled by default",
+        high_risk_disabled >= 1,
+        "All high-risk features should default to false",
+    )
 
     checks = [
         ("AGENT_CONNECTOR_WRITE_ENABLED: false", "Connector writes blocked by default"),
@@ -818,9 +888,7 @@ def audit_feature_flags():
     ]
 
     for pattern, desc in checks:
-        check(desc,
-              pattern in content or f"default: false" in content,
-              f"Cannot verify: {pattern}")
+        check(desc, pattern in content or "default: false" in content, f"Cannot verify: {pattern}")
 
 
 # ========== CI/CD SECURITY ==========
@@ -830,23 +898,25 @@ def audit_cicd():
     github_workflows = ROOT / ".github" / "workflows"
     if github_workflows.exists():
         workflows = list(github_workflows.glob("*.yml")) + list(github_workflows.glob("*.yaml"))
-        check(f"GitHub Actions workflows ({len(workflows)})",
-              len(workflows) > 0)
+        check(f"GitHub Actions workflows ({len(workflows)})", len(workflows) > 0)
     else:
-            warn("GitHub Actions workflows directory not found",
-             "No CI/CD pipeline definition")
+        warn("GitHub Actions workflows directory not found", "No CI/CD pipeline definition")
 
     precommit = ROOT / ".pre-commit-config.yaml"
     if precommit.exists():
         content = precommit.read_text()
         has_ruff = "ruff" in content
         has_mypy = "mypy" in content
-        has_security_hook = any(h in content for h in ["bandit", "gitleaks", "trufflehog", "detect-secrets"])
+        has_security_hook = any(
+            h in content for h in ["bandit", "gitleaks", "trufflehog", "detect-secrets"]
+        )
         check("Ruff linter in pre-commit", has_ruff)
         check("Mypy type checker in pre-commit", has_mypy)
         if not has_security_hook:
-            warn("Security hooks (bandit/gitleaks) in pre-commit",
-                 "No security-focused pre-commit hooks configured")
+            warn(
+                "Security hooks (bandit/gitleaks) in pre-commit",
+                "No security-focused pre-commit hooks configured",
+            )
         else:
             check("Security hooks (bandit/gitleaks) in pre-commit", True)
     else:
@@ -861,56 +931,80 @@ def audit_misc():
     cb = CONTROL_PLANE / "app" / "services" / "circuit_breaker.py"
     if cb.exists():
         content = cb.read_text()
-        check("Circuit breaker for data plane protection",
-              "CircuitBreaker" in content,
-              "Prevents cascading failures")
+        check(
+            "Circuit breaker for data plane protection",
+            "CircuitBreaker" in content,
+            "Prevents cascading failures",
+        )
 
     subsection("19.2 Request Context")
     rc = CONTROL_PLANE / "app" / "core" / "request_context.py"
     if rc.exists():
         content = rc.read_text()
-        check("Request contextvar isolation",
-              "contextvars" in content or "ContextVar" in content,
-              "Prevents context leakage between requests")
+        check(
+            "Request contextvar isolation",
+            "contextvars" in content or "ContextVar" in content,
+            "Prevents context leakage between requests",
+        )
 
     subsection("19.3 Immutable Audit Logs")
     audit_service_dir = CONTROL_PLANE / "app" / "services" / "security"
     if audit_service_dir.exists():
-        audit_files = [f for f in audit_service_dir.glob("*audit*") or audit_service_dir.glob("*immutable*")]
-        check(f"Immutable audit service ({len(audit_files)} files)",
-              len(audit_files) >= 1,
-              "Audit logs must be tamper-evident")
+        audit_files = [
+            f for f in audit_service_dir.glob("*audit*") or audit_service_dir.glob("*immutable*")
+        ]
+        check(
+            f"Immutable audit service ({len(audit_files)} files)",
+            len(audit_files) >= 1,
+            "Audit logs must be tamper-evident",
+        )
 
     subsection("19.4 PKI / mTLS")
     sec_dir = CONTROL_PLANE / "app" / "services" / "security"
     if sec_dir.exists():
-        pki_files = list(sec_dir.glob("*pki*")) + list(sec_dir.glob("*cert*")) + list(sec_dir.glob("*attest*"))
-        check(f"PKI/attestation modules ({len(pki_files)} files)",
-              len(pki_files) >= 1,
-              "PKI for mutual TLS and attestation")
+        pki_files = (
+            list(sec_dir.glob("*pki*"))
+            + list(sec_dir.glob("*cert*"))
+            + list(sec_dir.glob("*attest*"))
+        )
+        check(
+            f"PKI/attestation modules ({len(pki_files)} files)",
+            len(pki_files) >= 1,
+            "PKI for mutual TLS and attestation",
+        )
 
     subsection("19.5 DLP / PII")
     security_dir = CONTROL_PLANE / "app" / "services" / "security"
     if security_dir.exists():
         dlp_files = list(security_dir.glob("*dlp*")) + list(security_dir.glob("*pii*"))
-        check(f"DLP / PII protection modules ({len(dlp_files)} files)",
-              len(dlp_files) >= 1,
-              "Data Loss Prevention for sensitive content")
+        check(
+            f"DLP / PII protection modules ({len(dlp_files)} files)",
+            len(dlp_files) >= 1,
+            "Data Loss Prevention for sensitive content",
+        )
 
     subsection("19.6 Tenant Encryption")
     if security_dir.exists():
         enc_files = list(security_dir.glob("*encrypt*"))
-        check(f"Tenant encryption modules ({len(enc_files)} files)",
-              len(enc_files) >= 1,
-              "Per-tenant encryption at rest")
+        check(
+            f"Tenant encryption modules ({len(enc_files)} files)",
+            len(enc_files) >= 1,
+            "Per-tenant encryption at rest",
+        )
 
     subsection("19.7 Agent IAM / OAuth")
     api_dir = CONTROL_PLANE / "app" / "api"
     if api_dir.exists():
-        oauth_files = list(api_dir.glob("*oauth*")) + list(api_dir.glob("*iam*")) + list(api_dir.glob("*agent_iam*"))
-        check(f"OAuth/IAM for agents ({len(oauth_files)} files)",
-              len(oauth_files) >= 1,
-              "Agent identity and OAuth delegation")
+        oauth_files = (
+            list(api_dir.glob("*oauth*"))
+            + list(api_dir.glob("*iam*"))
+            + list(api_dir.glob("*agent_iam*"))
+        )
+        check(
+            f"OAuth/IAM for agents ({len(oauth_files)} files)",
+            len(oauth_files) >= 1,
+            "Agent identity and OAuth delegation",
+        )
 
 
 # ========== REPORT ==========
@@ -939,7 +1033,9 @@ def generate_report():
                 if detail:
                     print(f"           {detail}")
 
-    print(f"\n {BOLD}SECURITY SCORE:{RESET} {pass_count}/{total} ({pass_count*100//max(total,1)}%)")
+    print(
+        f"\n {BOLD}SECURITY SCORE:{RESET} {pass_count}/{total} ({pass_count * 100 // max(total, 1)}%)"
+    )
     if failures_count == 0:
         print(f" {GREEN}No critical security issues detected.{RESET}")
     else:
@@ -951,7 +1047,7 @@ def generate_report():
 def main():
     print(f"\n{BOLD}╔══════════════════════════════════════════════════╗{RESET}")
     print(f"{BOLD}║   LLM INFERENCE STACK - SECURITY AUDIT           ║{RESET}")
-    print(f"{BOLD}║   {datetime.now(timezone.utc).isoformat()}           ║{RESET}")
+    print(f"{BOLD}║   {datetime.now(UTC).isoformat()}           ║{RESET}")
     print(f"{BOLD}╚══════════════════════════════════════════════════╝{RESET}\n")
 
     audit_authentication()

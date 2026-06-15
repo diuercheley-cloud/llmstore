@@ -22,7 +22,7 @@ export default function Rag() {
     setLoading(false)
   }
 
-  useEffect(() => { fetchData() }, [])
+  useEffect(() => { void Promise.resolve().then(() => fetchData()) }, [])
 
   const handleCreate = async () => {
     const name = prompt('Nome da coleção:')

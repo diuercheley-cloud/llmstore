@@ -3,7 +3,7 @@ import json
 import os
 import uuid
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from app.core.time import utc_now
 from app.models.commercial.commercial_compliance import (
@@ -19,7 +19,7 @@ class AuditPackService:
         self.db = db
         self.base_path = Path("compliance/audit-packs")
 
-    async def generate_pack(self, standard: str = "soc2") -> Dict[str, Any]:
+    async def generate_pack(self, standard: str = "soc2") -> dict[str, Any]:
         """
         Generates a structured audit pack for a given standard.
         """
@@ -29,9 +29,11 @@ class AuditPackService:
         os.makedirs(pack_dir, exist_ok=True)
 
         evidence_list = []
-        
+
         # 1. Collect Operational Evidence
-        op_evidence = list((await self.db.execute(select(CommercialOperationalEvidence))).scalars().all())
+        op_evidence = list(
+            (await self.db.execute(select(CommercialOperationalEvidence))).scalars().all()
+        )
         for ev in op_evidence:
             data = {
                 "id": str(ev.id),
@@ -39,20 +41,22 @@ class AuditPackService:
                 "title": ev.title,
                 "summary": ev.summary,
                 "collected_at": ev.collected_at.isoformat() if ev.collected_at else None,
-                "content": self._sanitize_content(ev.evidence_json or {})
+                "content": self._sanitize_content(ev.evidence_json or {}),
             }
             evidence_list.append(data)
             self._save_evidence_file(pack_dir, f"op_{ev.id}.json", data)
 
         # 2. Collect Attestations
-        attestations = list((await self.db.execute(select(CommercialControlAttestation))).scalars().all())
+        attestations = list(
+            (await self.db.execute(select(CommercialControlAttestation))).scalars().all()
+        )
         for att in attestations:
             data = {
                 "id": str(att.id),
                 "policy_id": str(att.control_policy_id),
                 "attested_by": att.attested_by,
                 "status": att.status,
-                "period": f"{att.attestation_period_start} to {att.attestation_period_end}"
+                "period": f"{att.attestation_period_start} to {att.attestation_period_end}",
             }
             evidence_list.append(data)
             self._save_evidence_file(pack_dir, f"att_{att.id}.json", data)
@@ -63,7 +67,7 @@ class AuditPackService:
             "standard": standard,
             "generated_at": timestamp,
             "evidence_count": len(evidence_list),
-            "checksum": self._calculate_hash(evidence_list)
+            "checksum": self._calculate_hash(evidence_list),
         }
         self._save_evidence_file(pack_dir, "manifest.json", manifest)
 
@@ -74,7 +78,11 @@ class AuditPackService:
         Removes secrets and sensitive data from evidence.
         """
         if isinstance(content, dict):
-            return {k: self._sanitize_content(v) for k, v in content.items() if not self._is_secret_key(k)}
+            return {
+                k: self._sanitize_content(v)
+                for k, v in content.items()
+                if not self._is_secret_key(k)
+            }
         elif isinstance(content, list):
             return [self._sanitize_content(i) for i in content]
         return content

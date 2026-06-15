@@ -14,7 +14,7 @@ import json
 import os
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -63,7 +63,9 @@ def estimate_openai_cost_usd(model: str, prompt_tokens: int, completion_tokens: 
         else:
             return 0.0
     prompt_price, completion_price = pricing[key]
-    return (prompt_tokens / 1_000_000 * prompt_price) + (completion_tokens / 1_000_000 * completion_price)
+    return (prompt_tokens / 1_000_000 * prompt_price) + (
+        completion_tokens / 1_000_000 * completion_price
+    )
 
 
 def get_fx_rate_brl() -> float:
@@ -82,11 +84,15 @@ class OpenAIRealValidator:
         self.args = args
         self.env = env
         self.dry_run = args.dry_run
-        self.max_cost_brl = args.max_cost_brl or float(env.get("REAL_PROVIDER_MAX_COST_BRL", "2.00"))
+        self.max_cost_brl = args.max_cost_brl or float(
+            env.get("REAL_PROVIDER_MAX_COST_BRL", "2.00")
+        )
         self.model = args.model or (env.get("OPENAI_CHAT_MODEL") or "gpt-4o-mini")
-        self.emb_model = args.embeddings_model or (env.get("OPENAI_EMBEDDINGS_MODEL") or "text-embedding-3-small")
+        self.emb_model = args.embeddings_model or (
+            env.get("OPENAI_EMBEDDINGS_MODEL") or "text-embedding-3-small"
+        )
         self.output_dir = Path(args.output_dir)
-        self.timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        self.timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         self.report: dict[str, Any] = {
             "validator": "openai-real-provider",
             "timestamp": self.timestamp,
@@ -111,7 +117,9 @@ class OpenAIRealValidator:
         return self.env.get("OPENAI_API_KEY") or os.environ.get("OPENAI_API_KEY")
 
     def _get_base_url(self) -> str:
-        return self.env.get("OPENAI_BASE_URL") or os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
+        return self.env.get("OPENAI_BASE_URL") or os.environ.get(
+            "OPENAI_BASE_URL", "https://api.openai.com/v1"
+        )
 
     def run(self) -> dict[str, Any]:
         # ── Step 1: Validate env ─────────────────────────────────
@@ -127,17 +135,27 @@ class OpenAIRealValidator:
         ope = self.env.get("OPENAI_PROVIDER_ENABLED", "false")
 
         if rpv not in ("true", "1"):
-            self._check("env.real_provider_validation_enabled", "skip", "REAL_PROVIDER_VALIDATION_ENABLED is not true")
+            self._check(
+                "env.real_provider_validation_enabled",
+                "skip",
+                "REAL_PROVIDER_VALIDATION_ENABLED is not true",
+            )
             self.report["status"] = "OPENAI_REAL_SKIP"
             return self.report
 
         if ope not in ("true", "1"):
-            self._check("env.openai_provider_enabled", "skip", "OPENAI_PROVIDER_ENABLED is not true")
+            self._check(
+                "env.openai_provider_enabled", "skip", "OPENAI_PROVIDER_ENABLED is not true"
+            )
             self.report["status"] = "OPENAI_REAL_SKIP"
             return self.report
 
         self._check("env.api_key", "pass", f"key {mask_key(api_key)}, base={base_url}")
-        self._check("env.guards", "pass", "REAL_PROVIDER_VALIDATION_ENABLED=true, OPENAI_PROVIDER_ENABLED=true")
+        self._check(
+            "env.guards",
+            "pass",
+            "REAL_PROVIDER_VALIDATION_ENABLED=true, OPENAI_PROVIDER_ENABLED=true",
+        )
 
         if self.dry_run:
             self._check("dry_run", "pass", "Dry-run mode — no real calls made")
@@ -179,7 +197,13 @@ class OpenAIRealValidator:
             if resp.is_success:
                 data = resp.json()
                 models = [m["id"] for m in data.get("data", [])[:5]]
-                self._check("health", "pass", f"latency={latency}ms, {len(data.get('data',[]))} models", latency_ms=latency, models=models[:3])
+                self._check(
+                    "health",
+                    "pass",
+                    f"latency={latency}ms, {len(data.get('data', []))} models",
+                    latency_ms=latency,
+                    models=models[:3],
+                )
             else:
                 self._check("health", "fail", f"HTTP {resp.status_code}", latency_ms=latency)
         except Exception as e:
@@ -211,7 +235,11 @@ class OpenAIRealValidator:
                 output_text = ""
                 output_texts = data.get("output_text", [])
                 if isinstance(output_texts, list) and output_texts:
-                    output_text = output_texts[0] if isinstance(output_texts[0], str) else str(output_texts[0])
+                    output_text = (
+                        output_texts[0]
+                        if isinstance(output_texts[0], str)
+                        else str(output_texts[0])
+                    )
                 elif isinstance(output_texts, str):
                     output_text = output_texts
                 output_list = data.get("output", [])
@@ -225,14 +253,21 @@ class OpenAIRealValidator:
                                         output_text = c.get("text", "")
                 usage = data.get("usage", {}) or data.get("response_usage", {})
                 prompt_tokens = usage.get("input_tokens", 0) or usage.get("prompt_tokens", 0)
-                completion_tokens = usage.get("output_tokens", 0) or usage.get("completion_tokens", 0)
+                completion_tokens = usage.get("output_tokens", 0) or usage.get(
+                    "completion_tokens", 0
+                )
                 cost_usd = estimate_openai_cost_usd(self.model, prompt_tokens, completion_tokens)
                 cost_brl = cost_usd * get_fx_rate_brl()
                 response_valid = "OK" in output_text.upper() if output_text else False
                 if cost_brl > self.max_cost_brl:
-                    self._check("responses.cost_cap", "fail", f"cost R${cost_brl:.4f} exceeds max R${self.max_cost_brl}")
+                    self._check(
+                        "responses.cost_cap",
+                        "fail",
+                        f"cost R${cost_brl:.4f} exceeds max R${self.max_cost_brl}",
+                    )
                 self._check(
-                    "responses", "pass" if response_valid else "warn",
+                    "responses",
+                    "pass" if response_valid else "warn",
                     f"latency={latency}ms, tokens={prompt_tokens}+{completion_tokens}, "
                     f"cost=R${cost_brl:.6f}, response_valid={response_valid}",
                     latency_ms=latency,
@@ -255,14 +290,27 @@ class OpenAIRealValidator:
                     "latency_ms": latency,
                 }
                 if not log_prompts:
-                    self._check("responses.sanitized", "pass", "prompt not logged (REAL_PROVIDER_LOG_PROMPTS=false)")
+                    self._check(
+                        "responses.sanitized",
+                        "pass",
+                        "prompt not logged (REAL_PROVIDER_LOG_PROMPTS=false)",
+                    )
                 store = self.env.get("REAL_PROVIDER_STORE_RESPONSES", "false") in ("true", "1")
                 if store:
                     self._check("responses.stored", "pass", "response stored in output artifact")
                 else:
-                    self._check("responses.stored", "pass", "response not stored (REAL_PROVIDER_STORE_RESPONSES=false)")
+                    self._check(
+                        "responses.stored",
+                        "pass",
+                        "response not stored (REAL_PROVIDER_STORE_RESPONSES=false)",
+                    )
             else:
-                self._check("responses", "fail", f"HTTP {resp.status_code}: {resp.text[:200]}", latency_ms=latency)
+                self._check(
+                    "responses",
+                    "fail",
+                    f"HTTP {resp.status_code}: {resp.text[:200]}",
+                    latency_ms=latency,
+                )
         except Exception as e:
             self._check("responses", "fail", str(e), latency_ms=0)
 
@@ -293,7 +341,8 @@ class OpenAIRealValidator:
                 cost_usd = estimate_openai_cost_usd(self.emb_model, prompt_tokens, 0)
                 cost_brl = cost_usd * get_fx_rate_brl()
                 self._check(
-                    "embeddings", "pass" if valid else "fail",
+                    "embeddings",
+                    "pass" if valid else "fail",
                     f"latency={latency}ms, dim={dim}, tokens={prompt_tokens}, cost=R${cost_brl:.8f}",
                     latency_ms=latency,
                     dimensions=dim,
@@ -303,7 +352,12 @@ class OpenAIRealValidator:
                     cost_brl=cost_brl,
                 )
             else:
-                self._check("embeddings", "fail", f"HTTP {resp.status_code}: {resp.text[:200]}", latency_ms=latency)
+                self._check(
+                    "embeddings",
+                    "fail",
+                    f"HTTP {resp.status_code}: {resp.text[:200]}",
+                    latency_ms=latency,
+                )
         except Exception as e:
             self._check("embeddings", "fail", str(e), latency_ms=0)
 
@@ -386,7 +440,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--max-cost-brl", type=float, default=None, help="Max cost in BRL")
     p.add_argument("--model", default=None, help="Chat model to use")
     p.add_argument("--embeddings-model", default=None, help="Embeddings model to use")
-    p.add_argument("--output-dir", default=str(PROJECT_ROOT / "artifacts" / "real-provider-validation" / "openai"), help="Output directory")
+    p.add_argument(
+        "--output-dir",
+        default=str(PROJECT_ROOT / "artifacts" / "real-provider-validation" / "openai"),
+        help="Output directory",
+    )
     return p.parse_args(argv)
 
 
@@ -405,7 +463,9 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  Report: {report_path}")
     billing = report.get("billing")
     if billing:
-        print(f"  Estimated cost: USD ${billing['cost_usd']:.8f} / BRL R$ {billing['cost_brl']:.8f}")
+        print(
+            f"  Estimated cost: USD ${billing['cost_usd']:.8f} / BRL R$ {billing['cost_brl']:.8f}"
+        )
         print(f"  Latency: {billing['latency_ms']}ms")
     for c in report["checks"]:
         icon = {"pass": "OK", "fail": "FAIL", "skip": "SKIP", "warn": "WARN"}.get(c["status"], "?")

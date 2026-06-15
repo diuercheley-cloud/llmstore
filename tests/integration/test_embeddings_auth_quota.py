@@ -5,8 +5,8 @@ import pytest_asyncio
 from app.db.base import Base
 from app.db.session import get_db_session, get_redis
 from app.main import app
-from app.models.core.api_key import ApiKey
 from app.models.billing.billing_plan import BillingPlan
+from app.models.core.api_key import ApiKey
 from app.models.core.client import Client
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -33,11 +33,12 @@ async def client_with_embeddings_plan(isolated_db_url, fake_redis):
     app.dependency_overrides.clear()
     await engine.dispose()
 
+
 @pytest.mark.asyncio
 @patch("app.services.auth.verify_secret", return_value=True)
 async def test_embeddings_plan_disabled(mock_verify, client_with_embeddings_plan):
     async_client, sessionmaker = client_with_embeddings_plan
-    
+
     async with sessionmaker() as session:
         # Create plan with embeddings disabled
         plan = BillingPlan(
@@ -47,38 +48,37 @@ async def test_embeddings_plan_disabled(mock_verify, client_with_embeddings_plan
             rate_limit_per_minute=10,
             daily_token_quota=1000,
             monthly_token_quota=10000,
-            max_output_tokens=512
+            max_output_tokens=512,
         )
         session.add(plan)
         await session.commit()
         await session.refresh(plan)
-        
+
         client = Client(name="limited-client", billing_status="active", billing_plan_id=plan.id)
         session.add(client)
         await session.commit()
         await session.refresh(client)
-        
+
         # Prefix MUST be 12 chars for require_client
         prefix = "sk-no-emb-12"
         api_key = ApiKey(client_id=client.id, name="k", key_prefix=prefix, key_hash="h")
         session.add(api_key)
         await session.commit()
-        
+
         headers = {"Authorization": f"Bearer {prefix}.val"}
-        
+
         response = await async_client.post(
-            "/v1/embeddings",
-            headers=headers,
-            json={"model": "t", "input": "test"}
+            "/v1/embeddings", headers=headers, json={"model": "t", "input": "test"}
         )
         assert response.status_code == 403
         assert "not enabled for your plan" in response.text
+
 
 @pytest.mark.asyncio
 @patch("app.services.auth.verify_secret", return_value=True)
 async def test_embeddings_input_limit(mock_verify, client_with_embeddings_plan):
     async_client, sessionmaker = client_with_embeddings_plan
-    
+
     async with sessionmaker() as session:
         plan = BillingPlan(
             code="emb_limited",
@@ -88,27 +88,25 @@ async def test_embeddings_input_limit(mock_verify, client_with_embeddings_plan):
             rate_limit_per_minute=10,
             daily_token_quota=1000,
             monthly_token_quota=10000,
-            max_output_tokens=512
+            max_output_tokens=512,
         )
         session.add(plan)
         await session.commit()
-        
+
         client = Client(name="client", billing_status="active", billing_plan_id=plan.id)
         session.add(client)
         await session.commit()
-        
+
         prefix = "sk-emb-lim-1"
         api_key = ApiKey(client_id=client.id, name="k", key_prefix=prefix, key_hash="h")
         session.add(api_key)
         await session.commit()
-        
+
         headers = {"Authorization": f"Bearer {prefix}.val"}
-        
+
         # Should fail with 3 inputs
         response = await async_client.post(
-            "/v1/embeddings",
-            headers=headers,
-            json={"model": "t", "input": ["a", "b", "c"]}
+            "/v1/embeddings", headers=headers, json={"model": "t", "input": ["a", "b", "c"]}
         )
         assert response.status_code == 400
         assert "too many inputs" in response.text

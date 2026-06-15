@@ -40,8 +40,7 @@ class PromptBuilder:
             )
         else:
             prompt = (
-                "You are a Senior Software Engineer AI Agent specialized in "
-                f"{self.task_type}.\n"
+                f"You are a Senior Software Engineer AI Agent specialized in {self.task_type}.\n"
             )
             prompt += "Your goal is to solve the task autonomously and safely.\n\n"
 
@@ -76,7 +75,6 @@ class PromptBuilder:
                 prompt += "\n"
 
         if self.policy_summary:
-
             prompt += self.policy_summary + "\n"
 
         if self.rules_context:
@@ -98,7 +96,7 @@ class PromptBuilder:
         if self.few_shots:
             prompt += "## Examples (Few-Shot)\n"
             for i, example in enumerate(self.few_shots):
-                prompt += f"Example {i+1}:\n{example}\n\n"
+                prompt += f"Example {i + 1}:\n{example}\n\n"
 
         prompt += "## Guidelines\n"
         if self.interaction_mode == "chat":
@@ -136,7 +134,7 @@ class PromptBuilder:
                 if ctx:
                     formatted_text += f"### Context\n{ctx}\n\n"
                 formatted_text += "Respond only with the next action as a JSON object."
-                
+
                 new_task = []
                 for b in task:
                     if b.get("type") == "text":

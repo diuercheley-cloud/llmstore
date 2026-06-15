@@ -1,7 +1,7 @@
 import logging
 import uuid
 from datetime import timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -13,7 +13,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
-async def capture_capacity_snapshot(db: AsyncSession, cluster_id: Optional[str] = None) -> List[CommercialCapacitySnapshot]:
+
+async def capture_capacity_snapshot(
+    db: AsyncSession, cluster_id: str | None = None
+) -> list[CommercialCapacitySnapshot]:
     """
     Captures a snapshot of the current cluster capacity based on recent events and node status.
     """
@@ -30,56 +33,67 @@ async def capture_capacity_snapshot(db: AsyncSession, cluster_id: Optional[str] 
 
     # 1. Gather aggregate metrics from Routing Events
     # We aggregate by provider, model, qos_tier
-    metrics_stmt = select(
-        CommercialRoutingEvent.selected_provider,
-        CommercialRoutingEvent.selected_model,
-        CommercialRoutingEvent.qos_tier,
-        func.count(CommercialRoutingEvent.id).label("total_requests"),
-        func.avg(CommercialRoutingEvent.estimated_margin_percent).label("avg_margin"), # Not in snapshot but useful
-        func.sum(sa_case((CommercialRoutingEvent.sla_pass == False, 1), else_=0)).label("sla_violations"),
-        func.sum(sa_case((CommercialRoutingEvent.fallback_used == True, 1), else_=0)).label("fallbacks"),
-        func.sum(sa_case((CommercialRoutingEvent.blocked == True, 1), else_=0)).label("blocks"),
-    ).where(
-        and_(
-            CommercialRoutingEvent.created_at >= start_time,
-            # If we had a cluster_id in CommercialRoutingEvent we would filter here
-            # For now we assume the DB is cluster-scoped or shared
+    metrics_stmt = (
+        select(
+            CommercialRoutingEvent.selected_provider,
+            CommercialRoutingEvent.selected_model,
+            CommercialRoutingEvent.qos_tier,
+            func.count(CommercialRoutingEvent.id).label("total_requests"),
+            func.avg(CommercialRoutingEvent.estimated_margin_percent).label(
+                "avg_margin"
+            ),  # Not in snapshot but useful
+            func.sum(sa_case((CommercialRoutingEvent.sla_pass == False, 1), else_=0)).label(
+                "sla_violations"
+            ),
+            func.sum(sa_case((CommercialRoutingEvent.fallback_used == True, 1), else_=0)).label(
+                "fallbacks"
+            ),
+            func.sum(sa_case((CommercialRoutingEvent.blocked == True, 1), else_=0)).label("blocks"),
         )
-    ).group_by(
-        CommercialRoutingEvent.selected_provider,
-        CommercialRoutingEvent.selected_model,
-        CommercialRoutingEvent.qos_tier
+        .where(
+            and_(
+                CommercialRoutingEvent.created_at >= start_time,
+                # If we had a cluster_id in CommercialRoutingEvent we would filter here
+                # For now we assume the DB is cluster-scoped or shared
+            )
+        )
+        .group_by(
+            CommercialRoutingEvent.selected_provider,
+            CommercialRoutingEvent.selected_model,
+            CommercialRoutingEvent.qos_tier,
+        )
     )
 
     result = await db.execute(metrics_stmt)
     rows = result.all()
 
     snapshots = []
-    
+
     # Also gather node metrics for utilization
     node_stmt = select(CommercialNodeHeartbeat).where(
         and_(
-            CommercialNodeHeartbeat.last_seen_at >= now - timedelta(seconds=settings.commercial_node_offline_after_seconds),
+            CommercialNodeHeartbeat.last_seen_at
+            >= now - timedelta(seconds=settings.commercial_node_offline_after_seconds),
             # Filter by cluster if possible
         )
     )
     node_result = await db.execute(node_stmt)
     nodes = node_result.scalars().all()
-    
+
     # Simplify for Phase 21: One snapshot per (cluster, provider, model, qos_tier)
     # Plus a global cluster snapshot
-    
+
     for row in rows:
         provider, model, qos_tier, total_reqs, avg_margin, sla_v, fallbacks, blocks = row
-        
+
         rpm = total_reqs / (lookback_window.total_seconds() / 60.0)
         sla_rate = (sla_v / total_reqs * 100.0) if total_reqs > 0 else 0.0
         fallback_rate = (fallbacks / total_reqs * 100.0) if total_reqs > 0 else 0.0
         block_rate = (blocks / total_reqs * 100.0) if total_reqs > 0 else 0.0
-        
+
         # Estimate concurrency and latency from events if we had timing info
         # For Phase 21 we'll use simplified heuristics if timing is missing
-        
+
         snapshot = CommercialCapacitySnapshot(
             id=uuid.uuid4(),
             cluster_id=target_cluster,
@@ -88,24 +102,30 @@ async def capture_capacity_snapshot(db: AsyncSession, cluster_id: Optional[str] 
             qos_tier=qos_tier,
             timestamp=now,
             requests_per_minute=rpm,
-            concurrent_requests=int(rpm / 10), # Heuristic
-            avg_latency_ms=2000.0, # Placeholder
-            p95_latency_ms=5000.0, # Placeholder
-            queue_depth=0, # Placeholder
+            concurrent_requests=int(rpm / 10),  # Heuristic
+            avg_latency_ms=2000.0,  # Placeholder
+            p95_latency_ms=5000.0,  # Placeholder
+            queue_depth=0,  # Placeholder
             sla_violation_rate=sla_rate,
             fallback_rate=fallback_rate,
             block_rate=block_rate,
-            created_at=now
+            created_at=now,
         )
         db.add(snapshot)
         snapshots.append(snapshot)
 
     # Global cluster snapshot
     if nodes:
-        total_cpu = sum([n.metadata_json.get("cpu_utilization", 0.0) for n in nodes if n.metadata_json]) / len(nodes)
-        total_mem = sum([n.metadata_json.get("memory_utilization", 0.0) for n in nodes if n.metadata_json]) / len(nodes)
-        total_gpu = sum([n.metadata_json.get("gpu_utilization", 0.0) for n in nodes if n.metadata_json]) / len(nodes)
-        
+        total_cpu = sum(
+            [n.metadata_json.get("cpu_utilization", 0.0) for n in nodes if n.metadata_json]
+        ) / len(nodes)
+        total_mem = sum(
+            [n.metadata_json.get("memory_utilization", 0.0) for n in nodes if n.metadata_json]
+        ) / len(nodes)
+        total_gpu = sum(
+            [n.metadata_json.get("gpu_utilization", 0.0) for n in nodes if n.metadata_json]
+        ) / len(nodes)
+
         cluster_snapshot = CommercialCapacitySnapshot(
             id=uuid.uuid4(),
             cluster_id=target_cluster,
@@ -113,7 +133,7 @@ async def capture_capacity_snapshot(db: AsyncSession, cluster_id: Optional[str] 
             cpu_utilization=total_cpu,
             memory_utilization=total_mem,
             gpu_utilization=total_gpu,
-            created_at=now
+            created_at=now,
         )
         db.add(cluster_snapshot)
         snapshots.append(cluster_snapshot)
@@ -121,22 +141,29 @@ async def capture_capacity_snapshot(db: AsyncSession, cluster_id: Optional[str] 
     await db.commit()
     return snapshots
 
-async def summarize_cluster_capacity(db: AsyncSession, cluster_id: str, window_minutes: int = 60) -> Dict[str, Any]:
+
+async def summarize_cluster_capacity(
+    db: AsyncSession, cluster_id: str, window_minutes: int = 60
+) -> dict[str, Any]:
     start_time = utc_now() - timedelta(minutes=window_minutes)
-    stmt = select(CommercialCapacitySnapshot).where(
-        and_(
-            CommercialCapacitySnapshot.cluster_id == cluster_id,
-            CommercialCapacitySnapshot.timestamp >= start_time,
-            CommercialCapacitySnapshot.provider == None # Global cluster snapshots
+    stmt = (
+        select(CommercialCapacitySnapshot)
+        .where(
+            and_(
+                CommercialCapacitySnapshot.cluster_id == cluster_id,
+                CommercialCapacitySnapshot.timestamp >= start_time,
+                CommercialCapacitySnapshot.provider == None,  # Global cluster snapshots
+            )
         )
-    ).order_by(CommercialCapacitySnapshot.timestamp.desc())
-    
+        .order_by(CommercialCapacitySnapshot.timestamp.desc())
+    )
+
     result = await db.execute(stmt)
     snapshots = result.scalars().all()
-    
+
     if not snapshots:
         return {"cluster_id": cluster_id, "status": "no_data"}
-        
+
     latest = snapshots[0]
     return {
         "cluster_id": cluster_id,
@@ -144,18 +171,25 @@ async def summarize_cluster_capacity(db: AsyncSession, cluster_id: str, window_m
         "cpu": latest.cpu_utilization,
         "memory": latest.memory_utilization,
         "gpu": latest.gpu_utilization,
-        "snapshot_count": len(snapshots)
+        "snapshot_count": len(snapshots),
     }
 
-async def summarize_provider_capacity(db: AsyncSession, cluster_id: str, provider: str) -> Dict[str, Any]:
+
+async def summarize_provider_capacity(
+    db: AsyncSession, cluster_id: str, provider: str
+) -> dict[str, Any]:
     start_time = utc_now() - timedelta(minutes=60)
-    stmt = select(CommercialCapacitySnapshot).where(
-        and_(
-            CommercialCapacitySnapshot.cluster_id == cluster_id,
-            CommercialCapacitySnapshot.provider == provider,
-            CommercialCapacitySnapshot.timestamp >= start_time,
+    stmt = (
+        select(CommercialCapacitySnapshot)
+        .where(
+            and_(
+                CommercialCapacitySnapshot.cluster_id == cluster_id,
+                CommercialCapacitySnapshot.provider == provider,
+                CommercialCapacitySnapshot.timestamp >= start_time,
+            )
         )
-    ).order_by(CommercialCapacitySnapshot.timestamp.desc())
+        .order_by(CommercialCapacitySnapshot.timestamp.desc())
+    )
     result = await db.execute(stmt)
     snapshots = result.scalars().all()
 
@@ -163,7 +197,9 @@ async def summarize_provider_capacity(db: AsyncSession, cluster_id: str, provide
         return {"cluster_id": cluster_id, "provider": provider, "status": "no_data"}
 
     latest = snapshots[0]
-    avg_latency = sum(s.avg_latency_ms for s in snapshots if s.avg_latency_ms) / max(len(snapshots), 1)
+    avg_latency = sum(s.avg_latency_ms for s in snapshots if s.avg_latency_ms) / max(
+        len(snapshots), 1
+    )
     avg_rpm = sum(s.requests_per_minute for s in snapshots) / len(snapshots)
 
     return {
@@ -180,15 +216,21 @@ async def summarize_provider_capacity(db: AsyncSession, cluster_id: str, provide
     }
 
 
-async def summarize_qos_capacity(db: AsyncSession, cluster_id: str, qos_tier: str) -> Dict[str, Any]:
+async def summarize_qos_capacity(
+    db: AsyncSession, cluster_id: str, qos_tier: str
+) -> dict[str, Any]:
     start_time = utc_now() - timedelta(minutes=60)
-    stmt = select(CommercialCapacitySnapshot).where(
-        and_(
-            CommercialCapacitySnapshot.cluster_id == cluster_id,
-            CommercialCapacitySnapshot.qos_tier == qos_tier,
-            CommercialCapacitySnapshot.timestamp >= start_time,
+    stmt = (
+        select(CommercialCapacitySnapshot)
+        .where(
+            and_(
+                CommercialCapacitySnapshot.cluster_id == cluster_id,
+                CommercialCapacitySnapshot.qos_tier == qos_tier,
+                CommercialCapacitySnapshot.timestamp >= start_time,
+            )
         )
-    ).order_by(CommercialCapacitySnapshot.timestamp.desc())
+        .order_by(CommercialCapacitySnapshot.timestamp.desc())
+    )
     result = await db.execute(stmt)
     snapshots = result.scalars().all()
 
@@ -212,11 +254,12 @@ async def summarize_qos_capacity(db: AsyncSession, cluster_id: str, qos_tier: st
         "snapshot_count": len(snapshots),
     }
 
+
 async def cleanup_old_snapshots(db: AsyncSession) -> int:
     settings = get_settings()
     retention_days = settings.commercial_capacity_retention_days
     cutoff = utc_now() - timedelta(days=retention_days)
-    
+
     stmt = delete(CommercialCapacitySnapshot).where(CommercialCapacitySnapshot.timestamp < cutoff)
     result = await db.execute(stmt)
     await db.commit()

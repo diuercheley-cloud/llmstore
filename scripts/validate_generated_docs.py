@@ -1,4 +1,3 @@
-import os
 import sys
 from pathlib import Path
 
@@ -12,8 +11,9 @@ REQUIRED_DOCS = [
     "docs/generated/API_SURFACE.md",
     "docs/generated/STORAGE_BACKENDS.md",
     "docs/generated/BACKUP_CAPABILITIES.md",
-    "docs/generated/PRODUCT_SURFACE.md"
+    "docs/generated/PRODUCT_SURFACE.md",
 ]
+
 
 def validate():
     errors = []
@@ -22,12 +22,12 @@ def validate():
         if not full_path.exists():
             errors.append(f"Missing generated doc: {doc_path}")
             continue
-            
-        with open(full_path, "r", encoding="utf-8") as f:
+
+        with open(full_path, encoding="utf-8") as f:
             content = f.read()
             if GEN_HEADER not in content:
                 errors.append(f"Doc {doc_path} is missing the AUTO-GENERATED header.")
-                
+
     if errors:
         print("Validation FAILED:")
         for err in errors:
@@ -36,6 +36,7 @@ def validate():
     else:
         print("All generated documents are valid.")
         sys.exit(0)
+
 
 if __name__ == "__main__":
     validate()

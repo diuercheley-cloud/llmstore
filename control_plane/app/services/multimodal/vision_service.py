@@ -19,6 +19,7 @@ try:
     import io
 
     from PIL import Image
+
     HAS_PIL = True
 except ImportError:
     HAS_PIL = False
@@ -32,7 +33,7 @@ class VisionService:
     def __init__(self):
         self.policy_service = MultimodalPolicyService()
         self.usage_service = MultimodalUsageService()
-        
+
         # Ensure storage directory exists
         base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
         self.storage_dir = os.path.join(base_dir, "data", "multimodal_assets")
@@ -43,27 +44,23 @@ class VisionService:
         hostname = parsed.hostname or ""
         # Accept localhost, 127.0.0.1, internal IP ranges, or domains ending with local/internal
         is_internal = (
-            hostname in ("localhost", "127.0.0.1", "internal") or
-            hostname.startswith("10.") or
-            hostname.startswith("192.168.") or
-            hostname.startswith("172.16.") or
-            hostname.endswith(".local") or
-            hostname.endswith(".internal")
+            hostname in ("localhost", "127.0.0.1", "internal")
+            or hostname.startswith("10.")
+            or hostname.startswith("192.168.")
+            or hostname.startswith("172.16.")
+            or hostname.endswith(".local")
+            or hostname.endswith(".internal")
         )
         if not is_internal:
             raise HTTPException(
-                status_code=400,
-                detail="External URLs are blocked by default for security."
+                status_code=400, detail="External URLs are blocked by default for security."
             )
 
     def _sanitize_exif(self, image_bytes: bytes) -> tuple[bytes, bool]:
         if not HAS_PIL:
-            logger.warning(
-                "Pillow is not installed. EXIF sanitization skipped "
-                "(bytes preserved)."
-            )
+            logger.warning("Pillow is not installed. EXIF sanitization skipped (bytes preserved).")
             return image_bytes, False
-        
+
         try:
             image = Image.open(io.BytesIO(image_bytes))
             output = io.BytesIO()
@@ -81,7 +78,7 @@ class VisionService:
         image_upload: UploadFile = None,
         base64_data: str = None,
         image_url: str = None,
-        run_ocr: bool = False
+        run_ocr: bool = False,
     ) -> dict:
         # 1. Policy check
         await self.policy_service.check_policy(db, client_id, "vision", input_text=image_url)
@@ -115,13 +112,12 @@ class VisionService:
                     filename = os.path.basename(parsed_path) or "image.jpg"
                 except Exception as e:
                     raise HTTPException(
-                        status_code=400,
-                        detail=f"Failed to fetch image from URL: {str(e)}"
+                        status_code=400, detail=f"Failed to fetch image from URL: {str(e)}"
                     )
         else:
             raise HTTPException(
                 status_code=400,
-                detail="No image input provided. Must specify upload, base64_data, or image_url."
+                detail="No image input provided. Must specify upload, base64_data, or image_url.",
             )
 
         if not image_bytes:
@@ -151,7 +147,7 @@ class VisionService:
             file_hash=file_hash,
             provenance="uploaded",
             exif_sanitized=sanitized,
-            metadata_json={"original_filename": filename}
+            metadata_json={"original_filename": filename},
         )
         db.add(asset)
         await db.commit()
@@ -160,26 +156,24 @@ class VisionService:
         req = await self.usage_service.log_request(
             db, client_id, "vision", "completed", input_asset_id=asset_id
         )
-        await self.usage_service.record_usage(
-            db, client_id, req.id, "vision", unit_count=1
-        )
+        await self.usage_service.record_usage(db, client_id, req.id, "vision", unit_count=1)
 
         # 8. Real description, OCR, classification and visual analysis
         from app.services.multimodal.providers.local_vision import LocalVisionProvider
+
         provider = LocalVisionProvider()
         analysis = provider.analyze(bytes_sanitized)
-        
+
         description = analysis.get("description", "")
         classification = analysis.get("classification", [])
         objects_detected = analysis.get("objects_detected", [])
-        
+
         ocr_result = None
         if run_ocr:
-            ocr_result = (
-                "Real OCR integration pending. Visual features extracted: "
-                + ", ".join(objects_detected)
+            ocr_result = "Real OCR integration pending. Visual features extracted: " + ", ".join(
+                objects_detected
             )
-        
+
         return {
             "asset_id": str(asset_id),
             "description": description,
@@ -188,6 +182,6 @@ class VisionService:
             "visual_analysis": {
                 "dominant_colors": ["#FFFFFF", "#000000"],
                 "aspect_ratio": "1.0",
-                "objects_detected": objects_detected
-            }
+                "objects_detected": objects_detected,
+            },
         }

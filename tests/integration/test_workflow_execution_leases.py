@@ -39,10 +39,16 @@ async def test_deterministic_lease_and_failover(session):
     )
     service = WorkflowExecutionLeaseService()
     candidates = ["node-c", "node-a", "node-b"]
-    winner = service.deterministic_winner(workflow_id=fed.workflow_id, tenant_id=fed.tenant_id, candidates=candidates)
-    lease = await service.acquire_lease(session, federated_execution_id=fed.id, candidates=candidates, ttl_seconds=10)
+    winner = service.deterministic_winner(
+        workflow_id=fed.workflow_id, tenant_id=fed.tenant_id, candidates=candidates
+    )
+    lease = await service.acquire_lease(
+        session, federated_execution_id=fed.id, candidates=candidates, ttl_seconds=10
+    )
     lease.expires_at = utc_now()
-    failover = await service.failover(session, federated_execution_id=fed.id, candidates=candidates, ttl_seconds=10)
+    failover = await service.failover(
+        session, federated_execution_id=fed.id, candidates=candidates, ttl_seconds=10
+    )
 
     assert lease.lease_owner == winner
     assert failover.lease_owner in candidates

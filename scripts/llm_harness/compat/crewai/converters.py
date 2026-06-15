@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any
 
 from ...mas.schemas import AgentDefinition as HarnessAgentDef
 from ...mas.schemas import AgentTeam, SubTask, TeamMember
@@ -7,7 +7,7 @@ from .adapters import Agent, Crew, Task
 
 
 class CrewAIConverter(BaseConverter[Crew, AgentTeam]):
-    def __init__(self, default_model_profile: Optional[str] = None):
+    def __init__(self, default_model_profile: str | None = None):
         self.default_model_profile = default_model_profile
 
     def _convert_agent(self, agent: Agent) -> HarnessAgentDef:
@@ -31,7 +31,7 @@ class CrewAIConverter(BaseConverter[Crew, AgentTeam]):
     def convert(
         self,
         source: Crew,
-        team_name: Optional[str] = None,
+        team_name: str | None = None,
         topology: str = "linear",
         **kwargs: Any,
     ) -> ConvertResult[AgentTeam]:
@@ -41,7 +41,7 @@ class CrewAIConverter(BaseConverter[Crew, AgentTeam]):
                 error=f"Expected Crew instance, got {type(source).__name__}",
             )
 
-        warnings: List[str] = []
+        warnings: list[str] = []
 
         if source.process and "hierarchical" in source.process.lower():
             topology = "supervisor"
@@ -50,10 +50,7 @@ class CrewAIConverter(BaseConverter[Crew, AgentTeam]):
                 "You may need to define a supervisor agent."
             )
 
-        members = [
-            TeamMember(agent_id=a.role, role=a.role)
-            for a in source.agents
-        ]
+        members = [TeamMember(agent_id=a.role, role=a.role) for a in source.agents]
 
         team = AgentTeam(
             name=team_name or f"crewai_{source.process or 'sequential'}",
@@ -71,9 +68,9 @@ class CrewAIConverter(BaseConverter[Crew, AgentTeam]):
 
     def convert_batch(
         self,
-        sources: List[Crew],
+        sources: list[Crew],
         **kwargs: Any,
-    ) -> List[ConvertResult[AgentTeam]]:
+    ) -> list[ConvertResult[AgentTeam]]:
         return [
             self.convert(crew, team_name=kwargs.get("team_name", f"crew_{i}"), **kwargs)
             for i, crew in enumerate(sources)

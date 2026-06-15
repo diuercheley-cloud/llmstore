@@ -29,7 +29,12 @@ def upgrade() -> None:
     op.create_table(
         "api_keys",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
-        sa.Column("client_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("clients.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "client_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("clients.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("name", sa.String(length=120), nullable=False),
         sa.Column("key_prefix", sa.String(length=16), nullable=False),
         sa.Column("key_hash", sa.String(length=512), nullable=False),
@@ -41,7 +46,9 @@ def upgrade() -> None:
     op.create_table(
         "request_logs",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
-        sa.Column("client_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("clients.id"), nullable=False),
+        sa.Column(
+            "client_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("clients.id"), nullable=False
+        ),
         sa.Column("model", sa.String(length=255), nullable=False),
         sa.Column("endpoint", sa.String(length=64), nullable=False),
         sa.Column("prompt_tokens_estimated", sa.Integer(), nullable=False, server_default="0"),
@@ -57,7 +64,9 @@ def upgrade() -> None:
     op.create_table(
         "usage_records",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
-        sa.Column("client_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("clients.id"), nullable=False),
+        sa.Column(
+            "client_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("clients.id"), nullable=False
+        ),
         sa.Column("period_start", sa.Date(), nullable=False),
         sa.Column("period_type", sa.String(length=16), nullable=False),
         sa.Column("request_count", sa.Integer(), nullable=False, server_default="0"),
@@ -65,7 +74,9 @@ def upgrade() -> None:
         sa.Column("completion_tokens", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
-        sa.UniqueConstraint("client_id", "period_start", "period_type", name="uq_usage_record_period"),
+        sa.UniqueConstraint(
+            "client_id", "period_start", "period_type", name="uq_usage_record_period"
+        ),
     )
     op.create_index("ix_usage_records_client_id", "usage_records", ["client_id"])
     op.create_index("ix_usage_records_period_start", "usage_records", ["period_start"])
@@ -85,14 +96,18 @@ def upgrade() -> None:
     op.create_table(
         "quota_counters",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
-        sa.Column("client_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("clients.id"), nullable=False),
+        sa.Column(
+            "client_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("clients.id"), nullable=False
+        ),
         sa.Column("period_start", sa.Date(), nullable=False),
         sa.Column("period_type", sa.String(length=16), nullable=False),
         sa.Column("used_tokens", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("used_requests", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
-        sa.UniqueConstraint("client_id", "period_start", "period_type", name="uq_quota_counter_period"),
+        sa.UniqueConstraint(
+            "client_id", "period_start", "period_type", name="uq_quota_counter_period"
+        ),
     )
     op.create_index("ix_quota_counters_client_id", "quota_counters", ["client_id"])
 

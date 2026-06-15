@@ -32,8 +32,12 @@ class CommercialAgentProfile(Base):
     max_actions_per_day: Mapped[int] = mapped_column(Integer, default=2000)
 
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
 
 
 class CommercialAgentExecution(Base):
@@ -47,7 +51,9 @@ class CommercialAgentExecution(Base):
         index=True,
     )
     session_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
-    parent_execution_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
+    parent_execution_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True, index=True
+    )
     tenant_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
 
     status: Mapped[str] = mapped_column(String(32), default="pending", index=True)
@@ -55,7 +61,9 @@ class CommercialAgentExecution(Base):
     output_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
     plan_hash: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     execution_graph_hash: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
-    runtime_snapshot_hash: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    runtime_snapshot_hash: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, index=True
+    )
     audit_chain_hash: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     policy_decision: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
     replay_status: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
@@ -68,7 +76,9 @@ class CommercialAgentExecution(Base):
     receipt_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
-    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
@@ -88,7 +98,9 @@ class CommercialAgentDelegationPolicy(Base):
     )
     is_allowed: Mapped[bool] = mapped_column(Boolean, default=True)
     constraints_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
 
 class CommercialAgentToolExecution(Base):
@@ -106,7 +118,9 @@ class CommercialAgentToolExecution(Base):
     output_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
     approval_status: Mapped[str] = mapped_column(String(32), default="pending", index=True)
     is_confidential: Mapped[bool] = mapped_column(Boolean, default=True)
-    executed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    executed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
 
 class CommercialAgentMemoryBoundary(Base):
@@ -122,7 +136,9 @@ class CommercialAgentMemoryBoundary(Base):
     tenant_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     boundary_type: Mapped[str] = mapped_column(String(32), default="session")
     access_log_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
 
 class CommercialAgentAction(Base):
@@ -154,7 +170,9 @@ class CommercialAgentAction(Base):
     confidential_mode: Mapped[str] = mapped_column(String(32), default="redacted")
     approval_status: Mapped[str] = mapped_column(String(32), default="not_required", index=True)
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    executed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    executed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
 
 class CommercialToolRegistry(Base):
@@ -177,8 +195,12 @@ class CommercialToolRegistry(Base):
     policy_scope_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     schema_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
 
 
 class CommercialToolApproval(Base):
@@ -205,7 +227,9 @@ class CommercialToolApproval(Base):
     approval_chain_hash: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
@@ -229,6 +253,8 @@ class CommercialAgentReplayRecord(Base):
     mismatch_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     verified_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
     replayed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

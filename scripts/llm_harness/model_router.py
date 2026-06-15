@@ -1,31 +1,33 @@
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from .providers import create_code_agent
 
 logger = logging.getLogger(__name__)
 
+
 def is_cloud_provider(provider_name: str) -> bool:
     return provider_name in ("openai-compatible", "anthropic", "google", "control-plane")
+
 
 class ModelRouter:
     def __init__(self, config: Any):
         self.config = config
         self.models_config = getattr(config, "models", {}) or {}
 
-    def get_profiles(self) -> Dict[str, Dict[str, Any]]:
+    def get_profiles(self) -> dict[str, dict[str, Any]]:
         return self.models_config.get("profiles", {})
 
-    def resolve_profile(self, profile_name: str) -> Optional[Dict[str, Any]]:
+    def resolve_profile(self, profile_name: str) -> dict[str, Any] | None:
         profiles = self.get_profiles()
         if profile_name in profiles:
             return dict(profiles[profile_name])
         return None
 
-    def get_default_profile_name(self) -> Optional[str]:
+    def get_default_profile_name(self) -> str | None:
         return self.models_config.get("default")
 
-    def resolve_by_task_type(self, task_type: str) -> Tuple[Optional[str], Dict[str, Any]]:
+    def resolve_by_task_type(self, task_type: str) -> tuple[str | None, dict[str, Any]]:
         routing = self.models_config.get("routing", {})
         profile_name = routing.get(task_type)
         if not profile_name:
@@ -39,8 +41,7 @@ class ModelRouter:
         # Fallback to global config settings
         fallback_cfg = {
             "provider": (
-                getattr(self.config, "provider", None)
-                or getattr(self.config, "code_agent", "stub")
+                getattr(self.config, "provider", None) or getattr(self.config, "code_agent", "stub")
             ),
             "model": getattr(self.config, "model", "stub"),
             "base_url": getattr(self.config, "base_url", ""),
@@ -48,7 +49,7 @@ class ModelRouter:
         }
         return "default-config", fallback_cfg
 
-    def check_policy(self, profile_config: Dict[str, Any]) -> bool:
+    def check_policy(self, profile_config: dict[str, Any]) -> bool:
         provider = profile_config.get("provider", "")
         # Check global config or models allow_cloud_models setting
         allow_cloud = True
@@ -62,7 +63,7 @@ class ModelRouter:
             return False
         return True
 
-    def estimate_cost(self, profile_config: Dict[str, Any]) -> Dict[str, Any]:
+    def estimate_cost(self, profile_config: dict[str, Any]) -> dict[str, Any]:
         provider = profile_config.get("provider", "")
         model = profile_config.get("model", "")
 
@@ -71,10 +72,11 @@ class ModelRouter:
                 "prompt_token_price_per_1m": 0.0,
                 "completion_token_price_per_1m": 0.0,
                 "currency": "USD",
-                "is_local": True
+                "is_local": True,
             }
 
         from .pricing import DEFAULT_PRICING
+
         pricing_info = None
         for k, v in DEFAULT_PRICING.items():
             if k in model or model in k:
@@ -86,33 +88,31 @@ class ModelRouter:
                 "prompt_token_price_per_1m": pricing_info["prompt_token_price_per_1m"],
                 "completion_token_price_per_1m": pricing_info["completion_token_price_per_1m"],
                 "currency": pricing_info["currency"],
-                "is_local": False
+                "is_local": False,
             }
 
         return {
             "prompt_token_price_per_1m": 10.0,
             "completion_token_price_per_1m": 30.0,
             "currency": "USD",
-            "is_local": False
+            "is_local": False,
         }
 
     async def chat_completion_with_fallback(
         self,
-        messages: List[Dict[str, Any]],
-        task_type: Optional[str] = None,
-        profile_name: Optional[str] = None,
-        fallback_profile_name: Optional[str] = None,
+        messages: list[dict[str, Any]],
+        task_type: str | None = None,
+        profile_name: str | None = None,
+        fallback_profile_name: str | None = None,
         plain_chat: bool = False,
     ) -> Any:
-        primary_cfg: Dict[str, Any] = {}
+        primary_cfg: dict[str, Any] = {}
         # 1. Determine primary profile
         resolved_name = profile_name or getattr(self.config, "model_profile", None)
         if resolved_name:
             resolved_cfg = self.resolve_profile(resolved_name)
             if not resolved_cfg:
-                raise ValueError(
-                    f"Model profile '{resolved_name}' not found in configuration."
-                )
+                raise ValueError(f"Model profile '{resolved_name}' not found in configuration.")
             primary_cfg = resolved_cfg
         elif task_type:
             resolved_name, primary_cfg = self.resolve_by_task_type(task_type)
@@ -137,8 +137,7 @@ class ModelRouter:
         # Check policy
         if not self.check_policy(primary_cfg):
             raise PermissionError(
-                f"Cloud model provider '{primary_cfg.get('provider')}' "
-                "is blocked by policy."
+                f"Cloud model provider '{primary_cfg.get('provider')}' is blocked by policy."
             )
 
         # Build config override dict
@@ -152,15 +151,11 @@ class ModelRouter:
             return await agent.chat_completion(messages)
         except Exception as e:
             logger.warning(
-                f"Primary model profile '{resolved_name}' failed: {e}. "
-                "Attempting fallback..."
+                f"Primary model profile '{resolved_name}' failed: {e}. Attempting fallback..."
             )
             # Try fallback
-            fb_name = (
-                fallback_profile_name
-                or getattr(self.config, "fallback_model_profile", None)
-            )
-            fb_cfg: Dict[str, Any] = {}
+            fb_name = fallback_profile_name or getattr(self.config, "fallback_model_profile", None)
+            fb_cfg: dict[str, Any] = {}
             if fb_name:
                 resolved_fb_cfg = self.resolve_profile(fb_name)
                 if not resolved_fb_cfg:
@@ -192,4 +187,3 @@ class ModelRouter:
 
             agent_fb = create_code_agent(fb_cfg.get("provider", "stub"), fb_cfg_dict)
             return await agent_fb.chat_completion(messages)
-

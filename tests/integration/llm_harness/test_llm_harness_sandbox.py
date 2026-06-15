@@ -24,8 +24,6 @@ def test_sandbox_execution_sync():
             assert returncode == 0
             assert "hello sync" in stdout
 
-    import asyncio
-
     asyncio.run(run_test())
 
 
@@ -48,8 +46,6 @@ def test_sandbox_docker_command_build():
             assert "--network none" in cmd
             assert ws.path in cmd
 
-    import asyncio
-
     asyncio.run(run_test())
 
 
@@ -58,7 +54,10 @@ async def test_sandbox_docker_cleanup_on_success():
     async with Workspace() as ws:
         runner = SandboxRunner(workspace=ws, use_docker=True)
 
-        with patch("asyncio.create_subprocess_shell") as mock_shell, patch("subprocess.run") as mock_run:
+        with (
+            patch("asyncio.create_subprocess_shell") as mock_shell,
+            patch("subprocess.run") as mock_run,
+        ):
             # Setup mock process
             mock_process = MagicMock()
             mock_process.communicate = AsyncMock(return_value=(b"out", b"err"))
@@ -83,12 +82,16 @@ async def test_sandbox_docker_cleanup_on_timeout():
 
         async def fake_wait_for(awaitable, timeout):
             awaitable.close()
-            raise asyncio.TimeoutError
+            raise TimeoutError
 
-        with patch("asyncio.create_subprocess_shell") as mock_shell, patch(
-            "asyncio.wait_for",
-            new=AsyncMock(side_effect=fake_wait_for),
-        ), patch("subprocess.run") as mock_run:
+        with (
+            patch("asyncio.create_subprocess_shell") as mock_shell,
+            patch(
+                "asyncio.wait_for",
+                new=AsyncMock(side_effect=fake_wait_for),
+            ),
+            patch("subprocess.run") as mock_run,
+        ):
             mock_process = MagicMock()
             mock_process.communicate = AsyncMock(return_value=(b"", b""))
             mock_shell.return_value = mock_process

@@ -38,7 +38,18 @@ def _sanitize_payload(payload: dict[str, Any] | None) -> dict[str, Any]:
         sanitized: dict[str, Any] = {}
         for key, value in raw.items():
             lowered = str(key).lower()
-            if any(part in lowered for part in {"api_key", "authorization", "secret", "token", "password", "prompt", "response"}):
+            if any(
+                part in lowered
+                for part in {
+                    "api_key",
+                    "authorization",
+                    "secret",
+                    "token",
+                    "password",
+                    "prompt",
+                    "response",
+                }
+            ):
                 sanitized[str(key)] = REDACTION
             elif isinstance(value, str):
                 sanitized[str(key)] = _sanitize_text(value, limit=2000)
@@ -46,7 +57,9 @@ def _sanitize_payload(payload: dict[str, Any] | None) -> dict[str, Any]:
                 sanitized[str(key)] = _sanitize_payload(value)
             elif isinstance(value, list):
                 sanitized[str(key)] = [
-                    _sanitize_payload(item) if isinstance(item, dict) else (_sanitize_text(item, limit=2000) if isinstance(item, str) else item)
+                    _sanitize_payload(item)
+                    if isinstance(item, dict)
+                    else (_sanitize_text(item, limit=2000) if isinstance(item, str) else item)
                     for item in value
                 ]
             else:
@@ -108,10 +121,19 @@ async def ingest_routing_event(
     cfg = settings or get_settings()
     try:
         sanitized_payload = _sanitize_payload(payload)
-        event_id = str(sanitized_payload.get("event_id") or sanitized_payload.get("commercial_routing_event_id") or "") or None
+        event_id = (
+            str(
+                sanitized_payload.get("event_id")
+                or sanitized_payload.get("commercial_routing_event_id")
+                or ""
+            )
+            or None
+        )
         correlation_id = sanitized_payload.get("correlation_id")
         request_id = sanitized_payload.get("request_id")
-        dedupe_key = dedupe_event(correlation_id=correlation_id, request_id=request_id, event_id=event_id)
+        dedupe_key = dedupe_event(
+            correlation_id=correlation_id, request_id=request_id, event_id=event_id
+        )
 
         status = "pending"
         if cfg.commercial_analytics_dedupe_enabled:
@@ -174,7 +196,11 @@ async def _find_existing_routing_event(
         filters.append(CommercialRoutingEvent.correlation_id == correlation_id)
     if not filters:
         return None
-    result = await db.execute(select(CommercialRoutingEvent).where(or_(*filters)).order_by(CommercialRoutingEvent.created_at.desc()))
+    result = await db.execute(
+        select(CommercialRoutingEvent)
+        .where(or_(*filters))
+        .order_by(CommercialRoutingEvent.created_at.desc())
+    )
     return result.scalars().first()
 
 
@@ -222,7 +248,9 @@ async def _create_routing_event_from_payload(
         provider_latency_ms=payload.get("provider_latency_ms"),
         error_type=payload.get("error_type"),
         error_code=payload.get("error_code"),
-        commercial_config_id=uuid.UUID(str(payload["commercial_config_id"])) if payload.get("commercial_config_id") else None,
+        commercial_config_id=uuid.UUID(str(payload["commercial_config_id"]))
+        if payload.get("commercial_config_id")
+        else None,
         commercial_config_variant=payload.get("commercial_config_variant"),
     )
     db.add(event)
@@ -257,7 +285,9 @@ async def process_pending_events(
                 summary["processed"] += 1
                 continue
             if existing is not None and cfg.commercial_analytics_dedupe_enabled:
-                await mark_duplicate(db, ingest, message="matching commercial routing event already exists")
+                await mark_duplicate(
+                    db, ingest, message="matching commercial routing event already exists"
+                )
                 summary["duplicates"] += 1
                 continue
 

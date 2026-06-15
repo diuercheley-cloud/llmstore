@@ -32,7 +32,9 @@ async def test_workflow_receipt_verification_detects_tampering(session):
 
     receipt = (
         await session.execute(
-            select(CommercialWorkflowReceipt).where(CommercialWorkflowReceipt.execution_id == execution.id)
+            select(CommercialWorkflowReceipt).where(
+                CommercialWorkflowReceipt.execution_id == execution.id
+            )
         )
     ).scalar_one()
     first = await receipts.verify_receipt(session, receipt)

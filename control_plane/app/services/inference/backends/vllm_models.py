@@ -6,6 +6,7 @@ from fastapi import HTTPException
 
 logger = logging.getLogger(__name__)
 
+
 async def list_vllm_models() -> list:
     settings = get_settings()
     if not settings.vllm_backend_enabled:
@@ -27,6 +28,5 @@ async def list_vllm_models() -> list:
     except Exception as e:
         logger.error(f"Failed to list models from vLLM backend: {e}")
         raise HTTPException(
-            status_code=502,
-            detail=f"Failed to retrieve models from vLLM backend: {str(e)}"
+            status_code=502, detail=f"Failed to retrieve models from vLLM backend: {str(e)}"
         )

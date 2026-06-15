@@ -2,6 +2,7 @@
 Owner: agent-platform
 Status: beta
 """
+
 import logging
 import uuid
 
@@ -17,14 +18,13 @@ from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
+
 class EvalRegressionService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
     async def check_regression(
-        self,
-        agent_id: uuid.UUID,
-        eval_run_id: uuid.UUID
+        self, agent_id: uuid.UUID, eval_run_id: uuid.UUID
     ) -> AgentEvalRegressionResult:
         # 1. Fetch current baseline
         res_base = await self.db.execute(
@@ -33,14 +33,14 @@ class EvalRegressionService:
         baseline = res_base.scalar_one_or_none()
 
         # 2. Fetch current eval run
-        res_run = await self.db.execute(
-            select(AgentEvalRun).where(AgentEvalRun.id == eval_run_id)
-        )
+        res_run = await self.db.execute(select(AgentEvalRun).where(AgentEvalRun.id == eval_run_id))
         eval_run = res_run.scalar_one_or_none()
         if not eval_run:
             raise ValueError(f"Eval run not found: {eval_run_id}")
 
-        new_pass_rate = eval_run.passed_count / eval_run.total_count if eval_run.total_count > 0 else 0.0
+        new_pass_rate = (
+            eval_run.passed_count / eval_run.total_count if eval_run.total_count > 0 else 0.0
+        )
 
         # Calculate new run average latency and total cost
         res_results = await self.db.execute(
@@ -49,7 +49,8 @@ class EvalRegressionService:
         new_results = res_results.scalars().all()
         new_avg_latency = (
             sum(r.latency_ms for r in new_results if r.latency_ms is not None) / len(new_results)
-            if new_results else 0.0
+            if new_results
+            else 0.0
         )
         new_total_cost = sum(r.total_cost_brl for r in new_results if r.total_cost_brl is not None)
 
@@ -66,9 +67,9 @@ class EvalRegressionService:
                     "note": "No baseline exists for comparison.",
                     "pass_rate_diff": 0.0,
                     "avg_latency_diff": 0.0,
-                    "total_cost_diff": 0.0
+                    "total_cost_diff": 0.0,
                 },
-                created_at=utc_now()
+                created_at=utc_now(),
             )
             self.db.add(regression_result)
             await self.db.commit()
@@ -80,7 +81,7 @@ class EvalRegressionService:
             select(AgentEvalRun).where(AgentEvalRun.id == baseline.run_id)
         )
         base_run = res_base_run.scalar_one_or_none()
-        
+
         base_pass_rate = baseline.pass_rate
         base_avg_latency = 0.0
         base_total_cost = 0.0
@@ -91,10 +92,14 @@ class EvalRegressionService:
             )
             base_results = res_base_results.scalars().all()
             base_avg_latency = (
-                sum(r.latency_ms for r in base_results if r.latency_ms is not None) / len(base_results)
-                if base_results else 0.0
+                sum(r.latency_ms for r in base_results if r.latency_ms is not None)
+                / len(base_results)
+                if base_results
+                else 0.0
             )
-            base_total_cost = sum(r.total_cost_brl for r in base_results if r.total_cost_brl is not None)
+            base_total_cost = sum(
+                r.total_cost_brl for r in base_results if r.total_cost_brl is not None
+            )
 
         # Detect regression
         regression_detected = False
@@ -108,9 +113,9 @@ class EvalRegressionService:
 
         # Latency regression
         latency_diff = new_avg_latency - base_avg_latency
-        if base_avg_latency > 0 and latency_diff > 5000: # 5s deterioration
-             # We could block here if needed
-             pass
+        if base_avg_latency > 0 and latency_diff > 5000:  # 5s deterioration
+            # We could block here if needed
+            pass
 
         # Store metric diffs
         metric_diffs = {
@@ -119,7 +124,7 @@ class EvalRegressionService:
             "total_cost_diff": new_total_cost - base_total_cost,
             "reasons": reasons,
             "baseline_pass_rate": base_pass_rate,
-            "new_pass_rate": new_pass_rate
+            "new_pass_rate": new_pass_rate,
         }
 
         # Gate passes regression check if no regression detected
@@ -132,7 +137,7 @@ class EvalRegressionService:
             passed=passed,
             regression_detected=regression_detected,
             metric_diffs=metric_diffs,
-            created_at=utc_now()
+            created_at=utc_now(),
         )
         self.db.add(regression_result)
         await self.db.commit()

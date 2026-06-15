@@ -1,7 +1,6 @@
 import subprocess
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -22,6 +21,5 @@ def test_supported_surface_no_mocks():
         print(result.stdout)
         print(result.stderr)
     assert result.returncode == 0, (
-        "Mock/placeholder violations found in supported/core endpoints.\n"
-        f"{result.stdout}"
+        f"Mock/placeholder violations found in supported/core endpoints.\n{result.stdout}"
     )

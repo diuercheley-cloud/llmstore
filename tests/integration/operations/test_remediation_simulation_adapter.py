@@ -16,7 +16,7 @@ class TestSimulatedRemediationExecutionAdapter:
         adapter = SimulatedRemediationExecutionAdapter()
         steps = [
             {"action_type": "a1", "target_domain": "d1", "target_ref": "r1"},
-            {"action_type": "a2", "target_domain": "d2", "target_ref": "r2"}
+            {"action_type": "a2", "target_domain": "d2", "target_ref": "r2"},
         ]
         results = adapter.execute_plan({}, steps)
         assert len(results) == 2

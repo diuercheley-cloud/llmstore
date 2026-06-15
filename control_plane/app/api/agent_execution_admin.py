@@ -1,6 +1,6 @@
 # Owner: agent-platform
 import uuid
-from typing import Any, Dict, List
+from typing import Any
 
 from app.api.deps import get_db_session, require_admin
 from app.core.time import utc_now
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/admin/agents/execution", tags=["agent-execution-admi
 async def list_jobs(
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     stmt = select(AgentExecutionJob).order_by(AgentExecutionJob.created_at.desc())
     res = await db.execute(stmt)
     jobs = res.scalars().all()
@@ -43,7 +43,7 @@ async def list_jobs(
 async def list_workers(
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     stmt = select(AgentWorkerHeartbeat).order_by(AgentWorkerHeartbeat.last_heartbeat.desc())
     res = await db.execute(stmt)
     workers = res.scalars().all()
@@ -63,7 +63,7 @@ async def cancel_job(
     job_id: uuid.UUID,
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     stmt = select(AgentExecutionJob).where(AgentExecutionJob.id == job_id)
     res = await db.execute(stmt)
     job = res.scalar_one_or_none()
@@ -90,7 +90,7 @@ async def retry_job(
     job_id: uuid.UUID,
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     stmt = select(AgentExecutionJob).where(AgentExecutionJob.id == job_id)
     res = await db.execute(stmt)
     job = res.scalar_one_or_none()

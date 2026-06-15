@@ -30,13 +30,42 @@ def upgrade() -> None:
         sa.Column("metadata_json", sa.JSON(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_commercial_leader_leases_cluster_id", "commercial_leader_leases", ["cluster_id"], unique=False)
-    op.create_index("ix_commercial_leader_leases_leader_role", "commercial_leader_leases", ["leader_role"], unique=False)
-    op.create_index("ix_commercial_leader_leases_node_id", "commercial_leader_leases", ["node_id"], unique=False)
-    op.create_index("ix_commercial_leader_leases_lease_token", "commercial_leader_leases", ["lease_token"], unique=False)
-    op.create_index("ix_commercial_leader_leases_lease_expires_at", "commercial_leader_leases", ["lease_expires_at"], unique=False)
-    op.create_index("ix_commercial_leader_leases_last_heartbeat_at", "commercial_leader_leases", ["last_heartbeat_at"], unique=False)
-    op.create_index("ix_commercial_leader_leases_status", "commercial_leader_leases", ["status"], unique=False)
+    op.create_index(
+        "ix_commercial_leader_leases_cluster_id",
+        "commercial_leader_leases",
+        ["cluster_id"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_commercial_leader_leases_leader_role",
+        "commercial_leader_leases",
+        ["leader_role"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_commercial_leader_leases_node_id", "commercial_leader_leases", ["node_id"], unique=False
+    )
+    op.create_index(
+        "ix_commercial_leader_leases_lease_token",
+        "commercial_leader_leases",
+        ["lease_token"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_commercial_leader_leases_lease_expires_at",
+        "commercial_leader_leases",
+        ["lease_expires_at"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_commercial_leader_leases_last_heartbeat_at",
+        "commercial_leader_leases",
+        ["last_heartbeat_at"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_commercial_leader_leases_status", "commercial_leader_leases", ["status"], unique=False
+    )
     op.create_index(
         "uq_commercial_leader_leases_active_role",
         "commercial_leader_leases",
@@ -50,8 +79,12 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_index("uq_commercial_leader_leases_active_role", table_name="commercial_leader_leases")
     op.drop_index("ix_commercial_leader_leases_status", table_name="commercial_leader_leases")
-    op.drop_index("ix_commercial_leader_leases_last_heartbeat_at", table_name="commercial_leader_leases")
-    op.drop_index("ix_commercial_leader_leases_lease_expires_at", table_name="commercial_leader_leases")
+    op.drop_index(
+        "ix_commercial_leader_leases_last_heartbeat_at", table_name="commercial_leader_leases"
+    )
+    op.drop_index(
+        "ix_commercial_leader_leases_lease_expires_at", table_name="commercial_leader_leases"
+    )
     op.drop_index("ix_commercial_leader_leases_lease_token", table_name="commercial_leader_leases")
     op.drop_index("ix_commercial_leader_leases_node_id", table_name="commercial_leader_leases")
     op.drop_index("ix_commercial_leader_leases_leader_role", table_name="commercial_leader_leases")

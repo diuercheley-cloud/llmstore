@@ -10,6 +10,7 @@ import yaml
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, os.path.join(base_dir, "control_plane"))
 
+
 def get_sha256(filepath):
     hasher = hashlib.sha256()
     try:
@@ -20,14 +21,15 @@ def get_sha256(filepath):
     except Exception:
         return None
 
+
 def analyze_api_file(filepath):
     try:
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             tree = ast.parse(f.read(), filename=filepath)
     except Exception as e:
         print(f"Error parsing API file {filepath}: {e}")
         return []
-    
+
     endpoints = []
     for node in ast.walk(tree):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -41,21 +43,29 @@ def analyze_api_file(filepath):
                     args = decorator.args
                 elif isinstance(decorator, ast.Attribute):
                     func = decorator
-                
+
                 if isinstance(func, ast.Attribute):
                     # Check @router.xxx(...) or @app.xxx(...)
                     if isinstance(func.value, ast.Name) and func.value.id in ("router", "app"):
-                        if func.attr in ("get", "post", "put", "delete", "patch", "options", "head", "api_route"):
+                        if func.attr in (
+                            "get",
+                            "post",
+                            "put",
+                            "delete",
+                            "patch",
+                            "options",
+                            "head",
+                            "api_route",
+                        ):
                             is_deprecated = False
                             for kw in keywords:
                                 if kw.arg == "deprecated":
-                                    if hasattr(kw.value, "value"):
+                                    if hasattr(kw.value, "value") or isinstance(
+                                        kw.value, ast.NameConstant
+                                    ):
                                         if kw.value.value is True:
                                             is_deprecated = True
-                                    elif isinstance(kw.value, ast.NameConstant):
-                                        if kw.value.value is True:
-                                            is_deprecated = True
-                            
+
                             is_internal = "internal" in os.path.basename(filepath)
                             for kw in keywords:
                                 if kw.arg == "tags":
@@ -63,21 +73,24 @@ def analyze_api_file(filepath):
                                         for elt in kw.value.elts:
                                             if hasattr(elt, "value") and elt.value == "internal":
                                                 is_internal = True
-                            
+
                             if args and isinstance(args[0], ast.Constant):
                                 if "/internal/" in str(args[0].value):
                                     is_internal = True
                             elif args and isinstance(args[0], ast.Str):
                                 if "/internal/" in args[0].s:
                                     is_internal = True
-                                    
-                            endpoints.append({
-                                "func_name": node.name,
-                                "method": func.attr.upper(),
-                                "deprecated": is_deprecated,
-                                "internal": is_internal,
-                            })
+
+                            endpoints.append(
+                                {
+                                    "func_name": node.name,
+                                    "method": func.attr.upper(),
+                                    "deprecated": is_deprecated,
+                                    "internal": is_internal,
+                                }
+                            )
     return endpoints
+
 
 def run_analysis():
     # 1. Routers & Endpoints
@@ -88,11 +101,7 @@ def run_analysis():
         if file.endswith(".py") and file not in ("__init__.py", "dependencies.py", "deps.py"):
             filepath = os.path.join(api_dir, file)
             file_endpoints = analyze_api_file(filepath)
-            routers.append({
-                "name": file,
-                "path": filepath,
-                "endpoints_count": len(file_endpoints)
-            })
+            routers.append({"name": file, "path": filepath, "endpoints_count": len(file_endpoints)})
             for ep in file_endpoints:
                 ep["router"] = file
                 endpoints.append(ep)
@@ -103,7 +112,7 @@ def run_analysis():
     # 2. Services & Test Cobertura
     services = []
     services_dir = os.path.join(base_dir, "control_plane/app/services")
-    
+
     # Read test references (all test files contents concatenated for quick lookup)
     tests_content = ""
     tests_dir = os.path.join(base_dir, "tests/control_plane")
@@ -113,7 +122,7 @@ def run_analysis():
             if file.endswith(".py") and file.startswith("test_"):
                 test_files.append(file)
                 try:
-                    with open(os.path.join(root, file), "r", encoding="utf-8") as f:
+                    with open(os.path.join(root, file), encoding="utf-8") as f:
                         tests_content += f.read() + "\n"
                 except Exception:
                     pass
@@ -124,16 +133,16 @@ def run_analysis():
                 service_path = os.path.join(root, file)
                 rel_path = os.path.relpath(service_path, base_dir)
                 basename = os.path.splitext(file)[0]
-                
+
                 # Check test file by name or content reference
                 has_test_file = f"test_{file}" in test_files or f"test_{basename}.py" in test_files
                 referenced_in_tests = basename in tests_content
-                
+
                 # Count classes/methods inside service
                 classes_count = 0
                 methods_count = 0
                 try:
-                    with open(service_path, "r", encoding="utf-8") as f:
+                    with open(service_path, encoding="utf-8") as f:
                         tree = ast.parse(f.read(), filename=service_path)
                     for node in ast.walk(tree):
                         if isinstance(node, ast.ClassDef):
@@ -143,14 +152,16 @@ def run_analysis():
                 except Exception:
                     pass
 
-                services.append({
-                    "name": file,
-                    "rel_path": rel_path,
-                    "abs_path": service_path,
-                    "classes_count": classes_count,
-                    "methods_count": methods_count,
-                    "has_tests": has_test_file or referenced_in_tests
-                })
+                services.append(
+                    {
+                        "name": file,
+                        "rel_path": rel_path,
+                        "abs_path": service_path,
+                        "classes_count": classes_count,
+                        "methods_count": methods_count,
+                        "has_tests": has_test_file or referenced_in_tests,
+                    }
+                )
 
     services_without_tests = [s for s in services if not s["has_tests"]]
 
@@ -162,11 +173,11 @@ def run_analysis():
             if file.endswith(".py") and file != "__init__.py":
                 model_path = os.path.join(root, file)
                 rel_path = os.path.relpath(model_path, base_dir)
-                
+
                 # Count SQLAlchemy models
                 db_classes = []
                 try:
-                    with open(model_path, "r", encoding="utf-8") as f:
+                    with open(model_path, encoding="utf-8") as f:
                         tree = ast.parse(f.read(), filename=model_path)
                     for node in ast.walk(tree):
                         if isinstance(node, ast.ClassDef):
@@ -176,13 +187,15 @@ def run_analysis():
                                     db_classes.append(node.name)
                 except Exception:
                     pass
-                
-                models.append({
-                    "name": file,
-                    "rel_path": rel_path,
-                    "classes": db_classes,
-                    "classes_count": len(db_classes)
-                })
+
+                models.append(
+                    {
+                        "name": file,
+                        "rel_path": rel_path,
+                        "classes": db_classes,
+                        "classes_count": len(db_classes),
+                    }
+                )
 
     # 4. Scripts
     scripts = []
@@ -196,18 +209,20 @@ def run_analysis():
             rel_path = os.path.relpath(script_path, base_dir)
             sha = get_sha256(script_path)
             if sha:
-                scripts.append({
-                    "name": file,
-                    "rel_path": rel_path,
-                    "sha": sha,
-                    "size": os.path.getsize(script_path)
-                })
+                scripts.append(
+                    {
+                        "name": file,
+                        "rel_path": rel_path,
+                        "sha": sha,
+                        "size": os.path.getsize(script_path),
+                    }
+                )
 
     # Find duplicates
     sha_map = {}
     for s in scripts:
         sha_map.setdefault(s["sha"], []).append(s)
-    
+
     duplicate_scripts = []
     for sha, files in sha_map.items():
         if len(files) > 1:
@@ -218,7 +233,7 @@ def run_analysis():
     feature_flags = []
     if os.path.exists(ff_yaml_path):
         try:
-            with open(ff_yaml_path, "r", encoding="utf-8") as f:
+            with open(ff_yaml_path, encoding="utf-8") as f:
                 feature_flags = yaml.safe_load(f) or []
         except Exception as e:
             print(f"Error reading feature flags: {e}")
@@ -227,6 +242,7 @@ def run_analysis():
     orphans = []
     try:
         from app.services.feature_flag_registry import FeatureFlagRegistryService
+
         service = FeatureFlagRegistryService()
         scan_results = service.scan_orphans()
         orphans = scan_results.get("orphans", [])
@@ -243,25 +259,23 @@ def run_analysis():
             if file.endswith(".md"):
                 doc_path = os.path.join(root, file)
                 rel_path = os.path.relpath(doc_path, base_dir)
-                
+
                 # Check for owner
                 owner = None
                 try:
-                    with open(doc_path, "r", encoding="utf-8") as f:
+                    with open(doc_path, encoding="utf-8") as f:
                         lines = [f.readline() for _ in range(30)]
                     for line in lines:
-                        match = re.search(r"(?i)^\s*#*\s*(owner|autor|owner-team)\s*:\s*([^\n\r]+)", line)
+                        match = re.search(
+                            r"(?i)^\s*#*\s*(owner|autor|owner-team)\s*:\s*([^\n\r]+)", line
+                        )
                         if match:
                             owner = match.group(2).strip()
                             break
                 except Exception:
                     pass
-                
-                docs.append({
-                    "name": file,
-                    "rel_path": rel_path,
-                    "owner": owner
-                })
+
+                docs.append({"name": file, "rel_path": rel_path, "owner": owner})
 
     docs_without_owner = [d for d in docs if not d["owner"]]
 
@@ -270,7 +284,7 @@ def run_analysis():
     makefile_path = os.path.join(base_dir, "Makefile")
     if os.path.exists(makefile_path):
         try:
-            with open(makefile_path, "r", encoding="utf-8") as f:
+            with open(makefile_path, encoding="utf-8") as f:
                 for line in f:
                     match = re.match(r"^([a-zA-Z0-9_-]+):", line)
                     if match:
@@ -286,29 +300,33 @@ def run_analysis():
 
     # 8. Generate recommendations list
     recommendations = []
-    
+
     # R1: Duplicate scripts (safe cleanup)
     for dup_list in duplicate_scripts:
         original = dup_list[0]
         duplicates = dup_list[1:]
-        recommendations.append({
-            "target": f"Scripts duplicados: {', '.join([d['rel_path'] for d in duplicates])}",
-            "type": "safe cleanup",
-            "description": f"Os scripts acima são cópias idênticas de {original['rel_path']} (mesmo hash SHA-256). Podem ser removidos com segurança.",
-            "impact": "Redução do número de scripts redundantes."
-        })
+        recommendations.append(
+            {
+                "target": f"Scripts duplicados: {', '.join([d['rel_path'] for d in duplicates])}",
+                "type": "safe cleanup",
+                "description": f"Os scripts acima são cópias idênticas de {original['rel_path']} (mesmo hash SHA-256). Podem ser removidos com segurança.",
+                "impact": "Redução do número de scripts redundantes.",
+            }
+        )
 
     # R2: Legacy release-specific scripts (archive candidate)
     legacy_patterns = [r"v1\.5", r"v1\.6", r"v1\.7", r"v1\.8", r"cleanup-v", r"migration-v"]
     for s in scripts:
         for pattern in legacy_patterns:
             if re.search(pattern, s["name"]):
-                recommendations.append({
-                    "target": s["rel_path"],
-                    "type": "archive candidate",
-                    "description": f"Script de suporte/release antiga ({s['name']}). Fora do escopo do core estável v1.9.7.",
-                    "impact": "Limpeza da pasta scripts/."
-                })
+                recommendations.append(
+                    {
+                        "target": s["rel_path"],
+                        "type": "archive candidate",
+                        "description": f"Script de suporte/release antiga ({s['name']}). Fora do escopo do core estável v1.9.7.",
+                        "impact": "Limpeza da pasta scripts/.",
+                    }
+                )
                 break
 
     # R3: Services without tests (needs coverage / deprecate candidate)
@@ -323,7 +341,7 @@ def run_analysis():
                     continue
                 for f in files:
                     if f.endswith(".py") and f != s["name"]:
-                        with open(os.path.join(r, f), "r", encoding="utf-8") as handle:
+                        with open(os.path.join(r, f), encoding="utf-8") as handle:
                             content = handle.read()
                             if module_name in content:
                                 imported = True
@@ -334,57 +352,69 @@ def run_analysis():
             pass
 
         if not imported:
-            recommendations.append({
-                "target": s["rel_path"],
-                "type": "deprecated candidate",
-                "description": f"Serviço '{s['name']}' não possui arquivos de testes correspondentes e não parece ser importado no restante do código principal.",
-                "impact": "Remoção de arquivo morto."
-            })
+            recommendations.append(
+                {
+                    "target": s["rel_path"],
+                    "type": "deprecated candidate",
+                    "description": f"Serviço '{s['name']}' não possui arquivos de testes correspondentes e não parece ser importado no restante do código principal.",
+                    "impact": "Remoção de arquivo morto.",
+                }
+            )
         else:
-            recommendations.append({
-                "target": s["rel_path"],
-                "type": "needs compatibility shim",
-                "description": f"Serviço ativo '{s['name']}' não tem testes unitários nem de integração.",
-                "impact": "Garantia de estabilidade e segurança."
-            })
+            recommendations.append(
+                {
+                    "target": s["rel_path"],
+                    "type": "needs compatibility shim",
+                    "description": f"Serviço ativo '{s['name']}' não tem testes unitários nem de integração.",
+                    "impact": "Garantia de estabilidade e segurança.",
+                }
+            )
 
     # R4: Deprecated Endpoints (deprecated candidate / needs compatibility shim)
     for ep in deprecated_endpoints:
-        recommendations.append({
-            "target": f"Endpoint '{ep['method']} {ep['func_name']}' no router {ep['router']}",
-            "type": "needs compatibility shim",
-            "description": "Endpoint marcado oficialmente como deprecated no código. Deve ser mantido ativo para compatibilidade legada, mas monitorado para remoção futura.",
-            "impact": "Limpeza futura da área de superfície da API."
-        })
+        recommendations.append(
+            {
+                "target": f"Endpoint '{ep['method']} {ep['func_name']}' no router {ep['router']}",
+                "type": "needs compatibility shim",
+                "description": "Endpoint marcado oficialmente como deprecated no código. Deve ser mantido ativo para compatibilidade legada, mas monitorado para remoção futura.",
+                "impact": "Limpeza futura da área de superfície da API.",
+            }
+        )
 
     # R5: Deprecated / Orphaned feature flags
     for flag_name in orphans:
-        recommendations.append({
-            "target": f"Feature Flag órfã: {flag_name}",
-            "type": "safe cleanup",
-            "description": "A flag está registrada no YAML de governança mas não é mais referenciada no código Python ou variáveis de ambiente. Pode ser removida com segurança.",
-            "impact": "Estabilização e remoção de flags mortas."
-        })
-        
+        recommendations.append(
+            {
+                "target": f"Feature Flag órfã: {flag_name}",
+                "type": "safe cleanup",
+                "description": "A flag está registrada no YAML de governança mas não é mais referenciada no código Python ou variáveis de ambiente. Pode ser removida com segurança.",
+                "impact": "Estabilização e remoção de flags mortas.",
+            }
+        )
+
     for ff in deprecated_flags:
-        recommendations.append({
-            "target": f"Feature Flag deprecada: {ff['name']}",
-            "type": "deprecated candidate",
-            "description": "Flag de governança com status 'deprecated'. Planejar remoção definitiva.",
-            "impact": "Redução do drift de configuração."
-        })
+        recommendations.append(
+            {
+                "target": f"Feature Flag deprecada: {ff['name']}",
+                "type": "deprecated candidate",
+                "description": "Flag de governança com status 'deprecated'. Planejar remoção definitiva.",
+                "impact": "Redução do drift de configuração.",
+            }
+        )
 
     # R6: Docs without owners (needs owner assignment)
     for d in docs_without_owner:
-        recommendations.append({
-            "target": d["rel_path"],
-            "type": "needs compatibility shim",
-            "description": "Documento markdown sem declaração de 'owner:' no topo. Necessita de owner atribuído para governança de documentação.",
-            "impact": "Conformidade com o framework de governança documental."
-        })
+        recommendations.append(
+            {
+                "target": d["rel_path"],
+                "type": "needs compatibility shim",
+                "description": "Documento markdown sem declaração de 'owner:' no topo. Necessita de owner atribuído para governança de documentação.",
+                "impact": "Conformidade com o framework de governança documental.",
+            }
+        )
 
     # Write files
-    
+
     # 1. summary.md
     with open(os.path.join(output_dir, "summary.md"), "w", encoding="utf-8") as f:
         f.write(f"""# Complexity Summary Report
@@ -447,7 +477,9 @@ Consulte os relatórios detalhados específicos de cada área:
         f.write("| Service File | Classes | Methods | Has Tests? |\n| --- | --- | --- | --- |\n")
         for s in services:
             test_status = "✅ Yes" if s["has_tests"] else "❌ No"
-            f.write(f"| [{s['name']}](file://{s['abs_path']}) | {s['classes_count']} | {s['methods_count']} | {test_status} |\n")
+            f.write(
+                f"| [{s['name']}](file://{s['abs_path']}) | {s['classes_count']} | {s['methods_count']} | {test_status} |\n"
+            )
 
     # 4. models.md
     with open(os.path.join(output_dir, "models.md"), "w", encoding="utf-8") as f:
@@ -456,7 +488,9 @@ Consulte os relatórios detalhados específicos de cada área:
         f.write("## SQLAlchemy Models Map\n\n")
         f.write("| Model File | Classes Identificadas |\n| --- | --- |\n")
         for m in models:
-            classes_str = ", ".join([f"`{c}`" for c in m["classes"]]) if m["classes"] else "*Nenhuma*"
+            classes_str = (
+                ", ".join([f"`{c}`" for c in m["classes"]]) if m["classes"] else "*Nenhuma*"
+            )
             f.write(f"| {m['name']} | {classes_str} |\n")
 
     # 5. scripts.md
@@ -471,7 +505,9 @@ Consulte os relatórios detalhados específicos de cada área:
                 f.write(f"- **Hash SHA-256**: `{dup_list[0]['sha']}`\n")
                 f.write("- **Arquivos Identificados**:\n")
                 for dup in dup_list:
-                    f.write(f"  - [{dup['rel_path']}](file://{os.path.join(base_dir, dup['rel_path'])}) ({dup['size']} bytes)\n")
+                    f.write(
+                        f"  - [{dup['rel_path']}](file://{os.path.join(base_dir, dup['rel_path'])}) ({dup['size']} bytes)\n"
+                    )
                 f.write("\n")
         else:
             f.write("Nenhum script duplicado encontrado.\n")
@@ -492,15 +528,26 @@ Consulte os relatórios detalhados específicos de cada área:
     # 7. recommendations.md
     with open(os.path.join(output_dir, "recommendations.md"), "w", encoding="utf-8") as f:
         f.write("# Refactoring Recommendations Report\n\n")
-        f.write("Abaixo estão listadas as recomendações formais de redução de complexidade classificadas por criticidade e impacto. Nenhuma remoção é feita automaticamente.\n\n")
-        
+        f.write(
+            "Abaixo estão listadas as recomendações formais de redução de complexidade classificadas por criticidade e impacto. Nenhuma remoção é feita automaticamente.\n\n"
+        )
+
         # Group by type
-        types = ["safe cleanup", "needs compatibility shim", "deprecated candidate", "merge candidate", "archive candidate", "do not touch"]
+        types = [
+            "safe cleanup",
+            "needs compatibility shim",
+            "deprecated candidate",
+            "merge candidate",
+            "archive candidate",
+            "do not touch",
+        ]
         for t in types:
             matching_recs = [r for r in recommendations if r["type"] == t]
             f.write(f"## Classificação: `{t}`\n\n")
             if matching_recs:
-                f.write("| Target | Recomendação / Descrição | Impacto Esperado |\n| --- | --- | --- |\n")
+                f.write(
+                    "| Target | Recomendação / Descrição | Impacto Esperado |\n| --- | --- | --- |\n"
+                )
                 for r in matching_recs:
                     f.write(f"| {r['target']} | {r['description']} | {r['impact']} |\n")
                 f.write("\n")
@@ -508,6 +555,7 @@ Consulte os relatórios detalhados específicos de cada área:
                 f.write("Nenhuma recomendação nesta categoria.\n\n")
 
     print("Success: Generated all complexity report markdown artifacts.")
+
 
 if __name__ == "__main__":
     run_analysis()

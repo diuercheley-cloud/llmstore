@@ -35,35 +35,43 @@ async def verify_execution_replay(
         raise ValueError("execution_not_found")
 
     action_rows = (
-        await db.execute(
-            select(CommercialAgentAction)
-            .where(CommercialAgentAction.execution_id == execution_id)
-            .order_by(CommercialAgentAction.action_index.asc())
+        (
+            await db.execute(
+                select(CommercialAgentAction)
+                .where(CommercialAgentAction.execution_id == execution_id)
+                .order_by(CommercialAgentAction.action_index.asc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     stored_plan = (execution.metadata_json or {}).get("plan") or []
-    replay_plan = expected_plan or [
-        {
-            "action_index": row.get("action_index"),
-            "action_name": row.get("action_name"),
-            "tool_name": row.get("tool_name"),
-            "requires_approval": row.get("requires_approval", False),
-            "planned_input_hash": row.get("planned_input_hash"),
-            "graph_node_hash": row.get("graph_node_hash"),
-        }
-        for row in stored_plan
-    ] or [
-        {
-            "action_index": row.action_index,
-            "action_name": row.action_name,
-            "tool_name": row.tool_name,
-            "requires_approval": False,
-            "planned_input_hash": row.planned_input_hash,
-            "graph_node_hash": row.graph_node_hash,
-        }
-        for row in action_rows
-    ]
+    replay_plan = (
+        expected_plan
+        or [
+            {
+                "action_index": row.get("action_index"),
+                "action_name": row.get("action_name"),
+                "tool_name": row.get("tool_name"),
+                "requires_approval": row.get("requires_approval", False),
+                "planned_input_hash": row.get("planned_input_hash"),
+                "graph_node_hash": row.get("graph_node_hash"),
+            }
+            for row in stored_plan
+        ]
+        or [
+            {
+                "action_index": row.action_index,
+                "action_name": row.action_name,
+                "tool_name": row.tool_name,
+                "requires_approval": False,
+                "planned_input_hash": row.planned_input_hash,
+                "graph_node_hash": row.graph_node_hash,
+            }
+            for row in action_rows
+        ]
+    )
     replay_plan_hash = sha256_hex(canonical_json(replay_plan))
     replay_graph_hash = build_execution_graph_hash(action_rows)
 
@@ -111,7 +119,9 @@ async def verify_execution_replay(
     replay = CommercialAgentReplayRecord(
         execution_id=execution.id,
         tenant_id=tenant_id,
-        replay_hash=sha256_hex(f"{execution.id}:{replay_plan_hash}:{replay_graph_hash}:{verification_result}"),
+        replay_hash=sha256_hex(
+            f"{execution.id}:{replay_plan_hash}:{replay_graph_hash}:{verification_result}"
+        ),
         original_plan_hash=execution.plan_hash,
         original_graph_hash=execution.execution_graph_hash,
         runtime_snapshot_hash=execution.runtime_snapshot_hash,

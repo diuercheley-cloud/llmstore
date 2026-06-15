@@ -11,6 +11,7 @@ from scripts.llm_harness.compat.report import CompatibilityAnalyzer, FrameworkSu
 # 1. CompatibilityAnalyzer tests
 # ---------------------------------------------------------------------------
 
+
 class TestCompatibilityAnalyzer:
     def test_langgraph_fully_compatible(self):
         code = """
@@ -54,7 +55,10 @@ crew = Crew(agents=[researcher, writer], tasks=[task], process="sequential")
 """
         report = CompatibilityAnalyzer.analyze_source_code("crewai", code)
         assert report.framework == "crewai"
-        assert report.status in (FrameworkSupport.FULLY_COMPATIBLE, FrameworkSupport.PARTIALLY_COMPATIBLE)
+        assert report.status in (
+            FrameworkSupport.FULLY_COMPATIBLE,
+            FrameworkSupport.PARTIALLY_COMPATIBLE,
+        )
 
     def test_crewai_hierarchical(self):
         code = """
@@ -110,10 +114,12 @@ agent = ConversableAgent(name="coder", code_execution_config={"work_dir": "/tmp"
 # 2. LangGraph adapter + importer + converter tests
 # ---------------------------------------------------------------------------
 
+
 class TestLangGraphCompat:
     @pytest.fixture
     def importer(self):
         from scripts.llm_harness.compat.langgraph import LangGraphImporter
+
         return LangGraphImporter()
 
     def test_import_from_source(self, importer):
@@ -241,10 +247,12 @@ graph.set_entry_point("agent1")
 # 3. CrewAI adapter + importer + converter tests
 # ---------------------------------------------------------------------------
 
+
 class TestCrewAICompat:
     @pytest.fixture
     def importer(self):
         from scripts.llm_harness.compat.crewai import CrewAIImporter
+
         return CrewAIImporter()
 
     def test_import_from_source(self, importer):
@@ -300,6 +308,7 @@ crew = Crew(agents=[researcher, writer], tasks=[task1, task2])
 
     def test_convert_invalid(self):
         from scripts.llm_harness.compat.crewai import CrewAIConverter
+
         result = CrewAIConverter().convert("invalid")
         assert not result.success
 
@@ -315,6 +324,7 @@ crew = Crew(agents=[researcher, writer], tasks=[task1, task2])
 
     def test_agent_to_dict(self):
         from scripts.llm_harness.compat.crewai import Agent
+
         a = Agent(role="dev", goal="code", backstory="engineer")
         d = a.to_dict()
         assert d["role"] == "dev"
@@ -325,10 +335,12 @@ crew = Crew(agents=[researcher, writer], tasks=[task1, task2])
 # 4. AutoGen adapter + importer + converter tests
 # ---------------------------------------------------------------------------
 
+
 class TestAutoGenCompat:
     @pytest.fixture
     def importer(self):
         from scripts.llm_harness.compat.autogen import AutoGenImporter
+
         return AutoGenImporter()
 
     def test_import_from_source(self, importer):
@@ -407,6 +419,7 @@ gc = GroupChat(agents=[a1, a2], max_round=5)
 
     def test_convert_invalid(self):
         from scripts.llm_harness.compat.autogen import AutoGenConverter
+
         result = AutoGenConverter().convert("invalid")
         assert not result.success
 

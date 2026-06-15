@@ -1,6 +1,5 @@
 # Owner: Platform Operations
 import uuid
-from typing import List
 
 from app.api.deps import get_admin_token, get_db
 from app.core.config import get_settings
@@ -34,7 +33,7 @@ router = APIRouter(
 
 
 class TournamentCreateRequest(BaseModel):
-    candidate_ids: List[uuid.UUID]
+    candidate_ids: list[uuid.UUID]
     parallel_limit: int = 2
 
 
@@ -91,15 +90,17 @@ async def create_tournament(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/optimization/tournaments", response_model=List[TournamentResponse])
+@router.get("/optimization/tournaments", response_model=list[TournamentResponse])
 async def list_tournaments(
     tenant_id: str = "default",
     db: AsyncSession = Depends(get_db),
     _admin=Depends(get_admin_token),
 ):
-    stmt = select(AgentOptimizationTournament).where(
-        AgentOptimizationTournament.tenant_id == tenant_id
-    ).order_by(AgentOptimizationTournament.created_at.desc())
+    stmt = (
+        select(AgentOptimizationTournament)
+        .where(AgentOptimizationTournament.tenant_id == tenant_id)
+        .order_by(AgentOptimizationTournament.created_at.desc())
+    )
     res = await db.execute(stmt)
     tournaments = res.scalars().all()
     return [_tournament_to_response(t) for t in tournaments]
@@ -130,9 +131,7 @@ async def get_tournament(
 
     stmt_r = (
         select(AgentOptimizationTournamentResult)
-        .where(
-            AgentOptimizationTournamentResult.tournament_id == tournament_id
-        )
+        .where(AgentOptimizationTournamentResult.tournament_id == tournament_id)
         .order_by(AgentOptimizationTournamentResult.rank)
     )
     res_r = await db.execute(stmt_r)

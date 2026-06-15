@@ -20,24 +20,24 @@ class CanaryComparator:
 
         primary = await self.db.get(AgentRun, record.primary_run_id)
         shadow = await self.db.get(AgentRun, record.shadow_run_id)
-        
+
         # Mock comparison logic
         metrics = {
             "success_match": primary.status == shadow.status,
-            "latency_diff_ms": 100, # Placeholder
-            "cost_diff_brl": 0.05, # Placeholder
-            "tool_divergence": False
+            "latency_diff_ms": 100,  # Placeholder
+            "cost_diff_brl": 0.05,  # Placeholder
+            "tool_divergence": False,
         }
-        
+
         findings = []
         if primary.status != shadow.status:
             findings.append(f"Status divergence: Primary={primary.status}, Shadow={shadow.status}")
-            
+
         comparison = AgentCanaryComparison(
             shadow_run_id=shadow_run_record_id,
             metrics=metrics,
             findings=findings,
-            is_regression=not metrics["success_match"]
+            is_regression=not metrics["success_match"],
         )
         self.db.add(comparison)
         await self.db.commit()

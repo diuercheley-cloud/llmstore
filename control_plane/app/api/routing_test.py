@@ -52,6 +52,7 @@ async def set_force_local_failure(payload: ForceLocalFailureRequest):
     val = "true" if payload.enabled else "false"
     os.environ["ROUTING_TEST_FORCE_LOCAL_FAILURE"] = val
     from app.core.config import get_settings
+
     get_settings.cache_clear()
     return ForceLocalFailureResponse(
         routing_test_force_local_failure=payload.enabled,

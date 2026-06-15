@@ -1,7 +1,6 @@
 import logging
 import secrets
 import uuid
-from typing import Optional, Tuple
 
 from app.core.config import get_settings
 from app.core.security import hash_secret, verify_secret
@@ -12,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class ServicePrincipalService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -21,10 +21,10 @@ class ServicePrincipalService:
         self,
         tenant_id: str,
         agent_id: uuid.UUID,
-        description: Optional[str] = None,
-        actor_id: Optional[str] = None,
-        actor_type: Optional[str] = None,
-    ) -> Tuple[AgentServicePrincipal, str]:
+        description: str | None = None,
+        actor_id: str | None = None,
+        actor_type: str | None = None,
+    ) -> tuple[AgentServicePrincipal, str]:
         """
         Creates a new service principal for an agent.
         Generates a secure client ID and client secret, storing the secret's hash.
@@ -32,7 +32,7 @@ class ServicePrincipalService:
         """
         settings = get_settings()
         if not settings.agent_service_principals_enabled and not settings.agent_iam_enabled:
-             raise PermissionError("Agent Service Principals are disabled by feature flag.")
+            raise PermissionError("Agent Service Principals are disabled by feature flag.")
 
         # Check if already exists
         stmt = select(AgentServicePrincipal).where(
@@ -74,7 +74,7 @@ class ServicePrincipalService:
 
     async def get_service_principal(
         self, tenant_id: str, agent_id: uuid.UUID
-    ) -> Optional[AgentServicePrincipal]:
+    ) -> AgentServicePrincipal | None:
         stmt = select(AgentServicePrincipal).where(
             AgentServicePrincipal.tenant_id == tenant_id,
             AgentServicePrincipal.agent_id == agent_id,
@@ -84,7 +84,7 @@ class ServicePrincipalService:
 
     async def authenticate(
         self, client_id: str, client_secret: str
-    ) -> Optional[AgentServicePrincipal]:
+    ) -> AgentServicePrincipal | None:
         """
         Validates client_id and client_secret. Returns the Service Principal if valid.
         """
@@ -105,8 +105,8 @@ class ServicePrincipalService:
         self,
         tenant_id: str,
         agent_id: uuid.UUID,
-        actor_id: Optional[str] = None,
-        actor_type: Optional[str] = None,
+        actor_id: str | None = None,
+        actor_type: str | None = None,
     ) -> str:
         """
         Rotates the client secret for an agent's service principal.
@@ -136,8 +136,8 @@ class ServicePrincipalService:
         self,
         tenant_id: str,
         agent_id: uuid.UUID,
-        actor_id: Optional[str] = None,
-        actor_type: Optional[str] = None,
+        actor_id: str | None = None,
+        actor_type: str | None = None,
     ) -> None:
         sp = await self.get_service_principal(tenant_id, agent_id)
         if not sp:

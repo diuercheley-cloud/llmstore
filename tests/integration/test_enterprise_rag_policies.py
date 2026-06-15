@@ -43,7 +43,10 @@ class TestEnterpriseRagPolicy:
 
     def test_allowed_file_types_default(self):
         policy = EnterpriseRagPolicy()
-        assert all(ext in policy.allowed_file_types for ext in [".txt", ".md", ".pdf", ".docx", ".xlsx", ".csv"])
+        assert all(
+            ext in policy.allowed_file_types
+            for ext in [".txt", ".md", ".pdf", ".docx", ".xlsx", ".csv"]
+        )
 
 
 class TestResolvePolicy:
@@ -99,7 +102,9 @@ class TestResolvePolicy:
 class TestQuotaCheck:
     async def test_unlimited_quota(self, mock_session):
         client_id = uuid.uuid4()
-        policy = EnterpriseRagPolicy(max_documents=None, max_storage_mb=None, max_pages_per_month=None)
+        policy = EnterpriseRagPolicy(
+            max_documents=None, max_storage_mb=None, max_pages_per_month=None
+        )
         ok, msg = await check_quota_documents(mock_session, client_id, policy)
         assert ok is True
         ok, msg = await check_quota_storage(mock_session, client_id, policy)
@@ -150,7 +155,9 @@ class TestQuotaCheck:
         result.scalar = MagicMock(return_value=9 * 1024 * 1024)
         mock_session.execute.return_value = result
 
-        ok, msg = await check_quota_storage(mock_session, client_id, policy, additional_bytes=2 * 1024 * 1024)
+        ok, msg = await check_quota_storage(
+            mock_session, client_id, policy, additional_bytes=2 * 1024 * 1024
+        )
         assert ok is False
 
 

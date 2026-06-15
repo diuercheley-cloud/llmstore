@@ -27,12 +27,18 @@ class CommercialSignedModelRegistryEntry(Base):
         nullable=True,
         index=True,
     )
-    trust_state: Mapped[str] = mapped_column(String(32), nullable=False, default="pending", index=True)
+    trust_state: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="pending", index=True
+    )
     tenant_scope_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     approved_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
 
 
 class CommercialModelProvenanceAttestation(Base):
@@ -47,7 +53,9 @@ class CommercialModelProvenanceAttestation(Base):
     artifact_hash: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     evidence_json: Mapped[dict] = mapped_column(JSON, nullable=False)
     chain_of_custody_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
 
 class CommercialModelRevocationRecord(Base):
@@ -64,7 +72,9 @@ class CommercialModelRevocationRecord(Base):
     reason: Mapped[str] = mapped_column(Text, nullable=False)
     revocation_type: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
     revoked_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
 
 class CommercialModelPromotionBundle(Base):
@@ -78,7 +88,9 @@ class CommercialModelPromotionBundle(Base):
     manifest_hash: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     signature: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="created", index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
     promoted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
@@ -101,7 +113,9 @@ class CommercialModelIntegrityScan(Base):
     node_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     cluster_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
 
 class CommercialRuntimeModelAttestation(Base):
@@ -122,7 +136,9 @@ class CommercialRuntimeModelAttestation(Base):
     expected_checksum: Mapped[str | None] = mapped_column(String(128), nullable=True)
     observed_checksum: Mapped[str | None] = mapped_column(String(128), nullable=True)
     attestation_status: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
-    attested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    attested_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
     node_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     cluster_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
 
@@ -144,4 +160,6 @@ class CommercialModelIntegrityEvent(Base):
     node_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     cluster_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     immutable_hash: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )

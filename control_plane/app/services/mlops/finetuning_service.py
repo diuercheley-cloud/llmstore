@@ -6,7 +6,7 @@ import sys
 import tempfile
 import uuid
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.core.config import get_settings
 from app.services.mlops.model_lineage import ModelLineage
@@ -127,8 +127,8 @@ class FineTuningService:
         model_name: str,
         dataset_version_id: uuid.UUID,
         provider: str = "mock",
-        hyperparameters: Optional[Dict[str, Any]] = None,
-        admin_user_id: Optional[uuid.UUID] = None,
+        hyperparameters: dict[str, Any] | None = None,
+        admin_user_id: uuid.UUID | None = None,
     ) -> uuid.UUID:
         job = await self.job_registry.create_job(
             model_name=model_name,
@@ -146,24 +146,32 @@ class FineTuningService:
             await self._execute_mock(job.id, model_name, dataset_version_id, hparams, admin_user_id)
         elif provider == "local":
             await self.job_registry.update_job_status(
-                job_id=job.id, status="failed",
+                job_id=job.id,
+                status="failed",
                 logs="Local training not configured. Use 'gpu' provider.",
                 admin_user_id=admin_user_id,
             )
         else:
             await self.job_registry.update_job_status(
-                job_id=job.id, status="failed",
+                job_id=job.id,
+                status="failed",
                 logs=f"Provider '{provider}' not recognised. Use 'gpu' or 'mock'.",
                 admin_user_id=admin_user_id,
             )
 
         return job.id
 
-    async def _execute_mock(self, job_id: uuid.UUID, model_name: str,
-                            dataset_version_id: uuid.UUID, hparams: Dict[str, Any],
-                            admin_user_id: Optional[uuid.UUID] = None):
+    async def _execute_mock(
+        self,
+        job_id: uuid.UUID,
+        model_name: str,
+        dataset_version_id: uuid.UUID,
+        hparams: dict[str, Any],
+        admin_user_id: uuid.UUID | None = None,
+    ):
         await self.job_registry.update_job_status(
-            job_id=job_id, status="running",
+            job_id=job_id,
+            status="running",
             logs="Starting mock training execution... Setting up environments.",
             admin_user_id=admin_user_id,
         )
@@ -174,19 +182,30 @@ class FineTuningService:
             "Using API key: dummy-key-12345678901234567890123456789012"
         )
         await self.job_registry.update_job_status(
-            job_id=job_id, status="completed", logs=raw_logs,
-            output_model_id=output_model_id, admin_user_id=admin_user_id,
+            job_id=job_id,
+            status="completed",
+            logs=raw_logs,
+            output_model_id=output_model_id,
+            admin_user_id=admin_user_id,
         )
         await self.lineage_service.record_lineage(
-            model_id=output_model_id, dataset_version_id=dataset_version_id,
-            training_job_id=job_id, admin_user_id=admin_user_id,
+            model_id=output_model_id,
+            dataset_version_id=dataset_version_id,
+            training_job_id=job_id,
+            admin_user_id=admin_user_id,
         )
 
-    async def _execute_gpu(self, job_id: uuid.UUID, model_name: str,
-                           dataset_version_id: uuid.UUID, hparams: Dict[str, Any],
-                           admin_user_id: Optional[uuid.UUID] = None):
+    async def _execute_gpu(
+        self,
+        job_id: uuid.UUID,
+        model_name: str,
+        dataset_version_id: uuid.UUID,
+        hparams: dict[str, Any],
+        admin_user_id: uuid.UUID | None = None,
+    ):
         await self.job_registry.update_job_status(
-            job_id=job_id, status="running",
+            job_id=job_id,
+            status="running",
             logs="GPU executor: provisioning environment...",
             admin_user_id=admin_user_id,
         )
@@ -195,7 +214,9 @@ class FineTuningService:
         dataset_path = None
         if self.settings.mlops_dataset_storage_path:
             dataset_path = str(
-                Path(self.settings.mlops_dataset_storage_path) / str(dataset_version_id) / "data.jsonl"
+                Path(self.settings.mlops_dataset_storage_path)
+                / str(dataset_version_id)
+                / "data.jsonl"
             )
 
         params = {
@@ -217,8 +238,12 @@ class FineTuningService:
         async def _run():
             try:
                 proc = await asyncio.create_subprocess_exec(
-                    sys.executable, "-c", script, params_json,
-                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                    sys.executable,
+                    "-c",
+                    script,
+                    params_json,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
                     env={**os.environ, "TOKENIZERS_PARALLELISM": "false"},
                 )
                 all_logs = ""
@@ -230,29 +255,40 @@ class FineTuningService:
                     all_logs += decoded
                     if len(all_logs) % 4096 < len(decoded):
                         await self.job_registry.update_job_status(
-                            job_id=job_id, status="running",
-                            logs=all_logs[-16000:], admin_user_id=admin_user_id,
+                            job_id=job_id,
+                            status="running",
+                            logs=all_logs[-16000:],
+                            admin_user_id=admin_user_id,
                         )
                 await proc.wait()
                 if proc.returncode == 0:
                     output_model_id = f"{model_name}-ft-{str(job_id)[:8]}"
                     await self.job_registry.update_job_status(
-                        job_id=job_id, status="completed", logs=all_logs,
-                        output_model_id=output_model_id, admin_user_id=admin_user_id,
+                        job_id=job_id,
+                        status="completed",
+                        logs=all_logs,
+                        output_model_id=output_model_id,
+                        admin_user_id=admin_user_id,
                     )
                     await self.lineage_service.record_lineage(
-                        model_id=output_model_id, dataset_version_id=dataset_version_id,
-                        training_job_id=job_id, admin_user_id=admin_user_id,
+                        model_id=output_model_id,
+                        dataset_version_id=dataset_version_id,
+                        training_job_id=job_id,
+                        admin_user_id=admin_user_id,
                     )
                 else:
                     await self.job_registry.update_job_status(
-                        job_id=job_id, status="failed", logs=all_logs,
+                        job_id=job_id,
+                        status="failed",
+                        logs=all_logs,
                         admin_user_id=admin_user_id,
                     )
             except Exception as e:
                 await self.job_registry.update_job_status(
-                    job_id=job_id, status="failed",
-                    logs=f"GPU executor error: {e}", admin_user_id=admin_user_id,
+                    job_id=job_id,
+                    status="failed",
+                    logs=f"GPU executor error: {e}",
+                    admin_user_id=admin_user_id,
                 )
 
         asyncio.create_task(_run())

@@ -1,5 +1,4 @@
 import uuid
-from typing import Optional
 
 from app.db.session import get_db_session
 from app.models.core.client import Client
@@ -25,18 +24,18 @@ usage_service = MultimodalUsageService()
 
 class ImageGenRequest(BaseModel):
     prompt: str
-    size: Optional[str] = "1024x1024"
-    provider: Optional[str] = "mock"
+    size: str | None = "1024x1024"
+    provider: str | None = "mock"
 
 
 @router.post("/v1/multimodal/vision")
 async def post_vision(
-    image_file: Optional[UploadFile] = File(None),
-    base64_data: Optional[str] = Form(None),
-    image_url: Optional[str] = Form(None),
-    run_ocr: Optional[bool] = Form(False),
+    image_file: UploadFile | None = File(None),
+    base64_data: str | None = Form(None),
+    image_url: str | None = Form(None),
+    run_ocr: bool | None = Form(False),
     client: Client = Depends(require_client),
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
 ):
     try:
         result = await vision_service.process_image(
@@ -45,7 +44,7 @@ async def post_vision(
             image_upload=image_file,
             base64_data=base64_data,
             image_url=image_url,
-            run_ocr=run_ocr
+            run_ocr=run_ocr,
         )
         return result
     except HTTPException as e:
@@ -58,15 +57,11 @@ async def post_vision(
 async def post_image_generation(
     req: ImageGenRequest,
     client: Client = Depends(require_client),
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
 ):
     try:
         result = await image_generation_service.generate_image(
-            db=db,
-            client_id=client.id,
-            prompt=req.prompt,
-            size=req.size,
-            provider=req.provider
+            db=db, client_id=client.id, prompt=req.prompt, size=req.size, provider=req.provider
         )
         return result
     except HTTPException as e:
@@ -77,11 +72,11 @@ async def post_image_generation(
 
 @router.post("/v1/multimodal/speech-to-text")
 async def post_speech_to_text(
-    audio_file: Optional[UploadFile] = File(None),
-    base64_audio: Optional[str] = Form(None),
-    save_audio: Optional[bool] = Form(False),
+    audio_file: UploadFile | None = File(None),
+    base64_audio: str | None = Form(None),
+    save_audio: bool | None = Form(False),
     client: Client = Depends(require_client),
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
 ):
     try:
         result = await speech_to_text_service.transcribe_audio(
@@ -89,7 +84,7 @@ async def post_speech_to_text(
             client_id=client.id,
             audio_file=audio_file,
             base64_audio=base64_audio,
-            save_audio_by_policy=save_audio
+            save_audio_by_policy=save_audio,
         )
         return result
     except HTTPException as e:
@@ -102,7 +97,7 @@ async def post_speech_to_text(
 async def get_asset(
     asset_id: uuid.UUID,
     client: Client = Depends(require_client),
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
 ):
     try:
         asset = await policy_service.check_asset_access(db, client.id, asset_id)
@@ -114,10 +109,7 @@ async def get_asset(
 
 
 @router.get("/admin/multimodal/usage")
-async def get_admin_usage(
-    admin=Depends(require_admin),
-    db: AsyncSession = Depends(get_db_session)
-):
+async def get_admin_usage(admin=Depends(require_admin), db: AsyncSession = Depends(get_db_session)):
     try:
         result = await usage_service.get_usage_summary(db)
         return result

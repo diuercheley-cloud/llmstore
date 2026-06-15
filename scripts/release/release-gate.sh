@@ -100,7 +100,12 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 4. Feature Flags Governance
+# 4. Release Readiness (Files & Hygiene)
+# ---------------------------------------------------------------------------
+run_gate "release-readiness" python3 scripts/validate_release_readiness.py
+
+# ---------------------------------------------------------------------------
+# 5. Feature Flags Governance
 # ---------------------------------------------------------------------------
 run_gate "feature-flags" bash scripts/validators/check-feature-flags.sh
 
@@ -182,8 +187,7 @@ fi
 # ---------------------------------------------------------------------------
 # 12. agentic-readiness
 # ---------------------------------------------------------------------------
-...
-fi
+run_gate "agentic-readiness" bash scripts/dev/run-agentic-readiness.sh 2>&1 || true
 
 # ---------------------------------------------------------------------------
 # 12a. Simulated Surface Audit

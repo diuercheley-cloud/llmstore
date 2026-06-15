@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import sqlalchemy as sa
 from app.db.base import Base
@@ -13,7 +13,9 @@ class CommercialReportDeliveryLog(Base):
     __tablename__ = "commercial_report_delivery_logs"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    schedule_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
+    schedule_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True, index=True
+    )
     report_format: Mapped[str] = mapped_column(sa.String(20), nullable=False)
     recipients_json: Mapped[list | None] = mapped_column(sa.JSON, nullable=True)
     delivery_mode: Mapped[str] = mapped_column(sa.String(20), nullable=False)
@@ -26,7 +28,7 @@ class CommercialReportDeliveryLog(Base):
     created_at: Mapped[datetime] = mapped_column(
         sa.DateTime(timezone=True),
         nullable=False,
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
         index=True,
     )
     delivered_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True), nullable=True)

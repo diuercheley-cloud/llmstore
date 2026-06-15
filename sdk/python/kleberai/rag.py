@@ -21,7 +21,7 @@ class RAGAPI:
         data = {}
         if collection_id:
             data["collection_id"] = collection_id
-            
+
         try:
             with open(file_path, "rb") as f:
                 files = {"file": (file_path.split("/")[-1], f)}
@@ -31,9 +31,12 @@ class RAGAPI:
                     return response.json()
         except Exception as e:
             from .client import KleberAIError
+
             raise KleberAIError(f"Upload failed: {str(e)}")
 
-    def upload_document(self, file_path: str, collection_id: Optional[str] = None) -> Dict[str, Any]:
+    def upload_document(
+        self, file_path: str, collection_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Alias for upload_file to match documentation."""
         return self.upload_file(file_path, collection_id)
 

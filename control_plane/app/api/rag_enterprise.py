@@ -3,13 +3,10 @@ import json
 import logging
 import os
 import uuid
-from typing import Optional
 
 from app.api.client import _chat_with_fallback
 from app.api.deps import get_inference_proxy
 from app.core.config import get_settings
-from app.services.runtime_dependencies import get_db_session
-from app.models.core.client import Client
 from app.models.commercial.commercial_rag_vault import (
     CommercialRAGDocument,
     CommercialRAGLegalHold,
@@ -18,6 +15,7 @@ from app.models.commercial.commercial_rag_vault import (
     CommercialRAGVault,
 )
 from app.models.commercial.commercial_retrieval_proofs import CommercialRetrievalProof
+from app.models.core.client import Client
 from app.models.rag.rag_collection import RAGCollection
 from app.models.rag.rag_document import RAGDocument
 from app.models.rag.rag_document_chunk import RAGDocumentChunk
@@ -65,6 +63,7 @@ from app.services.rag_usage import (
     get_rag_usage_and_limits,
     record_rag_event,
 )
+from app.services.runtime_dependencies import get_db_session
 from app.utils.token_estimator import estimate_tokens_from_text
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel
@@ -113,6 +112,7 @@ class AdminRetrievalReplayPayload(BaseModel):
 
 # --- Helper ---
 
+
 def _check_rag_enabled():
     if not settings.rag_enabled:
         raise HTTPException(status_code=403, detail="RAG is disabled")
@@ -131,6 +131,7 @@ async def _check_client_rag(session, client):
 
 # --- Collections ---
 
+
 @router.post("/collections", response_model=CollectionResponse)
 async def create_collection(
     payload: CollectionCreate,
@@ -148,8 +149,12 @@ async def create_collection(
     await session.commit()
     await session.refresh(col)
     return CollectionResponse(
-        id=col.id, name=col.name, description=col.description,
-        document_count=0, tags=col.tags, created_at=col.created_at,
+        id=col.id,
+        name=col.name,
+        description=col.description,
+        document_count=0,
+        tags=col.tags,
+        created_at=col.created_at,
     )
 
 
@@ -159,29 +164,38 @@ async def list_collections(
     session: AsyncSession = Depends(get_db_session),
 ):
     await _check_client_rag(session, client)
-    cols = (await session.execute(
-        select(RAGCollection).where(RAGCollection.client_id == client.id)
-    )).scalars().all()
+    cols = (
+        (await session.execute(select(RAGCollection).where(RAGCollection.client_id == client.id)))
+        .scalars()
+        .all()
+    )
     data = []
     for col in cols:
         count_result = await session.execute(
             select(func.count(RAGDocument.id)).where(RAGDocument.client_id == client.id)
         )
         doc_count = count_result.scalar() or 0
-        data.append(CollectionResponse(
-            id=col.id, name=col.name, description=col.description,
-            document_count=doc_count, tags=col.tags, created_at=col.created_at,
-        ))
+        data.append(
+            CollectionResponse(
+                id=col.id,
+                name=col.name,
+                description=col.description,
+                document_count=doc_count,
+                tags=col.tags,
+                created_at=col.created_at,
+            )
+        )
     return CollectionListResponse(data=data)
 
 
 # --- Documents ---
 
+
 @router.post("/documents", response_model=EnterpriseDocumentResponse)
 async def upload_enterprise_document(
     file: UploadFile = File(...),
-    collection_id: Optional[uuid.UUID] = Query(None),
-    tags: Optional[str] = Query(None),
+    collection_id: uuid.UUID | None = Query(None),
+    tags: str | None = Query(None),
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
 ):
@@ -198,38 +212,49 @@ async def upload_enterprise_document(
     file_size_mb = file_size / (1024 * 1024)
 
     if file_size_mb > settings.rag_max_file_mb:
-        raise HTTPException(status_code=413, detail=f"File too large. Max {settings.rag_max_file_mb}MB")
+        raise HTTPException(
+            status_code=413, detail=f"File too large. Max {settings.rag_max_file_mb}MB"
+        )
 
     doc_ok, doc_msg = await check_quota_documents(session, client.id, policy)
     if not doc_ok:
-        return JSONResponse(status_code=429, content={
-            "error": "rag_limit_exceeded",
-            "limit": "rag_max_documents",
-            "current": usage_info["usage"]["documents_count"],
-            "max": policy.max_documents,
-            "plan": usage_info["plan"],
-        })
+        return JSONResponse(
+            status_code=429,
+            content={
+                "error": "rag_limit_exceeded",
+                "limit": "rag_max_documents",
+                "current": usage_info["usage"]["documents_count"],
+                "max": policy.max_documents,
+                "plan": usage_info["plan"],
+            },
+        )
 
     storage_ok, storage_msg = await check_quota_storage(session, client.id, policy, file_size)
     if not storage_ok:
-        return JSONResponse(status_code=429, content={
-            "error": "rag_limit_exceeded",
-            "limit": "rag_max_storage_mb",
-            "current": usage_info["usage"]["storage_mb"],
-            "max": policy.max_storage_mb,
-            "plan": usage_info["plan"],
-        })
+        return JSONResponse(
+            status_code=429,
+            content={
+                "error": "rag_limit_exceeded",
+                "limit": "rag_max_storage_mb",
+                "current": usage_info["usage"]["storage_mb"],
+                "max": policy.max_storage_mb,
+                "plan": usage_info["plan"],
+            },
+        )
 
     ext = os.path.splitext(file.filename)[1].lower()
     parser_status = get_parser_status(ext)
     if not parser_status.available:
-        raise HTTPException(status_code=400, detail={
-            "error": "parser_unavailable",
-            "extension": ext,
-            "dependency": parser_status.dependency,
-            "remediation": parser_status.remediation,
-            "message": f"Parser for {ext} is not available. Install {parser_status.dependency}.",
-        })
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "parser_unavailable",
+                "extension": ext,
+                "dependency": parser_status.dependency,
+                "remediation": parser_status.remediation,
+                "message": f"Parser for {ext} is not available. Install {parser_status.dependency}.",
+            },
+        )
 
     client_storage_dir = os.path.join(settings.rag_storage_dir, str(client.id), "enterprise")
     os.makedirs(client_storage_dir, exist_ok=True)
@@ -287,8 +312,8 @@ async def upload_enterprise_document(
 
 @router.get("/documents", response_model=EnterpriseDocumentListResponse)
 async def list_enterprise_documents(
-    collection_id: Optional[uuid.UUID] = Query(None),
-    status: Optional[str] = Query(None),
+    collection_id: uuid.UUID | None = Query(None),
+    status: str | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     client: Client = Depends(require_client),
@@ -304,16 +329,28 @@ async def list_enterprise_documents(
         count_stmt = count_stmt.where(RAGDocument.status == status)
 
     total = (await session.execute(count_stmt)).scalar() or 0
-    docs = (await session.execute(
-        stmt.order_by(RAGDocument.created_at.desc()).offset(offset).limit(limit)
-    )).scalars().all()
+    docs = (
+        (
+            await session.execute(
+                stmt.order_by(RAGDocument.created_at.desc()).offset(offset).limit(limit)
+            )
+        )
+        .scalars()
+        .all()
+    )
 
     data = [
         EnterpriseDocumentResponse(
-            id=d.id, filename=d.filename, original_filename=d.original_filename,
-            content_type=d.content_type, file_size_bytes=d.file_size_bytes,
-            status=d.status, page_count=d.page_count, chunk_count=d.chunk_count,
-            error_message=d.error_message, created_at=d.created_at,
+            id=d.id,
+            filename=d.filename,
+            original_filename=d.original_filename,
+            content_type=d.content_type,
+            file_size_bytes=d.file_size_bytes,
+            status=d.status,
+            page_count=d.page_count,
+            chunk_count=d.chunk_count,
+            error_message=d.error_message,
+            created_at=d.created_at,
             processed_at=d.processed_at,
         )
         for d in docs
@@ -328,16 +365,24 @@ async def get_enterprise_document(
     session: AsyncSession = Depends(get_db_session),
 ):
     await _check_client_rag(session, client)
-    doc = (await session.execute(
-        select(RAGDocument).where(RAGDocument.id == doc_id, RAGDocument.client_id == client.id)
-    )).scalar_one_or_none()
+    doc = (
+        await session.execute(
+            select(RAGDocument).where(RAGDocument.id == doc_id, RAGDocument.client_id == client.id)
+        )
+    ).scalar_one_or_none()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     return EnterpriseDocumentResponse(
-        id=doc.id, filename=doc.filename, original_filename=doc.original_filename,
-        content_type=doc.content_type, file_size_bytes=doc.file_size_bytes,
-        status=doc.status, page_count=doc.page_count, chunk_count=doc.chunk_count,
-        error_message=doc.error_message, created_at=doc.created_at,
+        id=doc.id,
+        filename=doc.filename,
+        original_filename=doc.original_filename,
+        content_type=doc.content_type,
+        file_size_bytes=doc.file_size_bytes,
+        status=doc.status,
+        page_count=doc.page_count,
+        chunk_count=doc.chunk_count,
+        error_message=doc.error_message,
+        created_at=doc.created_at,
         processed_at=doc.processed_at,
     )
 
@@ -349,39 +394,50 @@ async def delete_enterprise_document_endpoint(
     session: AsyncSession = Depends(get_db_session),
 ):
     await _check_client_rag(session, client)
-    doc = (await session.execute(
-        select(RAGDocument).where(RAGDocument.id == doc_id, RAGDocument.client_id == client.id)
-    )).scalar_one_or_none()
+    doc = (
+        await session.execute(
+            select(RAGDocument).where(RAGDocument.id == doc_id, RAGDocument.client_id == client.id)
+        )
+    ).scalar_one_or_none()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
     file_size = doc.file_size_bytes
     await delete_enterprise_document(session, doc)
-    await record_rag_event(session, client.id, "document_deleted", document_id=doc_id, storage_bytes=-file_size)
+    await record_rag_event(
+        session, client.id, "document_deleted", document_id=doc_id, storage_bytes=-file_size
+    )
     await session.commit()
     return {"status": "deleted"}
 
 
 # --- Query ---
 
+
 async def query_enterprise_rag(
     payload: EnterpriseQueryRequest,
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
-    proxy = Depends(get_inference_proxy),
+    proxy=Depends(get_inference_proxy),
 ):
     usage_info = await _check_client_rag(session, client)
     limits = usage_info["limits"]
     usage = usage_info["usage"]
 
-    if limits["max_queries_per_month"] is not None and usage["queries_month"] >= limits["max_queries_per_month"]:
-        return JSONResponse(status_code=429, content={
-            "error": "rag_limit_exceeded",
-            "limit": "rag_max_queries_per_month",
-            "current": usage["queries_month"],
-            "max": limits["max_queries_per_month"],
-            "plan": usage_info["plan"],
-        })
+    if (
+        limits["max_queries_per_month"] is not None
+        and usage["queries_month"] >= limits["max_queries_per_month"]
+    ):
+        return JSONResponse(
+            status_code=429,
+            content={
+                "error": "rag_limit_exceeded",
+                "limit": "rag_max_queries_per_month",
+                "current": usage["queries_month"],
+                "max": limits["max_queries_per_month"],
+                "plan": usage_info["plan"],
+            },
+        )
 
     policy = await resolve_enterprise_rag_policy(session, client)
     cloud_allowed = await is_cloud_embedding_allowed(client, policy)
@@ -402,7 +458,9 @@ async def query_enterprise_rag(
             return_audit=True,
         )
     except RetrievalAccessDenied as exc:
-        raise HTTPException(status_code=403, detail=f"Regulated RAG policy denied retrieval: {exc.reason}")
+        raise HTTPException(
+            status_code=403, detail=f"Regulated RAG policy denied retrieval: {exc.reason}"
+        )
 
     if not sources:
         return EnterpriseQueryResponse(
@@ -425,10 +483,13 @@ Pergunta:
 
 Resposta:"""
 
-    selected_model, _ = await resolve_requested_model(session, client=client, requested_model=payload.model)
+    selected_model, _ = await resolve_requested_model(
+        session, client=client, requested_model=payload.model
+    )
     effective_plan = await resolve_effective_plan_for_session(session, client)
 
     from app.services.tokenizer_service import get_tokenizer_service
+
     tokenizer = get_tokenizer_service()
     token_res = await tokenizer.count_text_tokens(prompt, model=selected_model.model_id)
     prompt_tokens = token_res.input_tokens
@@ -438,7 +499,8 @@ Resposta:"""
 
     try:
         await ensure_quota(
-            session, client.id,
+            session,
+            client.id,
             effective_plan.daily_token_quota,
             effective_plan.weekly_token_quota,
             effective_plan.monthly_token_quota,
@@ -454,22 +516,26 @@ Resposta:"""
         "temperature": payload.temperature,
     }
 
-    result = await _chat_with_fallback(proxy, selected_model, chat_payload, False, False, client=client)
+    result = await _chat_with_fallback(
+        proxy, selected_model, chat_payload, False, False, client=client
+    )
     response_payload = json.loads(result.response.body.decode("utf-8"))
     answer = (response_payload.get("choices") or [{}])[0].get("message", {}).get("content", "")
 
     completion_tokens = estimate_tokens_from_text(answer)
 
     await record_usage(
-        session, 
-        client.id, 
-        prompt_tokens, 
+        session,
+        client.id,
+        prompt_tokens,
         completion_tokens,
         token_count_method=token_count_method,
-        tokens_estimated=tokens_estimated
+        tokens_estimated=tokens_estimated,
     )
     await record_rag_event(session, client.id, "rag_query", quantity=1)
-    await record_rag_event(session, client.id, "rag_query_tokens", quantity=prompt_tokens + completion_tokens)
+    await record_rag_event(
+        session, client.id, "rag_query_tokens", quantity=prompt_tokens + completion_tokens
+    )
 
     if settings.commercial_rag_vault_enabled:
         vault = await get_or_create_default_vault(session, client_id=client.id)
@@ -517,6 +583,7 @@ Resposta:"""
 
 # --- Admin Endpoints ---
 
+
 @admin_router.get("/overview")
 async def admin_rag_overview(
     session: AsyncSession = Depends(get_db_session),
@@ -528,9 +595,9 @@ async def admin_rag_overview(
     total_storage = storage_result.scalar() or 0
     total_cols = (await session.execute(select(func.count(RAGCollection.id)))).scalar() or 0
 
-    clients_with_rag = (await session.execute(
-        select(func.count(func.distinct(RAGDocument.client_id)))
-    )).scalar() or 0
+    clients_with_rag = (
+        await session.execute(select(func.count(func.distinct(RAGDocument.client_id))))
+    ).scalar() or 0
 
     status_rows = await session.execute(
         select(RAGDocument.status, func.count(RAGDocument.id)).group_by(RAGDocument.status)
@@ -546,11 +613,13 @@ async def admin_rag_overview(
     )
     clients_data = []
     for row in client_results.mappings():
-        clients_data.append({
-            "client_id": str(row["client_id"]),
-            "documents": row["doc_count"],
-            "storage_bytes": row["storage"] or 0,
-        })
+        clients_data.append(
+            {
+                "client_id": str(row["client_id"]),
+                "documents": row["doc_count"],
+                "storage_bytes": row["storage"] or 0,
+            }
+        )
 
     return AdminOverview(
         total_documents=total_docs,
@@ -569,16 +638,24 @@ async def admin_list_client_documents(
     session: AsyncSession = Depends(get_db_session),
     admin=Depends(require_admin_role(AdminRole.READ)),
 ):
-    docs = (await session.execute(
-        select(RAGDocument).where(RAGDocument.client_id == client_id)
-    )).scalars().all()
+    docs = (
+        (await session.execute(select(RAGDocument).where(RAGDocument.client_id == client_id)))
+        .scalars()
+        .all()
+    )
     return EnterpriseDocumentListResponse(
         data=[
             EnterpriseDocumentResponse(
-                id=d.id, filename=d.filename, original_filename=d.original_filename,
-                content_type=d.content_type, file_size_bytes=d.file_size_bytes,
-                status=d.status, page_count=d.page_count, chunk_count=d.chunk_count,
-                error_message=d.error_message, created_at=d.created_at,
+                id=d.id,
+                filename=d.filename,
+                original_filename=d.original_filename,
+                content_type=d.content_type,
+                file_size_bytes=d.file_size_bytes,
+                status=d.status,
+                page_count=d.page_count,
+                chunk_count=d.chunk_count,
+                error_message=d.error_message,
+                created_at=d.created_at,
                 processed_at=d.processed_at,
             )
             for d in docs
@@ -592,7 +669,15 @@ async def admin_list_vaults(
     session: AsyncSession = Depends(get_db_session),
     admin=Depends(require_admin_role(AdminRole.READ)),
 ):
-    rows = (await session.execute(select(CommercialRAGVault).order_by(CommercialRAGVault.created_at.desc()))).scalars().all()
+    rows = (
+        (
+            await session.execute(
+                select(CommercialRAGVault).order_by(CommercialRAGVault.created_at.desc())
+            )
+        )
+        .scalars()
+        .all()
+    )
     return [
         {
             "id": str(item.id),
@@ -650,7 +735,9 @@ async def admin_list_regulated_documents(
             "classification": item.classification,
             "ingestion_status": item.ingestion_status,
             "source_type": item.source_type,
-            "signed_manifest_hash": item.signed_manifest_hash[:16] if item.signed_manifest_hash else None,
+            "signed_manifest_hash": item.signed_manifest_hash[:16]
+            if item.signed_manifest_hash
+            else None,
             "legal_hold": item.legal_hold,
             "metadata_json": sanitize_rag_metadata(item.metadata_json or {}),
             "created_at": item.created_at.isoformat(),
@@ -689,9 +776,17 @@ async def admin_list_retrieval_audit(
     session: AsyncSession = Depends(get_db_session),
     admin=Depends(require_admin_role(AdminRole.READ)),
 ):
-    rows = (await session.execute(
-        select(CommercialRAGRetrievalAudit).order_by(CommercialRAGRetrievalAudit.created_at.desc()).limit(200)
-    )).scalars().all()
+    rows = (
+        (
+            await session.execute(
+                select(CommercialRAGRetrievalAudit)
+                .order_by(CommercialRAGRetrievalAudit.created_at.desc())
+                .limit(200)
+            )
+        )
+        .scalars()
+        .all()
+    )
     return [
         {
             "id": str(item.id),
@@ -714,9 +809,17 @@ async def admin_list_retrieval_proofs(
     session: AsyncSession = Depends(get_db_session),
     admin=Depends(require_admin_role(AdminRole.READ)),
 ):
-    rows = (await session.execute(
-        select(CommercialRetrievalProof).order_by(CommercialRetrievalProof.created_at.desc()).limit(200)
-    )).scalars().all()
+    rows = (
+        (
+            await session.execute(
+                select(CommercialRetrievalProof)
+                .order_by(CommercialRetrievalProof.created_at.desc())
+                .limit(200)
+            )
+        )
+        .scalars()
+        .all()
+    )
     return [
         {
             "id": str(item.id),
@@ -769,7 +872,9 @@ async def admin_replay_retrieval_proof(
     proof = await session.get(CommercialRetrievalProof, proof_id)
     if proof is None:
         raise HTTPException(status_code=404, detail="Retrieval proof not found")
-    replay = await replay_retrieval_proof(session, proof=proof, replay_sources=payload.replay_sources)
+    replay = await replay_retrieval_proof(
+        session, proof=proof, replay_sources=payload.replay_sources
+    )
     await session.commit()
     return {
         "id": str(replay.id),
@@ -788,7 +893,10 @@ async def admin_verify_lineage_consistency(
     proof = await session.get(CommercialRetrievalProof, proof_id)
     if proof is None:
         raise HTTPException(status_code=404, detail="Retrieval proof not found")
-    return {"valid": await verify_lineage_consistency(session, proof), "lineage_root_hash": proof.lineage_root_hash}
+    return {
+        "valid": await verify_lineage_consistency(session, proof),
+        "lineage_root_hash": proof.lineage_root_hash,
+    }
 
 
 @admin_router.get("/poison-alerts")
@@ -796,9 +904,17 @@ async def admin_list_poison_alerts(
     session: AsyncSession = Depends(get_db_session),
     admin=Depends(require_admin_role(AdminRole.READ)),
 ):
-    rows = (await session.execute(
-        select(CommercialRAGPoisoningAlert).order_by(CommercialRAGPoisoningAlert.created_at.desc()).limit(200)
-    )).scalars().all()
+    rows = (
+        (
+            await session.execute(
+                select(CommercialRAGPoisoningAlert)
+                .order_by(CommercialRAGPoisoningAlert.created_at.desc())
+                .limit(200)
+            )
+        )
+        .scalars()
+        .all()
+    )
     return [
         {
             "id": str(item.id),
@@ -832,9 +948,17 @@ async def admin_list_legal_holds(
     session: AsyncSession = Depends(get_db_session),
     admin=Depends(require_admin_role(AdminRole.READ)),
 ):
-    rows = (await session.execute(
-        select(CommercialRAGLegalHold).order_by(CommercialRAGLegalHold.created_at.desc()).limit(200)
-    )).scalars().all()
+    rows = (
+        (
+            await session.execute(
+                select(CommercialRAGLegalHold)
+                .order_by(CommercialRAGLegalHold.created_at.desc())
+                .limit(200)
+            )
+        )
+        .scalars()
+        .all()
+    )
     return [
         {
             "id": str(item.id),
@@ -875,9 +999,15 @@ async def admin_reindex(
     session: AsyncSession = Depends(get_db_session),
     admin=Depends(require_admin_role(AdminRole.WRITE)),
 ):
-    docs = (await session.execute(
-        select(RAGDocument).where(RAGDocument.status.in_(["failed", "indexed"]))
-    )).scalars().all()
+    docs = (
+        (
+            await session.execute(
+                select(RAGDocument).where(RAGDocument.status.in_(["failed", "indexed"]))
+            )
+        )
+        .scalars()
+        .all()
+    )
 
     from app.api.rag import RAG_QUEUE_NAME
     from app.services.runtime_dependencies import redis_client

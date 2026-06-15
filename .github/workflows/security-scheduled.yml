@@ -18,6 +18,17 @@ jobs:
         uses: ./.github/actions/setup-python-project
       - name: Security Checks
         uses: ./.github/actions/run-security-checks
+
+      - name: Upload Bandit/Semgrep Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-scan-reports-scheduled
+          path: |
+            artifacts/reports/bandit-results.json
+            artifacts/reports/semgrep-results.json
+          retention-days: 30
+
       - name: Dependency Scan (Trivy)
         uses: aquasecurity/trivy-action@0.30.0
         with:

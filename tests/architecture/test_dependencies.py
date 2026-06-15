@@ -29,8 +29,7 @@ API_INFRASTRUCTURE_PREFIXES = (
 )
 
 API_INFRASTRUCTURE_XFAIL = (
-    "Large existing API->infra coupling tracked in issue ARCH-API-INFRA-001; "
-    "deadline 2026-07-31."
+    "Large existing API->infra coupling tracked in issue ARCH-API-INFRA-001; deadline 2026-07-31."
 )
 
 
@@ -55,7 +54,7 @@ def _resolve_import_from(*, module_name: str, node: ast.ImportFrom) -> str | Non
 
     package_parts = module_name.split(".")
     if node.level:
-        package_parts = package_parts[:-node.level]
+        package_parts = package_parts[: -node.level]
     if node.module:
         return ".".join([*package_parts, node.module])
     return ".".join(package_parts)

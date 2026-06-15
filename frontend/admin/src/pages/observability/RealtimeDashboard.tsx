@@ -66,6 +66,22 @@ interface Metrics {
 
 const MAX_DATA_POINTS = 30
 
+const MetricCard = ({ title, value, unit, icon: Icon, color, trend, alert }: any) => (
+  <div className={`bg-card border ${alert ? 'border-destructive animate-pulse' : 'border-border'} p-6 rounded-3xl shadow-sm transition-all`}>
+    <div className="flex justify-between items-start mb-4">
+      <div className={`p-3 rounded-2xl ${color}`}>
+        <Icon className="w-6 h-6" />
+      </div>
+      {alert && <AlertTriangle className="w-5 h-5 text-destructive" />}
+    </div>
+    <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">{title}</div>
+    <div className="flex items-baseline gap-1">
+      <span className="text-3xl font-black text-foreground">{value}</span>
+      <span className="text-sm font-bold text-muted-foreground">{unit}</span>
+    </div>
+  </div>
+)
+
 export default function RealtimeDashboard() {
   const [data, setData] = useState<Metrics | null>(null)
   const [history, setHistory] = useState<any[]>([])
@@ -132,21 +148,6 @@ export default function RealtimeDashboard() {
     queue: 10
   }
 
-  const MetricCard = ({ title, value, unit, icon: Icon, color, trend, alert }: any) => (
-    <div className={`bg-card border ${alert ? 'border-destructive animate-pulse' : 'border-border'} p-6 rounded-3xl shadow-sm transition-all`}>
-      <div className="flex justify-between items-start mb-4">
-        <div className={`p-3 rounded-2xl ${color}`}>
-          <Icon className="w-6 h-6" />
-        </div>
-        {alert && <AlertTriangle className="w-5 h-5 text-destructive" />}
-      </div>
-      <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">{title}</div>
-      <div className="flex items-baseline gap-1">
-        <span className="text-3xl font-black text-foreground">{value}</span>
-        <span className="text-sm font-bold text-muted-foreground">{unit}</span>
-      </div>
-    </div>
-  )
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">

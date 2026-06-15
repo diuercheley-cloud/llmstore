@@ -9,6 +9,7 @@ Covers:
 - GraphStore: cache invalidation on write
 - Benchmarks: 10k entity insert + 100k relation insert performance targets
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -316,7 +317,11 @@ class TestPostgresGraphProvider:
         settings.agent_kg_pgvector_enabled = True
         settings.agent_kg_pgrouting_enabled = False
         mock_db = MagicMock()
-        mock_db.execute = AsyncMock(return_value=MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))))
+        mock_db.execute = AsyncMock(
+            return_value=MagicMock(
+                scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))
+            )
+        )
         provider = PostgresGraphProvider(mock_db)
         caps = provider.capabilities()
         assert caps["provider"] == "postgres"
@@ -629,13 +634,13 @@ async def test_graphrag_dense_graph_10k_entities_100k_relations(session):
 | Relations inserted | {rel_count:,} |
 | Entity insert time | {entity_insert_s:.3f} s |
 | Relation insert time | {relation_insert_s:.3f} s |
-| Avg entity insert latency | {(entity_insert_s/10_000)*1000:.3f} ms |
+| Avg entity insert latency | {(entity_insert_s / 10_000) * 1000:.3f} ms |
 
 ## Query Latency
 | Query Type | Latency |
 |-----------|---------|
-| Entity name search | {entity_query_s*1000:.2f} ms |
-| Hybrid GraphRAG (depth=2, fan_out=20) | {hybrid_query_s*1000:.2f} ms |
+| Entity name search | {entity_query_s * 1000:.2f} ms |
+| Hybrid GraphRAG (depth=2, fan_out=20) | {hybrid_query_s * 1000:.2f} ms |
 
 ## Adjacency Cache Metrics
 | Metric | Value |

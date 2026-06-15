@@ -1,6 +1,7 @@
 import asyncio
 import logging
-from typing import Any, Awaitable, Callable, Optional, TypeVar
+from collections.abc import Awaitable, Callable
+from typing import Any, TypeVar
 
 T = TypeVar("T")
 
@@ -12,8 +13,8 @@ async def async_retry(
     *args: Any,
     max_retries: int = 3,
     base_delay: float = 1.0,
-    retryable_errors: Optional[tuple[type[Exception], ...]] = None,
-    non_retryable_errors: Optional[tuple[type[Exception], ...]] = None,
+    retryable_errors: tuple[type[Exception], ...] | None = None,
+    non_retryable_errors: tuple[type[Exception], ...] | None = None,
     **kwargs: Any,
 ) -> T:
     last_exc: Exception | None = None
@@ -22,13 +23,17 @@ async def async_retry(
             return await fn(*args, **kwargs)
         except non_retryable_errors or () as e:
             raise e
-        except (retryable_errors or (Exception,)) as e:
+        except retryable_errors or (Exception,) as e:
             last_exc = e
             if attempt < max_retries:
-                delay = base_delay * (2 ** attempt)
+                delay = base_delay * (2**attempt)
                 logger.warning(
                     "Retry %d/%d for %s after %.1fs: %s",
-                    attempt + 1, max_retries, fn.__name__, delay, e,
+                    attempt + 1,
+                    max_retries,
+                    fn.__name__,
+                    delay,
+                    e,
                 )
                 await asyncio.sleep(delay)
     raise last_exc  # type: ignore[misc]

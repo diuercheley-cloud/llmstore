@@ -87,6 +87,7 @@ async def run_harness(
 
     if config is None:
         import warnings
+
         warnings.warn(
             "Passing individual parameters to run_harness is deprecated. "
             "Pass a HarnessConfig instead.",
@@ -187,6 +188,7 @@ async def run_harness(
                     "Enable 'multimodal' or choose a multimodal model."
                 )
             from .policy import PolicyEngine
+
             temp_pe = PolicyEngine()
             dec = temp_pe.evaluate_file_path(file_path)
             if not dec.allowed:
@@ -202,6 +204,7 @@ async def run_harness(
                 raise FileNotFoundError(f"{media_type} not found at path: {file_path}")
 
             import base64
+
             with open(abs_path, "rb") as f:
                 b64_data = base64.b64encode(f.read()).decode("utf-8")
             ext = os.path.splitext(abs_path)[1].lower().strip(".")
@@ -215,8 +218,10 @@ async def run_harness(
         def _load_audio(file_path: str) -> dict[str, Any]:
             ext, b64_data = _validate_and_load_media(file_path, "Audio")
             mime_map = {
-                "mp3": "audio/mpeg", "wav": "audio/wav",
-                "ogg": "audio/ogg", "flac": "audio/flac",
+                "mp3": "audio/mpeg",
+                "wav": "audio/wav",
+                "ogg": "audio/ogg",
+                "flac": "audio/flac",
             }
             mime = mime_map.get(ext, "audio/mpeg")
             return {
@@ -228,8 +233,10 @@ async def run_harness(
         def _load_video(file_path: str) -> dict[str, Any]:
             ext, b64_data = _validate_and_load_media(file_path, "Video")
             mime_map = {
-                "mp4": "video/mp4", "webm": "video/webm",
-                "avi": "video/x-msvideo", "mov": "video/quicktime",
+                "mp4": "video/mp4",
+                "webm": "video/webm",
+                "avi": "video/x-msvideo",
+                "mov": "video/quicktime",
             }
             mime = mime_map.get(ext, "video/mp4")
             return {
@@ -295,12 +302,14 @@ async def run_harness(
         try:
             loop.config = config
             from .mcp import initialize_mcp_and_register_tools, mcp_client
+
             mcp_client.enabled = config.mcp.enabled
             mcp_client.servers_config = [s.model_dump() for s in config.mcp.servers]
             await initialize_mcp_and_register_tools(loop.policy_engine)
 
             if getattr(config, "auto", False):
                 from .auto_mode import AutoModeRunner
+
                 runner = AutoModeRunner(
                     coding_loop=loop,
                     max_auto_fixes=getattr(config, "max_auto_fixes", 3),
@@ -331,6 +340,7 @@ async def run_harness(
             return ExecutionResult(success=False, error=Sanitizer.sanitize_text(str(e)))
         finally:
             from .mcp import mcp_client
+
             await mcp_client.shutdown()
 
 
@@ -407,6 +417,7 @@ def main():
         print(f"Configuration Error: {exc}", file=sys.stderr)
         if getattr(args, "debug", False):
             import traceback
+
             traceback.print_exc()
         sys.exit(1)
 

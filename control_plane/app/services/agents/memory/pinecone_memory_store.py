@@ -1,6 +1,6 @@
 import logging
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.services.agents.memory.vector_store import VectorStore
 
@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from pinecone import Pinecone, ServerlessSpec
+
     HAS_PINECONE = True
 except ImportError:
     HAS_PINECONE = False
@@ -20,7 +21,12 @@ class PineconeMemoryStore(VectorStore):
     Gracefully degrades when Pinecone is unavailable.
     """
 
-    def __init__(self, api_key: Optional[str] = None, environment: Optional[str] = None, index_name: str = "agent-memory"):
+    def __init__(
+        self,
+        api_key: str | None = None,
+        environment: str | None = None,
+        index_name: str = "agent-memory",
+    ):
         self._api_key = api_key
         self._environment = environment or "us-east-1-aws"
         self._index_name = index_name
@@ -55,8 +61,8 @@ class PineconeMemoryStore(VectorStore):
         tenant_id: str,
         agent_id: uuid.UUID,
         memory_id: uuid.UUID,
-        embedding: List[float],
-        metadata: Dict[str, Any],
+        embedding: list[float],
+        metadata: dict[str, Any],
     ) -> None:
         if not self._index:
             logger.warning("Pinecone not available, skipping add_item")
@@ -78,10 +84,10 @@ class PineconeMemoryStore(VectorStore):
         self,
         tenant_id: str,
         agent_id: uuid.UUID,
-        query_embedding: List[float],
+        query_embedding: list[float],
         top_k: int = 5,
         score_threshold: float = 0.0,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         if not self._index:
             logger.warning("Pinecone not available, returning empty results")
             return []
@@ -105,12 +111,14 @@ class PineconeMemoryStore(VectorStore):
             if score < score_threshold:
                 continue
             meta = match.get("metadata", {})
-            matches.append({
-                "memory_id": meta.get("memory_id", ""),
-                "score": score,
-                "provider": "pinecone",
-                "metadata": meta,
-            })
+            matches.append(
+                {
+                    "memory_id": meta.get("memory_id", ""),
+                    "score": score,
+                    "provider": "pinecone",
+                    "metadata": meta,
+                }
+            )
 
         return matches
 

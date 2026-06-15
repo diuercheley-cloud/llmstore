@@ -35,7 +35,7 @@ def resolve_node_identity(settings: Settings | None = None) -> dict[str, Any]:
     if raw_node_id:
         node_id = raw_node_id
     else:
-        digest = hashlib.sha256(f"{hostname}:{role}:{process_id}".encode("utf-8")).hexdigest()[:24]
+        digest = hashlib.sha256(f"{hostname}:{role}:{process_id}".encode()).hexdigest()[:24]
         node_id = f"{role}-{digest}"
     return {
         "node_id": node_id,
@@ -75,7 +75,9 @@ async def write_heartbeat(
 ) -> dict[str, Any]:
     cfg = settings or get_settings()
     identity = node_identity or resolve_node_identity(cfg)
-    stmt = select(CommercialNodeHeartbeat).where(CommercialNodeHeartbeat.node_id == identity["node_id"])
+    stmt = select(CommercialNodeHeartbeat).where(
+        CommercialNodeHeartbeat.node_id == identity["node_id"]
+    )
     result = await db.execute(stmt)
     heartbeat = result.scalar_one_or_none()
     now = utc_now()
@@ -133,7 +135,9 @@ async def list_nodes(
 ) -> list[dict[str, Any]]:
     cfg = settings or get_settings()
     result = await db.execute(
-        select(CommercialNodeHeartbeat).order_by(CommercialNodeHeartbeat.node_role.asc(), CommercialNodeHeartbeat.node_id.asc())
+        select(CommercialNodeHeartbeat).order_by(
+            CommercialNodeHeartbeat.node_role.asc(), CommercialNodeHeartbeat.node_id.asc()
+        )
     )
     nodes = []
     for row in result.scalars().all():
@@ -228,9 +232,17 @@ async def commercial_distributed_analytics_loop(stop_event) -> None:
                         settings=cfg,
                     )
                     if renewed.get("renewed"):
-                        if tick % max(1, 300 // max(1, cfg.commercial_node_heartbeat_interval_seconds)) == 0:
+                        if (
+                            tick
+                            % max(1, 300 // max(1, cfg.commercial_node_heartbeat_interval_seconds))
+                            == 0
+                        ):
                             await aggregate_recent(session, hours=1, settings=cfg)
-                        if tick % max(1, 3600 // max(1, cfg.commercial_node_heartbeat_interval_seconds)) == 0:
+                        if (
+                            tick
+                            % max(1, 3600 // max(1, cfg.commercial_node_heartbeat_interval_seconds))
+                            == 0
+                        ):
                             await cleanup_old_analytics(
                                 session,
                                 settings=cfg,
@@ -247,6 +259,8 @@ async def commercial_distributed_analytics_loop(stop_event) -> None:
         try:
             import asyncio
 
-            await asyncio.wait_for(stop_event.wait(), timeout=cfg.commercial_node_heartbeat_interval_seconds)
+            await asyncio.wait_for(
+                stop_event.wait(), timeout=cfg.commercial_node_heartbeat_interval_seconds
+            )
         except Exception:
             continue

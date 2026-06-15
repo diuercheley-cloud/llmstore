@@ -36,7 +36,7 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(), nullable=False),
         sa.Column("activated_at", sa.DateTime(), nullable=True),
         sa.Column("rolled_back_at", sa.DateTime(), nullable=True),
-        sa.PrimaryKeyConstraint("id")
+        sa.PrimaryKeyConstraint("id"),
     )
 
     op.create_table(
@@ -55,7 +55,7 @@ def upgrade() -> None:
         sa.Column("traffic_percent", sa.Integer(), nullable=False),
         sa.Column("reason", sa.String(), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.PrimaryKeyConstraint("id")
+        sa.PrimaryKeyConstraint("id"),
     )
 
 

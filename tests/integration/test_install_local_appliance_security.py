@@ -4,6 +4,7 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).resolve().parents[2]
 INSTALLER = ROOT_DIR / "scripts" / "install-local-appliance.sh"
 
+
 def test_no_secrets_in_dry_run():
     result = subprocess.run([str(INSTALLER), "--dry-run"], capture_output=True, text=True)
     assert result.returncode == 0
@@ -15,10 +16,11 @@ def test_no_secrets_in_dry_run():
             # (In dry-run, we shouldn't even be generating them yet)
             pass
 
+
 def test_env_local_backup_logic():
-    # This is a bit hard to test without actually running the script, 
+    # This is a bit hard to test without actually running the script,
     # but we can check the script content for backup logic.
-    with open(INSTALLER, "r") as f:
+    with open(INSTALLER) as f:
         content = f.read()
-        assert "cp \"${ENV_FILE}\" \"${ENV_BACKUP_PATH}\"" in content
-        assert "chmod 600 \"${ENV_BACKUP_PATH}\"" in content
+        assert 'cp "${ENV_FILE}" "${ENV_BACKUP_PATH}"' in content
+        assert 'chmod 600 "${ENV_BACKUP_PATH}"' in content

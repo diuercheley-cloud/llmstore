@@ -23,7 +23,9 @@ class SovereignFederationEnvironmentRegistry:
             "deterministic_version": environment.get("deterministic_version", "v1"),
         }
         environment_hash = sha256_hex({"kind": "environment", **logical_payload})
-        immutable_hash = compute_negotiation_hash({"kind": "environment_immutable", **logical_payload})
+        immutable_hash = compute_negotiation_hash(
+            {"kind": "environment_immutable", **logical_payload}
+        )
         return SovereignFederationEnvironment(
             id=sha256_hex({"kind": "environment_id", **logical_payload}),
             client_id=environment["client_id"],
@@ -47,7 +49,9 @@ class SovereignFederationEnvironmentRegistry:
             "placeholder_trust_only": True,
         }
 
-    def evaluate_environment_trust(self, environment: SovereignFederationEnvironment) -> dict[str, Any]:
+    def evaluate_environment_trust(
+        self, environment: SovereignFederationEnvironment
+    ) -> dict[str, Any]:
         return {
             "trust_level": environment.trust_level,
             "trust_score": TRUST_SCORES.get(environment.trust_level, 0),

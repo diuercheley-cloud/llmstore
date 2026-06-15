@@ -7,8 +7,14 @@ from datetime import timedelta
 from typing import Any
 
 from app.core.time import utc_now
-from app.models.commercial.commercial_merkle_timelines import CommercialMerkleLeaf, CommercialMerkleTimeline
-from app.models.commercial.commercial_rag_vault import CommercialRAGRetrievalAudit, CommercialRAGVault
+from app.models.commercial.commercial_merkle_timelines import (
+    CommercialMerkleLeaf,
+    CommercialMerkleTimeline,
+)
+from app.models.commercial.commercial_rag_vault import (
+    CommercialRAGRetrievalAudit,
+    CommercialRAGVault,
+)
 from app.models.commercial.commercial_retrieval_proofs import (
     CommercialContextLineage,
     CommercialRetrievalMerkleLeaf,
@@ -30,7 +36,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _canonical(payload: Any) -> str:
-    return json.dumps(sanitize_report_payload(payload), sort_keys=True, ensure_ascii=True, separators=(",", ":"), default=str)
+    return json.dumps(
+        sanitize_report_payload(payload),
+        sort_keys=True,
+        ensure_ascii=True,
+        separators=(",", ":"),
+        default=str,
+    )
 
 
 def _sha256(payload: Any) -> str:
@@ -113,14 +125,22 @@ async def generate_retrieval_proof(
     session.add(proof)
     await session.flush()
 
-    lineage_root_id = await _persist_lineage(session, proof=proof, policy_payload=policy_payload, source_items=source_items)
+    lineage_root_id = await _persist_lineage(
+        session, proof=proof, policy_payload=policy_payload, source_items=source_items
+    )
     lineage_rows = (
-        await session.execute(
-            select(CommercialContextLineage)
-            .where(CommercialContextLineage.retrieval_proof_id == proof.id)
-            .order_by(CommercialContextLineage.depth.asc(), CommercialContextLineage.created_at.asc())
+        (
+            await session.execute(
+                select(CommercialContextLineage)
+                .where(CommercialContextLineage.retrieval_proof_id == proof.id)
+                .order_by(
+                    CommercialContextLineage.depth.asc(), CommercialContextLineage.created_at.asc()
+                )
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     lineage_root_hash = _sha256(
         {
             "root": str(lineage_root_id) if lineage_root_id else None,
@@ -130,7 +150,12 @@ async def generate_retrieval_proof(
 
     leaf_specs = [
         ("policy", f"policy:{audit.id}", policy_hash, policy_payload),
-        ("retrieval_sent", f"retrieval:{audit.id}", retrieval_sent_hash, {"retrieved_chunk_count": audit.retrieved_chunk_count}),
+        (
+            "retrieval_sent",
+            f"retrieval:{audit.id}",
+            retrieval_sent_hash,
+            {"retrieved_chunk_count": audit.retrieved_chunk_count},
+        ),
     ]
     for item in source_items:
         leaf_specs.append(
@@ -140,7 +165,11 @@ async def generate_retrieval_proof(
                 canonical_leaf_hash(
                     source_id=f"{item['document_id']}:{item['chunk_index']}",
                     source_type="retrieved_chunk",
-                    payload={"text_hash": item["text_hash"], "page": item["page"], "score": item["score"]},
+                    payload={
+                        "text_hash": item["text_hash"],
+                        "page": item["page"],
+                        "score": item["score"],
+                    },
                 ),
                 {"document_id": item["document_id"], "page": item["page"]},
             )
@@ -195,7 +224,9 @@ async def generate_retrieval_proof(
 
     quorum = await evaluate_witness_quorum(session, timeline.id)
     witness_summary = {
-        "quorum_status": "VALID" if quorum.get("quorum_status") == "met" else ("PARTIAL" if quorum.get("signatures_found", 0) > 0 else "INVALID"),
+        "quorum_status": "VALID"
+        if quorum.get("quorum_status") == "met"
+        else ("PARTIAL" if quorum.get("signatures_found", 0) > 0 else "INVALID"),
         "required_signatures": quorum.get("signatures_required", 0),
         "signatures_found": quorum.get("signatures_found", 0),
         "external_witness_present": quorum.get("external_witness_present", False),
@@ -249,7 +280,8 @@ async def generate_retrieval_proof(
             "retrieval_audit_immutable_hash": audit.immutable_hash,
         },
         "confidential_runtime_summary": {
-            "required": "confidential_runtime_required" in (retrieval_metadata.get("violations") or []),
+            "required": "confidential_runtime_required"
+            in (retrieval_metadata.get("violations") or []),
             "plaintext_retained": False,
         },
         "witness_quorum_summary": sanitize_report_payload(witness_summary),
@@ -333,14 +365,20 @@ async def _persist_lineage(
     return policy_node.id
 
 
-async def verify_retrieval_proof(session: AsyncSession, proof: CommercialRetrievalProof) -> dict[str, Any]:
+async def verify_retrieval_proof(
+    session: AsyncSession, proof: CommercialRetrievalProof
+) -> dict[str, Any]:
     inclusion = MerkleInclusionProof.from_dict(proof.proof_json.get("merkle_inclusion_proof", {}))
     merkle_valid = verify_inclusion_proof(inclusion)
     lineage_valid = await verify_lineage_consistency(session, proof)
     recomputed_hash = _sha256({k: v for k, v in proof.proof_json.items() if k != "proof_hash"})
     proof_hash_valid = recomputed_hash == proof.proof_hash
     timeline_valid = proof.proof_json.get("timeline_root") == proof.merkle_root
-    proof.verification_status = "valid" if all([merkle_valid, lineage_valid, proof_hash_valid, timeline_valid]) else "invalid"
+    proof.verification_status = (
+        "valid"
+        if all([merkle_valid, lineage_valid, proof_hash_valid, timeline_valid])
+        else "invalid"
+    )
     proof.verified_at = utc_now()
     await session.flush()
     return {
@@ -352,14 +390,22 @@ async def verify_retrieval_proof(session: AsyncSession, proof: CommercialRetriev
     }
 
 
-async def verify_lineage_consistency(session: AsyncSession, proof: CommercialRetrievalProof) -> bool:
+async def verify_lineage_consistency(
+    session: AsyncSession, proof: CommercialRetrievalProof
+) -> bool:
     rows = (
-        await session.execute(
-            select(CommercialContextLineage)
-            .where(CommercialContextLineage.retrieval_proof_id == proof.id)
-            .order_by(CommercialContextLineage.depth.asc(), CommercialContextLineage.created_at.asc())
+        (
+            await session.execute(
+                select(CommercialContextLineage)
+                .where(CommercialContextLineage.retrieval_proof_id == proof.id)
+                .order_by(
+                    CommercialContextLineage.depth.asc(), CommercialContextLineage.created_at.asc()
+                )
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     if not rows:
         return False
     lineage_root_hash = _sha256({"root": str(rows[0].id), "nodes": [row.node_hash for row in rows]})
@@ -384,10 +430,17 @@ async def replay_retrieval_proof(
     }
     replay_hash = _sha256(replay_payload)
     original = proof.proof_json.get("chunk_participants", [])
-    original_tokens = [f"{item['document_id']}:{item['chunk_index']}:{item['text_hash']}" for item in original]
-    replay_tokens = [f"{item['document_id']}:{item['chunk_index']}:{item['text_hash']}" for item in replay_payload["sources"]]
+    original_tokens = [
+        f"{item['document_id']}:{item['chunk_index']}:{item['text_hash']}" for item in original
+    ]
+    replay_tokens = [
+        f"{item['document_id']}:{item['chunk_index']}:{item['text_hash']}"
+        for item in replay_payload["sources"]
+    ]
     drift_score = round(1.0 - _token_overlap(original_tokens, replay_tokens), 4)
-    drift_status = "stable" if drift_score == 0.0 else ("minor_drift" if drift_score < 0.5 else "major_drift")
+    drift_status = (
+        "stable" if drift_score == 0.0 else ("minor_drift" if drift_score < 0.5 else "major_drift")
+    )
     replay_status = "matched" if drift_score == 0.0 else "drift_detected"
     record = CommercialRetrievalReplayRecord(
         retrieval_proof_id=proof.id,
@@ -411,15 +464,21 @@ async def replay_retrieval_proof(
     return record
 
 
-async def export_retrieval_proof(session: AsyncSession, proof: CommercialRetrievalProof) -> dict[str, Any]:
+async def export_retrieval_proof(
+    session: AsyncSession, proof: CommercialRetrievalProof
+) -> dict[str, Any]:
     replays = (
-        await session.execute(
-            select(CommercialRetrievalReplayRecord)
-            .where(CommercialRetrievalReplayRecord.retrieval_proof_id == proof.id)
-            .order_by(CommercialRetrievalReplayRecord.created_at.desc())
-            .limit(20)
+        (
+            await session.execute(
+                select(CommercialRetrievalReplayRecord)
+                .where(CommercialRetrievalReplayRecord.retrieval_proof_id == proof.id)
+                .order_by(CommercialRetrievalReplayRecord.created_at.desc())
+                .limit(20)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     payload = dict(proof.proof_json)
     payload["proof_hash"] = proof.proof_hash
     payload["verification_status"] = proof.verification_status

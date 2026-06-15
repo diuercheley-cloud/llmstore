@@ -92,3 +92,9 @@ test_env.sh
 chat
 frontend/admin/stats.html
 *.egg-info/
+
+# Compiled frontend artifacts
+*.map
+frontend/**/dist/
+frontend/**/build/
+control_plane/app/static/admin-v2/

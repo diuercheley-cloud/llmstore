@@ -39,7 +39,10 @@ class CompatibilityVerificationService:
     def verify_matrix(self, matrix: dict[str, Any]) -> dict[str, Any]:
         if not matrix["replay_safe"] or matrix["compatibility_status"] == "incompatible":
             status = "failed"
-        elif matrix["compatibility_status"] == "warning" and matrix["compatibility_type"] == "forward":
+        elif (
+            matrix["compatibility_status"] == "warning"
+            and matrix["compatibility_type"] == "forward"
+        ):
             status = "warning"
         else:
             status = "passed"
@@ -62,8 +65,7 @@ class CompatibilityVerificationService:
             "verification_status": verification_status,
             "replay_safe": replay_safe,
             "compatibility_summary": (
-                f"negotiated_version={self._get(session, 'negotiated_version')}; "
-                f"status={status}"
+                f"negotiated_version={self._get(session, 'negotiated_version')}; status={status}"
             ),
         }
 

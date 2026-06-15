@@ -46,9 +46,16 @@ def test_report_is_valid_json():
     data = json.loads(report_json.read_text(encoding="utf-8"))
 
     required = [
-        "report_type", "generated_at", "version", "git_branch",
-        "git_commit", "final_status", "evaluation_criteria",
-        "summary", "known_limitations", "residual_risks",
+        "report_type",
+        "generated_at",
+        "version",
+        "git_branch",
+        "git_commit",
+        "final_status",
+        "evaluation_criteria",
+        "summary",
+        "known_limitations",
+        "residual_risks",
         "v1_7_recommendation",
     ]
     for field in required:
@@ -69,9 +76,17 @@ def test_report_has_evaluation_criteria():
     assert len(criteria) >= 8, f"Expected >=8 criteria, got {len(criteria)}"
 
     criterion_ids = [c.get("id") for c in criteria]
-    for cid in ["security_report", "production_readiness", "validate_local_production",
-                "clean_install", "restore_rollback", "commercial_demo_e2e",
-                "secrets_check", "forbidden_files", "release_metadata"]:
+    for cid in [
+        "security_report",
+        "production_readiness",
+        "validate_local_production",
+        "clean_install",
+        "restore_rollback",
+        "commercial_demo_e2e",
+        "secrets_check",
+        "forbidden_files",
+        "release_metadata",
+    ]:
         assert cid in criterion_ids, f"Missing criterion: {cid}"
 
 

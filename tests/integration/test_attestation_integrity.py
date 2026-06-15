@@ -91,9 +91,7 @@ async def test_block_untrusted_runtimes(session: AsyncSession):
     result = await block_untrusted_runtimes(session, cluster_id="cluster-c", mode="report_only")
     assert result["allowed"] is True
 
-    await create_runtime_attestation(
-        session, cluster_id="cluster-c", node_id="untrusted-node"
-    )
+    await create_runtime_attestation(session, cluster_id="cluster-c", node_id="untrusted-node")
 
 
 @pytest.mark.asyncio

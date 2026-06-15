@@ -16,9 +16,13 @@ class CommercialCrossClusterForwardingEvent(Base):
     source_cluster_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     target_cluster_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     correlation_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
-    request_mode: Mapped[str] = mapped_column(String(32), nullable=False) # stream | non_stream
-    result: Mapped[str] = mapped_column(String(64), nullable=False) # forwarded | fallback_local | blocked | circuit_open | timeout
+    request_mode: Mapped[str] = mapped_column(String(32), nullable=False)  # stream | non_stream
+    result: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )  # forwarded | fallback_local | blocked | circuit_open | timeout
     latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     bytes_out: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     bytes_in: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now(), index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
+    )

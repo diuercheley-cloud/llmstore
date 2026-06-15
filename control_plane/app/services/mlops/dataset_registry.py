@@ -1,6 +1,6 @@
 import hashlib
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.time import utc_now
 from app.models.core.admin_rbac import AdminAuditEvent
@@ -16,8 +16,8 @@ async def log_mlops_audit(
     status: str,
     target_type: str,
     target_id: str,
-    details: Dict[str, Any],
-    admin_user_id: Optional[uuid.UUID] = None,
+    details: dict[str, Any],
+    admin_user_id: uuid.UUID | None = None,
 ) -> None:
     audit_event = AdminAuditEvent(
         id=uuid.uuid4(),
@@ -40,9 +40,9 @@ class DatasetRegistry:
     async def create_dataset(
         self,
         name: str,
-        description: Optional[str] = None,
+        description: str | None = None,
         is_production: bool = False,
-        admin_user_id: Optional[uuid.UUID] = None,
+        admin_user_id: uuid.UUID | None = None,
     ) -> MLDataset:
         # If is_production, require explicit approval. Otherwise default is approved.
         is_approved = not is_production
@@ -73,11 +73,9 @@ class DatasetRegistry:
     async def approve_dataset(
         self,
         dataset_id: uuid.UUID,
-        admin_user_id: Optional[uuid.UUID] = None,
+        admin_user_id: uuid.UUID | None = None,
     ) -> MLDataset:
-        result = await self.session.execute(
-            select(MLDataset).where(MLDataset.id == dataset_id)
-        )
+        result = await self.session.execute(select(MLDataset).where(MLDataset.id == dataset_id))
         dataset = result.scalar_one_or_none()
         if not dataset:
             raise HTTPException(status_code=404, detail="Dataset not found")
@@ -103,13 +101,11 @@ class DatasetRegistry:
         checksum: str,
         provenance: str,
         redaction_status: str = "none",
-        consent_metadata: Optional[Dict[str, Any]] = None,
-        content_bytes: Optional[bytes] = None,  # optional content to verify checksum
-        admin_user_id: Optional[uuid.UUID] = None,
+        consent_metadata: dict[str, Any] | None = None,
+        content_bytes: bytes | None = None,  # optional content to verify checksum
+        admin_user_id: uuid.UUID | None = None,
     ) -> MLDatasetVersion:
-        result = await self.session.execute(
-            select(MLDataset).where(MLDataset.id == dataset_id)
-        )
+        result = await self.session.execute(select(MLDataset).where(MLDataset.id == dataset_id))
         dataset = result.scalar_one_or_none()
         if not dataset:
             raise HTTPException(status_code=404, detail="Dataset not found")
@@ -125,7 +121,10 @@ class DatasetRegistry:
                 details={"reason": "unapproved_production_dataset"},
                 admin_user_id=admin_user_id,
             )
-            raise HTTPException(status_code=403, detail="Production datasets must be approved before adding versions.")
+            raise HTTPException(
+                status_code=403,
+                detail="Production datasets must be approved before adding versions.",
+            )
 
         # Checksum validation
         if content_bytes is not None:
@@ -137,7 +136,11 @@ class DatasetRegistry:
                     status="failed",
                     target_type="ml_datasets",
                     target_id=str(dataset.id),
-                    details={"reason": "invalid_checksum", "provided": checksum, "expected": expected_checksum},
+                    details={
+                        "reason": "invalid_checksum",
+                        "provided": checksum,
+                        "expected": expected_checksum,
+                    },
                     admin_user_id=admin_user_id,
                 )
                 raise HTTPException(status_code=400, detail="Invalid dataset checksum detected.")
@@ -171,6 +174,6 @@ class DatasetRegistry:
         )
         return db_version
 
-    async def list_datasets(self) -> List[MLDataset]:
+    async def list_datasets(self) -> list[MLDataset]:
         result = await self.session.execute(select(MLDataset))
         return list(result.scalars().all())

@@ -24,12 +24,9 @@ class SABExporter:
             "name": agent.name,
             "version": agent.version,
             "instructions": agent.instructions,
-            "tool_schemas": [], # In real app: fetch from ToolRegistry
-            "memory_policy": {}, # In real app: fetch from MemoryPolicyService
-            "provenance": {
-                "source_tenant": agent.tenant_id,
-                "exported_by": "system"
-            }
+            "tool_schemas": [],  # In real app: fetch from ToolRegistry
+            "memory_policy": {},  # In real app: fetch from MemoryPolicyService
+            "provenance": {"source_tenant": agent.tenant_id, "exported_by": "system"},
         }
 
         manifest = AgentSABManifest(**manifest_data)
@@ -38,9 +35,9 @@ class SABExporter:
         data_to_hash = manifest.model_dump(exclude={"checksums", "signature"})
         payload = json.dumps(data_to_hash, sort_keys=True).encode()
         checksum = hashlib.sha256(payload).hexdigest()
-        
+
         manifest.checksums = {"manifest": checksum}
-        
+
         # Mock signature
         manifest.signature = f"sig:{checksum}:prod_key"
 

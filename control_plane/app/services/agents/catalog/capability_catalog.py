@@ -1,5 +1,4 @@
 import uuid
-from typing import List, Optional
 
 from app.models.agents.agent_catalog import AgentCapabilityCatalogEntry, CapabilityApprovalEvent
 from sqlalchemy import select, update
@@ -10,7 +9,7 @@ class CapabilityCatalogService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def list_entries(self, category: Optional[str] = None) -> List[AgentCapabilityCatalogEntry]:
+    async def list_entries(self, category: str | None = None) -> list[AgentCapabilityCatalogEntry]:
         query = select(AgentCapabilityCatalogEntry)
         if category:
             query = query.where(AgentCapabilityCatalogEntry.category == category)
@@ -25,17 +24,19 @@ class CapabilityCatalogService:
         return entry
 
     async def approve_entry(self, entry_id: uuid.UUID, approver_id: uuid.UUID, comment: str = None):
-        result = await self.db.execute(select(AgentCapabilityCatalogEntry).where(AgentCapabilityCatalogEntry.id == entry_id))
+        result = await self.db.execute(
+            select(AgentCapabilityCatalogEntry).where(AgentCapabilityCatalogEntry.id == entry_id)
+        )
         entry = result.scalars().first()
         if not entry:
-             raise ValueError("Entry not found")
-        
+            raise ValueError("Entry not found")
+
         event = CapabilityApprovalEvent(
             catalog_entry_id=entry_id,
             approver_id=approver_id,
             previous_status=entry.status,
             new_status="approved",
-            comment=comment
+            comment=comment,
         )
         entry.status = "approved"
         self.db.add(event)

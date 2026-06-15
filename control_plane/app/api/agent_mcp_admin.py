@@ -5,7 +5,6 @@ from typing import Any
 
 from app.api.deps import require_admin
 from app.core.config import Settings, get_settings
-from app.services.runtime_dependencies import get_db_session
 from app.services.agents.mcp.mcp_audit import MCPAuditLog
 from app.services.agents.mcp.mcp_client import MCPClient
 from app.services.agents.mcp.mcp_oauth import (
@@ -17,6 +16,7 @@ from app.services.agents.mcp.mcp_oauth import (
 from app.services.agents.mcp.mcp_registry import MCPRegistry
 from app.services.agents.mcp.mcp_server import MCPServer
 from app.services.agents.mcp.mcp_token_exchange import exchange_token
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession

@@ -34,10 +34,30 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_commercial_model_provenance_attestations_source_type"), "commercial_model_provenance_attestations", ["source_type"], unique=False)
-    op.create_index(op.f("ix_commercial_model_provenance_attestations_source_cluster_id"), "commercial_model_provenance_attestations", ["source_cluster_id"], unique=False)
-    op.create_index(op.f("ix_commercial_model_provenance_attestations_import_method"), "commercial_model_provenance_attestations", ["import_method"], unique=False)
-    op.create_index(op.f("ix_commercial_model_provenance_attestations_artifact_hash"), "commercial_model_provenance_attestations", ["artifact_hash"], unique=False)
+    op.create_index(
+        op.f("ix_commercial_model_provenance_attestations_source_type"),
+        "commercial_model_provenance_attestations",
+        ["source_type"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_model_provenance_attestations_source_cluster_id"),
+        "commercial_model_provenance_attestations",
+        ["source_cluster_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_model_provenance_attestations_import_method"),
+        "commercial_model_provenance_attestations",
+        ["import_method"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_model_provenance_attestations_artifact_hash"),
+        "commercial_model_provenance_attestations",
+        ["artifact_hash"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_signed_model_registry_entries",
@@ -61,14 +81,54 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["provenance_id"], ["commercial_model_provenance_attestations.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_commercial_signed_model_registry_entries_model_name"), "commercial_signed_model_registry_entries", ["model_name"], unique=False)
-    op.create_index(op.f("ix_commercial_signed_model_registry_entries_model_alias"), "commercial_signed_model_registry_entries", ["model_alias"], unique=False)
-    op.create_index(op.f("ix_commercial_signed_model_registry_entries_provider"), "commercial_signed_model_registry_entries", ["provider"], unique=False)
-    op.create_index(op.f("ix_commercial_signed_model_registry_entries_model_format"), "commercial_signed_model_registry_entries", ["model_format"], unique=False)
-    op.create_index(op.f("ix_commercial_signed_model_registry_entries_checksum_sha256"), "commercial_signed_model_registry_entries", ["checksum_sha256"], unique=False)
-    op.create_index(op.f("ix_commercial_signed_model_registry_entries_manifest_hash"), "commercial_signed_model_registry_entries", ["manifest_hash"], unique=False)
-    op.create_index(op.f("ix_commercial_signed_model_registry_entries_provenance_id"), "commercial_signed_model_registry_entries", ["provenance_id"], unique=False)
-    op.create_index(op.f("ix_commercial_signed_model_registry_entries_trust_state"), "commercial_signed_model_registry_entries", ["trust_state"], unique=False)
+    op.create_index(
+        op.f("ix_commercial_signed_model_registry_entries_model_name"),
+        "commercial_signed_model_registry_entries",
+        ["model_name"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_signed_model_registry_entries_model_alias"),
+        "commercial_signed_model_registry_entries",
+        ["model_alias"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_signed_model_registry_entries_provider"),
+        "commercial_signed_model_registry_entries",
+        ["provider"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_signed_model_registry_entries_model_format"),
+        "commercial_signed_model_registry_entries",
+        ["model_format"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_signed_model_registry_entries_checksum_sha256"),
+        "commercial_signed_model_registry_entries",
+        ["checksum_sha256"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_signed_model_registry_entries_manifest_hash"),
+        "commercial_signed_model_registry_entries",
+        ["manifest_hash"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_signed_model_registry_entries_provenance_id"),
+        "commercial_signed_model_registry_entries",
+        ["provenance_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_signed_model_registry_entries_trust_state"),
+        "commercial_signed_model_registry_entries",
+        ["trust_state"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_model_revocation_records",
@@ -79,12 +139,29 @@ def upgrade() -> None:
         sa.Column("revocation_type", sa.String(length=32), nullable=False),
         sa.Column("revoked_by", sa.String(length=255), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["registry_entry_id"], ["commercial_signed_model_registry_entries.id"]),
+        sa.ForeignKeyConstraint(
+            ["registry_entry_id"], ["commercial_signed_model_registry_entries.id"]
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_commercial_model_revocation_records_registry_entry_id"), "commercial_model_revocation_records", ["registry_entry_id"], unique=False)
-    op.create_index(op.f("ix_commercial_model_revocation_records_model_name"), "commercial_model_revocation_records", ["model_name"], unique=False)
-    op.create_index(op.f("ix_commercial_model_revocation_records_revocation_type"), "commercial_model_revocation_records", ["revocation_type"], unique=False)
+    op.create_index(
+        op.f("ix_commercial_model_revocation_records_registry_entry_id"),
+        "commercial_model_revocation_records",
+        ["registry_entry_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_model_revocation_records_model_name"),
+        "commercial_model_revocation_records",
+        ["model_name"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_model_revocation_records_revocation_type"),
+        "commercial_model_revocation_records",
+        ["revocation_type"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_model_promotion_bundles",
@@ -100,38 +177,123 @@ def upgrade() -> None:
         sa.Column("promoted_at", sa.DateTime(timezone=True), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_commercial_model_promotion_bundles_bundle_name"), "commercial_model_promotion_bundles", ["bundle_name"], unique=False)
-    op.create_index(op.f("ix_commercial_model_promotion_bundles_source_cluster_id"), "commercial_model_promotion_bundles", ["source_cluster_id"], unique=False)
-    op.create_index(op.f("ix_commercial_model_promotion_bundles_target_cluster_id"), "commercial_model_promotion_bundles", ["target_cluster_id"], unique=False)
-    op.create_index(op.f("ix_commercial_model_promotion_bundles_manifest_hash"), "commercial_model_promotion_bundles", ["manifest_hash"], unique=False)
-    op.create_index(op.f("ix_commercial_model_promotion_bundles_status"), "commercial_model_promotion_bundles", ["status"], unique=False)
+    op.create_index(
+        op.f("ix_commercial_model_promotion_bundles_bundle_name"),
+        "commercial_model_promotion_bundles",
+        ["bundle_name"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_model_promotion_bundles_source_cluster_id"),
+        "commercial_model_promotion_bundles",
+        ["source_cluster_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_model_promotion_bundles_target_cluster_id"),
+        "commercial_model_promotion_bundles",
+        ["target_cluster_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_model_promotion_bundles_manifest_hash"),
+        "commercial_model_promotion_bundles",
+        ["manifest_hash"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_commercial_model_promotion_bundles_status"),
+        "commercial_model_promotion_bundles",
+        ["status"],
+        unique=False,
+    )
 
 
 def downgrade() -> None:
-    op.drop_index(op.f("ix_commercial_model_promotion_bundles_status"), table_name="commercial_model_promotion_bundles")
-    op.drop_index(op.f("ix_commercial_model_promotion_bundles_manifest_hash"), table_name="commercial_model_promotion_bundles")
-    op.drop_index(op.f("ix_commercial_model_promotion_bundles_target_cluster_id"), table_name="commercial_model_promotion_bundles")
-    op.drop_index(op.f("ix_commercial_model_promotion_bundles_source_cluster_id"), table_name="commercial_model_promotion_bundles")
-    op.drop_index(op.f("ix_commercial_model_promotion_bundles_bundle_name"), table_name="commercial_model_promotion_bundles")
+    op.drop_index(
+        op.f("ix_commercial_model_promotion_bundles_status"),
+        table_name="commercial_model_promotion_bundles",
+    )
+    op.drop_index(
+        op.f("ix_commercial_model_promotion_bundles_manifest_hash"),
+        table_name="commercial_model_promotion_bundles",
+    )
+    op.drop_index(
+        op.f("ix_commercial_model_promotion_bundles_target_cluster_id"),
+        table_name="commercial_model_promotion_bundles",
+    )
+    op.drop_index(
+        op.f("ix_commercial_model_promotion_bundles_source_cluster_id"),
+        table_name="commercial_model_promotion_bundles",
+    )
+    op.drop_index(
+        op.f("ix_commercial_model_promotion_bundles_bundle_name"),
+        table_name="commercial_model_promotion_bundles",
+    )
     op.drop_table("commercial_model_promotion_bundles")
 
-    op.drop_index(op.f("ix_commercial_model_revocation_records_revocation_type"), table_name="commercial_model_revocation_records")
-    op.drop_index(op.f("ix_commercial_model_revocation_records_model_name"), table_name="commercial_model_revocation_records")
-    op.drop_index(op.f("ix_commercial_model_revocation_records_registry_entry_id"), table_name="commercial_model_revocation_records")
+    op.drop_index(
+        op.f("ix_commercial_model_revocation_records_revocation_type"),
+        table_name="commercial_model_revocation_records",
+    )
+    op.drop_index(
+        op.f("ix_commercial_model_revocation_records_model_name"),
+        table_name="commercial_model_revocation_records",
+    )
+    op.drop_index(
+        op.f("ix_commercial_model_revocation_records_registry_entry_id"),
+        table_name="commercial_model_revocation_records",
+    )
     op.drop_table("commercial_model_revocation_records")
 
-    op.drop_index(op.f("ix_commercial_signed_model_registry_entries_trust_state"), table_name="commercial_signed_model_registry_entries")
-    op.drop_index(op.f("ix_commercial_signed_model_registry_entries_provenance_id"), table_name="commercial_signed_model_registry_entries")
-    op.drop_index(op.f("ix_commercial_signed_model_registry_entries_manifest_hash"), table_name="commercial_signed_model_registry_entries")
-    op.drop_index(op.f("ix_commercial_signed_model_registry_entries_checksum_sha256"), table_name="commercial_signed_model_registry_entries")
-    op.drop_index(op.f("ix_commercial_signed_model_registry_entries_model_format"), table_name="commercial_signed_model_registry_entries")
-    op.drop_index(op.f("ix_commercial_signed_model_registry_entries_provider"), table_name="commercial_signed_model_registry_entries")
-    op.drop_index(op.f("ix_commercial_signed_model_registry_entries_model_alias"), table_name="commercial_signed_model_registry_entries")
-    op.drop_index(op.f("ix_commercial_signed_model_registry_entries_model_name"), table_name="commercial_signed_model_registry_entries")
+    op.drop_index(
+        op.f("ix_commercial_signed_model_registry_entries_trust_state"),
+        table_name="commercial_signed_model_registry_entries",
+    )
+    op.drop_index(
+        op.f("ix_commercial_signed_model_registry_entries_provenance_id"),
+        table_name="commercial_signed_model_registry_entries",
+    )
+    op.drop_index(
+        op.f("ix_commercial_signed_model_registry_entries_manifest_hash"),
+        table_name="commercial_signed_model_registry_entries",
+    )
+    op.drop_index(
+        op.f("ix_commercial_signed_model_registry_entries_checksum_sha256"),
+        table_name="commercial_signed_model_registry_entries",
+    )
+    op.drop_index(
+        op.f("ix_commercial_signed_model_registry_entries_model_format"),
+        table_name="commercial_signed_model_registry_entries",
+    )
+    op.drop_index(
+        op.f("ix_commercial_signed_model_registry_entries_provider"),
+        table_name="commercial_signed_model_registry_entries",
+    )
+    op.drop_index(
+        op.f("ix_commercial_signed_model_registry_entries_model_alias"),
+        table_name="commercial_signed_model_registry_entries",
+    )
+    op.drop_index(
+        op.f("ix_commercial_signed_model_registry_entries_model_name"),
+        table_name="commercial_signed_model_registry_entries",
+    )
     op.drop_table("commercial_signed_model_registry_entries")
 
-    op.drop_index(op.f("ix_commercial_model_provenance_attestations_artifact_hash"), table_name="commercial_model_provenance_attestations")
-    op.drop_index(op.f("ix_commercial_model_provenance_attestations_import_method"), table_name="commercial_model_provenance_attestations")
-    op.drop_index(op.f("ix_commercial_model_provenance_attestations_source_cluster_id"), table_name="commercial_model_provenance_attestations")
-    op.drop_index(op.f("ix_commercial_model_provenance_attestations_source_type"), table_name="commercial_model_provenance_attestations")
+    op.drop_index(
+        op.f("ix_commercial_model_provenance_attestations_artifact_hash"),
+        table_name="commercial_model_provenance_attestations",
+    )
+    op.drop_index(
+        op.f("ix_commercial_model_provenance_attestations_import_method"),
+        table_name="commercial_model_provenance_attestations",
+    )
+    op.drop_index(
+        op.f("ix_commercial_model_provenance_attestations_source_cluster_id"),
+        table_name="commercial_model_provenance_attestations",
+    )
+    op.drop_index(
+        op.f("ix_commercial_model_provenance_attestations_source_type"),
+        table_name="commercial_model_provenance_attestations",
+    )
     op.drop_table("commercial_model_provenance_attestations")

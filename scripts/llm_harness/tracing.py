@@ -7,6 +7,7 @@ from typing import Any
 try:
     from opentelemetry import trace
     from opentelemetry.trace import Status, StatusCode
+
     OTEL_AVAILABLE = True
 except ImportError:
     OTEL_AVAILABLE = False
@@ -17,6 +18,7 @@ class Tracer:
     Manages tracing for LLM harness.
     Supports internal IDs and optional OpenTelemetry.
     """
+
     def __init__(self, trace_id: str | None = None):
         self.trace_id = trace_id or str(uuid.uuid4())
         self.spans: dict[str, Any] = {}
@@ -29,6 +31,7 @@ class Tracer:
         if not attributes:
             return None
         from .sanitizer import Sanitizer
+
         sanitized = {}
         sensitive_keys = {"key", "token", "password", "secret", "auth", "credential"}
         for k, v in attributes.items():
@@ -71,9 +74,7 @@ class Tracer:
         ctx_mgr = None
 
         if self.otel_tracer:
-            ctx_mgr = self.otel_tracer.start_as_current_span(
-                name, attributes=sanitized_attrs
-            )
+            ctx_mgr = self.otel_tracer.start_as_current_span(name, attributes=sanitized_attrs)
             otel_span = ctx_mgr.__enter__()
             self.spans[span_id] = {"name": name, "otel_span": otel_span, "ctx_mgr": ctx_mgr}
         else:

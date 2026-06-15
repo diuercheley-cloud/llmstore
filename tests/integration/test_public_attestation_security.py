@@ -10,6 +10,7 @@ async def test_gateway_disabled_by_default():
         assert response.status_code == 503
         assert "disabled" in response.json()["detail"].lower()
 
+
 @pytest.mark.asyncio
 async def test_anonymization():
     # Test IP masking logic again specifically for security

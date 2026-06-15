@@ -2,10 +2,11 @@
 Owner: agent-platform
 Status: beta
 """
+
 import logging
 import uuid
 from datetime import timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core import metrics
 from app.core.config import get_settings
@@ -16,6 +17,7 @@ from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
+
 class AgentIncidentService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -25,12 +27,12 @@ class AgentIncidentService:
         self,
         tenant_id: str,
         agent_id: uuid.UUID,
-        run_id: Optional[uuid.UUID],
+        run_id: uuid.UUID | None,
         incident_type: str,
         title: str,
         severity: str = "medium",
-        details: Optional[Dict[str, Any]] = None
-    ) -> Optional[AgentIncident]:
+        details: dict[str, Any] | None = None,
+    ) -> AgentIncident | None:
         if not self.settings.agent_incident_response_enabled:
             return None
 
@@ -62,10 +64,10 @@ class AgentIncidentService:
             details_json=details_json,
             status="open",
             created_at=utc_now(),
-            updated_at=utc_now()
+            updated_at=utc_now(),
         )
         self.db.add(incident)
-        
+
         # Record metric
         metrics.LLM_AGENT_INCIDENTS_TOTAL.labels(
             agent_id=str(agent_id), incident_type=incident_type, severity=severity
@@ -74,7 +76,7 @@ class AgentIncidentService:
         logger.warning(f"Agent Incident created: {title} (type: {incident_type}, run: {run_id})")
         await self.db.commit()
         await self.db.refresh(incident)
-        
+
         # Check for handoff loop or related incidents to link
         if incident_type == "handoff_loop":
             await self._link_related_incidents(incident)
@@ -82,12 +84,17 @@ class AgentIncidentService:
         return incident
 
     async def _link_related_incidents(self, incident: AgentIncident):
-        stmt = select(AgentIncident).where(
-            AgentIncident.agent_id == incident.agent_id,
-            AgentIncident.status == "open",
-            AgentIncident.id != incident.id,
-            AgentIncident.incident_type.in_(["handoff_loop", "tool_failure", "policy_denial"]),
-        ).order_by(AgentIncident.created_at.desc()).limit(10)
+        stmt = (
+            select(AgentIncident)
+            .where(
+                AgentIncident.agent_id == incident.agent_id,
+                AgentIncident.status == "open",
+                AgentIncident.id != incident.id,
+                AgentIncident.incident_type.in_(["handoff_loop", "tool_failure", "policy_denial"]),
+            )
+            .order_by(AgentIncident.created_at.desc())
+            .limit(10)
+        )
 
         res = await self.db.execute(stmt)
         related = res.scalars().all()
@@ -104,12 +111,18 @@ class AgentIncidentService:
         if related:
             logger.info(f"Linked {len(related)} related incidents to {incident.id}")
         else:
-            logger.info(f"No related incidents found for {incident.id}, checking agent-level patterns")
+            logger.info(
+                f"No related incidents found for {incident.id}, checking agent-level patterns"
+            )
 
-            recent_stmt = select(AgentIncident).where(
-                AgentIncident.agent_id == incident.agent_id,
-                AgentIncident.created_at >= utc_now() - timedelta(hours=1),
-            ).order_by(AgentIncident.created_at.desc())
+            recent_stmt = (
+                select(AgentIncident)
+                .where(
+                    AgentIncident.agent_id == incident.agent_id,
+                    AgentIncident.created_at >= utc_now() - timedelta(hours=1),
+                )
+                .order_by(AgentIncident.created_at.desc())
+            )
             res2 = await self.db.execute(recent_stmt)
             recent_incidents = res2.scalars().all()
 
@@ -124,18 +137,18 @@ class AgentIncidentService:
                 incident.severity = "high"
                 logger.warning(f"Incident {incident.id} severity escalated to high due to pattern")
 
-    async def get_incident(self, incident_id: uuid.UUID) -> Optional[AgentIncident]:
+    async def get_incident(self, incident_id: uuid.UUID) -> AgentIncident | None:
         res = await self.db.execute(select(AgentIncident).where(AgentIncident.id == incident_id))
         return res.scalar_one_or_none()
 
     async def list_incidents(
         self,
-        tenant_id: Optional[str] = None,
-        agent_id: Optional[uuid.UUID] = None,
-        status: Optional[str] = None,
+        tenant_id: str | None = None,
+        agent_id: uuid.UUID | None = None,
+        status: str | None = None,
         limit: int = 100,
-        offset: int = 0
-    ) -> List[AgentIncident]:
+        offset: int = 0,
+    ) -> list[AgentIncident]:
         query = select(AgentIncident).order_by(AgentIncident.created_at.desc())
         if tenant_id:
             query = query.where(AgentIncident.tenant_id == tenant_id)
@@ -143,12 +156,14 @@ class AgentIncidentService:
             query = query.where(AgentIncident.agent_id == agent_id)
         if status:
             query = query.where(AgentIncident.status == status)
-        
+
         query = query.offset(offset).limit(limit)
         res = await self.db.execute(query)
         return list(res.scalars().all())
 
-    async def acknowledge_incident(self, incident_id: uuid.UUID, performed_by: str) -> AgentIncident:
+    async def acknowledge_incident(
+        self, incident_id: uuid.UUID, performed_by: str
+    ) -> AgentIncident:
         incident = await self.get_incident(incident_id)
         if not incident:
             raise ValueError("Incident not found")
@@ -163,14 +178,16 @@ class AgentIncidentService:
             incident_id=incident.id,
             event_type="acknowledged",
             performed_by=performed_by,
-            created_at=utc_now()
+            created_at=utc_now(),
         )
         self.db.add(event)
         await self.db.commit()
         await self.db.refresh(incident)
         return incident
 
-    async def resolve_incident(self, incident_id: uuid.UUID, performed_by: str, resolution_notes: str) -> AgentIncident:
+    async def resolve_incident(
+        self, incident_id: uuid.UUID, performed_by: str, resolution_notes: str
+    ) -> AgentIncident:
         incident = await self.get_incident(incident_id)
         if not incident:
             raise ValueError("Incident not found")
@@ -185,7 +202,7 @@ class AgentIncidentService:
             event_type="resolved",
             performed_by=performed_by,
             notes=resolution_notes,
-            created_at=utc_now()
+            created_at=utc_now(),
         )
         self.db.add(event)
         await self.db.commit()

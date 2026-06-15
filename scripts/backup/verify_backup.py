@@ -1,8 +1,8 @@
 import argparse
-import httpx
-import json
 import os
 import sys
+
+import httpx
 
 API_URL = os.environ.get("CONTROL_PLANE_URL", "http://localhost:8080")
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "test-admin-token")

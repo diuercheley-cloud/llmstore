@@ -24,9 +24,7 @@ def test_final_status_is_valid():
         pytest.skip("No report directory")
     report_json = report_dir / "client-ready-report.json"
     data = json.loads(report_json.read_text(encoding="utf-8"))
-    assert data["final_status"] in ALLOWED_STATUSES, (
-        f"Invalid status: {data['final_status']}"
-    )
+    assert data["final_status"] in ALLOWED_STATUSES, f"Invalid status: {data['final_status']}"
 
 
 def test_report_version_matches_repo():
@@ -36,13 +34,15 @@ def test_report_version_matches_repo():
     actual_version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
     report_json = report_dir / "client-ready-report.json"
     data = json.loads(report_json.read_text(encoding="utf-8"))
-    
+
     # Relaxed check: version should not be empty, and can be legacy
     assert data["version"], "Version is empty in report JSON"
     if data["version"] != actual_version:
         if not data["version"].startswith("v1") and not data["version"].startswith("v2"):
-             pytest.fail(f"Report version '{data['version']}' is invalid (expected v1.x or v2.x)")
-        pytest.skip(f"Report version '{data['version']}' != repo version '{actual_version}' (legacy artifact)")
+            pytest.fail(f"Report version '{data['version']}' is invalid (expected v1.x or v2.x)")
+        pytest.skip(
+            f"Report version '{data['version']}' != repo version '{actual_version}' (legacy artifact)"
+        )
 
 
 def test_versionable_doc_status_matches_report():
@@ -58,7 +58,7 @@ def test_versionable_doc_status_matches_report():
     if "WITH_WARNINGS" in status_from_report:
         variants.append("ACCEPTED WARNINGS")
         variants.append("WITH WARNINGS")
-    
+
     assert any(v.upper() in doc_content.upper() for v in variants), (
         f"Status '{status_from_report}' (or variants {variants}) not found in versionable doc"
     )
@@ -87,18 +87,14 @@ def test_versionable_doc_has_limitations():
         pytest.skip("Versionable doc not found")
     content = VERSIONABLE_DOC.read_text(encoding="utf-8")
     assert "PSP" in content or "PIX" in content, "Missing PSP/PIX limitation"
-    assert "Limitacoes" in content or "limita" in content.lower(), (
-        "Missing limitations section"
-    )
+    assert "Limitacoes" in content or "limita" in content.lower(), "Missing limitations section"
 
 
 def test_versionable_doc_has_risks():
     if not VERSIONABLE_DOC.exists():
         pytest.skip("Versionable doc not found")
     content = VERSIONABLE_DOC.read_text(encoding="utf-8")
-    assert "Riscos" in content or "riscos" in content.lower(), (
-        "Missing residual risks section"
-    )
+    assert "Riscos" in content or "riscos" in content.lower(), "Missing residual risks section"
 
 
 def test_report_summary_consistency():

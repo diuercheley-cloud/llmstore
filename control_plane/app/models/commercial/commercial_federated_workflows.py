@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
+from app.db.base import Base
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -17,17 +18,25 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import UUID
 
-from app.db.base import Base
-
 
 class CommercialFederatedWorkflowExecution(Base):
     __tablename__ = "commercial_federated_workflow_executions"
     __table_args__ = (
-        UniqueConstraint("workflow_execution_id", "region_id", "cluster_id", name="uq_fed_workflow_exec_region_cluster"),
+        UniqueConstraint(
+            "workflow_execution_id",
+            "region_id",
+            "cluster_id",
+            name="uq_fed_workflow_exec_region_cluster",
+        ),
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    workflow_execution_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_executions.id"), nullable=False, index=True)
+    workflow_execution_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("commercial_workflow_executions.id"),
+        nullable=False,
+        index=True,
+    )
     workflow_id = Column(String(128), nullable=False, index=True)
     tenant_id = Column(String(64), nullable=True, index=True)
     client_id = Column(String(64), nullable=True, index=True)
@@ -56,17 +65,26 @@ class CommercialFederatedWorkflowExecution(Base):
     drift_detected = Column(Boolean, default=False, nullable=False)
     metadata_json = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
-    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), index=True)
+    updated_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), index=True
+    )
 
 
 class CommercialWorkflowExecutionPeer(Base):
     __tablename__ = "commercial_workflow_execution_peers"
     __table_args__ = (
-        UniqueConstraint("federated_execution_id", "peer_cluster_id", name="uq_fed_workflow_peer_cluster"),
+        UniqueConstraint(
+            "federated_execution_id", "peer_cluster_id", name="uq_fed_workflow_peer_cluster"
+        ),
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    federated_execution_id = Column(UUID(as_uuid=True), ForeignKey("commercial_federated_workflow_executions.id"), nullable=False, index=True)
+    federated_execution_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("commercial_federated_workflow_executions.id"),
+        nullable=False,
+        index=True,
+    )
     workflow_id = Column(String(128), nullable=False, index=True)
     tenant_id = Column(String(64), nullable=True, index=True)
     client_id = Column(String(64), nullable=True, index=True)
@@ -91,14 +109,21 @@ class CommercialWorkflowExecutionPeer(Base):
     last_seen_at = Column(DateTime, nullable=True, index=True)
     metadata_json = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
-    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), index=True)
+    updated_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), index=True
+    )
 
 
 class CommercialWorkflowExecutionLease(Base):
     __tablename__ = "commercial_workflow_execution_leases"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    federated_execution_id = Column(UUID(as_uuid=True), ForeignKey("commercial_federated_workflow_executions.id"), nullable=False, index=True)
+    federated_execution_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("commercial_federated_workflow_executions.id"),
+        nullable=False,
+        index=True,
+    )
     workflow_id = Column(String(128), nullable=False, index=True)
     tenant_id = Column(String(64), nullable=True, index=True)
     client_id = Column(String(64), nullable=True, index=True)
@@ -129,8 +154,18 @@ class CommercialWorkflowConsensusEvent(Base):
     __tablename__ = "commercial_workflow_consensus_events"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    federated_execution_id = Column(UUID(as_uuid=True), ForeignKey("commercial_federated_workflow_executions.id"), nullable=False, index=True)
-    peer_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_execution_peers.id"), nullable=True, index=True)
+    federated_execution_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("commercial_federated_workflow_executions.id"),
+        nullable=False,
+        index=True,
+    )
+    peer_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("commercial_workflow_execution_peers.id"),
+        nullable=True,
+        index=True,
+    )
     workflow_id = Column(String(128), nullable=False, index=True)
     tenant_id = Column(String(64), nullable=True, index=True)
     client_id = Column(String(64), nullable=True, index=True)
@@ -160,8 +195,18 @@ class CommercialWorkflowReplayFederationReport(Base):
     __tablename__ = "commercial_workflow_replay_federation_reports"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    federated_execution_id = Column(UUID(as_uuid=True), ForeignKey("commercial_federated_workflow_executions.id"), nullable=False, index=True)
-    source_execution_id = Column(UUID(as_uuid=True), ForeignKey("commercial_workflow_executions.id"), nullable=False, index=True)
+    federated_execution_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("commercial_federated_workflow_executions.id"),
+        nullable=False,
+        index=True,
+    )
+    source_execution_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("commercial_workflow_executions.id"),
+        nullable=False,
+        index=True,
+    )
     workflow_id = Column(String(128), nullable=False, index=True)
     tenant_id = Column(String(64), nullable=True, index=True)
     client_id = Column(String(64), nullable=True, index=True)

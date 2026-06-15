@@ -15,7 +15,7 @@ async def test_ga_readiness_runtime_disabled():
     with patch("app.services.platform.ga_readiness.get_settings") as mock_settings:
         mock_settings.return_value.agent_runtime_enabled = False
         svc = GAReadinessService()
-        
+
         state = {
             "runtime_enabled": False,
             "worker_heartbeat_active": True,
@@ -29,18 +29,19 @@ async def test_ga_readiness_runtime_disabled():
             "clean_working_tree": True,
             "supported_surface_no_production_beta_stub": True,
             "release_gate_passed": True,
-            "_reasons": {}
+            "_reasons": {},
         }
         res = svc.evaluate_readiness(state)
         assert res["maturity_level"] != "ga_ready"
         assert "runtime_enabled" in res["failed_criteria"]
+
 
 @pytest.mark.asyncio
 async def test_ga_readiness_worker_absent():
     with patch("app.services.platform.ga_readiness.get_settings") as mock_settings:
         mock_settings.return_value.agent_runtime_enabled = True
         svc = GAReadinessService()
-        
+
         state = {
             "runtime_enabled": True,
             "worker_heartbeat_active": False,
@@ -54,18 +55,19 @@ async def test_ga_readiness_worker_absent():
             "clean_working_tree": True,
             "supported_surface_no_production_beta_stub": True,
             "release_gate_passed": True,
-            "_reasons": {}
+            "_reasons": {},
         }
         res = svc.evaluate_readiness(state)
         assert res["maturity_level"] != "ga_ready"
         assert "worker_heartbeat_active" in res["failed_criteria"]
+
 
 @pytest.mark.asyncio
 async def test_ga_readiness_all_pass():
     with patch("app.services.platform.ga_readiness.get_settings") as mock_settings:
         mock_settings.return_value.agent_runtime_enabled = True
         svc = GAReadinessService()
-        
+
         state = {
             "runtime_enabled": True,
             "worker_heartbeat_active": True,
@@ -79,7 +81,7 @@ async def test_ga_readiness_all_pass():
             "clean_working_tree": True,
             "supported_surface_no_production_beta_stub": True,
             "release_gate_passed": True,
-            "_reasons": {}
+            "_reasons": {},
         }
         res = svc.evaluate_readiness(state)
         assert res["maturity_level"] == "ga_ready"

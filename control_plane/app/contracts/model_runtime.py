@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 from uuid import UUID
 
 from app.contracts.base import BaseContract, ContractCapability
@@ -14,18 +14,26 @@ class ModelInstance(BaseModel):
     port: int
     is_active: bool
 
+
 class ModelRuntimeCapabilities(ContractCapability):
     hot_swap: bool = False
     multi_instance: bool = False
     automatic_health_checks: bool = False
+
 
 @runtime_checkable
 class ModelRuntimeContract(BaseContract, Protocol):
     """
     Contract for Model Runtime Management (Loading/Unloading/Monitoring models).
     """
-    
-    async def load_model(self, model_id: UUID, backend_id: UUID, model_path: str, runtime_config: Optional[Dict[str, Any]] = None) -> ModelInstance:
+
+    async def load_model(
+        self,
+        model_id: UUID,
+        backend_id: UUID,
+        model_path: str,
+        runtime_config: dict[str, Any] | None = None,
+    ) -> ModelInstance:
         """Loads a model into a new runtime instance."""
         ...
 
@@ -37,7 +45,7 @@ class ModelRuntimeContract(BaseContract, Protocol):
         """Sets a specific instance as the active one for a model/backend."""
         ...
 
-    async def get_model_health(self, instance_id: UUID) -> Dict[str, Any]:
+    async def get_model_health(self, instance_id: UUID) -> dict[str, Any]:
         """Returns health information for a model instance."""
         ...
 
@@ -46,7 +54,13 @@ class ModelRuntimeContract(BaseContract, Protocol):
         ...
 
     def validate_contract(self) -> bool:
-        required_methods = ["load_model", "unload_model", "activate_model", "get_model_health", "capabilities"]
+        required_methods = [
+            "load_model",
+            "unload_model",
+            "activate_model",
+            "get_model_health",
+            "capabilities",
+        ]
         for method in required_methods:
             if not hasattr(self, method) or not callable(getattr(self, method)):
                 return False

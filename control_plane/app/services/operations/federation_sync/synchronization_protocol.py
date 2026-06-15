@@ -38,11 +38,15 @@ class SovereignFederationSynchronizationProtocol:
             lineage_verified=False,
             deterministic_version=logical_payload["deterministic_version"],
             session_hash=session_hash,
-            immutable_hash=sha256_hex({"kind": "federation_session_immutable", "session_hash": session_hash}),
+            immutable_hash=sha256_hex(
+                {"kind": "federation_session_immutable", "session_hash": session_hash}
+            ),
             started_at=utc_now(),
         )
 
-    def export_bundle(self, session: FederationSynchronizationSession, bundle: dict[str, Any]) -> FederationSynchronizationBundle:
+    def export_bundle(
+        self, session: FederationSynchronizationSession, bundle: dict[str, Any]
+    ) -> FederationSynchronizationBundle:
         logical_payload = {
             "client_id": str(session.client_id),
             "session_id": session.id,
@@ -71,13 +75,21 @@ class SovereignFederationSynchronizationProtocol:
             parent_bundle_hash=bundle.get("parent_bundle_hash"),
             replay_hash=bundle_hash,
             bundle_status="exported",
-            immutable_hash=sha256_hex({"kind": "federation_bundle_immutable", "bundle_hash": bundle_hash, "lineage_hash": lineage_hash}),
+            immutable_hash=sha256_hex(
+                {
+                    "kind": "federation_bundle_immutable",
+                    "bundle_hash": bundle_hash,
+                    "lineage_hash": lineage_hash,
+                }
+            ),
         )
         exported._logical_payload = logical_payload
         session.sync_status = "exported"
         return exported
 
-    def import_bundle(self, session: FederationSynchronizationSession, bundle: FederationSynchronizationBundle) -> FederationSynchronizationBundle:
+    def import_bundle(
+        self, session: FederationSynchronizationSession, bundle: FederationSynchronizationBundle
+    ) -> FederationSynchronizationBundle:
         verification = self.verify_bundle(bundle)
         if not verification["verified"]:
             bundle.bundle_status = "conflicted"
@@ -117,12 +129,22 @@ class SovereignFederationSynchronizationProtocol:
             "expected_lineage_hash": lineage_hash,
         }
 
-    def finalize_session(self, session: FederationSynchronizationSession, blocking_conflicts: list[Any] | None = None) -> FederationSynchronizationSession:
+    def finalize_session(
+        self, session: FederationSynchronizationSession, blocking_conflicts: list[Any] | None = None
+    ) -> FederationSynchronizationSession:
         blockers = blocking_conflicts or []
-        if any(conflict.resolution_strategy == "manual_review_required" or conflict.resolution_status == "blocked" for conflict in blockers):
+        if any(
+            conflict.resolution_strategy == "manual_review_required"
+            or conflict.resolution_status == "blocked"
+            for conflict in blockers
+        ):
             session.sync_status = "conflicted"
             return session
-        if not session.replay_verifiable or not session.offline_verifiable or not session.lineage_verified:
+        if (
+            not session.replay_verifiable
+            or not session.offline_verifiable
+            or not session.lineage_verified
+        ):
             session.sync_status = "rejected"
             return session
         session.sync_status = "verified"

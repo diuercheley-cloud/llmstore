@@ -26,12 +26,19 @@ def upgrade() -> None:
         sa.Column("client_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("model_registry_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("inference_backend_id", postgresql.UUID(as_uuid=True), nullable=True),
-        sa.Column("endpoint", sa.String(length=64), nullable=False, server_default="/v1/chat/completions/async"),
+        sa.Column(
+            "endpoint",
+            sa.String(length=64),
+            nullable=False,
+            server_default="/v1/chat/completions/async",
+        ),
         sa.Column("requested_model", sa.String(length=255), nullable=False),
         sa.Column("resolved_model", sa.String(length=255), nullable=False),
         sa.Column("status", sa.String(length=16), nullable=False, server_default="queued"),
         sa.Column("is_stream", sa.Boolean(), nullable=False, server_default=sa.text("false")),
-        sa.Column("include_reasoning", sa.Boolean(), nullable=False, server_default=sa.text("false")),
+        sa.Column(
+            "include_reasoning", sa.Boolean(), nullable=False, server_default=sa.text("false")
+        ),
         sa.Column("request_json", sa.Text(), nullable=False),
         sa.Column("response_json", sa.Text(), nullable=True),
         sa.Column("error_message", sa.Text(), nullable=True),
@@ -54,8 +61,12 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["inference_backend_id"], ["inference_backends.id"]),
     )
     op.create_index("ix_generation_jobs_client_id", "generation_jobs", ["client_id"])
-    op.create_index("ix_generation_jobs_model_registry_id", "generation_jobs", ["model_registry_id"])
-    op.create_index("ix_generation_jobs_inference_backend_id", "generation_jobs", ["inference_backend_id"])
+    op.create_index(
+        "ix_generation_jobs_model_registry_id", "generation_jobs", ["model_registry_id"]
+    )
+    op.create_index(
+        "ix_generation_jobs_inference_backend_id", "generation_jobs", ["inference_backend_id"]
+    )
     op.create_index("ix_generation_jobs_status", "generation_jobs", ["status"])
 
 

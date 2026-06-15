@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class DeploymentCallbackService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -39,15 +40,16 @@ class DeploymentCallbackService:
             "deployment_slug": deployment.slug,
             "status": run.status,
             "input": run.input_text,
-            "output": None, # In a real system, we'd extract the final answer
+            "output": None,  # In a real system, we'd extract the final answer
             "total_tokens": run.total_tokens,
             "estimated_cost_brl": run.estimated_cost_brl,
             "completed_at": run.completed_at.isoformat() if run.completed_at else None,
         }
-        
+
         # Extract output from steps if completed
         if run.status == "completed":
             from app.services.agents import agent_state
+
             steps = await agent_state.get_run_steps(self.db, run.id)
             for s in reversed(steps):
                 if s.step_type == "final":
@@ -60,19 +62,15 @@ class DeploymentCallbackService:
         # Sign payload if secret exists
         if deployment.callback_secret:
             signature = hmac.new(
-                deployment.callback_secret.encode(),
-                body.encode(),
-                hashlib.sha256
+                deployment.callback_secret.encode(), body.encode(), hashlib.sha256
             ).hexdigest()
             headers["X-Agent-Signature"] = signature
 
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
-                resp = await client.post(
-                    deployment.callback_url,
-                    content=body,
-                    headers=headers
+                resp = await client.post(deployment.callback_url, content=body, headers=headers)
+                logger.info(
+                    f"Callback sent to {deployment.callback_url} for run {run_id}. Status: {resp.status_code}"
                 )
-                logger.info(f"Callback sent to {deployment.callback_url} for run {run_id}. Status: {resp.status_code}")
         except Exception as e:
             logger.error(f"Failed to send callback for run {run_id}: {e}")

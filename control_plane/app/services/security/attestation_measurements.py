@@ -15,7 +15,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _canonical_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+    )
 
 
 def _hash_bytes(data: bytes) -> str:
@@ -29,6 +31,7 @@ def _hash_payload(payload: dict[str, Any]) -> str:
 def _environment_fingerprint() -> str:
     import os
     import platform
+
     parts = [
         platform.platform(),
         platform.machine(),
@@ -40,6 +43,7 @@ def _environment_fingerprint() -> str:
 
 def _compute_file_hash(file_path: str) -> str | None:
     import os
+
     if not os.path.isfile(file_path):
         return None
     try:
@@ -76,15 +80,17 @@ async def snapshot_runtime_measurement(
 
     env_fp = environment_fingerprint or _environment_fingerprint()
 
-    measurement_data = sanitize_report_payload({
-        "measurement_type": measurement_type,
-        "object_name": object_name,
-        "object_version": object_version,
-        "object_path_hash": object_path_hash,
-        "expected_hash": expected_hash,
-        "observed_hash": observed_hash,
-        "environment_fingerprint": env_fp,
-    })
+    measurement_data = sanitize_report_payload(
+        {
+            "measurement_type": measurement_type,
+            "object_name": object_name,
+            "object_version": object_version,
+            "object_path_hash": object_path_hash,
+            "expected_hash": expected_hash,
+            "observed_hash": observed_hash,
+            "environment_fingerprint": env_fp,
+        }
+    )
     measurement_hash = _hash_payload(measurement_data)
 
     prev_measurement = None
@@ -280,14 +286,20 @@ async def get_measurement_history(
 
 async def summarize_measurements(db: AsyncSession) -> dict[str, Any]:
     total = (await db.execute(select(func.count(CommercialRuntimeMeasurement.id)))).scalar() or 0
-    drift = (await db.execute(
-        select(func.count(CommercialRuntimeMeasurement.id))
-        .where(CommercialRuntimeMeasurement.drift_detected.is_(True))
-    )).scalar() or 0
-    valid = (await db.execute(
-        select(func.count(CommercialRuntimeMeasurement.id))
-        .where(CommercialRuntimeMeasurement.status == "valid")
-    )).scalar() or 0
+    drift = (
+        await db.execute(
+            select(func.count(CommercialRuntimeMeasurement.id)).where(
+                CommercialRuntimeMeasurement.drift_detected.is_(True)
+            )
+        )
+    ).scalar() or 0
+    valid = (
+        await db.execute(
+            select(func.count(CommercialRuntimeMeasurement.id)).where(
+                CommercialRuntimeMeasurement.status == "valid"
+            )
+        )
+    ).scalar() or 0
 
     recent = await db.execute(
         select(CommercialRuntimeMeasurement)

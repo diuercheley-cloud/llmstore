@@ -1,4 +1,4 @@
-from pydantic import Field, AliasChoices
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,13 +10,31 @@ class SecurityConfig(BaseSettings):
         env_nested_delimiter="__",
     )
 
-    admin_token: str = Field(alias="ADMIN_TOKEN", validation_alias=AliasChoices("ADMIN_TOKEN", "ADMIN_TOKEN_FILE"))
-    admin_read_token: str | None = Field(default=None, alias="ADMIN_READ_TOKEN", validation_alias=AliasChoices("ADMIN_READ_TOKEN", "ADMIN_READ_TOKEN_FILE"))
-    admin_write_token: str | None = Field(default=None, alias="ADMIN_WRITE_TOKEN", validation_alias=AliasChoices("ADMIN_WRITE_TOKEN", "ADMIN_WRITE_TOKEN_FILE"))
-    admin_super_token: str | None = Field(default=None, alias="ADMIN_SUPER_TOKEN", validation_alias=AliasChoices("ADMIN_SUPER_TOKEN", "ADMIN_SUPER_TOKEN_FILE"))
-    jwt_secret: str = Field(..., alias="JWT_SECRET", validation_alias=AliasChoices("JWT_SECRET", "JWT_SECRET_FILE"))
+    admin_token: str = Field(
+        alias="ADMIN_TOKEN", validation_alias=AliasChoices("ADMIN_TOKEN", "ADMIN_TOKEN_FILE")
+    )
+    admin_read_token: str | None = Field(
+        default=None,
+        alias="ADMIN_READ_TOKEN",
+        validation_alias=AliasChoices("ADMIN_READ_TOKEN", "ADMIN_READ_TOKEN_FILE"),
+    )
+    admin_write_token: str | None = Field(
+        default=None,
+        alias="ADMIN_WRITE_TOKEN",
+        validation_alias=AliasChoices("ADMIN_WRITE_TOKEN", "ADMIN_WRITE_TOKEN_FILE"),
+    )
+    admin_super_token: str | None = Field(
+        default=None,
+        alias="ADMIN_SUPER_TOKEN",
+        validation_alias=AliasChoices("ADMIN_SUPER_TOKEN", "ADMIN_SUPER_TOKEN_FILE"),
+    )
+    jwt_secret: str = Field(
+        ..., alias="JWT_SECRET", validation_alias=AliasChoices("JWT_SECRET", "JWT_SECRET_FILE")
+    )
     rbac_admin_enabled: bool = Field(default=True, alias="RBAC_ADMIN_ENABLED")
-    admin_tests_rate_limit_enabled: bool = Field(default=True, alias="ADMIN_TESTS_RATE_LIMIT_ENABLED")
+    admin_tests_rate_limit_enabled: bool = Field(
+        default=True, alias="ADMIN_TESTS_RATE_LIMIT_ENABLED"
+    )
 
     oauth_google_client_id: str = Field(default="", alias="OAUTH_GOOGLE_CLIENT_ID")
     oauth_google_client_secret: str = Field(default="", alias="OAUTH_GOOGLE_CLIENT_SECRET")
@@ -27,13 +45,19 @@ class SecurityConfig(BaseSettings):
     enterprise_sso_enabled: bool = Field(default=False, alias="ENTERPRISE_SSO_ENABLED")
     enterprise_sso_tenant_id: str = Field(default="", alias="ENTERPRISE_SSO_TENANT_ID")
     enterprise_sso_azure_client_id: str = Field(default="", alias="ENTERPRISE_SSO_AZURE_CLIENT_ID")
-    enterprise_sso_azure_client_secret: str = Field(default="", alias="ENTERPRISE_SSO_AZURE_CLIENT_SECRET")
+    enterprise_sso_azure_client_secret: str = Field(
+        default="", alias="ENTERPRISE_SSO_AZURE_CLIENT_SECRET"
+    )
     enterprise_sso_okta_client_id: str = Field(default="", alias="ENTERPRISE_SSO_OKTA_CLIENT_ID")
-    enterprise_sso_okta_client_secret: str = Field(default="", alias="ENTERPRISE_SSO_OKTA_CLIENT_SECRET")
+    enterprise_sso_okta_client_secret: str = Field(
+        default="", alias="ENTERPRISE_SSO_OKTA_CLIENT_SECRET"
+    )
     enterprise_sso_okta_domain: str = Field(default="", alias="ENTERPRISE_SSO_OKTA_DOMAIN")
     enterprise_sso_saml_sso_url: str = Field(default="", alias="ENTERPRISE_SSO_SAML_SSO_URL")
     enterprise_sso_saml_entity_id: str = Field(default="", alias="ENTERPRISE_SSO_SAML_ENTITY_ID")
-    enterprise_sso_saml_certificate: str = Field(default="", alias="ENTERPRISE_SSO_SAML_CERTIFICATE")
+    enterprise_sso_saml_certificate: str = Field(
+        default="", alias="ENTERPRISE_SSO_SAML_CERTIFICATE"
+    )
 
     pki_enabled: bool = Field(default=False, alias="PKI_ENABLED")
     pki_storage_path: str = Field(default="./data/pki", alias="PKI_STORAGE_PATH")
@@ -49,14 +73,16 @@ class SecurityConfig(BaseSettings):
     vault_kv_mount: str = Field(default="secret", alias="VAULT_KV_MOUNT")
 
     trust_x_forwarded_for: bool = Field(
-        default=False, alias="TRUST_X_FORWARDED_FOR",
+        default=False,
+        alias="TRUST_X_FORWARDED_FOR",
         description="Enable to trust X-Forwarded-For header. "
-                    "Only enable when behind a trusted reverse proxy.",
+        "Only enable when behind a trusted reverse proxy.",
     )
     trusted_proxies: str = Field(
-        default="", alias="TRUSTED_PROXIES",
+        default="",
+        alias="TRUSTED_PROXIES",
         description="Comma-separated list of trusted proxy IPs/CIDRs. "
-                    "When set, only X-Forwarded-For from these proxies is accepted.",
+        "When set, only X-Forwarded-For from these proxies is accepted.",
     )
 
     content_security_policy: str = Field(
@@ -74,6 +100,6 @@ class SecurityConfig(BaseSettings):
         ),
         alias="CONTENT_SECURITY_POLICY",
         description="Content-Security-Policy header value. "
-                    "Set to a stricter policy for production, e.g. "
-                    "script-src 'self' with nonces or hashes.",
+        "Set to a stricter policy for production, e.g. "
+        "script-src 'self' with nonces or hashes.",
     )

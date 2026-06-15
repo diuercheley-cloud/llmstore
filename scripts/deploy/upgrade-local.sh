@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve symlink if BASH_SOURCE[0] is a symlink
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 # shellcheck source=/dev/null
 source "${SCRIPT_DIR}/../dev/common.sh"
 init_stack_env
@@ -164,7 +171,7 @@ fi
 
 echo "[upgrade] Verificando banco de dados e rodando migrations..."
 if [[ "${DRY_RUN}" == "true" ]]; then
-  echo "[dry-run] dc exec -T control-plane alembic upgrade head"
+  echo "[dry-run] dc exec -T control-plane alembic upgrade heads"
 else
   # Wait for DB to be ready
   for _ in $(seq 1 30); do
@@ -173,7 +180,7 @@ else
     fi
     sleep 2
   done
-  dc exec -T control-plane alembic upgrade head
+  dc exec -T control-plane alembic upgrade heads
 fi
 
 echo "[upgrade] Validando status das migrations após upgrade..."

@@ -2,7 +2,6 @@
 import json
 from uuid import UUID
 
-from app.services.runtime_dependencies import get_db_session
 from app.models.governance.policy_engine import (
     DeterministicPolicy,
     PolicyBundle,
@@ -17,6 +16,7 @@ from app.services.governance.policy_engine.policy_evaluator import evaluate_poli
 from app.services.governance.policy_engine.policy_parser import hash_payload, parse_policy_dsl
 from app.services.governance.policy_engine.policy_replay_verifier import verify_replay
 from app.services.governance.policy_engine.receipts import build_policy_receipt
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import desc, select
@@ -111,7 +111,9 @@ async def create_policy(payload: PolicyCreateRequest, db: AsyncSession = Depends
         }
     )[:32]
     policy_hash = hash_payload(normalized)
-    immutable_hash = hash_payload({"policy_id": policy_id, "policy_hash": policy_hash, "status": payload.policy_status})
+    immutable_hash = hash_payload(
+        {"policy_id": policy_id, "policy_hash": policy_hash, "status": payload.policy_status}
+    )
     policy = DeterministicPolicy(
         id=policy_id,
         client_id=payload.client_id,
@@ -138,43 +140,58 @@ async def create_policy(payload: PolicyCreateRequest, db: AsyncSession = Depends
         )
     await db.commit()
     await db.refresh(policy)
-    return {"policy": _serialize_policy(policy), "audit_event": build_policy_audit_event("create", policy.id, "created")}
+    return {
+        "policy": _serialize_policy(policy),
+        "audit_event": build_policy_audit_event("create", policy.id, "created"),
+    }
 
 
-from app.domains.policy.contracts import PolicyRepository
 from app.domains.policy.repositories import SqlAlchemyPolicyRepository
+
 
 @router.get("")
 async def list_policies(db: AsyncSession = Depends(get_db_session)):
     repo = SqlAlchemyPolicyRepository(db)
     # The original query was global, so we need a global list method or use a dummy client_id if applicable.
-    # For now, let's add list_all_policies to the repo if needed, 
+    # For now, let's add list_all_policies to the repo if needed,
     # but the repo has list_policies_by_client.
     # Let's adjust the repo to have list_all_policies or just query all in repo.
-    
+
     # Actually, I'll update the repo to have list_all_policies.
     return {"items": await repo.list_all_policies()}
 
 
 @router.get("/{policy_id}/verify")
 async def verify_policy(policy_id: str, db: AsyncSession = Depends(get_db_session)):
-    policy = (await db.execute(select(DeterministicPolicy).where(DeterministicPolicy.id == policy_id))).scalar_one_or_none()
+    policy = (
+        await db.execute(select(DeterministicPolicy).where(DeterministicPolicy.id == policy_id))
+    ).scalar_one_or_none()
     if not policy:
         raise HTTPException(status_code=404, detail="policy_not_found")
     parsed = parse_policy_dsl(policy.dsl_json())
-    return {"policy": _serialize_policy(policy), "verified": True, "rule_count": len(parsed["rules"])}
+    return {
+        "policy": _serialize_policy(policy),
+        "verified": True,
+        "rule_count": len(parsed["rules"]),
+    }
 
 
 @router.post("/bundles", status_code=201)
-async def create_bundle(payload: PolicyBundleCreateRequest, db: AsyncSession = Depends(get_db_session)):
+async def create_bundle(
+    payload: PolicyBundleCreateRequest, db: AsyncSession = Depends(get_db_session)
+):
     policies = (
-        await db.execute(
-            select(DeterministicPolicy).where(
-                DeterministicPolicy.id.in_(payload.policy_ids),
-                DeterministicPolicy.client_id == payload.client_id,
+        (
+            await db.execute(
+                select(DeterministicPolicy).where(
+                    DeterministicPolicy.id.in_(payload.policy_ids),
+                    DeterministicPolicy.client_id == payload.client_id,
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     if len(policies) != len(payload.policy_ids):
         raise HTTPException(status_code=400, detail="bundle_contains_unknown_policy")
     policy_hashes = [item.policy_hash for item in policies]
@@ -195,7 +212,9 @@ async def create_bundle(payload: PolicyBundleCreateRequest, db: AsyncSession = D
 
 
 @router.post("/evaluate", status_code=201)
-async def evaluate_policy_against_subject(payload: PolicyEvaluationRequest, db: AsyncSession = Depends(get_db_session)):
+async def evaluate_policy_against_subject(
+    payload: PolicyEvaluationRequest, db: AsyncSession = Depends(get_db_session)
+):
     policy = (
         await db.execute(
             select(DeterministicPolicy).where(
@@ -208,7 +227,9 @@ async def evaluate_policy_against_subject(payload: PolicyEvaluationRequest, db: 
         raise HTTPException(status_code=404, detail="policy_not_found")
     result = evaluate_policy(policy.dsl_json(), payload.subject)
     row = PolicyEvaluationResult(
-        id=hash_payload({"policy_id": policy.id, "subject_ref": payload.subject_ref, "subject": payload.subject})[:32],
+        id=hash_payload(
+            {"policy_id": policy.id, "subject_ref": payload.subject_ref, "subject": payload.subject}
+        )[:32],
         client_id=payload.client_id,
         policy_id=policy.id,
         subject_type=payload.subject_type,
@@ -235,8 +256,14 @@ async def evaluate_policy_against_subject(payload: PolicyEvaluationRequest, db: 
 
 
 @router.post("/replay-verify")
-async def replay_verify(payload: PolicyReplayVerifyRequest, db: AsyncSession = Depends(get_db_session)):
-    policy = (await db.execute(select(DeterministicPolicy).where(DeterministicPolicy.id == payload.policy_id))).scalar_one_or_none()
+async def replay_verify(
+    payload: PolicyReplayVerifyRequest, db: AsyncSession = Depends(get_db_session)
+):
+    policy = (
+        await db.execute(
+            select(DeterministicPolicy).where(DeterministicPolicy.id == payload.policy_id)
+        )
+    ).scalar_one_or_none()
     if not policy:
         raise HTTPException(status_code=404, detail="policy_not_found")
     return verify_replay(policy.dsl_json(), payload.subject, payload.expected_decision)
@@ -244,5 +271,9 @@ async def replay_verify(payload: PolicyReplayVerifyRequest, db: AsyncSession = D
 
 @router.get("/conflicts")
 async def list_conflicts(db: AsyncSession = Depends(get_db_session)):
-    items = (await db.execute(select(PolicyConflict).order_by(desc(PolicyConflict.created_at)))).scalars().all()
+    items = (
+        (await db.execute(select(PolicyConflict).order_by(desc(PolicyConflict.created_at))))
+        .scalars()
+        .all()
+    )
     return {"items": [_serialize_conflict(item) for item in items]}

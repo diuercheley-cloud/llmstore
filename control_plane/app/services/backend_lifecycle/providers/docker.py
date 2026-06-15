@@ -1,8 +1,5 @@
 import json
 import logging
-import os
-import subprocess
-from pathlib import Path
 from uuid import UUID
 
 from app.contracts.backend_lifecycle import (
@@ -13,14 +10,13 @@ from app.contracts.backend_lifecycle import (
 )
 from app.services.admin_model_management import (
     _ALLOWED_DOCKER_SERVICES,
-    backend_runtime_capabilities,
-    backend_service_name,
-    compose_file_path,
     parse_metadata,
-    project_root,
     run_backend_docker_command,
 )
-from app.services.backend_lifecycle.providers.base import BaseLifecycleProvider, ProviderUnavailableError
+from app.services.backend_lifecycle.providers.base import (
+    BaseLifecycleProvider,
+    ProviderUnavailableError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +31,9 @@ class DockerProvider(BaseLifecycleProvider):
             provider_type="docker",
         )
 
-    async def get_observed_state(self, backend_id: UUID, desired: BackendDesiredState) -> BackendObservedState:
+    async def get_observed_state(
+        self, backend_id: UUID, desired: BackendDesiredState
+    ) -> BackendObservedState:
         try:
             caps = self._get_capabilities(desired)
             if not caps["docker_actions_allowed"]:
@@ -83,9 +81,17 @@ class DockerProvider(BaseLifecycleProvider):
                 parsed = json.loads(raw)
             except json.JSONDecodeError:
                 parsed = []
-            services = [parsed] if isinstance(parsed, dict) else (parsed if isinstance(parsed, list) else [])
+            services = (
+                [parsed]
+                if isinstance(parsed, dict)
+                else (parsed if isinstance(parsed, list) else [])
+            )
             match = next(
-                (s for s in services if str(s.get("Service") or s.get("Name") or "").strip() == service_name),
+                (
+                    s
+                    for s in services
+                    if str(s.get("Service") or s.get("Name") or "").strip() == service_name
+                ),
                 None,
             )
             if match is None:
@@ -118,20 +124,30 @@ class DockerProvider(BaseLifecycleProvider):
                 error=str(exc),
             )
 
-    async def start_backend(self, backend_id: UUID, desired: BackendDesiredState) -> LifecycleActionResult:
+    async def start_backend(
+        self, backend_id: UUID, desired: BackendDesiredState
+    ) -> LifecycleActionResult:
         return await self._docker_action(backend_id, desired, "start")
 
-    async def stop_backend(self, backend_id: UUID, desired: BackendDesiredState) -> LifecycleActionResult:
+    async def stop_backend(
+        self, backend_id: UUID, desired: BackendDesiredState
+    ) -> LifecycleActionResult:
         return await self._docker_action(backend_id, desired, "stop")
 
-    async def restart_backend(self, backend_id: UUID, desired: BackendDesiredState) -> LifecycleActionResult:
+    async def restart_backend(
+        self, backend_id: UUID, desired: BackendDesiredState
+    ) -> LifecycleActionResult:
         return await self._docker_action(backend_id, desired, "restart")
 
-    async def _docker_action(self, backend_id: UUID, desired: BackendDesiredState, action: str) -> LifecycleActionResult:
+    async def _docker_action(
+        self, backend_id: UUID, desired: BackendDesiredState, action: str
+    ) -> LifecycleActionResult:
         try:
             caps = self._get_capabilities(desired)
             if not caps["docker_actions_allowed"]:
-                raise ProviderUnavailableError("docker", "docker actions not allowed for this backend")
+                raise ProviderUnavailableError(
+                    "docker", "docker actions not allowed for this backend"
+                )
             service_name = caps["service_name"]
             if not service_name:
                 raise ProviderUnavailableError("docker", "no service name mapped")
@@ -181,8 +197,10 @@ class DockerProvider(BaseLifecycleProvider):
         }
 
     def _mock_backend(self, desired: BackendDesiredState, service_name: str) -> object:
-        from app.models.core.inference_backend import InferenceBackend
         import uuid
+
+        from app.models.core.inference_backend import InferenceBackend
+
         backend = InferenceBackend(
             id=desired.backend_id or uuid.uuid4(),
             name=desired.name,

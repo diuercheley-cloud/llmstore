@@ -1,7 +1,7 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.models.agents.agents import AgentABEvalRun, AgentEvalPairwiseResult
 from sqlalchemy import select
@@ -9,34 +9,35 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class ABComparisonEvaluator:
     """
     Handles A/B comparison of agent versions using pairwise scoring.
     Compares cost, latency, and safety alongside quality.
     """
+
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create_ab_run(self, tenant_id: str, agent_a_id: uuid.UUID, agent_b_id: uuid.UUID) -> AgentABEvalRun:
+    async def create_ab_run(
+        self, tenant_id: str, agent_a_id: uuid.UUID, agent_b_id: uuid.UUID
+    ) -> AgentABEvalRun:
         ab_run = AgentABEvalRun(
-            tenant_id=tenant_id,
-            agent_a_id=agent_a_id,
-            agent_b_id=agent_b_id,
-            status="running"
+            tenant_id=tenant_id, agent_a_id=agent_a_id, agent_b_id=agent_b_id, status="running"
         )
         self.db.add(ab_run)
         await self.db.flush()
         return ab_run
 
     async def record_pairwise_result(
-        self, 
-        ab_run_id: uuid.UUID, 
-        input_text: str, 
-        response_a: str, 
-        response_b: str, 
-        preference: str, 
-        rationale: str = None, 
-        metrics: Dict[str, Any] = None
+        self,
+        ab_run_id: uuid.UUID,
+        input_text: str,
+        response_a: str,
+        response_b: str,
+        preference: str,
+        rationale: str = None,
+        metrics: dict[str, Any] = None,
     ) -> AgentEvalPairwiseResult:
         result = AgentEvalPairwiseResult(
             ab_run_id=ab_run_id,
@@ -45,13 +46,13 @@ class ABComparisonEvaluator:
             response_b=response_b,
             preference=preference,
             rationale=rationale,
-            metrics=metrics or {}
+            metrics=metrics or {},
         )
         self.db.add(result)
         await self.db.flush()
         return result
 
-    async def finalize_ab_run(self, ab_run_id: uuid.UUID) -> Optional[uuid.UUID]:
+    async def finalize_ab_run(self, ab_run_id: uuid.UUID) -> uuid.UUID | None:
         """
         Determines the winner of an A/B run based on pairwise preferences.
         Considers overall safety and performance metrics.
@@ -78,7 +79,7 @@ class ABComparisonEvaluator:
             ab_run.winner_id = ab_run.agent_a_id
         elif votes_b > votes_a:
             ab_run.winner_id = ab_run.agent_b_id
-        
+
         ab_run.status = "completed"
         await self.db.flush()
         return ab_run.winner_id

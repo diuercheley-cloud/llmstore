@@ -20,7 +20,12 @@ async def send_revenue_alert(payload: dict[str, Any] | None) -> dict[str, Any]:
 
     logger.info(
         "revenue_protection_alert",
-        extra={"extra_data": {"payload": sanitized, "webhook_enabled": settings.commercial_revenue_protection_webhook_enabled}},
+        extra={
+            "extra_data": {
+                "payload": sanitized,
+                "webhook_enabled": settings.commercial_revenue_protection_webhook_enabled,
+            }
+        },
     )
 
     if not settings.commercial_revenue_protection_webhook_enabled:
@@ -30,5 +35,7 @@ async def send_revenue_alert(payload: dict[str, Any] | None) -> dict[str, Any]:
         return {"status": "dry_run", "payload": sanitized}
 
     async with httpx.AsyncClient(timeout=5.0) as client:
-        response = await client.post(settings.commercial_revenue_protection_webhook_url, json=sanitized)
+        response = await client.post(
+            settings.commercial_revenue_protection_webhook_url, json=sanitized
+        )
     return {"status": "sent", "code": response.status_code}

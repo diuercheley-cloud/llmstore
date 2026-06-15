@@ -2,6 +2,7 @@
 Owner: agent-platform
 Status: beta
 """
+
 import logging
 import uuid
 from datetime import timedelta
@@ -31,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 ACTIVE_STATUSES = ["queued", "leased", "running", "waiting_approval"]
 
+
 class BackpressureError(Exception):
     def __init__(self, message: str, limit_type: str):
         super().__init__(message)
@@ -43,7 +45,7 @@ async def update_queue_metrics(db: AsyncSession, tenant_id: str, agent_id: uuid.
         stmt_q = select(func.count(AgentExecutionJob.id)).where(
             AgentExecutionJob.tenant_id == tenant_id,
             AgentExecutionJob.agent_id == agent_id,
-            AgentExecutionJob.queue_status == "queued"
+            AgentExecutionJob.queue_status == "queued",
         )
         res_q = await db.execute(stmt_q)
         queued_count = res_q.scalar_one()
@@ -53,11 +55,13 @@ async def update_queue_metrics(db: AsyncSession, tenant_id: str, agent_id: uuid.
         stmt_r = select(func.count(AgentExecutionJob.id)).where(
             AgentExecutionJob.tenant_id == tenant_id,
             AgentExecutionJob.agent_id == agent_id,
-            AgentExecutionJob.queue_status.in_(["leased", "running", "waiting_approval"])
+            AgentExecutionJob.queue_status.in_(["leased", "running", "waiting_approval"]),
         )
         res_r = await db.execute(stmt_r)
         running_count = res_r.scalar_one()
-        LLM_AGENT_JOBS_RUNNING.labels(tenant_id=tenant_id, agent_id=str(agent_id)).set(running_count)
+        LLM_AGENT_JOBS_RUNNING.labels(tenant_id=tenant_id, agent_id=str(agent_id)).set(
+            running_count
+        )
     except Exception as e:
         logger.error(f"Failed to update queue metrics: {e}")
 
@@ -90,19 +94,23 @@ class AgentQueueManager:
             res_idem = await self.db.execute(stmt_idempotency)
             existing_idem = res_idem.scalar_one_or_none()
             if existing_idem:
-                logger.info(f"Job with idempotency_key {idempotency_key} already exists. Returning existing job.")
+                logger.info(
+                    f"Job with idempotency_key {idempotency_key} already exists. Returning existing job."
+                )
                 return existing_idem
 
         # Deduplication check
         if deduplication_key:
             stmt_dedup = select(AgentExecutionJob).where(
                 AgentExecutionJob.deduplication_key == deduplication_key,
-                AgentExecutionJob.queue_status.in_(ACTIVE_STATUSES)
+                AgentExecutionJob.queue_status.in_(ACTIVE_STATUSES),
             )
             res_dedup = await self.db.execute(stmt_dedup)
             existing = res_dedup.scalar_one_or_none()
             if existing:
-                logger.info(f"Job with deduplication_key {deduplication_key} already exists. Skipping enqueue.")
+                logger.info(
+                    f"Job with deduplication_key {deduplication_key} already exists. Skipping enqueue."
+                )
                 return existing
 
         # Multi-tier Backpressure check
@@ -123,7 +131,7 @@ class AgentQueueManager:
             # 2. Tenant concurrency limit (max 10)
             stmt_tenant = select(func.count(AgentExecutionJob.id)).where(
                 AgentExecutionJob.tenant_id == tenant_id,
-                AgentExecutionJob.queue_status.in_(ACTIVE_STATUSES)
+                AgentExecutionJob.queue_status.in_(ACTIVE_STATUSES),
             )
             res_tenant = await self.db.execute(stmt_tenant)
             tenant_count = res_tenant.scalar_one()
@@ -136,7 +144,7 @@ class AgentQueueManager:
             # 3. Agent concurrency limit (max 5)
             stmt_agent = select(func.count(AgentExecutionJob.id)).where(
                 AgentExecutionJob.agent_id == agent_id,
-                AgentExecutionJob.queue_status.in_(ACTIVE_STATUSES)
+                AgentExecutionJob.queue_status.in_(ACTIVE_STATUSES),
             )
             res_agent = await self.db.execute(stmt_agent)
             agent_count = res_agent.scalar_one()
@@ -152,20 +160,25 @@ class AgentQueueManager:
             risk_level = res_def.scalar_one_or_none() or "low"
 
             risk_limit = {"low": 50, "medium": 10, "high": 3, "critical": 1}.get(risk_level, 50)
-            stmt_risk = select(func.count(AgentExecutionJob.id)).join(
-                AgentDefinition, AgentExecutionJob.agent_id == AgentDefinition.id
-            ).where(
-                AgentExecutionJob.queue_status.in_(ACTIVE_STATUSES),
-                AgentDefinition.risk_level == risk_level
+            stmt_risk = (
+                select(func.count(AgentExecutionJob.id))
+                .join(AgentDefinition, AgentExecutionJob.agent_id == AgentDefinition.id)
+                .where(
+                    AgentExecutionJob.queue_status.in_(ACTIVE_STATUSES),
+                    AgentDefinition.risk_level == risk_level,
+                )
             )
             res_risk = await self.db.execute(stmt_risk)
             risk_count = res_risk.scalar_one()
             if risk_count >= risk_limit:
                 LLM_AGENT_QUEUE_BACKPRESSURE_TOTAL.labels(
-                    tenant_id=tenant_id, agent_id=str(agent_id), limit_type=f"risk_level_{risk_level}"
+                    tenant_id=tenant_id,
+                    agent_id=str(agent_id),
+                    limit_type=f"risk_level_{risk_level}",
                 ).inc()
                 raise BackpressureError(
-                    f"Risk level '{risk_level}' limit exceeded (max {risk_limit})", f"risk_level_{risk_level}"
+                    f"Risk level '{risk_level}' limit exceeded (max {risk_limit})",
+                    f"risk_level_{risk_level}",
                 )
 
         # Create execution job
@@ -186,16 +199,18 @@ class AgentQueueManager:
         self.db.add(job)
         await self.db.flush()
 
-        await agent_state.log_run_event(
-            self.db, agent_run_id, "enqueued", {"job_id": str(job.id)}
-        )
+        await agent_state.log_run_event(self.db, agent_run_id, "enqueued", {"job_id": str(job.id)})
 
         await self.db.commit()
         await update_queue_metrics(self.db, tenant_id, agent_id)
-        logger.info(f"Enqueued job {job.id} for run {agent_run_id} (tenant: {tenant_id}, priority: {priority})")
+        logger.info(
+            f"Enqueued job {job.id} for run {agent_run_id} (tenant: {tenant_id}, priority: {priority})"
+        )
         return job
 
-    async def dequeue_job(self, worker_id: str, lease_timeout_seconds: int = 60) -> AgentExecutionJob | None:
+    async def dequeue_job(
+        self, worker_id: str, lease_timeout_seconds: int = 60
+    ) -> AgentExecutionJob | None:
         if not self.settings.agent_execution_plane_enabled:
             return None
 
@@ -207,8 +222,7 @@ class AgentQueueManager:
         stmt = (
             select(AgentExecutionJob)
             .where(
-                AgentExecutionJob.queue_status == "queued",
-                AgentExecutionJob.available_at <= now
+                AgentExecutionJob.queue_status == "queued", AgentExecutionJob.available_at <= now
             )
             .order_by(AgentExecutionJob.priority.desc(), AgentExecutionJob.available_at.asc())
             .limit(1)
@@ -234,7 +248,7 @@ class AgentQueueManager:
             expires_at=job.locked_until,
         )
         self.db.add(lease)
-        
+
         await agent_state.log_run_event(
             self.db, job.agent_run_id, "leased", {"worker_id": worker_id}
         )
@@ -246,24 +260,23 @@ class AgentQueueManager:
 
     async def reclaim_expired_leases(self) -> None:
         now = utc_now()
-        
+
         # 1. First reclaim based on job table locked_until (Durable Queue hardening)
         stmt_stale_jobs = (
             select(AgentExecutionJob)
             .where(
-                AgentExecutionJob.queue_status == "leased",
-                AgentExecutionJob.locked_until <= now
+                AgentExecutionJob.queue_status == "leased", AgentExecutionJob.locked_until <= now
             )
             .with_for_update(skip_locked=True)
         )
         res_stale = await self.db.execute(stmt_stale_jobs)
         stale_jobs = res_stale.scalars().all()
-        
+
         reclaimed_ids = set()
         for job in stale_jobs:
             await self._handle_lease_expiry(job, job.locked_by or "unknown", "job_lock_expired")
             reclaimed_ids.add(job.id)
-            
+
             # Remove from lease table too
             stmt_del_lease = delete(AgentExecutionLease).where(AgentExecutionLease.job_id == job.id)
             await self.db.execute(stmt_del_lease)
@@ -281,20 +294,26 @@ class AgentQueueManager:
             if lease.job_id in reclaimed_ids:
                 await self.db.delete(lease)
                 continue
-                
-            stmt_job = select(AgentExecutionJob).where(AgentExecutionJob.id == lease.job_id).with_for_update()
+
+            stmt_job = (
+                select(AgentExecutionJob)
+                .where(AgentExecutionJob.id == lease.job_id)
+                .with_for_update()
+            )
             res_job = await self.db.execute(stmt_job)
             job = res_job.scalar_one_or_none()
-            
+
             if job and job.queue_status == "leased":
                 await self._handle_lease_expiry(job, lease.worker_id, "lease_table_expired")
-            
+
             await self.db.delete(lease)
 
         if stale_jobs or expired_leases:
             await self.db.commit()
 
-    async def _handle_lease_expiry(self, job: AgentExecutionJob, worker_id: str, reason: str) -> None:
+    async def _handle_lease_expiry(
+        self, job: AgentExecutionJob, worker_id: str, reason: str
+    ) -> None:
         now = utc_now()
         if job.queue_status in ("completed", "failed", "cancelled", "dead_letter"):
             return
@@ -303,13 +322,13 @@ class AgentQueueManager:
         job.locked_by = None
         job.locked_until = None
         error_msg = f"Lease expired ({reason}). Worker {worker_id} failed to renew heartbeat."
-        
+
         retry_record = AgentExecutionRetry(
             job_id=job.id,
             attempt=job.attempt_count,
             error_message=error_msg,
             attempted_at=now,
-            next_attempt_at=now
+            next_attempt_at=now,
         )
 
         if job.attempt_count < job.max_attempts:
@@ -322,14 +341,21 @@ class AgentQueueManager:
             job.updated_at = now
 
             await agent_state.log_run_event(
-                self.db, job.agent_run_id, "retry_scheduled", {
+                self.db,
+                job.agent_run_id,
+                "retry_scheduled",
+                {
                     "attempt": job.attempt_count,
                     "next_attempt_at": next_attempt.isoformat(),
-                    "reason": reason
-                }
+                    "reason": reason,
+                },
             )
-            LLM_AGENT_JOB_RETRIES_TOTAL.labels(tenant_id=job.tenant_id, agent_id=str(job.agent_id)).inc()
-            logger.warning(f"Job {job.id} lease expired ({reason}). Re-enqueued for attempt {job.attempt_count + 1} at {next_attempt}")
+            LLM_AGENT_JOB_RETRIES_TOTAL.labels(
+                tenant_id=job.tenant_id, agent_id=str(job.agent_id)
+            ).inc()
+            logger.warning(
+                f"Job {job.id} lease expired ({reason}). Re-enqueued for attempt {job.attempt_count + 1} at {next_attempt}"
+            )
         else:
             job.queue_status = "dead_letter"
             job.updated_at = now
@@ -346,17 +372,24 @@ class AgentQueueManager:
             self.db.add(dlq)
 
             await agent_state.update_run(
-                self.db, job.agent_run_id, status="failed", failure_reason="Max execution attempts reached (lease expired)", completed_at=now
+                self.db,
+                job.agent_run_id,
+                status="failed",
+                failure_reason="Max execution attempts reached (lease expired)",
+                completed_at=now,
             )
             await agent_state.log_run_event(
                 self.db, job.agent_run_id, "dead_letter", {"reason": error_msg}
             )
 
-            LLM_AGENT_JOBS_FAILED_TOTAL.labels(tenant_id=job.tenant_id, agent_id=str(job.agent_id)).inc()
-            LLM_AGENT_DEAD_LETTERS_TOTAL.labels(tenant_id=job.tenant_id, agent_id=str(job.agent_id)).inc()
+            LLM_AGENT_JOBS_FAILED_TOTAL.labels(
+                tenant_id=job.tenant_id, agent_id=str(job.agent_id)
+            ).inc()
+            LLM_AGENT_DEAD_LETTERS_TOTAL.labels(
+                tenant_id=job.tenant_id, agent_id=str(job.agent_id)
+            ).inc()
             logger.error(f"Job {job.id} lease expired and exceeded max attempts. Moved to DLQ.")
 
         self.db.add(retry_record)
         await self.db.flush()
         await update_queue_metrics(self.db, job.tenant_id, job.agent_id)
-

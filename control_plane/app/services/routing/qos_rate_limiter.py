@@ -1,19 +1,19 @@
 import logging
 import time
 import uuid
-from typing import Optional, Tuple
 
 from app.core.config import get_settings
 from redis.asyncio import Redis
 
 logger = logging.getLogger(__name__)
 
+
 class QoSRateLimiter:
     """
     Advanced rate limiter per QoS tier.
     Uses sliding window algorithm in Redis.
     """
-    
+
     def __init__(self, redis: Redis):
         self.redis = redis
         self.settings = get_settings()
@@ -33,11 +33,8 @@ class QoSRateLimiter:
         return self.settings.commercial_qos_basic_rpm
 
     async def check_rate_limit(
-        self, 
-        client_id: uuid.UUID, 
-        qos_tier: str,
-        model_id: str
-    ) -> Tuple[bool, str, Optional[str]]:
+        self, client_id: uuid.UUID, qos_tier: str, model_id: str
+    ) -> tuple[bool, str, str | None]:
         """
         Checks if a request should be rate limited.
         Returns (is_allowed, status, reason)
@@ -51,11 +48,11 @@ class QoSRateLimiter:
 
         now = time.time()
         window_start = now - 60
-        
+
         # Keys for different granularity
         client_key = f"qos_rl:client:{client_id}:rpm"
         tier_key = f"qos_rl:tier:{qos_tier}:rpm"
-        
+
         # Sliding window using Sorted Set
         async with self.redis.pipeline() as pipe:
             # Clean up old requests
@@ -66,20 +63,20 @@ class QoSRateLimiter:
             pipe.zadd(client_key, {str(now): now})
             # Set expiry for the key
             pipe.expire(client_key, 70)
-            
+
             results = await pipe.execute()
-            
+
         current_rpm = results[1]
-        
+
         if current_rpm >= limit_rpm:
             mode = self.settings.commercial_qos_rate_limit_mode
             reason = f"QoS tier '{qos_tier}' limit reached: {current_rpm}/{limit_rpm} RPM"
-            
+
             if mode == "enforce":
                 return False, "rejected", reason
             else:
                 return True, "throttled", reason
-                
+
         return True, "allowed", None
 
     async def get_current_rpm(self, client_id: uuid.UUID) -> int:

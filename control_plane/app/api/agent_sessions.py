@@ -2,7 +2,7 @@
 # Surface: client
 import logging
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.api.deps import get_db
 from app.models.core.client import Client
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["client", "agents-sessions"])
 
 
-def _serialize_session(session) -> Dict[str, Any]:
+def _serialize_session(session) -> dict[str, Any]:
     return {
         "id": str(session.id),
         "tenant_id": session.tenant_id,
@@ -38,7 +38,7 @@ def _serialize_session(session) -> Dict[str, Any]:
     }
 
 
-def _serialize_message(msg) -> Dict[str, Any]:
+def _serialize_message(msg) -> dict[str, Any]:
     return {
         "id": str(msg.id),
         "thread_id": str(msg.thread_id),
@@ -55,12 +55,12 @@ def _serialize_message(msg) -> Dict[str, Any]:
 @router.post("/v1/agents/{agent_id}/sessions")
 async def create_session(
     agent_id: uuid.UUID,
-    title: Optional[str] = Body(None),
-    metadata: Optional[Dict[str, Any]] = Body(None),
-    retention_policy: Optional[Dict[str, Any]] = Body(None),
+    title: str | None = Body(None),
+    metadata: dict[str, Any] | None = Body(None),
+    retention_policy: dict[str, Any] | None = Body(None),
     db: AsyncSession = Depends(get_db),
     client: Client = Depends(require_client),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     svc = AgentSessionService(db)
     session = await svc.create_session(
         tenant_id=str(client.id),
@@ -75,14 +75,14 @@ async def create_session(
 
 @router.get("/v1/agents/sessions")
 async def list_sessions(
-    agent_id: Optional[uuid.UUID] = Query(None),
-    user_id: Optional[str] = Query(None),
-    status: Optional[str] = Query(None),
+    agent_id: uuid.UUID | None = Query(None),
+    user_id: str | None = Query(None),
+    status: str | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
     client: Client = Depends(require_client),
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     svc = AgentSessionService(db)
     sessions = await svc.list_sessions(
         tenant_id=str(client.id),
@@ -100,7 +100,7 @@ async def get_session(
     session_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     client: Client = Depends(require_client),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     svc = AgentSessionService(db)
     session = await svc.get_session(session_id, tenant_id=str(client.id))
     if not session:
@@ -113,11 +113,11 @@ async def add_message(
     session_id: uuid.UUID,
     role: str = Body(...),
     content: str = Body(...),
-    run_id: Optional[uuid.UUID] = Body(None),
-    metadata: Optional[Dict[str, Any]] = Body(None),
+    run_id: uuid.UUID | None = Body(None),
+    metadata: dict[str, Any] | None = Body(None),
     db: AsyncSession = Depends(get_db),
     client: Client = Depends(require_client),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     svc = AgentSessionService(db)
     session = await svc.get_session(session_id, tenant_id=str(client.id))
     if not session:
@@ -134,7 +134,7 @@ async def add_message(
         metadata=metadata,
     )
     await svc.touch_session(session_id)
-    
+
     # Check for automatic summarization
     try:
         await svc.check_and_trigger_summarization(session_id)
@@ -152,16 +152,14 @@ async def get_messages(
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
     client: Client = Depends(require_client),
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     svc = AgentSessionService(db)
     session = await svc.get_session(session_id, tenant_id=str(client.id))
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
     thread_svc = ConversationThreadService(db)
-    messages = await thread_svc.get_messages(
-        session_id=session_id, limit=limit, offset=offset
-    )
+    messages = await thread_svc.get_messages(session_id=session_id, limit=limit, offset=offset)
     return [_serialize_message(m) for m in messages]
 
 
@@ -171,7 +169,7 @@ async def start_session_run(
     input_text: str = Body(...),
     db: AsyncSession = Depends(get_db),
     client: Client = Depends(require_client),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     svc = AgentSessionService(db)
     session = await svc.get_session(session_id, tenant_id=str(client.id))
     if not session:
@@ -214,7 +212,7 @@ async def delete_session(
     session_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     client: Client = Depends(require_client),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     svc = AgentSessionService(db)
     deleted = await svc.delete_session(session_id, tenant_id=str(client.id))
     if not deleted:
@@ -225,12 +223,12 @@ async def delete_session(
 @router.patch("/v1/agents/sessions/{session_id}")
 async def update_session(
     session_id: uuid.UUID,
-    title: Optional[str] = Body(None),
-    status: Optional[str] = Body(None),
-    metadata: Optional[Dict[str, Any]] = Body(None),
+    title: str | None = Body(None),
+    status: str | None = Body(None),
+    metadata: dict[str, Any] | None = Body(None),
     db: AsyncSession = Depends(get_db),
     client: Client = Depends(require_client),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     svc = AgentSessionService(db)
     session = await svc.update_session(
         session_id=session_id,

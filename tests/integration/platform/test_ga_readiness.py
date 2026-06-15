@@ -44,13 +44,18 @@ def test_all_12_criteria_pass_is_ga_ready(service):
 def test_surface_audit_dirty_blocks_ga(service):
     state = get_perfect_state()
     state["no_placeholder_production_surface"] = False
-    state["_reasons"]["no_placeholder_production_surface"] = "surface audit is dirty: 6 unregistered API routes"
+    state["_reasons"]["no_placeholder_production_surface"] = (
+        "surface audit is dirty: 6 unregistered API routes"
+    )
 
     result = service.evaluate_readiness(state)
 
     assert result["maturity_level"] == "production_ready"
     assert result["score"] == 11
-    assert result["details"]["no_placeholder_production_surface"] == "failed: surface audit is dirty: 6 unregistered API routes"
+    assert (
+        result["details"]["no_placeholder_production_surface"]
+        == "failed: surface audit is dirty: 6 unregistered API routes"
+    )
 
 
 def test_provider_validation_missing_blocks_ga(service):
@@ -72,7 +77,9 @@ def test_provider_validation_missing_blocks_ga(service):
 def test_silent_mock_blocks_ga(service):
     state = get_perfect_state()
     state["supported_surface_no_production_beta_stub"] = False
-    state["_reasons"]["supported_surface_no_production_beta_stub"] = "mock LLM is explicitly allowed in production-capable mode"
+    state["_reasons"]["supported_surface_no_production_beta_stub"] = (
+        "mock LLM is explicitly allowed in production-capable mode"
+    )
 
     result = service.evaluate_readiness(state)
 
@@ -105,7 +112,7 @@ def test_report_generation(service, tmpdir):
     service.generate_report(state, filepath=report_path)
 
     assert os.path.exists(report_path)
-    with open(report_path, "r", encoding="utf-8") as f:
+    with open(report_path, encoding="utf-8") as f:
         content = f.read()
         assert "GA_READY" in content
         assert "12 / 12" in content

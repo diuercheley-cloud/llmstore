@@ -1,7 +1,6 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from app.services.distributed_runtime.cluster_heartbeat import ClusterHeartbeatService
 from app.services.distributed_runtime.node_registry import NodeRegistry
 

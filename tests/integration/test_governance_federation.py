@@ -92,7 +92,11 @@ async def test_export_policy_to_disabled_peer(session: AsyncSession):
 
     registry = PolicyRegistryService()
     bundle = await registry.create_policy_bundle(
-        db=session, bundle_name="Test", bundle_version="1.0", bundle_type="routing", rules_json={"r": 1}
+        db=session,
+        bundle_name="Test",
+        bundle_version="1.0",
+        bundle_type="routing",
+        rules_json={"r": 1},
     )
 
     with pytest.raises(ValueError, match="is disabled"):
@@ -176,19 +180,29 @@ async def test_detect_policy_conflict(session: AsyncSession):
     rules_b = {"routing": {"force_local_only": False}}
 
     bundle = await registry.create_policy_bundle(
-        db=session, bundle_name="Conflict Bundle", bundle_version="1.0", bundle_type="routing", rules_json=rules_a
+        db=session,
+        bundle_name="Conflict Bundle",
+        bundle_version="1.0",
+        bundle_type="routing",
+        rules_json=rules_a,
     )
 
     service = PolicyFederationService()
     conflict = await service.detect_policy_conflict(
-        session, bundle_name="Conflict Bundle", bundle_version="1.0", remote_hash="different-hash-value"
+        session,
+        bundle_name="Conflict Bundle",
+        bundle_version="1.0",
+        remote_hash="different-hash-value",
     )
     assert conflict is not None
     assert conflict["conflict"] is True
     assert "Hash mismatch" in conflict["reason"]
 
     no_conflict = await service.detect_policy_conflict(
-        session, bundle_name="Conflict Bundle", bundle_version="1.0", remote_hash=bundle.immutable_hash
+        session,
+        bundle_name="Conflict Bundle",
+        bundle_version="1.0",
+        remote_hash=bundle.immutable_hash,
     )
     assert no_conflict is not None
     assert no_conflict["conflict"] is False
@@ -203,7 +217,11 @@ async def test_sync_policy_bundle(session: AsyncSession):
 
     registry = PolicyRegistryService()
     bundle = await registry.create_policy_bundle(
-        db=session, bundle_name="Sync Test", bundle_version="1.0", bundle_type="routing", rules_json={"r": 1}
+        db=session,
+        bundle_name="Sync Test",
+        bundle_version="1.0",
+        bundle_type="routing",
+        rules_json={"r": 1},
     )
 
     sync = await service.sync_policy_bundle(session, "sync-peer", bundle.id)
@@ -277,7 +295,11 @@ async def test_resolve_policy_conflict(session: AsyncSession):
 
     registry = PolicyRegistryService()
     bundle = await registry.create_policy_bundle(
-        db=session, bundle_name="Conflict", bundle_version="1.0", bundle_type="routing", rules_json={"r": 1}
+        db=session,
+        bundle_name="Conflict",
+        bundle_version="1.0",
+        bundle_type="routing",
+        rules_json={"r": 1},
     )
 
     sync = await service.sync_policy_bundle(session, "conflict-peer", bundle.id)

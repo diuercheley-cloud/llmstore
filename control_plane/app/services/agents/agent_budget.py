@@ -1,7 +1,7 @@
 # Owner: agent-platform
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any
 
 import yaml
 from app.core.config import get_settings
@@ -9,8 +9,9 @@ from app.models.agents.agents import AgentDefinition, AgentRun
 
 logger = logging.getLogger(__name__)
 
+
 class AgentBudgetService:
-    _config: Optional[Dict[str, Any]] = None
+    _config: dict[str, Any] | None = None
 
     def __init__(self):
         self.settings = get_settings()
@@ -20,19 +21,21 @@ class AgentBudgetService:
     def _load_config(self):
         config_path = os.path.join("config", "agent-slo-classes.yaml")
         if os.path.exists(config_path):
-            with open(config_path, "r") as f:
+            with open(config_path) as f:
                 AgentBudgetService._config = yaml.safe_load(f)
         else:
             logger.warning(f"Budget config not found at {config_path}, using empty defaults")
             AgentBudgetService._config = {"classes": {}}
 
-    def get_class_config(self, agent_class: Optional[str]) -> Dict[str, Any]:
+    def get_class_config(self, agent_class: str | None) -> dict[str, Any]:
         classes = AgentBudgetService._config.get("classes", {})
         if not agent_class or agent_class not in classes:
             return classes.get("default", {})
         return classes[agent_class]
 
-    async def validate_run_budget(self, agent_def: AgentDefinition, run: AgentRun) -> tuple[bool, Optional[str]]:
+    async def validate_run_budget(
+        self, agent_def: AgentDefinition, run: AgentRun
+    ) -> tuple[bool, str | None]:
         """
         Validates if the current run is within the budgets defined for its class.
         Returns (is_valid, reason).
@@ -58,25 +61,25 @@ class AgentBudgetService:
 
         # 4. Tool Calls Budget
         max_tools = cls_cfg.get("max_tool_calls")
-        if max_tools and (getattr(run, 'tool_calls_count', 0) or 0) > max_tools:
+        if max_tools and (getattr(run, "tool_calls_count", 0) or 0) > max_tools:
             return False, f"Tool calls budget exceeded: {run.tool_calls_count} > {max_tools}"
 
         # 5. Memory Reads Budget
         max_mem = cls_cfg.get("max_memory_reads")
-        if max_mem and (getattr(run, 'memory_reads_count', 0) or 0) > max_mem:
+        if max_mem and (getattr(run, "memory_reads_count", 0) or 0) > max_mem:
             return False, f"Memory reads budget exceeded: {run.memory_reads_count} > {max_mem}"
 
         # 6. Replans Budget
         max_replans = cls_cfg.get("max_replans")
-        if max_replans and (getattr(run, 'replans_count', 0) or 0) > max_replans:
+        if max_replans and (getattr(run, "replans_count", 0) or 0) > max_replans:
             return False, f"Replans budget exceeded: {run.replans_count} > {max_replans}"
 
         # 7. Approval Wait Time Budget
         max_wait = cls_cfg.get("max_approval_wait_seconds")
-        if max_wait and (getattr(run, 'approval_wait_seconds', 0) or 0) > max_wait:
+        if max_wait and (getattr(run, "approval_wait_seconds", 0) or 0) > max_wait:
             return False, f"Approval wait time exceeded: {run.approval_wait_seconds} > {max_wait}s"
 
         return True, None
 
-    def get_operational_limits(self, agent_class: Optional[str]) -> Dict[str, Any]:
+    def get_operational_limits(self, agent_class: str | None) -> dict[str, Any]:
         return self.get_class_config(agent_class)

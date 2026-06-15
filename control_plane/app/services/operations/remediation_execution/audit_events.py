@@ -1,7 +1,7 @@
 import hashlib
 import json
 import uuid
-from typing import Any, Dict
+from typing import Any
 
 from app.core.time import utc_now
 from app.models.core.admin_action_log import AdminActionLog
@@ -12,8 +12,8 @@ async def log_remediation_execution_audit_event(
     session: AsyncSession,
     action: str,
     client_id: uuid.UUID,
-    payload: Dict[str, Any],
-    status: str = "success"
+    payload: dict[str, Any],
+    status: str = "success",
 ):
     """
     Logs a remediation execution audit event to the AdminActionLog.
@@ -21,7 +21,7 @@ async def log_remediation_execution_audit_event(
     """
     sanitized_payload = {k: v for k, v in payload.items() if not k.startswith("_")}
     sanitized_payload["client_id"] = str(client_id)
-    
+
     signature_material = json.dumps(
         {"action": action, "client_id": str(client_id), "payload": sanitized_payload},
         sort_keys=True,
@@ -29,7 +29,9 @@ async def log_remediation_execution_audit_event(
         ensure_ascii=True,
         default=str,
     )
-    sanitized_payload["signature"] = hashlib.sha256(signature_material.encode("utf-8")).hexdigest()[:16]
+    sanitized_payload["signature"] = hashlib.sha256(signature_material.encode("utf-8")).hexdigest()[
+        :16
+    ]
 
     audit_entry = AdminActionLog(
         action=f"ops_remediation_exec:{action}",
@@ -38,54 +40,101 @@ async def log_remediation_execution_audit_event(
         request_method="SYSTEM",
         payload_json=sanitized_payload,
         status=status,
-        created_at=utc_now()
+        created_at=utc_now(),
     )
-    
+
     session.add(audit_entry)
     return audit_entry
 
-async def log_remediation_execution_prepared(session: AsyncSession, client_id: uuid.UUID, execution_id: uuid.UUID, plan_id: uuid.UUID):
+
+async def log_remediation_execution_prepared(
+    session: AsyncSession, client_id: uuid.UUID, execution_id: uuid.UUID, plan_id: uuid.UUID
+):
     return await log_remediation_execution_audit_event(
-        session, "remediation_requested", client_id, {"execution_id": str(execution_id), "plan_id": str(plan_id)}
+        session,
+        "remediation_requested",
+        client_id,
+        {"execution_id": str(execution_id), "plan_id": str(plan_id)},
     )
 
-async def log_remediation_approved(session: AsyncSession, client_id: uuid.UUID, execution_id: uuid.UUID, approved_by: str):
+
+async def log_remediation_approved(
+    session: AsyncSession, client_id: uuid.UUID, execution_id: uuid.UUID, approved_by: str
+):
     return await log_remediation_execution_audit_event(
-        session, "remediation_approved", client_id, {"execution_id": str(execution_id), "approved_by": approved_by}
+        session,
+        "remediation_approved",
+        client_id,
+        {"execution_id": str(execution_id), "approved_by": approved_by},
     )
 
-async def log_remediation_execution_started(session: AsyncSession, client_id: uuid.UUID, execution_id: uuid.UUID):
+
+async def log_remediation_execution_started(
+    session: AsyncSession, client_id: uuid.UUID, execution_id: uuid.UUID
+):
     return await log_remediation_execution_audit_event(
         session, "remediation_started", client_id, {"execution_id": str(execution_id)}
     )
 
 
-async def log_remediation_execution_step_executed(session: AsyncSession, client_id: uuid.UUID, step_id: uuid.UUID, status: str):
+async def log_remediation_execution_step_executed(
+    session: AsyncSession, client_id: uuid.UUID, step_id: uuid.UUID, status: str
+):
     return await log_remediation_execution_audit_event(
-        session, "remediation_step_completed", client_id, {"step_id": str(step_id), "status": status}
+        session,
+        "remediation_step_completed",
+        client_id,
+        {"step_id": str(step_id), "status": status},
     )
 
-async def log_remediation_execution_step_simulated(session: AsyncSession, client_id: uuid.UUID, step_id: uuid.UUID, status: str):
+
+async def log_remediation_execution_step_simulated(
+    session: AsyncSession, client_id: uuid.UUID, step_id: uuid.UUID, status: str
+):
     return await log_remediation_execution_audit_event(
-        session, "remediation_step_simulated", client_id, {"step_id": str(step_id), "status": status}
+        session,
+        "remediation_step_simulated",
+        client_id,
+        {"step_id": str(step_id), "status": status},
     )
 
-async def log_remediation_execution_completed(session: AsyncSession, client_id: uuid.UUID, execution_id: uuid.UUID):
+
+async def log_remediation_execution_completed(
+    session: AsyncSession, client_id: uuid.UUID, execution_id: uuid.UUID
+):
     return await log_remediation_execution_audit_event(
         session, "remediation_completed", client_id, {"execution_id": str(execution_id)}
     )
 
-async def log_remediation_failed(session: AsyncSession, client_id: uuid.UUID, execution_id: uuid.UUID, error_code: str):
+
+async def log_remediation_failed(
+    session: AsyncSession, client_id: uuid.UUID, execution_id: uuid.UUID, error_code: str
+):
     return await log_remediation_execution_audit_event(
-        session, "remediation_failed", client_id, {"execution_id": str(execution_id), "error_code": error_code}
+        session,
+        "remediation_failed",
+        client_id,
+        {"execution_id": str(execution_id), "error_code": error_code},
     )
 
-async def log_remediation_execution_killed(session: AsyncSession, client_id: uuid.UUID, execution_id: uuid.UUID, reason: str):
+
+async def log_remediation_execution_killed(
+    session: AsyncSession, client_id: uuid.UUID, execution_id: uuid.UUID, reason: str
+):
     return await log_remediation_execution_audit_event(
-        session, "remediation_execution_killed", client_id, {"execution_id": str(execution_id), "reason": reason}
+        session,
+        "remediation_execution_killed",
+        client_id,
+        {"execution_id": str(execution_id), "reason": reason},
     )
 
-async def log_remediation_kill_switch_updated(session: AsyncSession, client_id: uuid.UUID, enabled: bool, reason: str):
+
+async def log_remediation_kill_switch_updated(
+    session: AsyncSession, client_id: uuid.UUID, enabled: bool, reason: str
+):
     return await log_remediation_execution_audit_event(
-        session, "remediation_kill_switch_updated", client_id, {"enabled": enabled, "reason": reason}
+        session,
+        "remediation_kill_switch_updated",
+        client_id,
+        {"enabled": enabled, "reason": reason},
     )

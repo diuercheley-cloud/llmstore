@@ -6,7 +6,6 @@ FAQ_DOC = ROOT / "docs/CLIENT_DEMO_FAQ.md"
 
 
 class TestClientDemoObjectionsStructure:
-
     def test_objections_doc_exists(self):
         assert OBJECTIONS_DOC.exists(), "docs/CLIENT_DEMO_OBJECTIONS.md não encontrado"
 
@@ -24,26 +23,29 @@ class TestClientDemoObjectionsStructure:
         content = OBJECTIONS_DOC.read_text()
         sections = content.split("## Objeção")
         for section in sections[1:]:  # Skip header
-            assert "**Resposta:**" in section or "**Resposta**" in section or "Resposta:" in section, \
-                f"Objeção sem resposta encontrada: {section[:100]}"
+            assert (
+                "**Resposta:**" in section or "**Resposta**" in section or "Resposta:" in section
+            ), f"Objeção sem resposta encontrada: {section[:100]}"
 
 
 class TestClientDemoObjectionsContent:
-
     def test_objection_openai_direct(self):
         content = OBJECTIONS_DOC.read_text()
-        assert "OpenAI direto" in content or "OpenAI" in content, \
+        assert "OpenAI direto" in content or "OpenAI" in content, (
             "Objeção 'Por que não usar OpenAI direto?' não encontrada"
+        )
 
     def test_objection_model_quality(self):
         content = OBJECTIONS_DOC.read_text()
-        assert "modelo local for pior" in content or "pior que" in content, \
+        assert "modelo local for pior" in content or "pior que" in content, (
             "Objeção 'modelo local pior' não encontrada"
+        )
 
     def test_objection_security(self):
         content = OBJECTIONS_DOC.read_text()
-        assert "Isso é seguro" in content or "segurança" in content.lower(), \
+        assert "Isso é seguro" in content or "segurança" in content.lower(), (
             "Objeção de segurança não encontrada"
+        )
 
     def test_objection_support(self):
         content = OBJECTIONS_DOC.read_text()
@@ -51,13 +53,15 @@ class TestClientDemoObjectionsContent:
 
     def test_objection_cost(self):
         content = OBJECTIONS_DOC.read_text()
-        assert "Quanto custa" in content or "custo" in content.lower(), \
+        assert "Quanto custa" in content or "custo" in content.lower(), (
             "Objeção de custo não encontrada"
+        )
 
     def test_objection_integration(self):
         content = OBJECTIONS_DOC.read_text()
-        assert "integrar com sistemas internos" in content or "integração" in content.lower(), \
+        assert "integrar com sistemas internos" in content or "integração" in content.lower(), (
             "Objeção de integração não encontrada"
+        )
 
     def test_objection_lgpd(self):
         content = OBJECTIONS_DOC.read_text()
@@ -65,40 +69,46 @@ class TestClientDemoObjectionsContent:
 
     def test_objection_gpu_failure(self):
         content = OBJECTIONS_DOC.read_text()
-        assert "GPU falhar" in content or "GPU" in content or "falha" in content.lower(), \
+        assert "GPU falhar" in content or "GPU" in content or "falha" in content.lower(), (
             "Objeção de falha de GPU não encontrada"
+        )
 
     def test_objection_scalability(self):
         content = OBJECTIONS_DOC.read_text()
-        assert "Como escalar" in content or "escalar" in content.lower() or "escala" in content.lower(), \
-            "Objeção de escalabilidade não encontrada"
+        assert (
+            "Como escalar" in content or "escalar" in content.lower() or "escala" in content.lower()
+        ), "Objeção de escalabilidade não encontrada"
 
 
 class TestClientDemoObjectionsDisclaimers:
-
     def test_disclaims_psp_pix(self):
         content = OBJECTIONS_DOC.read_text().lower()
         mentions_psp = "psp" in content
         mentions_pix = "pix" in content
         if mentions_psp or mentions_pix:
-            assert any(phrase in content for phrase in [
-                "sem psp",
-                "psp real",
-                "fora do escopo",
-                "billing manual",
-                "faturamento manual",
-            ]), "Objeções mencionam PSP/PIX sem disclaimer"
+            assert any(
+                phrase in content
+                for phrase in [
+                    "sem psp",
+                    "psp real",
+                    "fora do escopo",
+                    "billing manual",
+                    "faturamento manual",
+                ]
+            ), "Objeções mencionam PSP/PIX sem disclaimer"
 
     def test_disclaims_cloud_managed(self):
         content = OBJECTIONS_DOC.read_text()
         # Should mention it's NOT cloud managed
-        assert "cloud gerenciada" in content.lower() or \
-               any(phrase in content.lower() for phrase in [
-                   "não oferecemos cloud",
-                   "on-premise",
-                   "appliance local",
-                   "100% local",
-               ]), "Objeções não deixam claro que não é cloud gerenciada"
+        assert "cloud gerenciada" in content.lower() or any(
+            phrase in content.lower()
+            for phrase in [
+                "não oferecemos cloud",
+                "on-premise",
+                "appliance local",
+                "100% local",
+            ]
+        ), "Objeções não deixam claro que não é cloud gerenciada"
 
     def test_disclaims_security_absolute(self):
         content = OBJECTIONS_DOC.read_text().lower()
@@ -107,21 +117,22 @@ class TestClientDemoObjectionsDisclaimers:
             # Must negate it
             context_before = content.split("garantimos segurança absoluta")[0]
             last_sentence = context_before.split(".")[-1]
-            assert "não" in last_sentence, \
-                "Documento parece prometer segurança absoluta sem negar"
+            assert "não" in last_sentence, "Documento parece prometer segurança absoluta sem negar"
 
     def test_disclaims_legal_substitution(self):
         content = OBJECTIONS_DOC.read_text().lower()
-        assert any(phrase in content for phrase in [
-            "não substitui análise jurídica",
-            "não substitui análise de compliance",
-            "consulte seu departamento jurídico",
-            "não substituímos",
-        ]), "Objeções não deixam claro que não substituem análise jurídica"
+        assert any(
+            phrase in content
+            for phrase in [
+                "não substitui análise jurídica",
+                "não substitui análise de compliance",
+                "consulte seu departamento jurídico",
+                "não substituímos",
+            ]
+        ), "Objeções não deixam claro que não substituem análise jurídica"
 
 
 class TestClientDemoFAQ:
-
     def test_faq_doc_exists(self):
         assert FAQ_DOC.exists(), "docs/CLIENT_DEMO_FAQ.md não encontrado"
 

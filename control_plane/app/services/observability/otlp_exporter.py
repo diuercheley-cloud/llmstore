@@ -8,6 +8,7 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 logger = logging.getLogger(__name__)
 
+
 class OTLPExporter:
     def setup(self, provider):
         settings = get_settings()

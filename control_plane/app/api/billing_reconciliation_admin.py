@@ -1,16 +1,17 @@
 # Owner: platform-ops
 import uuid
 from decimal import Decimal
-from typing import Optional
 
-from app.services.runtime_dependencies import get_db_session
 from app.models.commercial.commercial_billing_dispute import CommercialBillingDispute
-from app.models.commercial.commercial_financial_reconciliation import CommercialFinancialReconciliation
+from app.models.commercial.commercial_financial_reconciliation import (
+    CommercialFinancialReconciliation,
+)
 from app.services.auth import require_admin
 from app.services.billing.dispute_management import DisputeManagementService
 from app.services.billing.financial_audit_trail import FinancialAuditTrailService
 from app.services.billing.financial_reconciliation import FinancialReconciliationService
 from app.services.compliance.financial_controls import evaluate_control_policy
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import desc, select
@@ -46,6 +47,7 @@ class ManualCreditRequest(BaseModel):
 
 # --- Reconciliation Endpoints ---
 
+
 @router.get("/reconciliation/overview")
 async def get_reconciliation_overview(db: AsyncSession = Depends(get_db_session)):
     return await FinancialReconciliationService.summarize_reconciliation(db)
@@ -53,52 +55,53 @@ async def get_reconciliation_overview(db: AsyncSession = Depends(get_db_session)
 
 @router.post("/reconciliation/run")
 async def run_reconciliation(
-    request: ReconciliationRunRequest,
-    db: AsyncSession = Depends(get_db_session)
+    request: ReconciliationRunRequest, db: AsyncSession = Depends(get_db_session)
 ):
-    return await FinancialReconciliationService.detect_financial_discrepancies(db, hours=request.hours)
+    return await FinancialReconciliationService.detect_financial_discrepancies(
+        db, hours=request.hours
+    )
 
 
 @router.get("/reconciliation/mismatches")
 async def get_reconciliation_mismatches(
-    status: Optional[str] = "mismatch",
-    limit: int = 100,
-    db: AsyncSession = Depends(get_db_session)
+    status: str | None = "mismatch", limit: int = 100, db: AsyncSession = Depends(get_db_session)
 ):
-    stmt = select(CommercialFinancialReconciliation).where(
-        CommercialFinancialReconciliation.status == status
-    ).order_by(desc(CommercialFinancialReconciliation.created_at)).limit(limit)
-    
+    stmt = (
+        select(CommercialFinancialReconciliation)
+        .where(CommercialFinancialReconciliation.status == status)
+        .order_by(desc(CommercialFinancialReconciliation.created_at))
+        .limit(limit)
+    )
+
     result = await db.execute(stmt)
     return result.scalars().all()
 
 
 # --- Dispute Endpoints ---
 
+
 @router.get("/disputes")
 async def get_disputes(
-    status: Optional[str] = None,
-    client_id: Optional[uuid.UUID] = None,
+    status: str | None = None,
+    client_id: uuid.UUID | None = None,
     limit: int = 100,
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
 ):
     stmt = select(CommercialBillingDispute)
     if status:
         stmt = stmt.where(CommercialBillingDispute.status == status)
     if client_id:
         stmt = stmt.where(CommercialBillingDispute.client_id == client_id)
-        
+
     stmt = stmt.order_by(desc(CommercialBillingDispute.created_at)).limit(limit)
-    
+
     result = await db.execute(stmt)
     return result.scalars().all()
 
 
 @router.post("/disputes/{id}/review")
 async def review_dispute(
-    id: uuid.UUID,
-    request: DisputeReviewRequest,
-    db: AsyncSession = Depends(get_db_session)
+    id: uuid.UUID, request: DisputeReviewRequest, db: AsyncSession = Depends(get_db_session)
 ):
     success = await DisputeManagementService.review_dispute(db, id, request.admin_notes)
     if not success:
@@ -108,9 +111,7 @@ async def review_dispute(
 
 @router.post("/disputes/{id}/resolve")
 async def resolve_dispute(
-    id: uuid.UUID,
-    request: DisputeResolutionRequest,
-    db: AsyncSession = Depends(get_db_session)
+    id: uuid.UUID, request: DisputeResolutionRequest, db: AsyncSession = Depends(get_db_session)
 ):
     dispute = await db.get(CommercialBillingDispute, id)
     if dispute is None:
@@ -125,14 +126,22 @@ async def resolve_dispute(
             actor=request.admin_id,
             package_type="dispute_resolution",
             summary=f"Dispute credit resolution for {id}",
-            before_state={"status": dispute.status, "credit_transaction_id": str(dispute.credit_transaction_id) if dispute.credit_transaction_id else None},
+            before_state={
+                "status": dispute.status,
+                "credit_transaction_id": str(dispute.credit_transaction_id)
+                if dispute.credit_transaction_id
+                else None,
+            },
             after_state={"status": "credited", "credit_amount_brl": str(request.credit_amount_brl)},
             payload=request.model_dump(mode="json"),
             related_ids={"dispute_id": str(id), "client_id": str(dispute.client_id)},
         )
         if decision.should_block and decision.approval_chain is not None:
             await db.commit()
-            return {"status": "pending_approval", "approval_chain_id": str(decision.approval_chain.id)}
+            return {
+                "status": "pending_approval",
+                "approval_chain_id": str(decision.approval_chain.id),
+            }
     success = await DisputeManagementService.resolve_dispute(
         db, id, request.resolution_notes, request.credit_amount_brl
     )
@@ -144,8 +153,8 @@ async def resolve_dispute(
 @router.post("/disputes/{id}/reject")
 async def reject_dispute(
     id: uuid.UUID,
-    request: DisputeResolutionRequest, # Reuse schema
-    db: AsyncSession = Depends(get_db_session)
+    request: DisputeResolutionRequest,  # Reuse schema
+    db: AsyncSession = Depends(get_db_session),
 ):
     success = await DisputeManagementService.reject_dispute(db, id, request.resolution_notes)
     if not success:
@@ -155,8 +164,7 @@ async def reject_dispute(
 
 @router.post("/disputes/manual-credit")
 async def create_manual_credit(
-    request: ManualCreditRequest,
-    db: AsyncSession = Depends(get_db_session)
+    request: ManualCreditRequest, db: AsyncSession = Depends(get_db_session)
 ):
     try:
         decision = await evaluate_control_policy(
@@ -175,7 +183,10 @@ async def create_manual_credit(
         )
         if decision.should_block and decision.approval_chain is not None:
             await db.commit()
-            return {"status": "pending_approval", "approval_chain_id": str(decision.approval_chain.id)}
+            return {
+                "status": "pending_approval",
+                "approval_chain_id": str(decision.approval_chain.id),
+            }
         tx = await DisputeManagementService.create_manual_credit(
             db, request.client_id, request.amount_brl, request.reason, request.admin_id
         )
@@ -210,18 +221,24 @@ async def resolve_reconciliation(
         before_state={"status": recon.status, "notes": recon.notes},
         after_state={"status": "resolved", "notes": request.notes},
         payload=request.model_dump(mode="json"),
-        related_ids={"reconciliation_id": str(id), "client_id": str(recon.client_id) if recon.client_id else None},
+        related_ids={
+            "reconciliation_id": str(id),
+            "client_id": str(recon.client_id) if recon.client_id else None,
+        },
     )
     if decision.should_block and decision.approval_chain is not None:
         await db.commit()
         return {"status": "pending_approval", "approval_chain_id": str(decision.approval_chain.id)}
-    success = await FinancialReconciliationService.mark_reconciliation_resolved(db, id, request.notes)
+    success = await FinancialReconciliationService.mark_reconciliation_resolved(
+        db, id, request.notes
+    )
     if not success:
         raise HTTPException(status_code=400, detail="Could not resolve reconciliation")
     return {"status": "success"}
 
 
 # --- Audit Endpoints ---
+
 
 @router.get("/audit/validate-chain")
 async def validate_audit_chain(db: AsyncSession = Depends(get_db_session)):

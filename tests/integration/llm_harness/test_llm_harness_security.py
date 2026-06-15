@@ -8,6 +8,7 @@ def test_security_sanitization():
     assert "<script>" not in safe
     assert "[RESET CONTEXT]" not in safe
 
+
 def test_policy_command_validation():
     policy = PolicyEngine(config={"allowed_tools": ["ls", "cat"]})
     assert policy.evaluate_shell_command("ls -la").allowed is True

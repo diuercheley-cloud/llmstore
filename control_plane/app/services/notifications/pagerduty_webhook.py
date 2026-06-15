@@ -2,7 +2,7 @@ import json
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import httpx
 from app.core.config import get_settings
@@ -24,14 +24,14 @@ class PagerDutyEvent:
     source: str = "llm-inference-stack"
     severity: str = "warning"
     event_action: str = "trigger"
-    dedup_key: Optional[str] = None
-    component: Optional[str] = None
-    group: Optional[str] = None
-    cls: Optional[str] = None
-    custom_details: Dict[str, Any] = field(default_factory=dict)
-    links: List[Dict[str, str]] = field(default_factory=list)
+    dedup_key: str | None = None
+    component: str | None = None
+    group: str | None = None
+    cls: str | None = None
+    custom_details: dict[str, Any] = field(default_factory=dict)
+    links: list[dict[str, str]] = field(default_factory=list)
 
-    def to_payload(self) -> Dict:
+    def to_payload(self) -> dict:
         payload = {
             "routing_key": "",
             "event_action": self.event_action,
@@ -57,16 +57,16 @@ class PagerDutyEvent:
 @dataclass
 class OpsGenieEvent:
     message: str
-    alias: Optional[str] = None
-    description: Optional[str] = None
-    responders: List[Dict[str, str]] = field(default_factory=list)
+    alias: str | None = None
+    description: str | None = None
+    responders: list[dict[str, str]] = field(default_factory=list)
     priority: str = "P3"
     source: str = "llm-inference-stack"
-    tags: List[str] = field(default_factory=list)
-    details: Dict[str, Any] = field(default_factory=dict)
-    entity: Optional[str] = None
+    tags: list[str] = field(default_factory=list)
+    details: dict[str, Any] = field(default_factory=dict)
+    entity: str | None = None
 
-    def to_payload(self) -> Dict:
+    def to_payload(self) -> dict:
         return {
             "message": self.message,
             "alias": self.alias,
@@ -134,7 +134,7 @@ class AlertWebhookService:
             results["pagerduty"] = await self._send_pagerduty(ack_event)
         return results
 
-    async def _send_pagerduty(self, event: PagerDutyEvent) -> Dict:
+    async def _send_pagerduty(self, event: PagerDutyEvent) -> dict:
         payload = event.to_payload()
         payload["routing_key"] = self.pd_routing_key
         try:
@@ -153,7 +153,7 @@ class AlertWebhookService:
             logger.error(f"PagerDuty request failed: {e}")
             return {"error": str(e)}
 
-    async def _send_opsgenie(self, event: OpsGenieEvent) -> Dict:
+    async def _send_opsgenie(self, event: OpsGenieEvent) -> dict:
         payload = event.to_payload()
         try:
             resp = await self._http.post(

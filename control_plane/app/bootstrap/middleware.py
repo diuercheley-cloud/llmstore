@@ -1,6 +1,7 @@
+from app.middleware import deprecation_middleware, request_context_middleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.middleware import deprecation_middleware, request_context_middleware
+
 
 def configure_middleware(app: FastAPI, settings) -> None:
     app.middleware("http")(request_context_middleware)

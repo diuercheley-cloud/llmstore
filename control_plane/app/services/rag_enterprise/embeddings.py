@@ -1,7 +1,6 @@
 import asyncio
 import hashlib
 import logging
-from typing import List
 
 from app.core.config import get_settings
 from app.services.rag_enterprise.schemas import EmbeddingRecord
@@ -9,10 +8,10 @@ from app.services.rag_enterprise.schemas import EmbeddingRecord
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-_embedding_records: List[EmbeddingRecord] = []
+_embedding_records: list[EmbeddingRecord] = []
 
 
-def _get_mock_embedding(text: str, dimensions: int = 384) -> List[float]:
+def _get_mock_embedding(text: str, dimensions: int = 384) -> list[float]:
     h = hashlib.sha256(text.encode("utf-8")).digest()
     vals = [(h[i % len(h)] / 255.0) * 2 - 1 for i in range(dimensions)]
     norm = sum(v * v for v in vals) ** 0.5
@@ -27,10 +26,10 @@ class EnterpriseEmbeddingService:
         self.model_name = settings.rag_embedding_model
         self._model = None
         self._lock = asyncio.Lock()
-        self._records: List[EmbeddingRecord] = []
+        self._records: list[EmbeddingRecord] = []
 
     @property
-    def records(self) -> List[EmbeddingRecord]:
+    def records(self) -> list[EmbeddingRecord]:
         return list(self._records)
 
     async def _get_model(self):
@@ -44,9 +43,12 @@ class EnterpriseEmbeddingService:
             if self.provider == "local":
                 try:
                     from sentence_transformers import SentenceTransformer
+
                     logger.info(f"Lazy loading embedding model: {self.model_name}")
                     loop = asyncio.get_event_loop()
-                    self._model = await loop.run_in_executor(None, SentenceTransformer, self.model_name)
+                    self._model = await loop.run_in_executor(
+                        None, SentenceTransformer, self.model_name
+                    )
                     logger.info(f"Embedding model {self.model_name} loaded successfully")
                 except Exception as e:
                     logger.warning(f"Failed to load embedding model {self.model_name}: {e}")
@@ -58,7 +60,7 @@ class EnterpriseEmbeddingService:
                 return None
         return self._model
 
-    async def embed_text(self, text: str, cloud_allowed: bool = False) -> List[float]:
+    async def embed_text(self, text: str, cloud_allowed: bool = False) -> list[float]:
         if not cloud_allowed:
             return _get_mock_embedding(text)
 
@@ -74,7 +76,7 @@ class EnterpriseEmbeddingService:
         self._record_embedding(self.provider, self.model_name, 0.0, len(emb))
         return emb
 
-    async def embed_batch(self, texts: List[str], cloud_allowed: bool = False) -> List[List[float]]:
+    async def embed_batch(self, texts: list[str], cloud_allowed: bool = False) -> list[list[float]]:
         if not texts:
             return []
 
@@ -100,7 +102,7 @@ class EnterpriseEmbeddingService:
         rec = EmbeddingRecord(provider=provider, model=model, cost=cost, dimensions=dimensions)
         self._records.append(rec)
 
-    def get_records(self) -> List[EmbeddingRecord]:
+    def get_records(self) -> list[EmbeddingRecord]:
         return self._records
 
     def clear_records(self):

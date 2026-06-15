@@ -179,9 +179,10 @@ html_template = """
 </html>
 """
 
+
 @router.get("/developer-docs", response_class=HTMLResponse, include_in_schema=False)
 async def get_developer_docs():
     # Replace placeholder with markdown (escaping backticks and newlines properly for JS template literal)
-    safe_markdown = docs_markdown.replace('`', '\\`').replace('$', '\\$')
-    html_content = html_template.replace('{{ DOCS_MARKDOWN }}', safe_markdown)
+    safe_markdown = docs_markdown.replace("`", "\\`").replace("$", "\\$")
+    html_content = html_template.replace("{{ DOCS_MARKDOWN }}", safe_markdown)
     return html_content

@@ -1,0 +1,1 @@
+validators/validate-commercial-demo-e2e-local.sh

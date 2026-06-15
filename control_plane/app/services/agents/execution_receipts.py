@@ -9,7 +9,9 @@ from app.utils.crypto_signer import sign_payload
 
 
 def canonical_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+    )
 
 
 def sha256_hex(value: str | bytes) -> str:
@@ -27,7 +29,10 @@ def redact_confidential_payload(payload: Any, *, mode: str = "redacted") -> Any:
         redacted: dict[str, Any] = {}
         for key, value in payload.items():
             key_lower = str(key).lower()
-            if any(token in key_lower for token in ("secret", "token", "password", "credential", "payload", "content")):
+            if any(
+                token in key_lower
+                for token in ("secret", "token", "password", "credential", "payload", "content")
+            ):
                 redacted[key] = "<redacted>"
             else:
                 redacted[key] = redact_confidential_payload(value, mode=mode)

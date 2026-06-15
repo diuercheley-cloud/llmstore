@@ -8,7 +8,10 @@ from app.models.commercial.commercial_federated_workflows import (
     CommercialWorkflowExecutionPeer,
 )
 from app.models.commercial.commercial_sovereign_governance import CommercialOfflineRevocationList
-from app.models.commercial.commercial_workflows import CommercialWorkflowExecution, CommercialWorkflowStage
+from app.models.commercial.commercial_workflows import (
+    CommercialWorkflowExecution,
+    CommercialWorkflowStage,
+)
 from app.services.governance.policy_registry import PolicyRegistryService
 from app.services.routing.commercial_report_export import sanitize_report_payload
 from app.services.workflows.workflow_policy_enforcement import WorkflowPolicyEnforcementService
@@ -42,7 +45,9 @@ class FederatedWorkflowExecutionService:
             raise ValueError("workflow_execution_not_found")
         return execution
 
-    async def _get_federated_execution(self, db: AsyncSession, federated_execution_id) -> CommercialFederatedWorkflowExecution:
+    async def _get_federated_execution(
+        self, db: AsyncSession, federated_execution_id
+    ) -> CommercialFederatedWorkflowExecution:
         row = await db.get(CommercialFederatedWorkflowExecution, federated_execution_id)
         if row is None:
             raise ValueError("federated_workflow_execution_not_found")
@@ -50,12 +55,19 @@ class FederatedWorkflowExecutionService:
 
     async def _load_stages(self, db: AsyncSession, execution_id) -> list[CommercialWorkflowStage]:
         return (
-            await db.execute(
-                select(CommercialWorkflowStage)
-                .where(CommercialWorkflowStage.execution_id == execution_id)
-                .order_by(CommercialWorkflowStage.stage_order.asc(), CommercialWorkflowStage.created_at.asc())
+            (
+                await db.execute(
+                    select(CommercialWorkflowStage)
+                    .where(CommercialWorkflowStage.execution_id == execution_id)
+                    .order_by(
+                        CommercialWorkflowStage.stage_order.asc(),
+                        CommercialWorkflowStage.created_at.asc(),
+                    )
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
     async def _latest_federated_execution(
         self,
@@ -73,28 +85,41 @@ class FederatedWorkflowExecutionService:
                     CommercialFederatedWorkflowExecution.tenant_id == tenant_id,
                     CommercialFederatedWorkflowExecution.cluster_id == cluster_id,
                 )
-                .order_by(desc(CommercialFederatedWorkflowExecution.created_at), desc(CommercialFederatedWorkflowExecution.id))
+                .order_by(
+                    desc(CommercialFederatedWorkflowExecution.created_at),
+                    desc(CommercialFederatedWorkflowExecution.id),
+                )
                 .limit(1)
             )
         ).scalar_one_or_none()
 
     async def _is_peer_revoked(self, db: AsyncSession, peer_cluster_id: str) -> bool:
         crls = (
-            await db.execute(
-                select(CommercialOfflineRevocationList).order_by(CommercialOfflineRevocationList.created_at.desc())
+            (
+                await db.execute(
+                    select(CommercialOfflineRevocationList).order_by(
+                        CommercialOfflineRevocationList.created_at.desc()
+                    )
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return any(peer_cluster_id in (crl.revoked_peer_ids_json or []) for crl in crls)
 
     def _workflow_id(self, execution: CommercialWorkflowExecution) -> str:
         return execution.session_id or str(execution.id)
 
-    def _deterministic_clock(self, execution: CommercialWorkflowExecution, stages: list[CommercialWorkflowStage]) -> str:
+    def _deterministic_clock(
+        self, execution: CommercialWorkflowExecution, stages: list[CommercialWorkflowStage]
+    ) -> str:
         return sha256_hex(
             {
                 "execution_id": str(execution.id),
                 "started_at": execution.started_at.isoformat() if execution.started_at else None,
-                "completed_at": execution.completed_at.isoformat() if execution.completed_at else None,
+                "completed_at": execution.completed_at.isoformat()
+                if execution.completed_at
+                else None,
                 "steps": [
                     {
                         "stage_key": stage.stage_key,
@@ -115,7 +140,9 @@ class FederatedWorkflowExecutionService:
     ) -> tuple[str, list[dict[str, Any]]]:
         trail: list[dict[str, Any]] = []
         for stage in stages:
-            binding, snapshot = await self.policy_enforcement.ensure_stage_binding(db, execution=execution, stage=stage)
+            binding, snapshot = await self.policy_enforcement.ensure_stage_binding(
+                db, execution=execution, stage=stage
+            )
             trail.append(
                 sanitize_report_payload(
                     {
@@ -146,7 +173,8 @@ class FederatedWorkflowExecutionService:
         existing = (
             await db.execute(
                 select(CommercialWorkflowExecutionPeer).where(
-                    CommercialWorkflowExecutionPeer.federated_execution_id == federated_execution_id,
+                    CommercialWorkflowExecutionPeer.federated_execution_id
+                    == federated_execution_id,
                     CommercialWorkflowExecutionPeer.peer_cluster_id == peer_cluster_id,
                 )
             )
@@ -212,7 +240,12 @@ class FederatedWorkflowExecutionService:
             raise ValueError("cluster_ids_required")
         mapping: dict[str, str] = {}
         for stage in stages:
-            idx = int(sha256_hex({"workflow_id": self._workflow_id(execution), "stage_key": stage.stage_key})[:8], 16) % len(owners)
+            idx = int(
+                sha256_hex(
+                    {"workflow_id": self._workflow_id(execution), "stage_key": stage.stage_key}
+                )[:8],
+                16,
+            ) % len(owners)
             mapping[stage.stage_key] = owners[idx]
         return {
             "workflow_execution_id": str(execution.id),
@@ -241,12 +274,20 @@ class FederatedWorkflowExecutionService:
             raise ValueError("tenant_scope_violation")
         stages = await self._load_stages(db, execution.id)
         provenance = await self.provenance.build_execution_provenance(db, execution)
-        governance_hash, governance_trail = await self._governance_summary(db, execution=execution, stages=stages)
+        governance_hash, governance_trail = await self._governance_summary(
+            db, execution=execution, stages=stages
+        )
         if execution.provenance_hash is None:
             execution.provenance_hash = provenance["provenance_hash"]
-        receipt = await self.receipts.issue_execution_receipt(db, execution, provenance_summary=provenance)
-        cluster_ids = [cluster_id] + [item["cluster_id"] for item in (peer_clusters or []) if item.get("cluster_id")]
-        partition = await self.partition_dag(db, execution_id=execution.id, cluster_ids=cluster_ids or [cluster_id])
+        receipt = await self.receipts.issue_execution_receipt(
+            db, execution, provenance_summary=provenance
+        )
+        cluster_ids = [cluster_id] + [
+            item["cluster_id"] for item in (peer_clusters or []) if item.get("cluster_id")
+        ]
+        partition = await self.partition_dag(
+            db, execution_id=execution.id, cluster_ids=cluster_ids or [cluster_id]
+        )
         routing_hash = sha256_hex({"owners": partition["owners"], "mode": federation_mode})
         runtime_snapshot_hash = sha256_hex([stage.runtime_snapshot_hash for stage in stages])
         execution_hash = sha256_hex(
@@ -321,7 +362,11 @@ class FederatedWorkflowExecutionService:
             }
         )
         row.signed_execution_receipt = sign_federated_payload(
-            {"execution_hash": execution_hash, "receipt_hash": receipt.receipt_hash, "cluster_id": cluster_id},
+            {
+                "execution_hash": execution_hash,
+                "receipt_hash": receipt.receipt_hash,
+                "cluster_id": cluster_id,
+            },
             scope="federated_workflow_execution",
         )
         db.add(row)
@@ -349,11 +394,15 @@ class FederatedWorkflowExecutionService:
             raise ValueError("federation_forwarding_disabled")
         if row.tenant_id and target_cluster_id == row.cluster_id:
             selected = sorted(
-                key for key, owner in (row.stage_ownership_json or {}).items() if owner == target_cluster_id
+                key
+                for key, owner in (row.stage_ownership_json or {}).items()
+                if owner == target_cluster_id
             )
         else:
             selected = sorted(
-                key for key, owner in (row.stage_ownership_json or {}).items() if owner == target_cluster_id
+                key
+                for key, owner in (row.stage_ownership_json or {}).items()
+                if owner == target_cluster_id
             )
         return sanitize_report_payload(
             {
@@ -376,14 +425,22 @@ class FederatedWorkflowExecutionService:
             }
         )
 
-    async def list_peers(self, db: AsyncSession, *, tenant_id: str | None = None) -> list[CommercialWorkflowExecutionPeer]:
-        stmt = select(CommercialWorkflowExecutionPeer).order_by(desc(CommercialWorkflowExecutionPeer.updated_at))
+    async def list_peers(
+        self, db: AsyncSession, *, tenant_id: str | None = None
+    ) -> list[CommercialWorkflowExecutionPeer]:
+        stmt = select(CommercialWorkflowExecutionPeer).order_by(
+            desc(CommercialWorkflowExecutionPeer.updated_at)
+        )
         if tenant_id:
             stmt = stmt.where(CommercialWorkflowExecutionPeer.tenant_id == tenant_id)
         return (await db.execute(stmt)).scalars().all()
 
-    async def list_executions(self, db: AsyncSession, *, tenant_id: str | None = None) -> list[CommercialFederatedWorkflowExecution]:
-        stmt = select(CommercialFederatedWorkflowExecution).order_by(desc(CommercialFederatedWorkflowExecution.created_at))
+    async def list_executions(
+        self, db: AsyncSession, *, tenant_id: str | None = None
+    ) -> list[CommercialFederatedWorkflowExecution]:
+        stmt = select(CommercialFederatedWorkflowExecution).order_by(
+            desc(CommercialFederatedWorkflowExecution.created_at)
+        )
         if tenant_id:
             stmt = stmt.where(CommercialFederatedWorkflowExecution.tenant_id == tenant_id)
         return (await db.execute(stmt)).scalars().all()
@@ -410,7 +467,9 @@ class FederatedWorkflowExecutionService:
             ],
         }
 
-    async def drift_summary(self, db: AsyncSession, *, tenant_id: str | None = None) -> dict[str, Any]:
+    async def drift_summary(
+        self, db: AsyncSession, *, tenant_id: str | None = None
+    ) -> dict[str, Any]:
         rows = await self.list_executions(db, tenant_id=tenant_id)
         items = [
             {

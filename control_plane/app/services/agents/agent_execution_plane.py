@@ -2,9 +2,9 @@
 Owner: agent-platform
 Status: beta
 """
+
 import logging
 import uuid
-from typing import List
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -22,6 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class AgentExecutionPlane:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -32,7 +33,7 @@ class AgentExecutionPlane:
         if not self.settings.agent_execution_plane_enabled:
             raise RuntimeError("Agent Execution Plane is disabled.")
 
-    async def get_jobs(self, tenant_id: str | None = None) -> List[AgentExecutionJob]:
+    async def get_jobs(self, tenant_id: str | None = None) -> list[AgentExecutionJob]:
         self._verify_enabled()
         stmt = select(AgentExecutionJob)
         if tenant_id:
@@ -41,13 +42,15 @@ class AgentExecutionPlane:
         res = await self.db.execute(stmt)
         return list(res.scalars().all())
 
-    async def get_workers(self) -> List[AgentWorkerHeartbeat]:
+    async def get_workers(self) -> list[AgentWorkerHeartbeat]:
         self._verify_enabled()
         stmt = select(AgentWorkerHeartbeat).order_by(AgentWorkerHeartbeat.last_heartbeat.desc())
         res = await self.db.execute(stmt)
         return list(res.scalars().all())
 
-    async def get_dead_letters(self, tenant_id: str | None = None) -> List[AgentExecutionDeadLetter]:
+    async def get_dead_letters(
+        self, tenant_id: str | None = None
+    ) -> list[AgentExecutionDeadLetter]:
         self._verify_enabled()
         stmt = select(AgentExecutionDeadLetter)
         if tenant_id:
@@ -63,7 +66,7 @@ class AgentExecutionPlane:
         job = res.scalar_one_or_none()
         if not job:
             return False
-        
+
         # Tenant boundary check
         if tenant_id and job.tenant_id != tenant_id:
             raise PermissionError("Access denied to this job.")

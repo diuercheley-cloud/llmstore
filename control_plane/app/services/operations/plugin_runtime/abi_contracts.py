@@ -36,7 +36,9 @@ class PluginABIContractService:
             contract_status=logical_payload["contract_status"],
             deterministic_version=logical_payload["deterministic_version"],
             contract_hash=contract_hash,
-            immutable_hash=sha256_hex({"kind": "plugin_abi_contract_immutable", "contract_hash": contract_hash}),
+            immutable_hash=sha256_hex(
+                {"kind": "plugin_abi_contract_immutable", "contract_hash": contract_hash}
+            ),
         )
         contract._logical_payload = logical_payload
         return contract
@@ -46,7 +48,10 @@ class PluginABIContractService:
         valid_status = contract.contract_status in PLUGIN_CONTRACT_STATUSES
         load_blocked = contract.contract_status in {"blocked", "revoked"}
         return {
-            "valid": valid_scope and valid_status and bool(contract.abi_version) and bool(contract.schema_version),
+            "valid": valid_scope
+            and valid_status
+            and bool(contract.abi_version)
+            and bool(contract.schema_version),
             "load_blocked": load_blocked,
             "placeholder_certified_is_real": False,
             "reasons": [

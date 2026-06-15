@@ -1,6 +1,5 @@
 # Owner: Platform Operations
 import uuid
-from typing import List
 
 from app.api.deps import get_admin_token, get_db
 from app.core.config import get_settings
@@ -14,13 +13,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 def verify_optimization_enabled():
     settings = get_settings()
     if not settings.agent_auto_optimization_enabled:
-        raise HTTPException(status_code=403, detail="Agent Auto-Optimization is disabled by feature flag.")
+        raise HTTPException(
+            status_code=403, detail="Agent Auto-Optimization is disabled by feature flag."
+        )
+
 
 router = APIRouter(
     prefix="/admin/agents",
     tags=["agent-optimization-admin"],
-    dependencies=[Depends(verify_optimization_enabled)]
+    dependencies=[Depends(verify_optimization_enabled)],
 )
+
 
 # Schemas
 class ExperimentResponse(BaseModel):
@@ -30,6 +33,7 @@ class ExperimentResponse(BaseModel):
     status: str
     metrics_baseline: dict
     created_at: str
+
 
 class CandidateResponse(BaseModel):
     id: uuid.UUID
@@ -42,6 +46,7 @@ class CandidateResponse(BaseModel):
     safety_regression: bool
     created_at: str
 
+
 class OptimizationResultResponse(BaseModel):
     id: uuid.UUID
     candidate_id: uuid.UUID
@@ -49,13 +54,14 @@ class OptimizationResultResponse(BaseModel):
     metrics_delta: dict
     created_at: str
 
+
 # Endpoints
 @router.post("/{id}/optimization/experiments", response_model=ExperimentResponse)
 async def create_experiment(
     id: uuid.UUID,
     tenant_id: str = "default",
     db: AsyncSession = Depends(get_db),
-    _admin = Depends(get_admin_token),
+    _admin=Depends(get_admin_token),
 ):
     """Triggers an optimization experiment to analyze failures and generate candidates."""
     coordinator = AgentOptimizerCoordinator(db)
@@ -68,19 +74,20 @@ async def create_experiment(
             agent_id=experiment.agent_id,
             status=experiment.status,
             metrics_baseline=experiment.metrics_baseline,
-            created_at=experiment.created_at.isoformat()
+            created_at=experiment.created_at.isoformat(),
         )
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/{id}/optimization/candidates", response_model=List[CandidateResponse])
+
+@router.get("/{id}/optimization/candidates", response_model=list[CandidateResponse])
 async def get_candidates(
     id: uuid.UUID,
     tenant_id: str = "default",
     db: AsyncSession = Depends(get_db),
-    _admin = Depends(get_admin_token),
+    _admin=Depends(get_admin_token),
 ):
     """Gets all generated optimization candidates for an agent."""
     service = OptimizationExperimentService(db)
@@ -95,16 +102,19 @@ async def get_candidates(
             status=c.status,
             is_improvement=c.is_improvement,
             safety_regression=c.safety_regression,
-            created_at=c.created_at.isoformat()
+            created_at=c.created_at.isoformat(),
         )
         for c in candidates
     ]
 
-@router.post("/optimization/candidates/{candidate_id}/eval", response_model=OptimizationResultResponse)
+
+@router.post(
+    "/optimization/candidates/{candidate_id}/eval", response_model=OptimizationResultResponse
+)
 async def evaluate_candidate(
     candidate_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _admin = Depends(get_admin_token),
+    _admin=Depends(get_admin_token),
 ):
     """Runs the evaluation suite on a candidate to assess performance and safety deltas."""
     service = OptimizationExperimentService(db)
@@ -116,18 +126,19 @@ async def evaluate_candidate(
             candidate_id=result.candidate_id,
             eval_run_id=result.eval_run_id,
             metrics_delta=result.metrics_delta,
-            created_at=result.created_at.isoformat()
+            created_at=result.created_at.isoformat(),
         )
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.post("/optimization/candidates/{candidate_id}/approve", response_model=CandidateResponse)
 async def approve_candidate(
     candidate_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _admin = Depends(get_admin_token),
+    _admin=Depends(get_admin_token),
 ):
     """Approves an optimization candidate for promotion."""
     service = OptimizationExperimentService(db)
@@ -143,16 +154,17 @@ async def approve_candidate(
             status=candidate.status,
             is_improvement=candidate.is_improvement,
             safety_regression=candidate.safety_regression,
-            created_at=candidate.created_at.isoformat()
+            created_at=candidate.created_at.isoformat(),
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
 
 @router.post("/optimization/candidates/{candidate_id}/apply", response_model=CandidateResponse)
 async def apply_candidate(
     candidate_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _admin = Depends(get_admin_token),
+    _admin=Depends(get_admin_token),
 ):
     """Promotes/applies the candidate's changes onto the active agent definition."""
     service = OptimizationExperimentService(db)
@@ -168,7 +180,7 @@ async def apply_candidate(
             status=candidate.status,
             is_improvement=candidate.is_improvement,
             safety_regression=candidate.safety_regression,
-            created_at=candidate.created_at.isoformat()
+            created_at=candidate.created_at.isoformat(),
         )
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e))

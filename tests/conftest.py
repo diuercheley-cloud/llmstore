@@ -19,15 +19,17 @@ TEST_TMP = Path("/tmp/llm-inference-stack-tests")
 TEST_TMP.mkdir(parents=True, exist_ok=True)
 TEST_DB_FILE = TEST_TMP / "unit-tests.db"
 
+
 def _load_env_file(path: Path) -> None:
     if path.exists():
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line or line.startswith("#") or "=" not in line:
                     continue
                 key, value = line.split("=", 1)
                 os.environ.setdefault(key, value)
+
 
 _load_env_file(ENV_FILE)
 _load_env_file(ENV_LOCAL)
@@ -51,7 +53,9 @@ os.environ["ADMIN_TOKEN"] = "a-long-enough-and-very-secure-admin-token-32-chars-
 
 # Required fallbacks for tests
 os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{TEST_DB_FILE}?timeout=30"
-os.environ["REDIS_URL"] = "redis://localhost:6379/0" # Use localhost instead of invalid to avoid long DNS timeouts, or we'll mock it
+os.environ["REDIS_URL"] = (
+    "redis://localhost:6379/0"  # Use localhost instead of invalid to avoid long DNS timeouts, or we'll mock it
+)
 os.environ["DATA_PLANE_BASE_URL"] = "http://localhost:8081"
 os.environ["RAG_STORAGE_DIR"] = str(TEST_TMP / "rag_uploads")
 os.environ["LMSTUDIO_ENABLED"] = "false"
@@ -63,7 +67,12 @@ os.environ["AGENT_MCP_ENABLED"] = "true"
 # Each test that needs it must set it via monkeypatch or os.environ.
 os.environ["AGENT_STUDIO_ENABLED"] = "true"
 os.environ["CLOUD_PROVIDERS_ENABLED"] = "false"
-for _secret_key in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "DEEPSEEK_API_KEY", "OPENROUTER_API_KEY"):
+for _secret_key in (
+    "OPENAI_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "DEEPSEEK_API_KEY",
+    "OPENROUTER_API_KEY",
+):
     os.environ.pop(_secret_key, None)
 
 # Ensure control_plane is on path
@@ -75,7 +84,6 @@ if CONTROL_PLANE.exists() and str(CONTROL_PLANE) not in sys.path:
 APP_ROOT = ROOT / "app"
 if APP_ROOT.exists() and str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
-
 
 
 class FakeRedis:
@@ -123,10 +131,12 @@ class FakeRedis:
             in_pipeline = False
 
         if in_pipeline and name in pipeline_methods:
+
             def mock_method(*args, **kwargs):
                 self._record(name, *args, **kwargs)
                 self._pipeline_ops.append((name, args, kwargs))
                 return self
+
             return mock_method
         return object.__getattribute__(self, name)
 
@@ -187,7 +197,7 @@ class FakeRedis:
         sorted_items = sorted(self._zsets[key].items(), key=lambda x: x[1])
         if stop == -1:
             stop = len(sorted_items) - 1
-        subset = sorted_items[start:stop+1]
+        subset = sorted_items[start : stop + 1]
         if withscores:
             return subset
         return [item[0] for item in subset]
@@ -220,17 +230,17 @@ class FakeRedis:
             rate = float(keys_and_args[1])
             burst = float(keys_and_args[2])
             now = float(keys_and_args[3])
-            
+
             period = burst / rate
             emission_interval = 1.0 / rate
-            
+
             tat = float(self._store.get(key) or 0)
             new_tat = max(tat, now) + emission_interval
             allow_at = new_tat - period
-            
+
             if now < allow_at:
                 return [0, allow_at - now, 0]
-            
+
             self._store[key] = new_tat
             remaining = int((now - allow_at) / emission_interval)
             return [1, 0, remaining]
@@ -333,6 +343,7 @@ def redis_client(fake_redis) -> FakeRedis:
 @pytest.fixture
 def settings():
     from app.core.config import get_settings
+
     return get_settings()
 
 
@@ -340,7 +351,9 @@ def settings():
 def mock_global_redis(monkeypatch, fake_redis):
     """Mock the global redis_client to avoid connection errors during tests."""
     import app.db.session
+
     monkeypatch.setattr(app.db.session, "redis_client", fake_redis)
+
 
 @pytest.fixture(autouse=True)
 def global_reset(monkeypatch: pytest.MonkeyPatch):
@@ -349,6 +362,7 @@ def global_reset(monkeypatch: pytest.MonkeyPatch):
     Autouse=True means it runs for EVERY test.
     """
     from app.core.config import get_settings
+
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()
@@ -357,6 +371,7 @@ def global_reset(monkeypatch: pytest.MonkeyPatch):
 @pytest.fixture
 def isolated_db_url(tmp_path: Path) -> str:
     import uuid
+
     db_id = uuid.uuid4().hex
     return f"sqlite+aiosqlite:///file:{db_id}?mode=memory&cache=shared&uri=true"
 
@@ -364,6 +379,7 @@ def isolated_db_url(tmp_path: Path) -> str:
 @pytest_asyncio.fixture
 async def fastapi_app() -> AsyncIterator[FastAPI]:
     from app.main import app
+
     yield app
 
 
@@ -392,6 +408,7 @@ def app_client_factory():
 @pytest.fixture
 def admin_token_headers() -> dict[str, str]:
     from app.core.config import get_settings
+
     settings = get_settings()
     token = settings.admin_super_token or settings.admin_token or "test-admin-token"
     return {"X-Admin-Token": token}
@@ -400,6 +417,7 @@ def admin_token_headers() -> dict[str, str]:
 @pytest.fixture
 def models_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     from app.services import admin_model_management as model_mgmt
+
     directory = tmp_path / "models"
     directory.mkdir()
     monkeypatch.setattr(model_mgmt, "resolve_models_dir", lambda: directory)
@@ -411,10 +429,6 @@ async def session(isolated_db_url) -> AsyncIterator[AsyncSession]:
     from app.db.base import Base
     from app.services.admin_rbac import ensure_admin_rbac_seed
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-    import app.models
-    import app.models.core.model_health
-    import app.models.core.inference_routing_decision
-    import app.models.commercial.global_routing_policy
 
     engine = create_async_engine(isolated_db_url)
     testing_session_local = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
@@ -437,10 +451,6 @@ async def admin_client(isolated_db_url, fake_redis, models_dir) -> AsyncIterator
     from app.main import app as fastapi_app
     from app.services.admin_rbac import ensure_admin_rbac_seed
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-    import app.models
-    import app.models.core.model_health
-    import app.models.core.inference_routing_decision
-    import app.models.commercial.global_routing_policy
 
     engine = create_async_engine(isolated_db_url)
     testing_session_local = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
@@ -465,7 +475,9 @@ async def admin_client(isolated_db_url, fake_redis, models_dir) -> AsyncIterator
     fastapi_app.dependency_overrides[get_db_session_api] = override_get_db_session
     fastapi_app.dependency_overrides[get_redis] = lambda: fake_redis
 
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=fastapi_app), base_url="http://testserver") as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=fastapi_app), base_url="http://testserver"
+    ) as client:
         yield client
 
     fastapi_app.dependency_overrides.clear()
@@ -492,7 +504,7 @@ def pytest_collection_modifyitems(config, items):
         "test_key_rotation.py",
         "test_policy_evaluator.py",
         "test_rego_runtime.py",
-        "test_signing_service.py"
+        "test_signing_service.py",
     }
 
     release_gate_files = {
@@ -513,29 +525,29 @@ def pytest_collection_modifyitems(config, items):
         # security hygiene
         "test_security.py",
         "test_admin_readiness_security_sanitization.py",
-        "test_internal_security_review.py"
+        "test_internal_security_review.py",
     }
 
     for item in items:
         path = str(item.fspath)
         filename = Path(path).name
-        
+
         # Release Gate marker
         if filename in release_gate_files:
             item.add_marker(pytest.mark.release_gate)
-        
+
         # 1. Chaos marker
         if "/chaos/" in path or "chaos" in item.name.lower():
             item.add_marker(pytest.mark.chaos)
-        
+
         # 2. K8s marker
         elif "/kubernetes/" in path or "/k8s/" in path or "k8s" in item.name.lower():
             item.add_marker(pytest.mark.k8s)
-            
+
         # 3. Quick marker
         elif filename in quick_files or "/smoke/" in path:
             item.add_marker(pytest.mark.quick)
-            
+
         # 4. Slow marker
         elif "slow" in item.name.lower():
             item.add_marker(pytest.mark.slow)

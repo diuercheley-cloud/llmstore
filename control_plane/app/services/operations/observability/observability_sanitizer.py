@@ -8,4 +8,3 @@ def sanitize_observability_payload(payload: dict) -> dict:
     for key in check_payload_for_sensitive_keys(payload):
         redacted[key] = "[redacted]"
     return redacted
-

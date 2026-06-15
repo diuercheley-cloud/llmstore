@@ -2,7 +2,7 @@ import html
 import json
 import re
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -36,7 +36,13 @@ PUBLIC_PAGES: dict[str, PublicPageSEO] = {
         file_name="index.html",
         title="LLM Inference Stack | Infraestrutura privada de IA com API compatível com OpenAI",
         description="Stack privada para inferência de LLM com API compatível com OpenAI, RAG nativo, portal do cliente e operação em infraestrutura própria.",
-        keywords=("llm inference stack", "openai compatible api", "private ai", "rag", "infraestrutura de ia"),
+        keywords=(
+            "llm inference stack",
+            "openai compatible api",
+            "private ai",
+            "rag",
+            "infraestrutura de ia",
+        ),
         change_frequency="weekly",
         priority=1.0,
         schema_types=("Organization", "Product", "SoftwareApplication"),
@@ -47,7 +53,12 @@ PUBLIC_PAGES: dict[str, PublicPageSEO] = {
         file_name="pricing.html",
         title="Pricing | LLM Inference Stack",
         description="Planos simples para infraestrutura de inferência de IA com endpoints compatíveis com OpenAI, quotas previsíveis e suporte empresarial.",
-        keywords=("llm pricing", "openai compatible api pricing", "private ai pricing", "rag pricing"),
+        keywords=(
+            "llm pricing",
+            "openai compatible api pricing",
+            "private ai pricing",
+            "rag pricing",
+        ),
         priority=0.9,
         schema_types=("Organization", "Product", "SoftwareApplication"),
     ),
@@ -78,7 +89,12 @@ PUBLIC_PAGES: dict[str, PublicPageSEO] = {
         file_name="capabilities.html",
         title="Capabilities | LLM Inference Stack",
         description="Veja recursos suportados, estágios de disponibilidade e limitações do appliance local de IA e da stack de inferência.",
-        keywords=("llm capabilities", "local ai appliance", "inference stack features", "openai compatible"),
+        keywords=(
+            "llm capabilities",
+            "local ai appliance",
+            "inference stack features",
+            "openai compatible",
+        ),
         priority=0.8,
         schema_types=("Organization", "Product", "SoftwareApplication"),
     ),
@@ -123,7 +139,9 @@ def absolute_url(base_url: str, path: str) -> str:
     return f"{base_url}{path}"
 
 
-def build_json_ld(page: PublicPageSEO, *, request: Request, settings: Settings) -> list[dict[str, Any]]:
+def build_json_ld(
+    page: PublicPageSEO, *, request: Request, settings: Settings
+) -> list[dict[str, Any]]:
     base_url = _base_url(request, settings)
     page_url = absolute_url(base_url, page.path)
     image_url = absolute_url(base_url, "/static/www/og-default.png")
@@ -245,7 +263,9 @@ def render_public_page(page: PublicPageSEO, *, request: Request, settings: Setti
         count=1,
         flags=re.IGNORECASE | re.DOTALL,
     )
-    return rendered.replace("</head>", f"{build_meta_head(page, request=request, settings=settings)}\n  </head>", 1)
+    return rendered.replace(
+        "</head>", f"{build_meta_head(page, request=request, settings=settings)}\n  </head>", 1
+    )
 
 
 def generate_sitemap(*, request: Request, settings: Settings) -> str:
@@ -258,10 +278,15 @@ def generate_sitemap(*, request: Request, settings: Settings) -> str:
                 "loc": absolute_url(base_url, page.path),
                 "changefreq": page.change_frequency,
                 "priority": f"{page.priority:.1f}",
-                "lastmod": datetime.fromtimestamp(file_path.stat().st_mtime, tz=timezone.utc).strftime("%Y-%m-%d"),
+                "lastmod": datetime.fromtimestamp(file_path.stat().st_mtime, tz=UTC).strftime(
+                    "%Y-%m-%d"
+                ),
             }
         )
-    lines = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ]
     for entry in url_entries:
         lines.extend(
             [

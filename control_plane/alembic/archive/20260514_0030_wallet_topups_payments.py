@@ -32,13 +32,17 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("provider", "external_id", name="uq_wallet_topup_provider_external_id"),
-        sa.UniqueConstraint("provider", "idempotency_key", name="uq_wallet_topup_provider_idempotency_key"),
+        sa.UniqueConstraint(
+            "provider", "idempotency_key", name="uq_wallet_topup_provider_idempotency_key"
+        ),
     )
     op.create_index("ix_wallet_topup_intents_client_id", "wallet_topup_intents", ["client_id"])
     op.create_index("ix_wallet_topup_intents_status", "wallet_topup_intents", ["status"])
     op.create_index("ix_wallet_topup_intents_provider", "wallet_topup_intents", ["provider"])
     op.create_index("ix_wallet_topup_intents_external_id", "wallet_topup_intents", ["external_id"])
-    op.create_index("ix_wallet_topup_intents_idempotency_key", "wallet_topup_intents", ["idempotency_key"])
+    op.create_index(
+        "ix_wallet_topup_intents_idempotency_key", "wallet_topup_intents", ["idempotency_key"]
+    )
     op.create_index("ix_wallet_topup_intents_created_at", "wallet_topup_intents", ["created_at"])
 
     op.create_table(
@@ -55,18 +59,32 @@ def upgrade() -> None:
         sa.Column("paid_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="SET NULL"),
-        sa.ForeignKeyConstraint(["topup_intent_id"], ["wallet_topup_intents.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(
+            ["topup_intent_id"], ["wallet_topup_intents.id"], ondelete="SET NULL"
+        ),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("provider", "external_id", name="uq_payment_webhook_provider_external_id"),
-        sa.UniqueConstraint("provider", "idempotency_key", name="uq_payment_webhook_provider_idempotency_key"),
+        sa.UniqueConstraint(
+            "provider", "external_id", name="uq_payment_webhook_provider_external_id"
+        ),
+        sa.UniqueConstraint(
+            "provider", "idempotency_key", name="uq_payment_webhook_provider_idempotency_key"
+        ),
     )
     op.create_index("ix_payment_webhook_events_client_id", "payment_webhook_events", ["client_id"])
-    op.create_index("ix_payment_webhook_events_topup_intent_id", "payment_webhook_events", ["topup_intent_id"])
+    op.create_index(
+        "ix_payment_webhook_events_topup_intent_id", "payment_webhook_events", ["topup_intent_id"]
+    )
     op.create_index("ix_payment_webhook_events_status", "payment_webhook_events", ["status"])
     op.create_index("ix_payment_webhook_events_provider", "payment_webhook_events", ["provider"])
-    op.create_index("ix_payment_webhook_events_external_id", "payment_webhook_events", ["external_id"])
-    op.create_index("ix_payment_webhook_events_idempotency_key", "payment_webhook_events", ["idempotency_key"])
-    op.create_index("ix_payment_webhook_events_created_at", "payment_webhook_events", ["created_at"])
+    op.create_index(
+        "ix_payment_webhook_events_external_id", "payment_webhook_events", ["external_id"]
+    )
+    op.create_index(
+        "ix_payment_webhook_events_idempotency_key", "payment_webhook_events", ["idempotency_key"]
+    )
+    op.create_index(
+        "ix_payment_webhook_events_created_at", "payment_webhook_events", ["created_at"]
+    )
 
 
 def downgrade() -> None:

@@ -26,10 +26,13 @@ def test_measure_validation_targets_json_output():
     script = ROOT_DIR / "scripts" / "measure_validation_targets.py"
     result = subprocess.run(
         [
-            sys.executable, str(script),
-            "--targets", "validate-makefile-governance",
+            sys.executable,
+            str(script),
+            "--targets",
+            "validate-makefile-governance",
             "--json",
-            "--timeout", "60",
+            "--timeout",
+            "60",
         ],
         cwd=ROOT_DIR,
         capture_output=True,
@@ -61,10 +64,14 @@ def test_list_slow_tests_can_run_on_small_dir():
     script = ROOT_DIR / "scripts" / "list_slow_tests.py"
     result = subprocess.run(
         [
-            sys.executable, str(script),
-            "--test-dir", "tests/integration/build",
-            "--top-n", "5",
-            "--timeout", "60",
+            sys.executable,
+            str(script),
+            "--test-dir",
+            "tests/integration/build",
+            "--top-n",
+            "5",
+            "--timeout",
+            "60",
         ],
         cwd=ROOT_DIR,
         capture_output=True,
@@ -76,6 +83,7 @@ def test_list_slow_tests_can_run_on_small_dir():
 
 def test_scripts_import_without_error():
     import importlib.util
+
     for script_name in ("measure_validation_targets.py", "list_slow_tests.py"):
         path = ROOT_DIR / "scripts" / script_name
         spec = importlib.util.spec_from_file_location(script_name.replace(".py", ""), path)

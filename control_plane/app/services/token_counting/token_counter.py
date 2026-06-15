@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Union
 
 from app.core.config import get_settings
 from app.services.token_counting.anthropic_token_counter import AnthropicTokenCounter
@@ -8,21 +8,29 @@ from app.services.token_counting.openai_token_counter import OpenAITokenCounter
 
 
 class TokenCountingResult:
-    def __init__(self, prompt_tokens: int, completion_tokens: int, total_tokens: int, tokenizer_used: str, fallback_used: bool):
+    def __init__(
+        self,
+        prompt_tokens: int,
+        completion_tokens: int,
+        total_tokens: int,
+        tokenizer_used: str,
+        fallback_used: bool,
+    ):
         self.prompt_tokens = prompt_tokens
         self.completion_tokens = completion_tokens
         self.total_tokens = total_tokens
         self.tokenizer_used = tokenizer_used
         self.fallback_used = fallback_used
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "prompt_tokens": self.prompt_tokens,
             "completion_tokens": self.completion_tokens,
             "total_tokens": self.total_tokens,
             "tokenizer_used": self.tokenizer_used,
-            "fallback_used": self.fallback_used
+            "fallback_used": self.fallback_used,
         }
+
 
 class TokenCounter:
     """Main coordinator to route token counting to specific model/provider tokenizer implementations."""
@@ -34,20 +42,18 @@ class TokenCounter:
 
         self.fallback_counter = FallbackTokenCounter()
         self.openai_counter = OpenAITokenCounter(
-            fallback_counter=self.fallback_counter,
-            fallback_allowed=self.fallback_allowed
+            fallback_counter=self.fallback_counter, fallback_allowed=self.fallback_allowed
         )
         self.anthropic_counter = AnthropicTokenCounter(
-            fallback_counter=self.fallback_counter,
-            fallback_allowed=self.fallback_allowed
+            fallback_counter=self.fallback_counter, fallback_allowed=self.fallback_allowed
         )
         self.llama_counter = LlamaTokenCounter(
             fallback_counter=self.fallback_counter,
             fallback_allowed=self.fallback_allowed,
-            tokenizer_model_path=getattr(settings, "tokenizer_model_path", None)
+            tokenizer_model_path=getattr(settings, "tokenizer_model_path", None),
         )
 
-    def _get_counter_for_model(self, model: str, provider: Optional[str] = None):
+    def _get_counter_for_model(self, model: str, provider: str | None = None):
         m_lower = model.lower() if model else ""
         p_lower = provider.lower() if provider else ""
 
@@ -58,9 +64,17 @@ class TokenCounter:
         elif "llama" in m_lower or "llama" in p_lower:
             return self.llama_counter
         else:
-            return self.openai_counter  # Default to OpenAI counter (supports cl100k_base or fallback)
+            return (
+                self.openai_counter
+            )  # Default to OpenAI counter (supports cl100k_base or fallback)
 
-    def count_tokens(self, prompt: Union[str, List[Dict[str, Any]]], completion: Optional[str], model: str, provider: Optional[str] = None) -> TokenCountingResult:
+    def count_tokens(
+        self,
+        prompt: Union[str, list[dict[str, Any]]],
+        completion: str | None,
+        model: str,
+        provider: str | None = None,
+    ) -> TokenCountingResult:
         """
         Counts prompt and completion tokens.
         If real token counting is disabled or fallback is forced/required, it will use fallback.
@@ -76,7 +90,7 @@ class TokenCounter:
                 completion_tokens=c_tokens,
                 total_tokens=p_tokens + c_tokens,
                 tokenizer_used="fallback",
-                fallback_used=True
+                fallback_used=True,
             )
 
         counter = self._get_counter_for_model(model, provider)
@@ -96,5 +110,5 @@ class TokenCounter:
             completion_tokens=c_tokens,
             total_tokens=p_tokens + c_tokens,
             tokenizer_used=tokenizer_used,
-            fallback_used=fallback_used
+            fallback_used=fallback_used,
         )

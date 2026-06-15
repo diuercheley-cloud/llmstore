@@ -6,9 +6,9 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 SERVICES_ROOT = REPO_ROOT / "control_plane" / "app" / "services"
@@ -120,7 +120,9 @@ DOMAIN_BOUNDARIES: dict[str, DomainBoundary] = {
 
 
 def iter_service_files() -> Iterable[Path]:
-    yield from sorted(path for path in SERVICES_ROOT.rglob("*.py") if "__pycache__" not in path.parts)
+    yield from sorted(
+        path for path in SERVICES_ROOT.rglob("*.py") if "__pycache__" not in path.parts
+    )
 
 
 def module_name_for(path: Path) -> str:

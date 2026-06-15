@@ -30,6 +30,7 @@ class TestCorrelationDeterministicHash:
         assert len(h) == 64
         assert all(c in "0123456789abcdef" for c in h)
 
+
 @pytest.mark.asyncio
 class TestCorrelationModels:
     async def test_create_operational_correlation(self, session: AsyncSession):
@@ -42,7 +43,7 @@ class TestCorrelationModels:
             correlation_score=0.85,
             confidence=0.9,
             immutable_hash="hash123",
-            previous_hash="prev123"
+            previous_hash="prev123",
         )
         session.add(correlation)
         await session.commit()
@@ -60,7 +61,7 @@ class TestCorrelationModels:
     async def test_create_correlated_event(self, session: AsyncSession):
         client_id = uuid.uuid4()
         correlation_id = uuid.uuid4()
-        
+
         # Need a real correlation for foreign key consistency
         correlation = OperationalCorrelation(
             id=correlation_id,
@@ -68,10 +69,10 @@ class TestCorrelationModels:
             correlation_type="test",
             source_domains_json={},
             correlation_key="test_key",
-            immutable_hash="hash_corr"
+            immutable_hash="hash_corr",
         )
         session.add(correlation)
-        
+
         event = CorrelatedOperationalEvent(
             client_id=client_id,
             correlation_id=correlation_id,
@@ -80,13 +81,15 @@ class TestCorrelationModels:
             source_ref="req_123",
             severity="error",
             event_timestamp=utc_now(),
-            immutable_hash="hash_event"
+            immutable_hash="hash_event",
         )
         session.add(event)
         await session.commit()
 
         result = await session.execute(
-            select(CorrelatedOperationalEvent).where(CorrelatedOperationalEvent.source_ref == "req_123")
+            select(CorrelatedOperationalEvent).where(
+                CorrelatedOperationalEvent.source_ref == "req_123"
+            )
         )
         saved = result.scalars().one()
         assert saved.event_type == "api_error"
@@ -101,7 +104,7 @@ class TestCorrelationModels:
             target_node="inference_api",
             trust_relation="depends_on",
             confidence=0.99,
-            immutable_hash="hash_link"
+            immutable_hash="hash_link",
         )
         session.add(link)
         await session.commit()

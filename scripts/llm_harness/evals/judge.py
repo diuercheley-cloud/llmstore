@@ -65,15 +65,15 @@ JUDGE_SYSTEM_PROMPT = (
     "2. Code quality - Is the code well-structured, readable, and idiomatic?\n"
     "3. Completeness - Are all requirements addressed?\n"
     "4. Test quality - Are tests passing and well-written?\n\n"
-    'Return a JSON object with these fields:\n'
-    '{\n'
+    "Return a JSON object with these fields:\n"
+    "{\n"
     '  "score": 0.0 to 1.0,\n'
     '  "passed": true/false,\n'
     '  "reason": "Detailed explanation of the evaluation",\n'
     '  "strengths": ["list of strengths"],\n'
     '  "weaknesses": ["list of weaknesses"],\n'
     '  "risk_level": "low|medium|high"\n'
-    '}\n\n'
+    "}\n\n"
     "Be objective and thorough. Score below 0.7 means the solution has significant issues."
 )
 
@@ -147,9 +147,7 @@ class OpenAICompatibleJudgeProvider(BaseJudgeProvider):
         if not self.model:
             raise ValueError("model is required for judge provider")
         if not self._get_api_key():
-            raise ValueError(
-                f"API key not found in environment variable {self.api_key_env}"
-            )
+            raise ValueError(f"API key not found in environment variable {self.api_key_env}")
 
     def _build_headers(self) -> dict[str, str]:
         headers = {"Content-Type": "application/json"}
@@ -167,10 +165,9 @@ class OpenAICompatibleJudgeProvider(BaseJudgeProvider):
             url = f"https://{url}"
 
         async with httpx.AsyncClient(timeout=httpx.Timeout(self.timeout)) as client:
+
             async def _do_post() -> dict[str, Any]:
-                response = await client.post(
-                    url, json=payload, headers=self._build_headers()
-                )
+                response = await client.post(url, json=payload, headers=self._build_headers())
                 response.raise_for_status()
                 return response.json()
 

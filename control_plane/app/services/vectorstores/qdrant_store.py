@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import httpx
 from app.core.config import get_settings
@@ -8,6 +8,7 @@ from .base import VectorStoreBase
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
+
 
 class QdrantStore(VectorStoreBase):
     """
@@ -33,30 +34,22 @@ class QdrantStore(VectorStoreBase):
         self,
         collection_name: str,
         id: str,
-        vector: List[float],
-        metadata: Optional[Dict[str, Any]] = None,
-        namespace: Optional[str] = None,
+        vector: list[float],
+        metadata: dict[str, Any] | None = None,
+        namespace: str | None = None,
     ) -> None:
-        point = {
-            "id": id,
-            "vector": vector,
-            "payload": metadata or {}
-        }
+        point = {"id": id, "vector": vector, "payload": metadata or {}}
         await self._request("PUT", f"/collections/{collection_name}/points", {"points": [point]})
 
     async def search(
         self,
         collection_name: str,
-        vector: List[float],
+        vector: list[float],
         limit: int = 5,
-        filters: Optional[Dict[str, Any]] = None,
-        namespace: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
-        query = {
-            "vector": vector,
-            "limit": limit,
-            "with_payload": True
-        }
+        filters: dict[str, Any] | None = None,
+        namespace: str | None = None,
+    ) -> list[dict[str, Any]]:
+        query = {"vector": vector, "limit": limit, "with_payload": True}
         if filters:
             # Simple Qdrant filter conversion (can be expanded)
             q_filter = {"must": []}
@@ -67,33 +60,28 @@ class QdrantStore(VectorStoreBase):
         res = await self._request("POST", f"/collections/{collection_name}/points/search", query)
         hits = []
         for hit in res.get("result", []):
-            hits.append({
-                "id": hit["id"],
-                "metadata": hit.get("payload", {}),
-                "score": hit["score"]
-            })
+            hits.append(
+                {"id": hit["id"], "metadata": hit.get("payload", {}), "score": hit["score"]}
+            )
         return hits
 
     async def delete(
         self,
         collection_name: str,
-        ids: List[str],
-        namespace: Optional[str] = None,
+        ids: list[str],
+        namespace: str | None = None,
     ) -> None:
-        await self._request("POST", f"/collections/{collection_name}/points/delete", {"points": ids})
+        await self._request(
+            "POST", f"/collections/{collection_name}/points/delete", {"points": ids}
+        )
 
     async def collection_create(
         self,
         collection_name: str,
         dimension: int,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
-        body = {
-            "vectors": {
-                "size": dimension,
-                "distance": "Cosine"
-            }
-        }
+        body = {"vectors": {"size": dimension, "distance": "Cosine"}}
         await self._request("PUT", f"/collections/{collection_name}", body)
 
     async def collection_delete(
@@ -102,7 +90,7 @@ class QdrantStore(VectorStoreBase):
     ) -> None:
         await self._request("DELETE", f"/collections/{collection_name}")
 
-    async def healthcheck(self) -> Dict[str, Any]:
+    async def healthcheck(self) -> dict[str, Any]:
         if not settings.qdrant_enabled:
             return {"status": "disabled", "provider": "qdrant"}
         try:
@@ -110,7 +98,7 @@ class QdrantStore(VectorStoreBase):
             return {
                 "status": "healthy" if res.get("title") == "qdrant" else "unhealthy",
                 "version": res.get("version"),
-                "provider": "qdrant"
+                "provider": "qdrant",
             }
         except Exception as e:
             return {"status": "unhealthy", "error": str(e), "provider": "qdrant"}

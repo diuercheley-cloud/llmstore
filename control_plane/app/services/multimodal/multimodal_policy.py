@@ -30,21 +30,19 @@ class MultimodalPolicyService:
         return get_settings()
 
     async def check_policy(
-        self,
-        db: AsyncSession,
-        client_id: uuid.UUID,
-        feature: str,
-        input_text: str = None
+        self, db: AsyncSession, client_id: uuid.UUID, feature: str, input_text: str = None
     ) -> None:
         # 1. Global Multimodal enabled check
         if not self.settings.multimodal_enabled:
             await self.log_policy_event(
-                db, client_id, feature, "access_denied",
-                {"reason": "MULTIMODAL_ENABLED feature flag is false"}
+                db,
+                client_id,
+                feature,
+                "access_denied",
+                {"reason": "MULTIMODAL_ENABLED feature flag is false"},
             )
             raise MultimodalPolicyException(
-                "Multimodal capabilities are disabled on this server.",
-                status_code=403
+                "Multimodal capabilities are disabled on this server.", status_code=403
             )
 
         # 2. Specific feature enabled check
@@ -52,17 +50,19 @@ class MultimodalPolicyService:
             "vision": self.settings.vision_input_enabled,
             "image-generation": self.settings.image_generation_enabled,
             "speech-to-text": self.settings.speech_to_text_enabled,
-            "audio-streaming": self.settings.realtime_audio_enabled
+            "audio-streaming": self.settings.realtime_audio_enabled,
         }
 
         if not feature_flag_map.get(feature, False):
             await self.log_policy_event(
-                db, client_id, feature, "access_denied",
-                {"reason": f"Feature flag for '{feature}' is disabled"}
+                db,
+                client_id,
+                feature,
+                "access_denied",
+                {"reason": f"Feature flag for '{feature}' is disabled"},
             )
             raise MultimodalPolicyException(
-                f"Multimodal feature '{feature}' is disabled.",
-                status_code=403
+                f"Multimodal feature '{feature}' is disabled.", status_code=403
             )
 
         # 3. Content Safety Hook
@@ -71,15 +71,19 @@ class MultimodalPolicyService:
             for word in BANNED_WORDS:
                 if word in text_lower:
                     await self.log_policy_event(
-                        db, client_id, feature, "content_safety_blocked", {
+                        db,
+                        client_id,
+                        feature,
+                        "content_safety_blocked",
+                        {
                             "reason": f"Input content matched banned word: {word}",
-                            "input_text_redacted": input_text[:50] + "..."
-                        }
+                            "input_text_redacted": input_text[:50] + "...",
+                        },
                     )
                     raise MultimodalPolicyException(
                         "Content safety violation: input contains unsafe or "
                         "policy-violating terms.",
-                        status_code=400
+                        status_code=400,
                     )
 
         # 4. Quota/Budget check
@@ -87,15 +91,11 @@ class MultimodalPolicyService:
 
         # 5. Audit Receipt (log allowed access)
         await self.log_policy_event(
-            db, client_id, feature, "access_granted",
-            {"timestamp": utc_now().isoformat()}
+            db, client_id, feature, "access_granted", {"timestamp": utc_now().isoformat()}
         )
 
     async def check_asset_access(
-        self,
-        db: AsyncSession,
-        client_id: uuid.UUID,
-        asset_id: uuid.UUID
+        self, db: AsyncSession, client_id: uuid.UUID, asset_id: uuid.UUID
     ) -> MultimodalAsset:
         """
         Enforce tenant isolation. Tenant A must NOT read or use assets of Tenant B.
@@ -108,34 +108,34 @@ class MultimodalPolicyService:
 
         if asset.client_id != client_id:
             await self.log_policy_event(
-                db, client_id, asset.asset_type, "access_denied", {
+                db,
+                client_id,
+                asset.asset_type,
+                "access_denied",
+                {
                     "reason": "Tenant isolation violation - attempted to access "
-                              "asset of another tenant",
-                    "asset_id": str(asset_id)
-                }
+                    "asset of another tenant",
+                    "asset_id": str(asset_id),
+                },
             )
             raise MultimodalPolicyException(
-                "Access denied: asset belongs to another tenant.",
-                status_code=403
+                "Access denied: asset belongs to another tenant.", status_code=403
             )
 
         return asset
 
     async def enforce_quota_limits(
-        self,
-        db: AsyncSession,
-        client_id: uuid.UUID,
-        feature: str
+        self, db: AsyncSession, client_id: uuid.UUID, feature: str
     ) -> None:
         """
         Check estimated cost for this month to ensure budget is not exceeded.
         """
         now = utc_now()
         month_start = datetime(now.year, now.month, 1, tzinfo=now.tzinfo)
-        
+
         stmt = select(func.sum(MultimodalUsageEvent.estimated_cost)).where(
             MultimodalUsageEvent.client_id == client_id,
-            MultimodalUsageEvent.created_at >= month_start
+            MultimodalUsageEvent.created_at >= month_start,
         )
         res = await db.execute(stmt)
         cost_sum = res.scalar() or 0.0
@@ -143,32 +143,28 @@ class MultimodalPolicyService:
         budget_limit = 10.00
         if cost_sum >= budget_limit:
             await self.log_policy_event(
-                db, client_id, feature, "quota_exceeded", {
-                    "current_spending": cost_sum,
-                    "budget_limit": budget_limit
-                }
+                db,
+                client_id,
+                feature,
+                "quota_exceeded",
+                {"current_spending": cost_sum, "budget_limit": budget_limit},
             )
             raise MultimodalPolicyException(
                 f"Quota exceeded: Monthly budget of ${budget_limit:.2f} for "
                 f"multimodal services has been reached (Current spending: "
                 f"${cost_sum:.2f}).",
-                status_code=429
+                status_code=429,
             )
 
     async def log_policy_event(
-        self,
-        db: AsyncSession,
-        client_id: uuid.UUID,
-        feature: str,
-        event_type: str,
-        details: dict
+        self, db: AsyncSession, client_id: uuid.UUID, feature: str, event_type: str, details: dict
     ) -> None:
         event = MultimodalPolicyEvent(
             id=uuid.uuid4(),
             client_id=client_id,
             feature=feature,
             event_type=event_type,
-            details=details
+            details=details,
         )
         db.add(event)
         await db.commit()

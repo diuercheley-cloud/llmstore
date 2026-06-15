@@ -16,6 +16,7 @@ Strategy:
     to intercept HTTP calls to the fake MCP server without a real TCP connection.
   - FakeMCPServer.handle_request() provides deterministic responses.
 """
+
 from __future__ import annotations
 
 from unittest.mock import patch
@@ -34,6 +35,7 @@ try:
 except (ImportError, ModuleNotFoundError):
     import sys
     from pathlib import Path
+
     sys.path.append(str(Path(__file__).parent))
     from fake_mcp_server import FakeMCPServer
 
@@ -47,6 +49,7 @@ def _patch_transport(server: FakeMCPServer):
     Returns a context manager that patches build_transport with a fake
     that delegates to FakeMCPServer.handle_request().
     """
+
     class _FakeTransport:
         async def initialize(self):
             resp = server.handle_request(
@@ -164,7 +167,9 @@ async def test_hardcoded_mock_not_returned_by_default():
     settings.agent_mcp_real_discovery_enabled = False  # real discovery also off
 
     registry = MCPRegistry()
-    server = registry.register("t1", "test-disabled", "streamable_http", "http://localhost:9999/mcp")
+    server = registry.register(
+        "t1", "test-disabled", "streamable_http", "http://localhost:9999/mcp"
+    )
 
     client = MCPClient()
     with pytest.raises(PermissionError, match="AGENT_MCP_REAL_DISCOVERY_ENABLED"):
@@ -225,7 +230,9 @@ async def test_approved_tool_can_be_called():
 
     fake = FakeMCPServer()
     registry = MCPRegistry()
-    server = registry.register("t1", "approved-server", "streamable_http", "http://localhost:9999/mcp")
+    server = registry.register(
+        "t1", "approved-server", "streamable_http", "http://localhost:9999/mcp"
+    )
     server.approved_tools.add("echo")
 
     with _patch_transport(fake):
@@ -302,7 +309,9 @@ async def test_malicious_tool_description_sanitized():
 
     fake = FakeMCPServer()  # includes 'danger' tool with injection bait
     registry = MCPRegistry()
-    server = registry.register("t1", "danger-server", "streamable_http", "http://localhost:9999/mcp")
+    server = registry.register(
+        "t1", "danger-server", "streamable_http", "http://localhost:9999/mcp"
+    )
 
     with _patch_transport(fake):
         client = MCPClient()
@@ -334,7 +343,9 @@ async def test_sampling_advertised_by_server_blocks_discover():
 
     fake = FakeMCPServer(advertise_sampling=True)
     registry = MCPRegistry()
-    server = registry.register("t1", "sampler-server", "streamable_http", "http://localhost:9999/mcp")
+    server = registry.register(
+        "t1", "sampler-server", "streamable_http", "http://localhost:9999/mcp"
+    )
 
     with _patch_transport(fake):
         client = MCPClient()
@@ -382,7 +393,9 @@ async def test_call_tool_mock_mode_records_mock_audit():
     MCPAuditLog.clear()
 
     registry = MCPRegistry()
-    server = registry.register("t1", "mock-call-server", "streamable_http", "http://localhost:9999/mcp")
+    server = registry.register(
+        "t1", "mock-call-server", "streamable_http", "http://localhost:9999/mcp"
+    )
     server.approved_tools.add("echo")
 
     client = MCPClient()
@@ -407,7 +420,9 @@ def test_approve_tool_sanitizes_dangerous_name():
     settings.agent_mcp_mock_mode = False
 
     registry = MCPRegistry()
-    server = registry.register("t1", "sanitize-server", "streamable_http", "http://localhost:9999/mcp")
+    server = registry.register(
+        "t1", "sanitize-server", "streamable_http", "http://localhost:9999/mcp"
+    )
 
     client = MCPClient()
     result = client.approve_tool(server.id, "evil<script>tool")

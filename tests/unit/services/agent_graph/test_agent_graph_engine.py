@@ -1,5 +1,5 @@
-import uuid
 import pytest
+from app.services.agents.agent_graph.engine import AgentGraphEngine
 from app.services.agents.agent_graph.models import (
     AgentGraphSpec,
     AgentNode,
@@ -8,7 +8,6 @@ from app.services.agents.agent_graph.models import (
     GraphExecutionStatus,
     NodeExecutionStatus,
 )
-from app.services.agents.agent_graph.engine import AgentGraphEngine
 
 
 @pytest.fixture
@@ -78,10 +77,7 @@ async def test_parallel_execution(engine):
     result = await engine.execute(graph)
     assert result.status == GraphExecutionStatus.COMPLETED
     assert len(result.node_results) == 5
-    assert all(
-        nr.status == NodeExecutionStatus.COMPLETED
-        for nr in result.node_results.values()
-    )
+    assert all(nr.status == NodeExecutionStatus.COMPLETED for nr in result.node_results.values())
 
 
 @pytest.mark.asyncio

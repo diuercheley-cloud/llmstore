@@ -15,10 +15,12 @@ Feature flags consumed:
   AGENT_KG_PGVECTOR_ENABLED
   AGENT_KG_PGROUTING_ENABLED
 """
+
 from __future__ import annotations
 
 import uuid
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from app.core.config import get_settings
 from app.models.agents.agent_knowledge_graph import (
@@ -39,7 +41,7 @@ class PostgresGraphProvider(InternalSQLGraphProvider):
     Inherits all write methods from InternalSQLGraphProvider and overrides
     read paths with Postgres-optimised queries when the matching feature
     flag is active.
-    
+
     Implements GraphProvider protocol.
     """
 
@@ -71,11 +73,7 @@ class PostgresGraphProvider(InternalSQLGraphProvider):
         """
         if not self._pgvector_enabled:
             # Graceful fallback: return top_k entities by insertion order
-            stmt = (
-                select(AgentKGEntity)
-                .where(AgentKGEntity.tenant_id == tenant_id)
-                .limit(top_k)
-            )
+            stmt = select(AgentKGEntity).where(AgentKGEntity.tenant_id == tenant_id).limit(top_k)
             result = await self.db.execute(stmt)
             return list(result.scalars().all())
 

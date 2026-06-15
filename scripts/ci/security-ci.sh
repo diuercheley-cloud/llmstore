@@ -15,3 +15,8 @@ if command -v trivy &> /dev/null; then
 else
     echo "Trivy not installed, skipping FS scan."
 fi
+
+echo "==> Security CI: Code and Multi-language Security Scan (Bandit & Semgrep)"
+pip install bandit semgrep
+python3 scripts/validators/validate_security_scan.py
+

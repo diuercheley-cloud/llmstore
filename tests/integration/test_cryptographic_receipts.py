@@ -46,11 +46,16 @@ async def test_generate_inference_receipt(session, settings):
     assert receipt.immutable_hash is not None
 
     ledger = (
-        await session.execute(
-            select(CommercialInferenceReceiptLedgerEvent)
-            .where(CommercialInferenceReceiptLedgerEvent.receipt_id == receipt.id)
+        (
+            await session.execute(
+                select(CommercialInferenceReceiptLedgerEvent).where(
+                    CommercialInferenceReceiptLedgerEvent.receipt_id == receipt.id
+                )
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     assert len(ledger) >= 1
     assert ledger[0].event_type == "receipt_created"
 
@@ -130,11 +135,16 @@ async def test_receipt_verification_valid(session, settings):
     assert report.report_hash is not None
 
     reports = (
-        await session.execute(
-            select(CommercialInferenceReceiptVerificationReport)
-            .where(CommercialInferenceReceiptVerificationReport.receipt_id == receipt.id)
+        (
+            await session.execute(
+                select(CommercialInferenceReceiptVerificationReport).where(
+                    CommercialInferenceReceiptVerificationReport.receipt_id == receipt.id
+                )
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     assert len(reports) >= 1
 
 
@@ -225,6 +235,7 @@ async def test_tenant_verification(session, settings):
 async def test_receipt_replay_linkage(session, settings):
     settings.commercial_receipts_enabled = True
     import hashlib
+
     runtime_hash = hashlib.sha256(b"runtime-snapshot-data").hexdigest()
     receipt = await generate_inference_receipt(
         session,

@@ -9,7 +9,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-async def _create_bundle(session: AsyncSession, *, name: str = "wf-policy") -> CommercialPolicyBundle:
+async def _create_bundle(
+    session: AsyncSession, *, name: str = "wf-policy"
+) -> CommercialPolicyBundle:
     bundle = CommercialPolicyBundle(
         bundle_name=name,
         bundle_version="1.0.0",
@@ -33,12 +35,20 @@ async def test_enforcement_deny_by_default(session: AsyncSession):
         name="deny-by-default",
         dag_or_steps=[{"stage_key": "stage-a", "policy": {}, "config": {"x": 1}}],
     )
-    execution = await orchestrator.start_execution(session, definition_id=definition.id, session_id="s-1", tenant_id="tenant-a")
+    execution = await orchestrator.start_execution(
+        session, definition_id=definition.id, session_id="s-1", tenant_id="tenant-a"
+    )
     stage = (
-        await session.execute(select(CommercialWorkflowStage).where(CommercialWorkflowStage.execution_id == execution.id))
+        await session.execute(
+            select(CommercialWorkflowStage).where(
+                CommercialWorkflowStage.execution_id == execution.id
+            )
+        )
     ).scalar_one()
 
-    decision = await WorkflowPolicyEnforcementService().evaluate_stage(session, execution=execution, stage=stage)
+    decision = await WorkflowPolicyEnforcementService().evaluate_stage(
+        session, execution=execution, stage=stage
+    )
 
     assert decision["decision"] == "deny"
     assert decision["reason"] == "missing_valid_policy"
@@ -61,13 +71,21 @@ async def test_policy_snapshot_drift_and_rollback(session: AsyncSession):
             }
         ],
     )
-    execution = await orchestrator.start_execution(session, definition_id=definition.id, session_id="s-2", tenant_id="tenant-a")
+    execution = await orchestrator.start_execution(
+        session, definition_id=definition.id, session_id="s-2", tenant_id="tenant-a"
+    )
     stage = (
-        await session.execute(select(CommercialWorkflowStage).where(CommercialWorkflowStage.execution_id == execution.id))
+        await session.execute(
+            select(CommercialWorkflowStage).where(
+                CommercialWorkflowStage.execution_id == execution.id
+            )
+        )
     ).scalar_one()
 
     stage.metadata_json["runtime"] = {"cpu": "large"}
-    decision = await WorkflowPolicyEnforcementService().evaluate_stage(session, execution=execution, stage=stage)
+    decision = await WorkflowPolicyEnforcementService().evaluate_stage(
+        session, execution=execution, stage=stage
+    )
     rollback = await WorkflowPolicyEnforcementService().rollback_stage_policy(
         session,
         execution=execution,

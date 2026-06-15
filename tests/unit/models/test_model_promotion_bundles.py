@@ -20,7 +20,9 @@ async def test_bundle_create_verify_promote_reject(session):
         import_method="airgap",
         artifact_hash="artifact-123",
         evidence_json={"scanner": "offline"},
-        chain_of_custody_json={"events": [{"actor": "ops", "action": "sealed", "timestamp": "2026-05-15T00:00:00Z"}]},
+        chain_of_custody_json={
+            "events": [{"actor": "ops", "action": "sealed", "timestamp": "2026-05-15T00:00:00Z"}]
+        },
     )
     entry = await register_model_manifest(
         session,
@@ -45,7 +47,11 @@ async def test_bundle_create_verify_promote_reject(session):
         bundle_name="Reject 38",
         source_cluster_id="cluster-a",
         target_cluster_id="cluster-b",
-        manifest_json={"model": {"checksum_sha256": "x", "manifest_hash": "y"}, "provenance": {"artifact_hash": "z"}, "manifest_hash": "hash"},
+        manifest_json={
+            "model": {"checksum_sha256": "x", "manifest_hash": "y"},
+            "provenance": {"artifact_hash": "z"},
+            "manifest_hash": "hash",
+        },
         manifest_hash="hash",
         signature=None,
         status="created",
@@ -65,5 +71,7 @@ async def test_bundle_endpoints_require_admin_auth(admin_client, admin_token_hea
     unauthorized = await admin_client.get("/admin/models/supply-chain/bundles")
     assert unauthorized.status_code == 401
 
-    authorized = await admin_client.get("/admin/models/supply-chain/bundles", headers=admin_token_headers)
+    authorized = await admin_client.get(
+        "/admin/models/supply-chain/bundles", headers=admin_token_headers
+    )
     assert authorized.status_code == 200

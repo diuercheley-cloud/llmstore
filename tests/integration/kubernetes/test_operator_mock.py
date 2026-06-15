@@ -8,7 +8,9 @@ def load_operator_main():
     spec.loader.exec_module(m)
     return m
 
+
 operator_main = load_operator_main()
+
 
 def test_operator_handlers_exist():
     # Check if handlers are defined for our CRDs
@@ -17,18 +19,25 @@ def test_operator_handlers_exist():
     assert operator_main.reconcile_provider is not None
     assert operator_main.reconcile_tenant is not None
 
+
 def test_operator_reconcile_inference_stack_mock():
     class MockLogger:
-        def info(self, msg): pass
-        def error(self, msg): pass
-    
-    spec = {'image': 'test-image', 'replicas': 2}
-    body = {'metadata': {'name': 'test-stack', 'namespace': 'default'}}
-    
+        def info(self, msg):
+            pass
+
+        def error(self, msg):
+            pass
+
+    spec = {"image": "test-image", "replicas": 2}
+    body = {"metadata": {"name": "test-stack", "namespace": "default"}}
+
     # Mocking Kubernetes API calls inside the function
-    with mock.patch('kubernetes.client.AppsV1Api'), \
-         mock.patch('kubernetes.client.CoreV1Api'), \
-         mock.patch('kubernetes.client.CustomObjectsApi'):
-        
+    with (
+        mock.patch("kubernetes.client.AppsV1Api"),
+        mock.patch("kubernetes.client.CoreV1Api"),
+        mock.patch("kubernetes.client.CustomObjectsApi"),
+    ):
         # This shouldn't raise exception now
-        operator_main.reconcile_inference_stack(spec=spec, name='test-stack', namespace='default', body=body, logger=MockLogger())
+        operator_main.reconcile_inference_stack(
+            spec=spec, name="test-stack", namespace="default", body=body, logger=MockLogger()
+        )

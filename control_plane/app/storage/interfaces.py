@@ -21,7 +21,9 @@ class DocumentStore(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_rag_document(self, document_id: UUID, *, client_id: UUID | None = None) -> RAGDocument | None:
+    async def get_rag_document(
+        self, document_id: UUID, *, client_id: UUID | None = None
+    ) -> RAGDocument | None:
         raise NotImplementedError
 
     @abstractmethod
@@ -45,7 +47,9 @@ class DocumentStore(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_rag_documents_by_ids(self, document_ids: Sequence[UUID]) -> dict[UUID, RAGDocument]:
+    async def get_rag_documents_by_ids(
+        self, document_ids: Sequence[UUID]
+    ) -> dict[UUID, RAGDocument]:
         raise NotImplementedError
 
     @abstractmethod
@@ -53,7 +57,9 @@ class DocumentStore(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def summarize_rag_usage_events(self, client_id: UUID, *, since: datetime) -> dict[str, int]:
+    async def summarize_rag_usage_events(
+        self, client_id: UUID, *, since: datetime
+    ) -> dict[str, int]:
         raise NotImplementedError
 
     @abstractmethod
@@ -95,7 +101,9 @@ class VectorStore(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def delete(self, collection_name: str, ids: list[str], namespace: str | None = None) -> None:
+    async def delete(
+        self, collection_name: str, ids: list[str], namespace: str | None = None
+    ) -> None:
         raise NotImplementedError
 
     @abstractmethod
@@ -118,7 +126,9 @@ class VectorStore(ABC):
 
 class AuditStore(ABC):
     @abstractmethod
-    async def record_admin_event(self, record: AdminAuditRecord, *, auto_commit: bool = True) -> None:
+    async def record_admin_event(
+        self, record: AdminAuditRecord, *, auto_commit: bool = True
+    ) -> None:
         raise NotImplementedError
 
 

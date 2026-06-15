@@ -1,7 +1,6 @@
 # Owner: voice-agent
 import logging
 import uuid
-from typing import Optional
 
 from app.core.time import utc_now
 from app.models.core.realtime_voice import VoiceSession, VoiceTranscript, VoiceTurn
@@ -28,9 +27,7 @@ class VoiceAgentBridge:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def ensure_agent_session(
-        self, voice_session: VoiceSession
-    ) -> Optional[uuid.UUID]:
+    async def ensure_agent_session(self, voice_session: VoiceSession) -> uuid.UUID | None:
         """Ensure voice session has a linked agent session. Returns agent_session_id."""
         if voice_session.agent_session_id:
             return voice_session.agent_session_id
@@ -89,7 +86,7 @@ class VoiceAgentBridge:
         self,
         turn: VoiceTurn,
         agent_text: str,
-        agent_run_id: Optional[uuid.UUID] = None,
+        agent_run_id: uuid.UUID | None = None,
     ) -> VoiceTurn:
         """Complete an agent turn with the response text."""
         turn.agent_text = agent_text
@@ -137,6 +134,7 @@ class VoiceAgentBridge:
     ) -> list[VoiceTranscript]:
         """Get all transcripts for a voice session."""
         from sqlalchemy import select
+
         stmt = (
             select(VoiceTranscript)
             .where(VoiceTranscript.session_id == session_id)

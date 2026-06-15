@@ -1,6 +1,6 @@
 import logging
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.models.agents.agents import AgentA2ARegistration, AgentDefinition
 from app.services.agents.a2a.a2a_security import A2ASecurityService
@@ -24,22 +24,18 @@ class A2ADiscoveryService:
     async def discover_agents(
         self,
         tenant_id: str,
-        capability: Optional[str] = None,
-        tool_name: Optional[str] = None,
-        name_query: Optional[str] = None,
+        capability: str | None = None,
+        tool_name: str | None = None,
+        name_query: str | None = None,
         limit: int = 20,
         offset: int = 0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         A2ASecurityService.verify_a2a_enabled_or_raise()
 
-        stmt = select(AgentA2ARegistration).where(
-            AgentA2ARegistration.tenant_id == tenant_id
-        )
+        stmt = select(AgentA2ARegistration).where(AgentA2ARegistration.tenant_id == tenant_id)
 
         if capability:
-            stmt = stmt.where(
-                AgentA2ARegistration.capabilities[capability].as_string().isnot(None)
-            )
+            stmt = stmt.where(AgentA2ARegistration.capabilities[capability].as_string().isnot(None))
 
         # Count total
         count_stmt = select(sa_func.count()).select_from(stmt.subquery())
@@ -66,14 +62,16 @@ class A2ADiscoveryService:
             if name_query and name_query.lower() not in agent_name.lower():
                 continue
 
-            results.append({
-                "agent_id": str(reg.agent_id),
-                "agent_name": agent_name,
-                "target_url": reg.target_url,
-                "capabilities": reg.capabilities or {},
-                "is_external": reg.is_external,
-                "registered_at": reg.created_at.isoformat() if reg.created_at else None,
-            })
+            results.append(
+                {
+                    "agent_id": str(reg.agent_id),
+                    "agent_name": agent_name,
+                    "target_url": reg.target_url,
+                    "capabilities": reg.capabilities or {},
+                    "is_external": reg.is_external,
+                    "registered_at": reg.created_at.isoformat() if reg.created_at else None,
+                }
+            )
 
         return {
             "agents": results,
@@ -86,7 +84,7 @@ class A2ADiscoveryService:
         self,
         tenant_id: str,
         agent_id: uuid.UUID,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         A2ASecurityService.verify_a2a_enabled_or_raise()
 
         stmt = select(AgentA2ARegistration).where(
@@ -112,7 +110,7 @@ class A2ADiscoveryService:
         self,
         tenant_id: str,
         agent_id: uuid.UUID,
-        capabilities: Dict[str, Any],
+        capabilities: dict[str, Any],
     ) -> dict:
         A2ASecurityService.verify_a2a_enabled_or_raise()
 

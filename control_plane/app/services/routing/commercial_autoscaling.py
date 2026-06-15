@@ -1,6 +1,5 @@
 import logging
 import uuid
-from typing import List, Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -19,7 +18,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
-async def generate_autoscaling_recommendations(db: AsyncSession, cluster_id: str) -> List[CommercialAutoscalingRecommendation]:
+
+async def generate_autoscaling_recommendations(
+    db: AsyncSession, cluster_id: str
+) -> list[CommercialAutoscalingRecommendation]:
     """
     Analyzes recent forecasts and snapshots to generate recommendations.
     """
@@ -28,22 +30,25 @@ async def generate_autoscaling_recommendations(db: AsyncSession, cluster_id: str
         return []
 
     # 1. Fetch latest forecasts
-    stmt = select(CommercialCapacityForecast).where(
-        CommercialCapacityForecast.cluster_id == cluster_id
-    ).order_by(CommercialCapacityForecast.created_at.desc()).limit(10)
-    
+    stmt = (
+        select(CommercialCapacityForecast)
+        .where(CommercialCapacityForecast.cluster_id == cluster_id)
+        .order_by(CommercialCapacityForecast.created_at.desc())
+        .limit(10)
+    )
+
     result = await db.execute(stmt)
     forecasts = result.scalars().all()
-    
+
     recommendations = []
-    
+
     for forecast in forecasts:
         rec = None
         if forecast.recommended_action == "scale_up" and forecast.confidence > 0.7:
             rec = await recommend_scale_up(db, forecast)
         elif forecast.predicted_sla_violation_rate > settings.commercial_sla_risk_alert_percent:
             rec = await recommend_qos_throttling(db, forecast)
-            
+
         if rec:
             recommendations.append(rec)
             # Phase 21.1: Trigger simulation and safety gates
@@ -52,12 +57,17 @@ async def generate_autoscaling_recommendations(db: AsyncSession, cluster_id: str
                 if simulation:
                     status, reason = await validate_simulation_against_policy(db, simulation)
                     simulation.safety_gate_status = status
-                    logger.info(f"Recommendation {rec.id} simulated. Status: {status}. Reason: {reason}")
+                    logger.info(
+                        f"Recommendation {rec.id} simulated. Status: {status}. Reason: {reason}"
+                    )
 
     await db.commit()
     return recommendations
 
-async def run_simulation_for_recommendation(db: AsyncSession, rec: CommercialAutoscalingRecommendation):
+
+async def run_simulation_for_recommendation(
+    db: AsyncSession, rec: CommercialAutoscalingRecommendation
+):
     """
     Helper to run a simulation for a generated recommendation.
     """
@@ -66,10 +76,15 @@ async def run_simulation_for_recommendation(db: AsyncSession, rec: CommercialAut
     elif rec.recommendation_type == "scale_down":
         return await simulate_scale_down(db, rec.target_scope, rec.target_identifier, {"nodes": 1})
     elif rec.recommendation_type == "reroute":
-        return await simulate_reroute(db, rec.target_scope, rec.target_identifier, {"traffic_percent": 10})
+        return await simulate_reroute(
+            db, rec.target_scope, rec.target_identifier, {"traffic_percent": 10}
+        )
     return None
 
-async def recommend_scale_up(db: AsyncSession, forecast: CommercialCapacityForecast) -> Optional[CommercialAutoscalingRecommendation]:
+
+async def recommend_scale_up(
+    db: AsyncSession, forecast: CommercialCapacityForecast
+) -> CommercialAutoscalingRecommendation | None:
     rec = CommercialAutoscalingRecommendation(
         id=uuid.uuid4(),
         cluster_id=forecast.cluster_id,
@@ -78,28 +93,40 @@ async def recommend_scale_up(db: AsyncSession, forecast: CommercialCapacityForec
         target_identifier=forecast.provider or forecast.cluster_id,
         reason=f"Predicted RPM growth of {forecast.predicted_rpm:.2f} exceeds capacity. SLA risk is {forecast.predicted_sla_violation_rate:.2f}%.",
         predicted_sla_risk=forecast.predicted_sla_violation_rate,
-        estimated_cost_impact_brl=10.0, # Placeholder
-        estimated_margin_impact_brl=-2.0, # Placeholder
+        estimated_cost_impact_brl=10.0,  # Placeholder
+        estimated_margin_impact_brl=-2.0,  # Placeholder
         confidence=forecast.confidence,
         dry_run_only=True,
-        created_at=utc_now()
+        created_at=utc_now(),
     )
     db.add(rec)
     return rec
 
-async def recommend_scale_down(db: AsyncSession, forecast: CommercialCapacityForecast) -> Optional[CommercialAutoscalingRecommendation]:
+
+async def recommend_scale_down(
+    db: AsyncSession, forecast: CommercialCapacityForecast
+) -> CommercialAutoscalingRecommendation | None:
     # Placeholder
     return None
 
-async def recommend_reroute(db: AsyncSession, forecast: CommercialCapacityForecast) -> Optional[CommercialAutoscalingRecommendation]:
+
+async def recommend_reroute(
+    db: AsyncSession, forecast: CommercialCapacityForecast
+) -> CommercialAutoscalingRecommendation | None:
     # Placeholder
     return None
 
-async def recommend_cache_expansion(db: AsyncSession, forecast: CommercialCapacityForecast) -> Optional[CommercialAutoscalingRecommendation]:
+
+async def recommend_cache_expansion(
+    db: AsyncSession, forecast: CommercialCapacityForecast
+) -> CommercialAutoscalingRecommendation | None:
     # Placeholder
     return None
 
-async def recommend_qos_throttling(db: AsyncSession, forecast: CommercialCapacityForecast) -> Optional[CommercialAutoscalingRecommendation]:
+
+async def recommend_qos_throttling(
+    db: AsyncSession, forecast: CommercialCapacityForecast
+) -> CommercialAutoscalingRecommendation | None:
     target = forecast.qos_tier or "Free"
     rec = CommercialAutoscalingRecommendation(
         id=uuid.uuid4(),
@@ -110,10 +137,10 @@ async def recommend_qos_throttling(db: AsyncSession, forecast: CommercialCapacit
         reason=f"High SLA risk ({forecast.predicted_sla_violation_rate:.2f}%) predicted for {target} tier. Throttling recommended to protect Premium tiers.",
         predicted_sla_risk=forecast.predicted_sla_violation_rate,
         estimated_cost_impact_brl=0.0,
-        estimated_margin_impact_brl=1.0, # Throttling saves cost
+        estimated_margin_impact_brl=1.0,  # Throttling saves cost
         confidence=forecast.confidence,
         dry_run_only=True,
-        created_at=utc_now()
+        created_at=utc_now(),
     )
     db.add(rec)
     return rec

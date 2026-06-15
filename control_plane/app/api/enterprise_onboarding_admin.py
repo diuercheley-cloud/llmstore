@@ -1,20 +1,22 @@
 # Owner: platform-ops
-from typing import Any, List, Optional
+from typing import Any
 
 from app.api.dependencies import get_current_admin
-from app.services.runtime_dependencies import get_db_session
 from app.services.enterprise_onboarding import EnterpriseOnboardingService
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/enterprise/onboarding", tags=["enterprise_onboarding"])
 
+
 class ProjectCreate(BaseModel):
     customer_name: str
     contact_email: str
     project_name: str
     tier: str = "pilot"
+
 
 class ProjectResponse(BaseModel):
     id: str
@@ -23,34 +25,35 @@ class ProjectResponse(BaseModel):
     start_date: Any
     customer_id: str
 
+
 class TaskUpdate(BaseModel):
     status: str
-    notes: Optional[str] = None
+    notes: str | None = None
+
 
 @router.post("/projects", response_model=ProjectResponse)
 async def create_project(
     data: ProjectCreate,
     db: AsyncSession = Depends(get_db_session),
-    admin: Any = Depends(get_current_admin)
+    admin: Any = Depends(get_current_admin),
 ):
     service = EnterpriseOnboardingService(db)
     customer = await service.create_customer(data.customer_name, data.contact_email, data.tier)
     project = await service.create_project(customer.id, data.project_name)
     return project
 
-@router.get("/projects", response_model=List[ProjectResponse])
+
+@router.get("/projects", response_model=list[ProjectResponse])
 async def list_projects(
-    db: AsyncSession = Depends(get_db_session),
-    admin: Any = Depends(get_current_admin)
+    db: AsyncSession = Depends(get_db_session), admin: Any = Depends(get_current_admin)
 ):
     service = EnterpriseOnboardingService(db)
     return await service.list_projects()
 
+
 @router.get("/projects/{id}")
 async def get_project(
-    id: str,
-    db: AsyncSession = Depends(get_db_session),
-    admin: Any = Depends(get_current_admin)
+    id: str, db: AsyncSession = Depends(get_db_session), admin: Any = Depends(get_current_admin)
 ):
     service = EnterpriseOnboardingService(db)
     project = await service.get_project(id)
@@ -58,12 +61,13 @@ async def get_project(
         raise HTTPException(status_code=404, detail="Project not found")
     return project
 
+
 @router.patch("/tasks/{id}")
 async def update_task(
     id: str,
     data: TaskUpdate,
     db: AsyncSession = Depends(get_db_session),
-    admin: Any = Depends(get_current_admin)
+    admin: Any = Depends(get_current_admin),
 ):
     service = EnterpriseOnboardingService(db)
     try:
@@ -71,11 +75,10 @@ async def update_task(
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
+
 @router.post("/projects/{id}/handover-report")
 async def generate_handover_report(
-    id: str,
-    db: AsyncSession = Depends(get_db_session),
-    admin: Any = Depends(get_current_admin)
+    id: str, db: AsyncSession = Depends(get_db_session), admin: Any = Depends(get_current_admin)
 ):
     service = EnterpriseOnboardingService(db)
     try:

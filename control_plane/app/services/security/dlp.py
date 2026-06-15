@@ -1,16 +1,17 @@
 import logging
 import re
 import uuid
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any
 
 from app.models.agents.dlp import AgentDLPViolation
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class DLPBlockException(ValueError):
     pass
+
 
 class DLPService:
     def __init__(self):
@@ -35,7 +36,7 @@ class DLPService:
             return False
         if len(set(digits)) == 1:
             return False
-        
+
         # Validate first digit
         sum_1 = sum(digits[i] * (10 - i) for i in range(9))
         digit_1 = (sum_1 * 10) % 11
@@ -43,7 +44,7 @@ class DLPService:
             digit_1 = 0
         if digit_1 != digits[9]:
             return False
-            
+
         # Validate second digit
         sum_2 = sum(digits[i] * (11 - i) for i in range(10))
         digit_2 = (sum_2 * 10) % 11
@@ -51,7 +52,7 @@ class DLPService:
             digit_2 = 0
         if digit_2 != digits[10]:
             return False
-            
+
         return True
 
     @staticmethod
@@ -60,7 +61,7 @@ class DLPService:
         digits = [int(d) for d in card_str if d.isdigit()]
         if len(digits) < 13 or len(digits) > 19:
             return False
-        
+
         checksum = 0
         reverse_digits = digits[::-1]
         for i, digit in enumerate(reverse_digits):
@@ -71,10 +72,10 @@ class DLPService:
                 checksum += double_digit
             else:
                 checksum += digit
-                
+
         return checksum % 10 == 0
 
-    def scan_text_sync(self, text: str, use_local_model: bool = False) -> List[Dict[str, Any]]:
+    def scan_text_sync(self, text: str, use_local_model: bool = False) -> list[dict[str, Any]]:
         """
         Synchronously scans text for sensitive data.
         Returns a list of findings with start/end indices.
@@ -97,17 +98,21 @@ class DLPService:
                     continue
                 if pii_type == "aws_secret_key":
                     # Smart rule: Check context around the 40 character match, excluding the match itself
-                    context = (text[max(0, start-50):start] + text[end:min(len(text), end+50)]).lower()
+                    context = (
+                        text[max(0, start - 50) : start] + text[end : min(len(text), end + 50)]
+                    ).lower()
                     if not any(word in context for word in ["aws", "secret", "key", "credential"]):
                         continue
 
-                findings.append({
-                    "type": pii_type,
-                    "value": val,
-                    "start": start,
-                    "end": end,
-                    "method": "regex_rules"
-                })
+                findings.append(
+                    {
+                        "type": pii_type,
+                        "value": val,
+                        "start": start,
+                        "end": end,
+                        "method": "regex_rules",
+                    }
+                )
 
         # 2. Local Model Detection (Heuristic classification simulation)
         if use_local_model:
@@ -122,22 +127,24 @@ class DLPService:
         self,
         db: AsyncSession,
         text: str,
-        run_id: Optional[uuid.UUID] = None,
+        run_id: uuid.UUID | None = None,
         tenant_id: str = "default",
         direction: str = "ingress",
         content_type: str = "prompt",
         action: str = "redact",
-        use_local_model: bool = False
-    ) -> Tuple[str, List[Dict[str, Any]]]:
+        use_local_model: bool = False,
+    ) -> tuple[str, list[dict[str, Any]]]:
         """
-        Asynchronously scans text, handles DLP violations by redacting/blocking, 
+        Asynchronously scans text, handles DLP violations by redacting/blocking,
         saves violations in the database, and returns the processed text.
         """
         findings = self.scan_text_sync(text, use_local_model=use_local_model)
         if not findings:
             return text, []
 
-        logger.warning(f"DLP violations detected: {len(findings)} findings in run {run_id} ({direction})")
+        logger.warning(
+            f"DLP violations detected: {len(findings)} findings in run {run_id} ({direction})"
+        )
 
         # Log violation to database
         db_findings = []
@@ -145,13 +152,15 @@ class DLPService:
             # Redact the actual sensitive value in DB to prevent storing PII in audit log
             val = f["value"]
             masked_val = val[:2] + "*" * (len(val) - 4) + val[-2:] if len(val) > 4 else "****"
-            db_findings.append({
-                "type": f["type"],
-                "value": masked_val,
-                "start": f["start"],
-                "end": f["end"],
-                "method": f["method"]
-            })
+            db_findings.append(
+                {
+                    "type": f["type"],
+                    "value": masked_val,
+                    "start": f["start"],
+                    "end": f["end"],
+                    "method": f["method"],
+                }
+            )
 
         violation = AgentDLPViolation(
             run_id=run_id,
@@ -159,14 +168,16 @@ class DLPService:
             direction=direction,
             content_type=content_type,
             findings=db_findings,
-            action_taken=action
+            action_taken=action,
         )
         db.add(violation)
         await db.commit()
 
         if action == "block":
             types = ", ".join(set(f["type"] for f in findings))
-            raise DLPBlockException(f"Data Loss Prevention block: Sensitive data of type [{types}] detected.")
+            raise DLPBlockException(
+                f"Data Loss Prevention block: Sensitive data of type [{types}] detected."
+            )
 
         if action == "redact":
             # Replace findings in text from end to start to preserve indices
@@ -174,9 +185,10 @@ class DLPService:
             redacted_text = text
             for f in sorted_findings:
                 label = f"[{f['type'].upper()}_REDACTED]"
-                redacted_text = redacted_text[:f["start"]] + label + redacted_text[f["end"]:]
+                redacted_text = redacted_text[: f["start"]] + label + redacted_text[f["end"] :]
             return redacted_text, findings
 
         return text, findings
+
 
 dlp_service = DLPService()

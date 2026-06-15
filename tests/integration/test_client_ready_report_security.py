@@ -70,8 +70,15 @@ def test_versionable_doc_no_secrets():
 
 def test_check_secrets_passes_on_client_ready_scripts():
     result = subprocess.run(
-        ["./scripts/validators/check-secrets.sh", "--path", "scripts/validators/generate-client-ready-report.sh"],
-        cwd=ROOT, capture_output=True, text=True, timeout=30,
+        [
+            "./scripts/validators/check-secrets.sh",
+            "--path",
+            "scripts/validators/generate-client-ready-report.sh",
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        timeout=30,
     )
     assert result.returncode == 0, (
         f"check-secrets on generate-client-ready-report.sh failed:\n"
@@ -82,11 +89,13 @@ def test_check_secrets_passes_on_client_ready_scripts():
 def test_check_secrets_on_client_ready_docs():
     result = subprocess.run(
         ["./scripts/validators/check-secrets.sh", "--path", "docs/CLIENT_READY_FINAL_REPORT.md"],
-        cwd=ROOT, capture_output=True, text=True, timeout=30,
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        timeout=30,
     )
     assert result.returncode == 0, (
-        f"check-secrets on CLIENT_READY_FINAL_REPORT.md failed:\n"
-        f"{result.stdout}\n{result.stderr}"
+        f"check-secrets on CLIENT_READY_FINAL_REPORT.md failed:\n{result.stdout}\n{result.stderr}"
     )
 
 
@@ -115,6 +124,9 @@ def test_forbidden_files_not_versioned():
     for fname in forbidden:
         result = subprocess.run(
             ["git", "ls-files", "--error-unmatch", fname],
-            cwd=ROOT, capture_output=True, text=True, timeout=10,
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         assert result.returncode != 0, f"Forbidden file '{fname}' is versioned in git"

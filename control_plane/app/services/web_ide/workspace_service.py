@@ -6,6 +6,7 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
+
 class WorkspaceService:
     def __init__(self, tenant_id: str):
         self.tenant_id = str(tenant_id)
@@ -21,13 +22,15 @@ class WorkspaceService:
         os.makedirs(self.base_path / "tools", exist_ok=True)
         os.makedirs(self.base_path / "plugins", exist_ok=True)
         os.makedirs(self.base_path / "tests", exist_ok=True)
-        
+
         # Create a sample agent manifest if it doesn't exist
         sample_file = self.base_path / "agents" / "sample_agent.yaml"
         if not sample_file.exists():
             with open(sample_file, "w") as f:
-                f.write("name: Sample Agent\nversion: 0.1.0\ninstructions: |\n  You are a helpful assistant.\n")
-        
+                f.write(
+                    "name: Sample Agent\nversion: 0.1.0\ninstructions: |\n  You are a helpful assistant.\n"
+                )
+
         return str(self.base_path)
 
     async def delete_workspace(self):

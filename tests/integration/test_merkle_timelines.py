@@ -30,10 +30,7 @@ class TestMerkleCore:
         assert h1 != h2
 
     def test_merkle_root_deterministic(self):
-        leaves = [
-            canonical_leaf_hash(f"id-{i}", "receipt", {"idx": i})
-            for i in range(4)
-        ]
+        leaves = [canonical_leaf_hash(f"id-{i}", "receipt", {"idx": i}) for i in range(4)]
         root1 = calculate_merkle_root(leaves)
         root2 = calculate_merkle_root(leaves)
         assert root1 == root2
@@ -44,20 +41,14 @@ class TestMerkleCore:
             calculate_merkle_root([])
 
     def test_inclusion_proof_valid(self):
-        leaves = [
-            canonical_leaf_hash(f"id-{i}", "receipt", {"idx": i})
-            for i in range(8)
-        ]
+        leaves = [canonical_leaf_hash(f"id-{i}", "receipt", {"idx": i}) for i in range(8)]
         proof = generate_inclusion_proof(3, leaves)
         assert proof.leaf_index == 3
         assert proof.root == calculate_merkle_root(leaves)
         assert verify_inclusion_proof(proof) is True
 
     def test_inclusion_proof_invalid_after_tamper(self):
-        leaves = [
-            canonical_leaf_hash(f"id-{i}", "receipt", {"idx": i})
-            for i in range(8)
-        ]
+        leaves = [canonical_leaf_hash(f"id-{i}", "receipt", {"idx": i}) for i in range(8)]
         proof = generate_inclusion_proof(3, leaves)
         # Tamper with the leaf hash
         tampered_proof = type(proof)(
@@ -69,10 +60,7 @@ class TestMerkleCore:
         assert verify_inclusion_proof(tampered_proof) is False
 
     def test_inclusion_proof_invalid_root(self):
-        leaves = [
-            canonical_leaf_hash(f"id-{i}", "receipt", {"idx": i})
-            for i in range(8)
-        ]
+        leaves = [canonical_leaf_hash(f"id-{i}", "receipt", {"idx": i}) for i in range(8)]
         proof = generate_inclusion_proof(3, leaves)
         tampered_root = hashlib.sha256(b"wrong-root").hexdigest()
         tampered_proof = type(proof)(
@@ -84,37 +72,25 @@ class TestMerkleCore:
         assert verify_inclusion_proof(tampered_proof) is False
 
     def test_seal_timeline_basic(self):
-        leaves = [
-            canonical_leaf_hash(f"id-{i}", "receipt", {"idx": i})
-            for i in range(4)
-        ]
+        leaves = [canonical_leaf_hash(f"id-{i}", "receipt", {"idx": i}) for i in range(4)]
         root = seal_timeline(leaves)
         assert len(root) == 64
         assert root == calculate_merkle_root(leaves)
 
     def test_seal_timeline_with_previous_root(self):
-        leaves = [
-            canonical_leaf_hash(f"id-{i}", "receipt", {"idx": i})
-            for i in range(4)
-        ]
+        leaves = [canonical_leaf_hash(f"id-{i}", "receipt", {"idx": i}) for i in range(4)]
         previous = hashlib.sha256(b"previous").hexdigest()
         root = seal_timeline(leaves, previous)
         assert len(root) == 64
         assert root != calculate_merkle_root(leaves)
 
     def test_validate_timeline_chain_no_previous(self):
-        leaves = [
-            canonical_leaf_hash(f"id-{i}", "receipt", {"idx": i})
-            for i in range(4)
-        ]
+        leaves = [canonical_leaf_hash(f"id-{i}", "receipt", {"idx": i}) for i in range(4)]
         root = seal_timeline(leaves)
         assert validate_timeline_chain(root, None, None) is True
 
     def test_validate_timeline_chain_valid(self):
-        leaves = [
-            canonical_leaf_hash(f"id-{i}", "receipt", {"idx": i})
-            for i in range(4)
-        ]
+        leaves = [canonical_leaf_hash(f"id-{i}", "receipt", {"idx": i}) for i in range(4)]
         previous = hashlib.sha256(b"previous").hexdigest()
         unchained_root = calculate_merkle_root(leaves)
         chained_root = seal_timeline(leaves, previous)

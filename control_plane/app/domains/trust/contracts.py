@@ -29,4 +29,3 @@ class TrustDomainContract:
         "must not require direct imports from other domain contracts",
         "must avoid mutable cross-domain state as a contract requirement",
     )
-

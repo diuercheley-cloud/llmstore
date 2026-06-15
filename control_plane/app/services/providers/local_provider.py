@@ -27,7 +27,13 @@ class LocalProvider(ProviderAdapter):
             "id": "local-chat-mock",
             "object": "chat.completion",
             "model": payload.get("model", "local-model"),
-            "choices": [{"index": 0, "message": {"role": "assistant", "content": "Local mock response"}, "finish_reason": "stop"}],
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": "Local mock response"},
+                    "finish_reason": "stop",
+                }
+            ],
             "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15},
         }
 
@@ -36,7 +42,13 @@ class LocalProvider(ProviderAdapter):
             "id": "local-resp-mock",
             "object": "response",
             "model": payload.get("model", "local-model"),
-            "output": [{"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": "Local mock response"}]}],
+            "output": [
+                {
+                    "type": "message",
+                    "role": "assistant",
+                    "content": [{"type": "output_text", "text": "Local mock response"}],
+                }
+            ],
             "usage": {"input_tokens": 10, "output_tokens": 5, "total_tokens": 15},
         }
 

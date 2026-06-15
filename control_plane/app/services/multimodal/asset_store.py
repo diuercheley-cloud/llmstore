@@ -2,7 +2,6 @@ import hashlib
 import io
 import uuid
 from pathlib import Path
-from typing import Optional, Tuple
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -18,10 +17,12 @@ class AssetStore:
         self.db = db
         self.settings = get_settings()
         # Setup upload storage directory
-        self.storage_dir = Path(getattr(self.settings, "rag_storage_dir", "/tmp")) / "multimodal_uploads"
+        self.storage_dir = (
+            Path(getattr(self.settings, "rag_storage_dir", "/tmp")) / "multimodal_uploads"
+        )
         self.storage_dir.mkdir(parents=True, exist_ok=True)
 
-    def _sanitize_image_exif(self, file_bytes: bytes, mime_type: str) -> Tuple[bytes, bool]:
+    def _sanitize_image_exif(self, file_bytes: bytes, mime_type: str) -> tuple[bytes, bool]:
         """Strips EXIF metadata from images to prevent metadata leaks."""
         if not mime_type.startswith("image/"):
             return file_bytes, False
@@ -43,13 +44,12 @@ class AssetStore:
         asset_type: str,
         file_bytes: bytes,
         mime_type: str,
-        provenance: str = "uploaded"
+        provenance: str = "uploaded",
     ) -> MultimodalAsset:
         """Stores multimodal asset locally, sanitizes EXIF, and records in database."""
         if not self.settings.multimodal_enabled:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Multimodal service is disabled"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Multimodal service is disabled"
             )
 
         # 1. Strip EXIF data if image
@@ -81,24 +81,21 @@ class AssetStore:
             exif_sanitized=exif_sanitized,
             redaction_status="completed" if exif_sanitized else "skipped",
             created_at=utc_now(),
-            metadata_json={"provider": "local"}
+            metadata_json={"provider": "local"},
         )
         self.db.add(asset)
         await self.db.commit()
         await self.db.refresh(asset)
         return asset
 
-    async def get_asset(self, asset_id: uuid.UUID, tenant_id: str) -> Optional[MultimodalAsset]:
+    async def get_asset(self, asset_id: uuid.UUID, tenant_id: str) -> MultimodalAsset | None:
         """Retrieves asset with strict tenant isolation check."""
         if not self.settings.multimodal_enabled:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Multimodal service is disabled"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Multimodal service is disabled"
             )
 
-        res = await self.db.execute(
-            select(MultimodalAsset).where(MultimodalAsset.id == asset_id)
-        )
+        res = await self.db.execute(select(MultimodalAsset).where(MultimodalAsset.id == asset_id))
         asset = res.scalar_one_or_none()
         if not asset:
             return None
@@ -107,7 +104,7 @@ class AssetStore:
         if asset.tenant_id != tenant_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied: tenant isolation violation"
+                detail="Access denied: tenant isolation violation",
             )
 
         return asset

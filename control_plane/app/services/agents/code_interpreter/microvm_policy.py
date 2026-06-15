@@ -48,7 +48,7 @@ class MicroVMPolicy:
 
     def resolve_provider_name(self) -> str:
         provider = self.settings.agent_code_sandbox_provider or "docker"
-        
+
         # In production-like environments, block 'mock' if simulation is not allowed
         if provider == "mock" and not self.settings.agent_sandbox_allow_simulated_provider:
             raise RuntimeError("Mock sandbox is blocked in production-like environments")
@@ -65,8 +65,10 @@ class MicroVMPolicy:
                     break
 
         if self.settings.agent_code_sandbox_microvm_required and provider not in MICROVM_PROVIDERS:
-            raise RuntimeError(f"{provider.capitalize()} sandbox is blocked because MicroVM isolation is required")
-        
+            raise RuntimeError(
+                f"{provider.capitalize()} sandbox is blocked because MicroVM isolation is required"
+            )
+
         return provider
 
     def ensure_provider_enabled(self, provider: str) -> None:
@@ -81,7 +83,9 @@ class MicroVMPolicy:
         if enabled is None:
             raise RuntimeError(f"Unsupported sandbox provider '{provider}'")
         if not enabled:
-            raise RuntimeError(f"{provider.capitalize()} sandbox provider is disabled by feature flag")
+            raise RuntimeError(
+                f"{provider.capitalize()} sandbox provider is disabled by feature flag"
+            )
 
     def is_fallback_allowed(self) -> bool:
         return not self.settings.agent_code_sandbox_microvm_required
@@ -99,7 +103,9 @@ class MicroVMPolicy:
             return False
         return False
 
-    def build_isolation_profile(self, provider: str, limits: dict[str, Any]) -> SandboxIsolationProfile:
+    def build_isolation_profile(
+        self, provider: str, limits: dict[str, Any]
+    ) -> SandboxIsolationProfile:
         kernel_levels = {
             "mock": "simulated",
             "docker": "container-shared-kernel",

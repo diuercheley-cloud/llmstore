@@ -1,11 +1,11 @@
 # Owner: agent-platform
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.api.deps import require_admin
-from app.services.runtime_dependencies import get_db_session
 from app.services.agents import agent_lifecycle as lifecycle_service
 from app.services.agents import agent_registry as reg_service
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
@@ -13,46 +13,51 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/agent-registry", tags=["agent-registry-admin"])
 
+
 # Pydantic Schemas
 class AgentRegistryEntryCreate(BaseModel):
     name: str = Field(..., max_length=128)
-    semantic_version: Optional[str] = "0.1.0"
-    owner: Optional[str] = Field(None, max_length=128)
-    business_purpose: Optional[str] = None
-    supported_surface_status: Optional[str] = "internal"
-    risk_level: Optional[str] = "low"
-    approval_required: Optional[bool] = False
-    allowed_tenants: Optional[List[str]] = None
-    allowed_models: Optional[List[str]] = None
-    allowed_tools: Optional[List[str]] = None
-    memory_enabled: Optional[bool] = False
-    compliance_tags: Optional[List[str]] = None
-    eval_baseline: Optional[str] = None
-    instructions: Optional[str] = None
+    semantic_version: str | None = "0.1.0"
+    owner: str | None = Field(None, max_length=128)
+    business_purpose: str | None = None
+    supported_surface_status: str | None = "internal"
+    risk_level: str | None = "low"
+    approval_required: bool | None = False
+    allowed_tenants: list[str] | None = None
+    allowed_models: list[str] | None = None
+    allowed_tools: list[str] | None = None
+    memory_enabled: bool | None = False
+    compliance_tags: list[str] | None = None
+    eval_baseline: str | None = None
+    instructions: str | None = None
+
 
 class AgentRegistryEntryUpdate(BaseModel):
-    name: Optional[str] = Field(None, max_length=128)
-    semantic_version: Optional[str] = None
-    owner: Optional[str] = Field(None, max_length=128)
-    business_purpose: Optional[str] = None
-    supported_surface_status: Optional[str] = None
-    risk_level: Optional[str] = None
-    approval_required: Optional[bool] = None
-    allowed_tenants: Optional[List[str]] = None
-    allowed_models: Optional[List[str]] = None
-    allowed_tools: Optional[List[str]] = None
-    memory_enabled: Optional[bool] = None
-    compliance_tags: Optional[List[str]] = None
-    eval_baseline: Optional[str] = None
-    instructions: Optional[str] = None
+    name: str | None = Field(None, max_length=128)
+    semantic_version: str | None = None
+    owner: str | None = Field(None, max_length=128)
+    business_purpose: str | None = None
+    supported_surface_status: str | None = None
+    risk_level: str | None = None
+    approval_required: bool | None = None
+    allowed_tenants: list[str] | None = None
+    allowed_models: list[str] | None = None
+    allowed_tools: list[str] | None = None
+    memory_enabled: bool | None = None
+    compliance_tags: list[str] | None = None
+    eval_baseline: str | None = None
+    instructions: str | None = None
+
 
 class AgentApprovalRequest(BaseModel):
     approved_by: str = Field(..., max_length=128)
-    metadata: Optional[dict] = None
+    metadata: dict | None = None
+
 
 class AgentDeprecationRequest(BaseModel):
     reason: str
-    replacement_agent_id: Optional[uuid.UUID] = None
+    replacement_agent_id: uuid.UUID | None = None
+
 
 class AgentRegistryEntryResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -61,22 +66,23 @@ class AgentRegistryEntryResponse(BaseModel):
     agent_id: uuid.UUID
     name: str
     semantic_version: str
-    owner: Optional[str] = None
-    business_purpose: Optional[str] = None
+    owner: str | None = None
+    business_purpose: str | None = None
     supported_surface_status: str
     risk_level: str
     approval_required: bool
-    allowed_tenants: Optional[List[str]] = None
-    allowed_models: Optional[List[str]] = None
-    allowed_tools: Optional[List[str]] = None
+    allowed_tenants: list[str] | None = None
+    allowed_models: list[str] | None = None
+    allowed_tools: list[str] | None = None
     memory_enabled: bool
     human_approval_required: bool
-    compliance_tags: Optional[List[str]] = None
+    compliance_tags: list[str] | None = None
     status: str
-    eval_baseline: Optional[str] = None
-    instructions: Optional[str] = None
+    eval_baseline: str | None = None
+    instructions: str | None = None
     created_at: str
     updated_at: str
+
 
 class AgentVersionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -84,15 +90,16 @@ class AgentVersionResponse(BaseModel):
     id: uuid.UUID
     agent_registry_id: uuid.UUID
     semantic_version: str
-    instructions: Optional[str] = None
-    allowed_tools: Optional[List[str]] = None
-    allowed_models: Optional[List[str]] = None
+    instructions: str | None = None
+    allowed_tools: list[str] | None = None
+    allowed_models: list[str] | None = None
     created_at: str
 
 
 # Helpers
 def format_datetime(dt) -> str:
     return dt.isoformat() if dt else ""
+
 
 def to_registry_response(entry) -> AgentRegistryEntryResponse:
     return AgentRegistryEntryResponse(
@@ -118,6 +125,7 @@ def to_registry_response(entry) -> AgentRegistryEntryResponse:
         updated_at=format_datetime(entry.updated_at),
     )
 
+
 def to_version_response(version) -> AgentVersionResponse:
     return AgentVersionResponse(
         id=version.id,
@@ -131,59 +139,58 @@ def to_version_response(version) -> AgentVersionResponse:
 
 
 # Endpoints
-@router.get("", response_model=List[AgentRegistryEntryResponse])
+@router.get("", response_model=list[AgentRegistryEntryResponse])
 async def list_agent_registry(
-    status: Optional[str] = None,
-    owner: Optional[str] = None,
+    status: str | None = None,
+    owner: str | None = None,
     limit: int = 100,
     offset: int = 0,
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
 ):
     """Lists versioned agent registry entries with filtering."""
     entries = await reg_service.get_registry_entries(db, limit, offset, status, owner)
     return [to_registry_response(e) for e in entries]
 
+
 @router.post("", response_model=AgentRegistryEntryResponse, status_code=status.HTTP_201_CREATED)
 async def create_agent_registry_entry(
-    payload: AgentRegistryEntryCreate,
-    db: AsyncSession = Depends(get_db_session)
+    payload: AgentRegistryEntryCreate, db: AsyncSession = Depends(get_db_session)
 ):
     """Creates a new catalog entry in draft status."""
     try:
-        entry = await reg_service.create_registry_entry(db, payload.model_dump(), performed_by="admin")
+        entry = await reg_service.create_registry_entry(
+            db, payload.model_dump(), performed_by="admin"
+        )
         return to_registry_response(entry)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.get("/{id}", response_model=AgentRegistryEntryResponse)
-async def get_agent_registry_entry(
-    id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session)
-):
+async def get_agent_registry_entry(id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
     """Fetches details for a specific agent registry entry."""
     entry = await reg_service.get_registry_entry(db, id)
     if not entry:
         raise HTTPException(status_code=404, detail=f"Agent registry entry {id} not found.")
     return to_registry_response(entry)
 
+
 @router.patch("/{id}", response_model=AgentRegistryEntryResponse)
 async def update_agent_registry_entry(
-    id: uuid.UUID,
-    payload: AgentRegistryEntryUpdate,
-    db: AsyncSession = Depends(get_db_session)
+    id: uuid.UUID, payload: AgentRegistryEntryUpdate, db: AsyncSession = Depends(get_db_session)
 ):
     """Updates metadata and potentially registers a new version for an entry."""
     try:
-        entry = await reg_service.update_registry_entry(db, id, payload.model_dump(exclude_unset=True), performed_by="admin")
+        entry = await reg_service.update_registry_entry(
+            db, id, payload.model_dump(exclude_unset=True), performed_by="admin"
+        )
         return to_registry_response(entry)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.post("/{id}/submit-review", response_model=AgentRegistryEntryResponse)
-async def submit_agent_review(
-    id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session)
-):
+async def submit_agent_review(id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
     """Transitions status from draft -> review."""
     try:
         entry = await lifecycle_service.submit_review(db, id, performed_by="admin")
@@ -191,11 +198,10 @@ async def submit_agent_review(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.post("/{id}/approve", response_model=AgentRegistryEntryResponse)
 async def approve_agent_registry_entry(
-    id: uuid.UUID,
-    payload: AgentApprovalRequest,
-    db: AsyncSession = Depends(get_db_session)
+    id: uuid.UUID, payload: AgentApprovalRequest, db: AsyncSession = Depends(get_db_session)
 ):
     """Transitions status from review -> approved. Enforces risk-level rules."""
     try:
@@ -206,11 +212,9 @@ async def approve_agent_registry_entry(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.post("/{id}/activate", response_model=AgentRegistryEntryResponse)
-async def activate_agent_registry_entry(
-    id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session)
-):
+async def activate_agent_registry_entry(id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
     """Transitions status from approved/paused -> active. Enforces governance gates."""
     try:
         entry = await lifecycle_service.activate_agent(db, id, performed_by="admin")
@@ -218,11 +222,9 @@ async def activate_agent_registry_entry(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.post("/{id}/pause", response_model=AgentRegistryEntryResponse)
-async def pause_agent_registry_entry(
-    id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session)
-):
+async def pause_agent_registry_entry(id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
     """Transitions status from active -> paused."""
     try:
         entry = await lifecycle_service.pause_agent(db, id, performed_by="admin")
@@ -230,26 +232,27 @@ async def pause_agent_registry_entry(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.post("/{id}/deprecate", response_model=AgentRegistryEntryResponse)
 async def deprecate_agent_registry_entry(
-    id: uuid.UUID,
-    payload: AgentDeprecationRequest,
-    db: AsyncSession = Depends(get_db_session)
+    id: uuid.UUID, payload: AgentDeprecationRequest, db: AsyncSession = Depends(get_db_session)
 ):
     """Transitions status from active -> deprecated."""
     try:
         entry = await lifecycle_service.deprecate_agent(
-            db, id, reason=payload.reason, replacement_id=payload.replacement_agent_id, performed_by="admin"
+            db,
+            id,
+            reason=payload.reason,
+            replacement_id=payload.replacement_agent_id,
+            performed_by="admin",
         )
         return to_registry_response(entry)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.post("/{id}/archive", response_model=AgentRegistryEntryResponse)
-async def archive_agent_registry_entry(
-    id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session)
-):
+async def archive_agent_registry_entry(id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
     """Transitions status from deprecated -> archived."""
     try:
         entry = await lifecycle_service.archive_agent(db, id, performed_by="admin")
@@ -257,52 +260,52 @@ async def archive_agent_registry_entry(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/{id}/versions", response_model=List[AgentVersionResponse])
-async def get_agent_registry_versions(
-    id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session)
-):
+
+@router.get("/{id}/versions", response_model=list[AgentVersionResponse])
+async def get_agent_registry_versions(id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
     """Retrieves all semantic versions registered for a given agent entry."""
     versions = await reg_service.get_agent_versions(db, id)
     return [to_version_response(v) for v in versions]
 
+
 @router.get("/{id}/policy-diff")
 async def get_agent_policy_diff(
-    id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session),
-    admin: Any = Depends(require_admin)
-) -> Dict[str, Any]:
+    id: uuid.UUID, db: AsyncSession = Depends(get_db_session), admin: Any = Depends(require_admin)
+) -> dict[str, Any]:
     return {
         "agent_id": str(id),
         "policy_diff": {
             "instructions": {"old": "", "new": ""},
             "allowed_tools": {"old": [], "new": []},
-            "memory_policy": {"old": {}, "new": {}}
-        }
+            "memory_policy": {"old": {}, "new": {}},
+        },
     }
+
 
 @router.get("/{id}/lineage")
 async def get_agent_lineage(
-    id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session),
-    admin: Any = Depends(require_admin)
-) -> Dict[str, Any]:
+    id: uuid.UUID, db: AsyncSession = Depends(get_db_session), admin: Any = Depends(require_admin)
+) -> dict[str, Any]:
     from app.models.agents.agents import AgentLifecycleEvent, AgentVersion
-    
+
     # 1. Fetch lifecycle events
-    stmt_events = select(AgentLifecycleEvent).where(
-        AgentLifecycleEvent.agent_registry_id == id
-    ).order_by(AgentLifecycleEvent.created_at.desc())
+    stmt_events = (
+        select(AgentLifecycleEvent)
+        .where(AgentLifecycleEvent.agent_registry_id == id)
+        .order_by(AgentLifecycleEvent.created_at.desc())
+    )
     res_events = await db.execute(stmt_events)
     events = res_events.scalars().all()
-    
+
     # 2. Fetch versions
-    stmt_versions = select(AgentVersion).where(
-        AgentVersion.agent_registry_id == id
-    ).order_by(AgentVersion.created_at.desc())
+    stmt_versions = (
+        select(AgentVersion)
+        .where(AgentVersion.agent_registry_id == id)
+        .order_by(AgentVersion.created_at.desc())
+    )
     res_versions = await db.execute(stmt_versions)
     versions = res_versions.scalars().all()
-    
+
     return {
         "agent_id": str(id),
         "events": [
@@ -313,19 +316,16 @@ async def get_agent_lineage(
                 "to_status": e.to_status,
                 "performed_by": e.performed_by,
                 "notes": e.notes,
-                "created_at": e.created_at.isoformat()
+                "created_at": e.created_at.isoformat(),
             }
             for e in events
         ],
         "versions": [
-            {
-                "id": str(v.id),
-                "version": v.semantic_version,
-                "created_at": v.created_at.isoformat()
-            }
+            {"id": str(v.id), "version": v.semantic_version, "created_at": v.created_at.isoformat()}
             for v in versions
-        ]
+        ],
     }
+
 
 @router.post("/{id}/promote")
 async def promote_agent(
@@ -333,14 +333,10 @@ async def promote_agent(
     target_status: str = Body(..., embed=True),
     reason: str = Body(..., embed=True),
     db: AsyncSession = Depends(get_db_session),
-    admin: Any = Depends(require_admin)
-) -> Dict[str, Any]:
+    admin: Any = Depends(require_admin),
+) -> dict[str, Any]:
     # Promotion check logic
     # 1. Eval pass?
     # 2. Approval?
     # 3. No critical incidents?
-    return {
-        "agent_id": str(id),
-        "new_status": target_status,
-        "promotion_id": str(uuid.uuid4())
-    }
+    return {"agent_id": str(id), "new_status": target_status, "promotion_id": str(uuid.uuid4())}

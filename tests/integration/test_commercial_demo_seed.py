@@ -41,8 +41,9 @@ class TestCommercialDemoSeedScript:
         )
         assert result.returncode != 0
         messages = result.stdout + result.stderr
-        assert any(m in messages for m in ["ERRO", "ADMIN_TOKEN", "stack não encontrada", "refused"]), \
-            f"Expected error, got: {messages[:200]}"
+        assert any(
+            m in messages for m in ["ERRO", "ADMIN_TOKEN", "stack não encontrada", "refused"]
+        ), f"Expected error, got: {messages[:200]}"
 
     def test_demo_commercial_clients_env_not_committed(self):
         gitignore = ROOT / ".gitignore"
@@ -68,7 +69,9 @@ class TestCommercialDemoSeedScript:
 
 @pytest.mark.asyncio
 class TestCommercialDemoSeedAPI:
-    async def test_create_demo_client_via_api(self, admin_client: AsyncClient, admin_token_headers: dict[str, str]):
+    async def test_create_demo_client_via_api(
+        self, admin_client: AsyncClient, admin_token_headers: dict[str, str]
+    ):
         metadata = json.dumps({"demo": True, "scenario": "test-clinica", "ficticio": True})
         payload = {
             "name": "Test Demo Clinica",
@@ -88,17 +91,20 @@ class TestCommercialDemoSeedAPI:
         assert "id" in data
         assert data["name"] == "Test Demo Clinica"
 
-    async def test_demo_client_has_metadata(self, admin_client: AsyncClient, admin_token_headers: dict[str, str]):
+    async def test_demo_client_has_metadata(
+        self, admin_client: AsyncClient, admin_token_headers: dict[str, str]
+    ):
         response = await admin_client.get("/admin/clients", headers=admin_token_headers)
         assert response.status_code == 200
         clients = response.json()
         demo_clients = [
-            c for c in clients
-            if c.get("metadata_json") and "demo" in c["metadata_json"]
+            c for c in clients if c.get("metadata_json") and "demo" in c["metadata_json"]
         ]
         assert len(demo_clients) >= 0  # May be 0 if not seeded, but structure is valid
 
-    async def test_create_demo_plan_via_api(self, admin_client: AsyncClient, admin_token_headers: dict[str, str]):
+    async def test_create_demo_plan_via_api(
+        self, admin_client: AsyncClient, admin_token_headers: dict[str, str]
+    ):
         payload = {
             "code": "test-demo-plan",
             "name": "Test Demo Plan",
@@ -125,7 +131,9 @@ class TestCommercialDemoSeedAPI:
         data = response.json()
         assert data["code"] == "test-demo-plan"
 
-    async def test_generate_demo_invoice(self, admin_client: AsyncClient, admin_token_headers: dict[str, str]):
+    async def test_generate_demo_invoice(
+        self, admin_client: AsyncClient, admin_token_headers: dict[str, str]
+    ):
         payload = {
             "due_in_days": 7,
             "payment_method": "manual_pix",
@@ -140,7 +148,9 @@ class TestCommercialDemoSeedAPI:
         assert response.status_code != 401
         assert response.status_code != 403
 
-    async def test_demo_api_key_creation(self, admin_client: AsyncClient, admin_token_headers: dict[str, str]):
+    async def test_demo_api_key_creation(
+        self, admin_client: AsyncClient, admin_token_headers: dict[str, str]
+    ):
         response = await admin_client.get("/admin/clients", headers=admin_token_headers)
         clients = response.json()
         if not clients:
@@ -173,7 +183,11 @@ class TestCommercialDemoSeedDocs:
         assert flow.exists()
 
         readme_content = readme.read_text()
-        assert "Clínica" in readme_content or "clínica" in readme_content or "clinica" in readme_content.lower()
+        assert (
+            "Clínica" in readme_content
+            or "clínica" in readme_content
+            or "clinica" in readme_content.lower()
+        )
         assert "Jurídico" in readme_content or "jurídico" in readme_content
 
     def test_demo_flow_has_all_scenarios(self):

@@ -1,3 +1,14 @@
+# Stage 0: Build frontend static assets
+FROM node:20-slim AS frontend-builder
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY frontend/admin/package.json ./frontend/admin/
+COPY frontend/client/package.json ./frontend/client/
+COPY sdk/node/package.json ./sdk/node/
+RUN npm ci
+COPY frontend/admin ./frontend/admin
+RUN npm run build --workspace=frontend/admin
+
 FROM python:3.12-slim AS python-builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -76,6 +87,7 @@ COPY --from=llama-builder /build/llama.cpp/build/bin/ /opt/llama/bin/
 
 COPY docker/data-plane/entrypoint.sh /opt/quickstart/llama-entrypoint.sh
 COPY control_plane /app/control_plane
+COPY --from=frontend-builder /app/control_plane/app/static/admin-v2 /app/control_plane/app/static/admin-v2
 COPY scripts /app/scripts
 COPY config /config
 COPY VERSION /app/VERSION

@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, patch
 import httpx
 import pytest
 from app.core.config import get_settings
-from app.models.core.api_key import ApiKey
 from app.models.billing.billing_plan import BillingPlan
+from app.models.core.api_key import ApiKey
 from app.models.core.client import Client
 from app.models.core.model_registry import ModelRegistry
 from app.services.backend_registry import ensure_default_backends
@@ -63,7 +63,9 @@ async def test_vllm_chat_request_mapeado(monkeypatch):
     get_settings.cache_clear()
 
     mock_resp = MagicMock(status_code=200)
-    mock_resp.json = MagicMock(return_value={"choices": [{"message": {"role": "assistant", "content": "Hello world"}}]})
+    mock_resp.json = MagicMock(
+        return_value={"choices": [{"message": {"role": "assistant", "content": "Hello world"}}]}
+    )
 
     with patch("httpx.AsyncClient.post", return_value=mock_resp) as mock_post:
         service = VllmBackendService()
@@ -71,7 +73,7 @@ async def test_vllm_chat_request_mapeado(monkeypatch):
             {"messages": [{"role": "user", "content": "hi"}], "model": "default"}
         )
         assert res["choices"][0]["message"]["content"] == "Hello world"
-        
+
         # Verify model was mapped to default configuration
         posted_payload = mock_post.call_args[1]["json"]
         assert posted_payload["model"] == "facebook/opt-125m"
@@ -132,6 +134,7 @@ async def test_vllm_token_usage_registrado(admin_client, admin_token_headers, mo
         await ensure_default_model(session)
         await session.commit()
         from sqlalchemy import select
+
         vllm_model_res = await session.execute(
             select(ModelRegistry).where(ModelRegistry.model_alias == "vllm-default")
         )
@@ -139,19 +142,21 @@ async def test_vllm_token_usage_registrado(admin_client, admin_token_headers, mo
 
         # Mock the real call payload to return typical openai structure
         mock_resp = MagicMock(status_code=200)
-        mock_resp.json = MagicMock(return_value={
-            "choices": [{"message": {"role": "assistant", "content": "mock text output"}}],
-            "usage": {"prompt_tokens": 10, "completion_tokens": 15, "total_tokens": 25}
-        })
+        mock_resp.json = MagicMock(
+            return_value={
+                "choices": [{"message": {"role": "assistant", "content": "mock text output"}}],
+                "usage": {"prompt_tokens": 10, "completion_tokens": 15, "total_tokens": 25},
+            }
+        )
 
         with patch("httpx.AsyncClient.post", return_value=mock_resp):
             resp = await admin_client.post(
                 "/v1/chat/completions",
                 json={
                     "model": vllm_model.model_id,
-                    "messages": [{"role": "user", "content": "hi"}]
+                    "messages": [{"role": "user", "content": "hi"}],
                 },
-                headers={"Authorization": "Bearer sk-vllm.val"}
+                headers={"Authorization": "Bearer sk-vllm.val"},
             )
             assert resp.status_code == 200
             data = resp.json()
@@ -161,9 +166,11 @@ async def test_vllm_token_usage_registrado(admin_client, admin_token_headers, mo
 
 
 @pytest.mark.asyncio
-async def test_vllm_fallback_para_outro_backend_funciona(admin_client, admin_token_headers, monkeypatch, session):
+async def test_vllm_fallback_para_outro_backend_funciona(
+    admin_client, admin_token_headers, monkeypatch, session
+):
     monkeypatch.setenv("VLLM_BACKEND_ENABLED", "true")
-    monkeypatch.setenv("VLLM_BASE_URL", "http://127.0.0.1:9090/v1") # Definitely offline
+    monkeypatch.setenv("VLLM_BASE_URL", "http://127.0.0.1:9090/v1")  # Definitely offline
     get_settings.cache_clear()
 
     # Set up client and API key
@@ -209,6 +216,7 @@ async def test_vllm_fallback_para_outro_backend_funciona(admin_client, admin_tok
     await ensure_default_model(session)
     await session.commit()
     from sqlalchemy import select
+
     vllm_model_res = await session.execute(
         select(ModelRegistry).where(ModelRegistry.model_alias == "vllm-default")
     )
@@ -216,6 +224,7 @@ async def test_vllm_fallback_para_outro_backend_funciona(admin_client, admin_tok
 
     # Add fallback route to gemma-local backend (which we mock to respond successfully)
     from app.models.core.model_backend_route import ModelBackendRoute
+
     fallback_route = ModelBackendRoute(
         model_registry_id=vllm_model.id,
         inference_backend_id=backends["gemma-local"].id,
@@ -236,10 +245,14 @@ async def test_vllm_fallback_para_outro_backend_funciona(admin_client, admin_tok
                 raise httpx.ConnectError("Connection refused")
             # Fallback gemma-local succeeds
             mock_success = MagicMock(status_code=200)
-            mock_success.json = MagicMock(return_value={
-                "choices": [{"message": {"role": "assistant", "content": "hello from fallback"}}],
-                "usage": {"prompt_tokens": 5, "completion_tokens": 10, "total_tokens": 15}
-            })
+            mock_success.json = MagicMock(
+                return_value={
+                    "choices": [
+                        {"message": {"role": "assistant", "content": "hello from fallback"}}
+                    ],
+                    "usage": {"prompt_tokens": 5, "completion_tokens": 10, "total_tokens": 15},
+                }
+            )
             return mock_success
 
         with patch("httpx.AsyncClient.post", side_effect=side_effect) as mock_post:
@@ -247,9 +260,9 @@ async def test_vllm_fallback_para_outro_backend_funciona(admin_client, admin_tok
                 "/v1/chat/completions",
                 json={
                     "model": vllm_model.model_id,
-                    "messages": [{"role": "user", "content": "hi"}]
+                    "messages": [{"role": "user", "content": "hi"}],
                 },
-                headers={"Authorization": "Bearer sk-fallback.val"}
+                headers={"Authorization": "Bearer sk-fallback.val"},
             )
             assert resp.status_code == 200
             data = resp.json()

@@ -11,7 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 def compute_deterministic_hash(*, fields: dict, version: str = "v1") -> str:
     raw = json.dumps(fields, sort_keys=True, ensure_ascii=False, default=str)
-    return hashlib.sha256(f"{version}:{raw}".encode("utf-8")).hexdigest()
+    return hashlib.sha256(f"{version}:{raw}".encode()).hexdigest()
 
 
 class FailureSignal(Base):
@@ -28,7 +28,9 @@ class FailureSignal(Base):
     payload_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     immutable_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
     previous_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
 
 class FailureForecast(Base):
@@ -44,7 +46,9 @@ class FailureForecast(Base):
     deterministic_version: Mapped[str | None] = mapped_column(String(16), nullable=True)
     input_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     immutable_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
 
 class FailureRiskAssessment(Base):
@@ -59,4 +63,6 @@ class FailureRiskAssessment(Base):
     dry_run: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     advisory_only: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     immutable_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )

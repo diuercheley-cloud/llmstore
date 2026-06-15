@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 import pytest_asyncio
@@ -17,14 +17,19 @@ async def session(isolated_db_url):
         yield s
     await engine.dispose()
 
+
 @pytest.mark.asyncio
 async def test_checkpoint_consistency_match(session: AsyncSession):
-    start = datetime.now(timezone.utc) - timedelta(hours=5)
-    end = datetime.now(timezone.utc)
-    
-    cp1 = await transparency_gossip.create_consistency_checkpoint(session, "merkle_timeline", start, end)
-    cp2 = await transparency_gossip.create_consistency_checkpoint(session, "merkle_timeline", start, end)
-    
+    start = datetime.now(UTC) - timedelta(hours=5)
+    end = datetime.now(UTC)
+
+    cp1 = await transparency_gossip.create_consistency_checkpoint(
+        session, "merkle_timeline", start, end
+    )
+    cp2 = await transparency_gossip.create_consistency_checkpoint(
+        session, "merkle_timeline", start, end
+    )
+
     # Since they have same start/end and no timelines exist in DB during test, they should have same root_hash (placeholder)
     # or at least we test the comparison function
     comparison = await transparency_gossip.compare_checkpoints(session, cp1.id, cp2.id)

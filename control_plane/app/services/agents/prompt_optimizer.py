@@ -5,8 +5,9 @@ Uses LLM-as-judge to identify weaknesses and generate optimized variants.
 """
 
 import logging
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from app.core.config import get_settings
 
@@ -29,8 +30,8 @@ class EvalResult:
     passed: int
     failed: int
     avg_latency_ms: float
-    failures_by_type: Dict[str, int] = field(default_factory=dict)
-    samples: List[Dict[str, Any]] = field(default_factory=list)
+    failures_by_type: dict[str, int] = field(default_factory=dict)
+    samples: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
@@ -48,7 +49,7 @@ class PromptOptimizationSuggestion:
 @dataclass
 class PromptVariant:
     system_prompt: str
-    changes: List[str] = field(default_factory=list)
+    changes: list[str] = field(default_factory=list)
     expected_improvement: str = ""
     score: float = 0.0
 
@@ -59,8 +60,8 @@ class OptimizationReport:
     agent_version: str
     current_system_prompt: str
     eval_results: EvalResult
-    suggestions: List[PromptOptimizationSuggestion] = field(default_factory=list)
-    variants: List[PromptVariant] = field(default_factory=list)
+    suggestions: list[PromptOptimizationSuggestion] = field(default_factory=list)
+    variants: list[PromptVariant] = field(default_factory=list)
     overall_score: float = 0.0
     recommended_action: str = ""
 
@@ -123,7 +124,7 @@ class PromptOptimizationEngine:
     and alternative prompt variants.
     """
 
-    def __init__(self, llm_judge_fn: Optional[Callable] = None):
+    def __init__(self, llm_judge_fn: Callable | None = None):
         self.settings = get_settings()
         self.llm = llm_judge_fn
 
@@ -146,13 +147,15 @@ class PromptOptimizationEngine:
                 should_suggest = True
             elif pattern_id == "refusal_leak":
                 refusal_count = sum(
-                    phrase in prompt_lower for phrase in ["cannot", "unable", "i am sorry", "as an ai"]
+                    phrase in prompt_lower
+                    for phrase in ["cannot", "unable", "i am sorry", "as an ai"]
                 )
                 if refusal_count >= 2:
                     should_suggest = True
             elif pattern_id == "no_safety_guidelines":
                 has_safety = any(
-                    phrase in prompt_lower for phrase in ["safety", "harmful", "refuse", "never", "guardrail"]
+                    phrase in prompt_lower
+                    for phrase in ["safety", "harmful", "refuse", "never", "guardrail"]
                 )
                 should_suggest = not has_safety
             elif pattern_id == "no_chain_of_thought":
@@ -168,7 +171,8 @@ class PromptOptimizationEngine:
                 should_suggest = not has_examples
             elif pattern_id == "no_persona":
                 has_persona = any(
-                    phrase in prompt_lower for phrase in ["you are a", "you are an", "act as", "role:"]
+                    phrase in prompt_lower
+                    for phrase in ["you are a", "you are an", "act as", "role:"]
                 )
                 should_suggest = not has_persona
             elif pattern_id == "vague_constraints":
@@ -179,18 +183,23 @@ class PromptOptimizationEngine:
                 should_suggest = not has_constraints
             elif pattern_id == "format_inconsistency":
                 has_format = any(
-                    phrase in prompt_lower for phrase in ["output format", "schema", "exactly", "must be"]
+                    phrase in prompt_lower
+                    for phrase in ["output format", "schema", "exactly", "must be"]
                 )
-                should_suggest = not has_format and eval_results.failures_by_type.get("format", 0) > 0
+                should_suggest = (
+                    not has_format and eval_results.failures_by_type.get("format", 0) > 0
+                )
 
             if should_suggest:
-                suggestions.append(PromptOptimizationSuggestion(
-                    category=pattern_id,
-                    severity=pattern["severity"],
-                    title=pattern["description"],
-                    description=pattern["suggestion"],
-                    priority=self._severity_to_priority(pattern["severity"]),
-                ))
+                suggestions.append(
+                    PromptOptimizationSuggestion(
+                        category=pattern_id,
+                        severity=pattern["severity"],
+                        title=pattern["description"],
+                        description=pattern["suggestion"],
+                        priority=self._severity_to_priority(pattern["severity"]),
+                    )
+                )
 
         suggestions.sort(key=lambda s: s.priority, reverse=True)
         report.suggestions = suggestions
@@ -206,14 +215,12 @@ class PromptOptimizationEngine:
     def _severity_to_priority(self, severity: str) -> int:
         return {"high": 100, "medium": 50, "low": 10}.get(severity, 0)
 
-    def _compute_overall_score(self, eval_results: EvalResult,
-                                suggestions: List[PromptOptimizationSuggestion]) -> float:
+    def _compute_overall_score(
+        self, eval_results: EvalResult, suggestions: list[PromptOptimizationSuggestion]
+    ) -> float:
         base_score = eval_results.pass_rate * 100
 
-        penalty = sum(
-            {"high": 15, "medium": 8, "low": 3}.get(s.severity, 0)
-            for s in suggestions
-        )
+        penalty = sum({"high": 15, "medium": 8, "low": 3}.get(s.severity, 0) for s in suggestions)
 
         if eval_results.avg_latency_ms > 15000:
             penalty += 10
@@ -222,8 +229,9 @@ class PromptOptimizationEngine:
 
         return max(0, min(100, base_score - penalty))
 
-    def _recommend_action(self, score: float,
-                           suggestions: List[PromptOptimizationSuggestion]) -> str:
+    def _recommend_action(
+        self, score: float, suggestions: list[PromptOptimizationSuggestion]
+    ) -> str:
         high_priority = [s for s in suggestions if s.severity == "high"]
         if score >= 90 and not high_priority:
             return "No changes needed — prompt is well-optimized"
@@ -234,8 +242,9 @@ class PromptOptimizationEngine:
         else:
             return "Major overhaul required — significant issues detected"
 
-    def _generate_variants(self, system_prompt: str,
-                            suggestions: List[PromptOptimizationSuggestion]) -> List[PromptVariant]:
+    def _generate_variants(
+        self, system_prompt: str, suggestions: list[PromptOptimizationSuggestion]
+    ) -> list[PromptVariant]:
         variants = []
 
         high_suggestions = [s for s in suggestions if s.severity == "high"]
@@ -260,12 +269,14 @@ class PromptOptimizationEngine:
                     changes.append("Reduced refusal language, added positive framing")
 
             if changes:
-                variants.append(PromptVariant(
-                    system_prompt=new_prompt,
-                    changes=changes,
-                    expected_improvement="Reduced false refusals, improved safety posture",
-                    score=85.0,
-                ))
+                variants.append(
+                    PromptVariant(
+                        system_prompt=new_prompt,
+                        changes=changes,
+                        expected_improvement="Reduced false refusals, improved safety posture",
+                        score=85.0,
+                    )
+                )
 
         if suggestions:
             medium = [s for s in suggestions if s.severity == "medium"]
@@ -283,20 +294,25 @@ class PromptOptimizationEngine:
                         )
                         changes.append("Added few-shot examples")
                     elif s.category == "no_chain_of_thought":
-                        new_prompt = new_prompt.replace(
-                            "Answer:", "Think step-by-step, then Answer:"
-                        ) if "Answer:" in new_prompt else (
-                            new_prompt + "\n\nFor complex questions, reason step-by-step before answering."
+                        new_prompt = (
+                            new_prompt.replace("Answer:", "Think step-by-step, then Answer:")
+                            if "Answer:" in new_prompt
+                            else (
+                                new_prompt
+                                + "\n\nFor complex questions, reason step-by-step before answering."
+                            )
                         )
                         changes.append("Added chain-of-thought instruction")
 
                 if changes:
-                    variants.append(PromptVariant(
-                        system_prompt=new_prompt,
-                        changes=changes,
-                        expected_improvement="Better accuracy on complex tasks, more consistent formatting",
-                        score=75.0,
-                    ))
+                    variants.append(
+                        PromptVariant(
+                            system_prompt=new_prompt,
+                            changes=changes,
+                            expected_improvement="Better accuracy on complex tasks, more consistent formatting",
+                            score=75.0,
+                        )
+                    )
 
         return variants
 
@@ -309,7 +325,7 @@ class PromptOptimizerAPI:
     def __init__(self, engine: PromptOptimizationEngine):
         self.engine = engine
 
-    async def analyze(self, system_prompt: str, eval_results: Dict) -> Dict:
+    async def analyze(self, system_prompt: str, eval_results: dict) -> dict:
         er = EvalResult(
             suite_name=eval_results.get("suite_name", "unknown"),
             pass_rate=eval_results.get("pass_rate", 0.0),

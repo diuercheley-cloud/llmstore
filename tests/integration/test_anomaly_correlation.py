@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from app.models.commercial.commercial_runtime_fabric import CommercialRuntimeFabricEvent
@@ -16,7 +16,7 @@ async def test_anomaly_correlation_drift(session: AsyncSession):
         source_node_id="node-1",
         component="workflow",
         details={"drift_id": "drift-123"},
-        created_at=datetime.now(timezone.utc)
+        created_at=datetime.now(UTC),
     )
     session.add(event)
     await session.commit()

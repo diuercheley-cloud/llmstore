@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class PaymentReconciliationService:
     @staticmethod
     async def process_webhook(db: AsyncSession, provider_name: str, payload: bytes, signature: str):

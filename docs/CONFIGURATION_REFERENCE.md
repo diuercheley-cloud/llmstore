@@ -775,6 +775,7 @@ This document is generated from `BaseAppConfig`. Required values are marked as `
 | --- | --- | --- | --- | --- |
 | CONTENT_MODERATION_ENABLED | content_moderation_enabled | bool | true | no |
 | CONTENT_MODERATION_TOXICITY_THRESHOLD | content_moderation_toxicity_threshold | float | 0.7 | no |
+| CONTENT_SECURITY_POLICY | content_security_policy | str | default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ws: wss:; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none' | no |
 
 ## `control`
 
@@ -1572,6 +1573,18 @@ This document is generated from `BaseAppConfig`. Required values are marked as `
 | Env | Field | Type | Default | Secret |
 | --- | --- | --- | --- | --- |
 | TOOL_ARGUMENT_PREVIEW_CHARS | tool_argument_preview_chars | int | 160 | no |
+
+## `trust`
+
+| Env | Field | Type | Default | Secret |
+| --- | --- | --- | --- | --- |
+| TRUST_X_FORWARDED_FOR | trust_x_forwarded_for | bool | false | no |
+
+## `trusted`
+
+| Env | Field | Type | Default | Secret |
+| --- | --- | --- | --- | --- |
+| TRUSTED_PROXIES | trusted_proxies | str | - | no |
 
 ## `tts`
 

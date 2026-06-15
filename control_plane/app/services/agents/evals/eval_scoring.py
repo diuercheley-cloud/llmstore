@@ -1,7 +1,6 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import List, Tuple
 
 from app.models.agents.agents import AgentEvalResult, AgentLLMJudgeRun
 from app.services.agents.evals.red_team import RedTeamScanner
@@ -10,11 +9,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class EvalScoringManager:
     """
     Manages evaluation scoring and promotion gates.
     Ensures quality and safety thresholds are met before promotion.
     """
+
     def __init__(self, db: AsyncSession):
         self.db = db
 
@@ -26,25 +27,33 @@ class EvalScoringManager:
         stmt = select(AgentEvalResult).where(AgentEvalResult.run_id == run_id)
         res = await self.db.execute(stmt)
         results = list(res.scalars().all())
-        
+
         if not results:
             return 0.0
 
         total_score = 0.0
         for result in results:
             # Prefer LLM judge score if available (scaled 1-10 to 0-1)
-            stmt_judge = select(AgentLLMJudgeRun).where(AgentLLMJudgeRun.eval_result_id == result.id)
+            stmt_judge = select(AgentLLMJudgeRun).where(
+                AgentLLMJudgeRun.eval_result_id == result.id
+            )
             judge_res = await self.db.execute(stmt_judge)
             judge = judge_res.scalar_one_or_none()
-            
+
             if judge:
-                total_score += (judge.score / 10.0)
+                total_score += judge.score / 10.0
             else:
                 total_score += 1.0 if result.passed else 0.0
 
         return total_score / len(results)
 
-    async def evaluate_promotion_readiness(self, agent_id: uuid.UUID, run_id: uuid.UUID, threshold: float = 0.8, allow_mock: bool = False) -> Tuple[bool, List[str]]:
+    async def evaluate_promotion_readiness(
+        self,
+        agent_id: uuid.UUID,
+        run_id: uuid.UUID,
+        threshold: float = 0.8,
+        allow_mock: bool = False,
+    ) -> tuple[bool, list[str]]:
         """
         Validates if an agent is eligible for production promotion.
         Returns (is_ready, reasons).
@@ -60,9 +69,10 @@ class EvalScoringManager:
 
         # 2. Check for mock judge usage
         if not allow_mock:
-            stmt = select(AgentLLMJudgeRun).join(AgentEvalResult).where(
-                AgentEvalResult.run_id == run_id, 
-                AgentLLMJudgeRun.is_mock == True
+            stmt = (
+                select(AgentLLMJudgeRun)
+                .join(AgentEvalResult)
+                .where(AgentEvalResult.run_id == run_id, AgentLLMJudgeRun.is_mock == True)
             )
             res = await self.db.execute(stmt)
             if res.scalars().first():
@@ -80,11 +90,13 @@ class EvalScoringManager:
 
         return is_ready, reasons
 
-    async def check_regression(self, agent_id: uuid.UUID, current_run_id: uuid.UUID, baseline_run_id: uuid.UUID) -> bool:
+    async def check_regression(
+        self, agent_id: uuid.UUID, current_run_id: uuid.UUID, baseline_run_id: uuid.UUID
+    ) -> bool:
         """
         Detects if the current run has regressed compared to a baseline.
         """
         current_score = await self.calculate_run_score(current_run_id)
         baseline_score = await self.calculate_run_score(baseline_run_id)
-        
+
         return current_score < baseline_score

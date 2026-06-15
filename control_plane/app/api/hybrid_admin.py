@@ -1,10 +1,10 @@
 # Owner: platform-ops
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from app.core.config import get_settings
-from app.services.runtime_dependencies import get_db_session
 from app.models.billing.ai_wallet import AiWallet
+from app.models.billing.request_financial import RequestFinancial
 from app.models.commercial.commercial_rag_vault import (
     CommercialRAGDocument,
     CommercialRAGLegalHold,
@@ -20,7 +20,6 @@ from app.models.commercial.commercial_retrieval_proofs import (
 from app.models.rag.rag_collection import RAGCollection
 from app.models.rag.rag_document import RAGDocument
 from app.models.rag.rag_document_chunk import RAGDocumentChunk
-from app.models.billing.request_financial import RequestFinancial
 from app.services.auth import require_admin
 from app.services.billing.pricing_engine import get_provider_pricing_config
 from app.services.providers.registry import (
@@ -29,6 +28,7 @@ from app.services.providers.registry import (
     get_providers,
 )
 from app.services.routing.smart_router import get_smart_router
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -94,7 +94,11 @@ async def hybrid_summary(
     except Exception:
         pass
 
-    cache_hit_rate = (cache_hit_count / (cache_hit_count + cache_miss_count) * 100) if (cache_hit_count + cache_miss_count) > 0 else 0.0
+    cache_hit_rate = (
+        (cache_hit_count / (cache_hit_count + cache_miss_count) * 100)
+        if (cache_hit_count + cache_miss_count) > 0
+        else 0.0
+    )
 
     provider_cost_brl = 0.0
     customer_revenue_brl = 0.0
@@ -119,7 +123,9 @@ async def hybrid_summary(
     except Exception:
         pass
 
-    margin_percent = (gross_profit_brl / customer_revenue_brl * 100) if customer_revenue_brl > 0 else 0.0
+    margin_percent = (
+        (gross_profit_brl / customer_revenue_brl * 100) if customer_revenue_brl > 0 else 0.0
+    )
 
     active_wallets = 0
     low_balance_clients = 0
@@ -156,7 +162,9 @@ async def hybrid_summary(
             if p.enabled and not p.configured:
                 warnings.append(f"Cloud provider '{pid}' enabled but missing API key")
             if settings_local.cloud_providers_enabled and not p.configured:
-                warnings.append(f"Cloud provider '{pid}' enabled via CLOUD_PROVIDERS_ENABLED but no API key configured")
+                warnings.append(
+                    f"Cloud provider '{pid}' enabled via CLOUD_PROVIDERS_ENABLED but no API key configured"
+                )
 
     if not settings_local.cloud_providers_enabled:
         warnings.append("Cloud providers are disabled (CLOUD_PROVIDERS_ENABLED=false)")
@@ -212,7 +220,7 @@ async def hybrid_summary(
         "local_first": local_first,
         "warnings": warnings,
         "critical_failures": critical_failures,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }
 
 
@@ -225,15 +233,17 @@ async def hybrid_providers():
         p = get_providers().get(s.provider_id)
         if p and hasattr(p, "api_key") and p.api_key:
             masked_key = _mask(p.api_key)
-        result.append({
-            "provider_id": s.provider_id,
-            "provider_type": s.provider_type,
-            "enabled": s.enabled,
-            "configured": s.configured,
-            "healthy": s.healthy,
-            "capabilities": s.capabilities.model_dump(),
-            "masked_api_key": masked_key,
-        })
+        result.append(
+            {
+                "provider_id": s.provider_id,
+                "provider_type": s.provider_type,
+                "enabled": s.enabled,
+                "configured": s.configured,
+                "healthy": s.healthy,
+                "capabilities": s.capabilities.model_dump(),
+                "masked_api_key": masked_key,
+            }
+        )
     return result
 
 
@@ -284,14 +294,20 @@ async def hybrid_financials(
         )
         rows = (await session.execute(stmt)).all()
         for row in rows:
-            provider_costs.append({
-                "provider": row.provider,
-                "total_requests": int(row.total_requests),
-                "total_provider_cost_brl": round(float(row.total_provider_cost_brl or 0.0), 2),
-                "total_customer_price_brl": round(float(row.total_customer_price_brl or 0.0), 2),
-                "total_gross_profit_brl": round(float(row.total_gross_profit_brl or 0.0), 2),
-                "avg_margin_percent": round(float(row.avg_margin_percent), 2) if row.avg_margin_percent is not None else None,
-            })
+            provider_costs.append(
+                {
+                    "provider": row.provider,
+                    "total_requests": int(row.total_requests),
+                    "total_provider_cost_brl": round(float(row.total_provider_cost_brl or 0.0), 2),
+                    "total_customer_price_brl": round(
+                        float(row.total_customer_price_brl or 0.0), 2
+                    ),
+                    "total_gross_profit_brl": round(float(row.total_gross_profit_brl or 0.0), 2),
+                    "avg_margin_percent": round(float(row.avg_margin_percent), 2)
+                    if row.avg_margin_percent is not None
+                    else None,
+                }
+            )
     except Exception:
         pass
 
@@ -332,6 +348,7 @@ async def hybrid_cache(
         pass
 
     from app.models.core.request_log import RequestLog
+
     exact_hits = 0
     exact_misses = 0
     try:
@@ -368,20 +385,20 @@ async def hybrid_wallets(
 ):
     wallets = []
     try:
-        result = await session.execute(
-            select(AiWallet).order_by(AiWallet.balance_brl.asc())
-        )
+        result = await session.execute(select(AiWallet).order_by(AiWallet.balance_brl.asc()))
         rows = result.scalars().all()
         for w in rows:
-            wallets.append({
-                "wallet_id": str(w.id),
-                "client_id": str(w.client_id),
-                "currency": w.currency,
-                "balance_brl": float(w.balance_brl),
-                "reserved_brl": float(w.reserved_brl),
-                "available_brl": float(w.balance_brl - w.reserved_brl),
-                "status": w.status,
-            })
+            wallets.append(
+                {
+                    "wallet_id": str(w.id),
+                    "client_id": str(w.client_id),
+                    "currency": w.currency,
+                    "balance_brl": float(w.balance_brl),
+                    "reserved_brl": float(w.reserved_brl),
+                    "available_brl": float(w.balance_brl - w.reserved_brl),
+                    "status": w.status,
+                }
+            )
     except Exception:
         pass
     return wallets
@@ -446,9 +463,7 @@ async def hybrid_rag(
         pass
 
     try:
-        clients = await session.execute(
-            select(func.count(func.distinct(RAGDocument.client_id)))
-        )
+        clients = await session.execute(select(func.count(func.distinct(RAGDocument.client_id))))
         result["clients_with_rag"] = clients.scalar() or 0
     except Exception:
         pass
@@ -463,23 +478,77 @@ async def hybrid_rag(
 
     if settings.commercial_rag_vault_enabled:
         try:
-            result["regulated_rag_vault"]["vaults"] = (await session.execute(select(func.count(CommercialRAGVault.id)))).scalar() or 0
-            result["regulated_rag_vault"]["retrievals"] = (await session.execute(select(func.count(CommercialRAGRetrievalAudit.id)))).scalar() or 0
-            result["regulated_rag_vault"]["poisoning_alerts"] = (await session.execute(select(func.count(CommercialRAGPoisoningAlert.id)).where(CommercialRAGPoisoningAlert.resolved == False))).scalar() or 0
-            result["regulated_rag_vault"]["acl_violations"] = (await session.execute(select(func.count(CommercialRAGRetrievalAudit.id)).where(CommercialRAGRetrievalAudit.policy_result != "allow"))).scalar() or 0
-            result["regulated_rag_vault"]["legal_holds"] = (await session.execute(select(func.count(CommercialRAGLegalHold.id)).where(CommercialRAGLegalHold.active == True))).scalar() or 0
-            result["regulated_rag_vault"]["signed_documents"] = (await session.execute(select(func.count(CommercialRAGDocument.id)).where(CommercialRAGDocument.signed_manifest_hash.is_not(None)))).scalar() or 0
-            confidential_count = (await session.execute(select(func.count(CommercialRAGVault.id)).where(CommercialRAGVault.vault_mode.in_(["confidential", "sovereign", "airgap"])))).scalar() or 0
+            result["regulated_rag_vault"]["vaults"] = (
+                await session.execute(select(func.count(CommercialRAGVault.id)))
+            ).scalar() or 0
+            result["regulated_rag_vault"]["retrievals"] = (
+                await session.execute(select(func.count(CommercialRAGRetrievalAudit.id)))
+            ).scalar() or 0
+            result["regulated_rag_vault"]["poisoning_alerts"] = (
+                await session.execute(
+                    select(func.count(CommercialRAGPoisoningAlert.id)).where(
+                        CommercialRAGPoisoningAlert.resolved == False
+                    )
+                )
+            ).scalar() or 0
+            result["regulated_rag_vault"]["acl_violations"] = (
+                await session.execute(
+                    select(func.count(CommercialRAGRetrievalAudit.id)).where(
+                        CommercialRAGRetrievalAudit.policy_result != "allow"
+                    )
+                )
+            ).scalar() or 0
+            result["regulated_rag_vault"]["legal_holds"] = (
+                await session.execute(
+                    select(func.count(CommercialRAGLegalHold.id)).where(
+                        CommercialRAGLegalHold.active == True
+                    )
+                )
+            ).scalar() or 0
+            result["regulated_rag_vault"]["signed_documents"] = (
+                await session.execute(
+                    select(func.count(CommercialRAGDocument.id)).where(
+                        CommercialRAGDocument.signed_manifest_hash.is_not(None)
+                    )
+                )
+            ).scalar() or 0
+            confidential_count = (
+                await session.execute(
+                    select(func.count(CommercialRAGVault.id)).where(
+                        CommercialRAGVault.vault_mode.in_(["confidential", "sovereign", "airgap"])
+                    )
+                )
+            ).scalar() or 0
             total_vaults = result["regulated_rag_vault"]["vaults"] or 0
-            result["regulated_rag_vault"]["confidential_retrieval_percent"] = round((confidential_count / total_vaults) * 100, 2) if total_vaults else 0.0
+            result["regulated_rag_vault"]["confidential_retrieval_percent"] = (
+                round((confidential_count / total_vaults) * 100, 2) if total_vaults else 0.0
+            )
         except Exception:
             pass
         try:
-            result["context_lineage_retrieval_proofs"]["retrieval_proofs"] = (await session.execute(select(func.count(CommercialRetrievalProof.id)))).scalar() or 0
-            result["context_lineage_retrieval_proofs"]["lineage_nodes"] = (await session.execute(select(func.count(CommercialContextLineage.id)))).scalar() or 0
-            result["context_lineage_retrieval_proofs"]["replay_records"] = (await session.execute(select(func.count(CommercialRetrievalReplayRecord.id)))).scalar() or 0
-            result["context_lineage_retrieval_proofs"]["verified_proofs"] = (await session.execute(select(func.count(CommercialRetrievalProof.id)).where(CommercialRetrievalProof.verification_status == "valid"))).scalar() or 0
-            result["context_lineage_retrieval_proofs"]["drift_events"] = (await session.execute(select(func.count(CommercialRetrievalReplayRecord.id)).where(CommercialRetrievalReplayRecord.drift_status != "stable"))).scalar() or 0
+            result["context_lineage_retrieval_proofs"]["retrieval_proofs"] = (
+                await session.execute(select(func.count(CommercialRetrievalProof.id)))
+            ).scalar() or 0
+            result["context_lineage_retrieval_proofs"]["lineage_nodes"] = (
+                await session.execute(select(func.count(CommercialContextLineage.id)))
+            ).scalar() or 0
+            result["context_lineage_retrieval_proofs"]["replay_records"] = (
+                await session.execute(select(func.count(CommercialRetrievalReplayRecord.id)))
+            ).scalar() or 0
+            result["context_lineage_retrieval_proofs"]["verified_proofs"] = (
+                await session.execute(
+                    select(func.count(CommercialRetrievalProof.id)).where(
+                        CommercialRetrievalProof.verification_status == "valid"
+                    )
+                )
+            ).scalar() or 0
+            result["context_lineage_retrieval_proofs"]["drift_events"] = (
+                await session.execute(
+                    select(func.count(CommercialRetrievalReplayRecord.id)).where(
+                        CommercialRetrievalReplayRecord.drift_status != "stable"
+                    )
+                )
+            ).scalar() or 0
         except Exception:
             pass
 

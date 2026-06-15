@@ -17,8 +17,10 @@ class TestRemediationAuditEvents:
         plan_id = uuid.uuid4()
         await log_remediation_plan_proposed(session, client_id, plan_id, "test_plan")
         await session.commit()
-        
-        stmt = select(AdminActionLog).where(AdminActionLog.action == "ops_remediation:remediation_plan_proposed")
+
+        stmt = select(AdminActionLog).where(
+            AdminActionLog.action == "ops_remediation:remediation_plan_proposed"
+        )
         result = await session.execute(stmt)
         entry = result.scalars().one()
         assert entry.payload_json["plan_id"] == str(plan_id)
@@ -29,8 +31,10 @@ class TestRemediationAuditEvents:
         step_id = uuid.uuid4()
         await log_remediation_step_proposed(session, client_id, step_id, "containment")
         await session.commit()
-        
-        stmt = select(AdminActionLog).where(AdminActionLog.action == "ops_remediation:remediation_step_proposed")
+
+        stmt = select(AdminActionLog).where(
+            AdminActionLog.action == "ops_remediation:remediation_step_proposed"
+        )
         result = await session.execute(stmt)
         entry = result.scalars().one()
         assert entry.payload_json["step_id"] == str(step_id)

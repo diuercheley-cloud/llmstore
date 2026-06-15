@@ -24,6 +24,6 @@ async def ensure_default_safety_policies(session: AsyncSession) -> None:
         allow_scale_down=True,
         allow_scale_up=True,
         allow_cluster_failover=False,
-        allow_cross_region_routing=False
+        allow_cross_region_routing=False,
     )
     session.add(default_policy)

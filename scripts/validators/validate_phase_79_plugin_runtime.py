@@ -112,7 +112,7 @@ REQUIRED_PATTERNS = {
     ],
     "control_plane/app/main.py": [
         "operations_plugin_runtime_admin_router",
-        "app.include_router(operations_plugin_runtime_admin_router, tags=[\"operations-plugin-runtime\"])",
+        'app.include_router(operations_plugin_runtime_admin_router, tags=["operations-plugin-runtime"])',
     ],
     "control_plane/app/static/admin/index.html": [
         "Formal Plugin ABI &amp; Extension Runtime",

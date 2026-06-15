@@ -3,9 +3,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.services.runtime_dependencies import get_db_session
-from app.models.core.admin_action_log import AdminActionLog
 from app.models.commercial.commercial_leader_lease import CommercialLeaderLease
+from app.models.core.admin_action_log import AdminActionLog
 from app.services.auth import require_admin
 from app.services.routing.commercial_leader_election import (
     force_expire_stale_leases,
@@ -14,6 +13,7 @@ from app.services.routing.commercial_leader_election import (
     try_acquire_leader,
 )
 from app.services.routing.commercial_node_heartbeat import list_nodes, resolve_node_identity
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Body, Depends
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -58,7 +58,9 @@ async def get_ha_leaders(db: AsyncSession = Depends(get_db_session)):
     roles = ["scheduler", "aggregator", "reporter", "calibration", "canary", "global"]
     leaders = []
     for role in roles:
-        leaders.append(await get_current_leader(db, cluster_id=identity["cluster_id"], leader_role=role))
+        leaders.append(
+            await get_current_leader(db, cluster_id=identity["cluster_id"], leader_role=role)
+        )
     await db.commit()
     return {
         "cluster_id": identity["cluster_id"],
@@ -73,7 +75,9 @@ async def get_ha_cluster_state(db: AsyncSession = Depends(get_db_session)):
     expire_result = await force_expire_stale_leases(db, cluster_id=identity["cluster_id"])
     leaders = []
     for role in ["scheduler", "aggregator", "reporter", "calibration", "canary", "global"]:
-        leaders.append(await get_current_leader(db, cluster_id=identity["cluster_id"], leader_role=role))
+        leaders.append(
+            await get_current_leader(db, cluster_id=identity["cluster_id"], leader_role=role)
+        )
     stale_result = await db.execute(
         select(CommercialLeaderLease)
         .where(

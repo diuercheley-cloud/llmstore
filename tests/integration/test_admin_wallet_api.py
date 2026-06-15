@@ -1,4 +1,3 @@
-import os
 from uuid import uuid4
 
 import httpx
@@ -12,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 @pytest_asyncio.fixture
 async def app():
     from app.main import app as _app
+
     engine = create_async_engine("sqlite+aiosqlite://", echo=False)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -29,13 +29,16 @@ async def app():
 
 @pytest_asyncio.fixture
 async def client(app):
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as c:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+    ) as c:
         yield c
 
 
 @pytest.fixture
 def admin_token_headers():
     from app.core.config import get_settings
+
     settings = get_settings()
     token = settings.admin_super_token or settings.admin_token or "test-admin-token"
     return {"X-Admin-Token": token}
@@ -84,7 +87,9 @@ async def test_admin_manual_credit_increases_balance(client, admin_token_headers
     assert tx["type"] == "manual_credit"
     assert tx["amount_brl"] == 150.0
 
-    resp2 = await client.get(f"/admin/billing/wallets/{demo_client_id}", headers=admin_token_headers)
+    resp2 = await client.get(
+        f"/admin/billing/wallets/{demo_client_id}", headers=admin_token_headers
+    )
     assert resp2.json()["balance_brl"] == 150.0
 
 
@@ -107,7 +112,9 @@ async def test_admin_adjustment(client, admin_token_headers, demo_client_id):
 
 
 @pytest.mark.asyncio
-async def test_admin_adjustment_negative_balance_blocked(client, admin_token_headers, demo_client_id):
+async def test_admin_adjustment_negative_balance_blocked(
+    client, admin_token_headers, demo_client_id
+):
     resp = await client.post(
         f"/admin/billing/wallets/{demo_client_id}/adjustment",
         json={"amount_brl": -50.0},
@@ -123,7 +130,9 @@ async def test_admin_transactions_list(client, admin_token_headers, demo_client_
         json={"amount_brl": 50.0, "reason": "tx list test"},
         headers=admin_token_headers,
     )
-    resp = await client.get(f"/admin/billing/wallets/{demo_client_id}/transactions", headers=admin_token_headers)
+    resp = await client.get(
+        f"/admin/billing/wallets/{demo_client_id}/transactions", headers=admin_token_headers
+    )
     assert resp.status_code == 200
     txs = resp.json()
     assert len(txs) >= 1

@@ -14,7 +14,9 @@ async def test_environment_preflight_reports_failures(monkeypatch):
 
     monkeypatch.setattr(service, "_check_required_ports", fake_ports)
     monkeypatch.setattr(service, "_check_python_deps", fake_deps)
-    monkeypatch.setattr(service, "_check_env_files", lambda: {".env": "PASS", ".env.example": "PASS"})
+    monkeypatch.setattr(
+        service, "_check_env_files", lambda: {".env": "PASS", ".env.example": "PASS"}
+    )
 
     report = await service.run_full_preflight()
 
@@ -34,7 +36,9 @@ async def test_environment_preflight_passes_when_all_checks_pass(monkeypatch):
 
     monkeypatch.setattr(service, "_check_required_ports", fake_ports)
     monkeypatch.setattr(service, "_check_python_deps", fake_deps)
-    monkeypatch.setattr(service, "_check_env_files", lambda: {".env": "PASS", ".env.example": "PASS"})
+    monkeypatch.setattr(
+        service, "_check_env_files", lambda: {".env": "PASS", ".env.example": "PASS"}
+    )
 
     report = await service.run_full_preflight()
 

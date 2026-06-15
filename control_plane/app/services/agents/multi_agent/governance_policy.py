@@ -10,19 +10,22 @@ class MultiAgentPolicyService:
     """
     Enforces production-grade limits for multi-agent systems.
     """
+
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def validate_delegation(self, run_id: uuid.UUID, parent_id: uuid.UUID, child_id: uuid.UUID) -> tuple[bool, str]:
+    async def validate_delegation(
+        self, run_id: uuid.UUID, parent_id: uuid.UUID, child_id: uuid.UUID
+    ) -> tuple[bool, str]:
         # 1. Max Depth
         depth = await self._get_delegation_depth(run_id, parent_id)
-        if depth >= 5: # Default production limit
-            return False, f"Max delegation depth exceeded: {depth+1} > 5"
+        if depth >= 5:  # Default production limit
+            return False, f"Max delegation depth exceeded: {depth + 1} > 5"
 
         # 2. Max Fanout (from parent)
         fanout = await self._get_fanout(run_id, parent_id)
         if fanout >= 10:
-            return False, f"Max fanout exceeded for agent {parent_id}: {fanout+1} > 10"
+            return False, f"Max fanout exceeded for agent {parent_id}: {fanout + 1} > 10"
 
         return True, "OK"
 
@@ -31,8 +34,7 @@ class MultiAgentPolicyService:
         curr_id = agent_id
         while curr_id:
             stmt = select(AgentTeamDelegation).where(
-                AgentTeamDelegation.run_id == run_id,
-                AgentTeamDelegation.child_agent_id == curr_id
+                AgentTeamDelegation.run_id == run_id, AgentTeamDelegation.child_agent_id == curr_id
             )
             res = await self.db.execute(stmt)
             delegation = res.scalar_one_or_none()
@@ -40,14 +42,13 @@ class MultiAgentPolicyService:
                 break
             depth += 1
             curr_id = delegation.parent_agent_id
-            if depth > 20: # Safety break
+            if depth > 20:  # Safety break
                 break
         return depth
 
     async def _get_fanout(self, run_id: uuid.UUID, parent_id: uuid.UUID) -> int:
         stmt = select(func.count(AgentTeamDelegation.id)).where(
-            AgentTeamDelegation.run_id == run_id,
-            AgentTeamDelegation.parent_agent_id == parent_id
+            AgentTeamDelegation.run_id == run_id, AgentTeamDelegation.parent_agent_id == parent_id
         )
         res = await self.db.execute(stmt)
         return res.scalar() or 0
@@ -58,11 +59,11 @@ class MultiAgentPolicyService:
         run = res.scalar_one_or_none()
         if not run:
             return False
-            
+
         # shared_budget_brl could be a field in AgentTeamRun or in TeamDefinition
-        limit = getattr(run, "shared_budget_brl", 1.0) # Default 1.0 BRL
+        limit = getattr(run, "shared_budget_brl", 1.0)  # Default 1.0 BRL
         current = getattr(run, "total_cost_brl", 0.0)
-        
+
         if current + requested_cost > limit:
             return False
         return True

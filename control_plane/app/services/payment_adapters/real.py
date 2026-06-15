@@ -44,11 +44,15 @@ class RealPaymentAdapter:
         external_id = payload.get("external_id") or payload.get("id")
         idempotency_key = payload.get("idempotency_key") or external_id
         if not idempotency_key:
-            raise PaymentAdapterError("webhook missing idempotency_key", code="webhook_missing_idempotency")
+            raise PaymentAdapterError(
+                "webhook missing idempotency_key", code="webhook_missing_idempotency"
+            )
         try:
             amount_brl = Decimal(str(payload.get("amount_brl")))
         except Exception as exc:
-            raise PaymentAdapterError("webhook has invalid amount_brl", code="webhook_invalid_amount") from exc
+            raise PaymentAdapterError(
+                "webhook has invalid amount_brl", code="webhook_invalid_amount"
+            ) from exc
         return PaymentWebhookPayload(
             provider=self.provider,
             external_id=str(external_id) if external_id else None,

@@ -32,7 +32,6 @@ ASSESSMENT_RECEIPT = {
 
 
 class TestEventStructure:
-
     def test_signal_event_contains_all_required_fields(self):
         e = build_failure_signal_recorded_event(SIGNAL_RECEIPT)
         _assert_event_fields(e, "failure_signal_recorded")
@@ -50,7 +49,6 @@ class TestEventStructure:
 
 
 class TestEventType:
-
     def test_signal_event_type(self):
         e = build_failure_signal_recorded_event(SIGNAL_RECEIPT)
         assert e["event_type"] == "failure_signal_recorded"
@@ -76,7 +74,6 @@ class TestEventType:
 
 
 class TestIdentityPropagation:
-
     def test_signal_event_client_id(self):
         e = build_failure_signal_recorded_event(SIGNAL_RECEIPT)
         assert e["client_id"] == "client-1"
@@ -106,7 +103,6 @@ class TestIdentityPropagation:
 
 
 class TestReceiptHash:
-
     def test_signal_event_receipt_hash(self):
         e = build_failure_signal_recorded_event(SIGNAL_RECEIPT)
         assert e["receipt_hash"] == "a" * 64
@@ -124,10 +120,17 @@ class TestReceiptHash:
 
 
 class TestImmutableHash:
-
     def test_immutable_hash_is_64_hex_chars(self):
-        for builder in (build_failure_signal_recorded_event, build_failure_forecast_created_event, build_failure_risk_assessment_created_event):
-            e = builder(SIGNAL_RECEIPT if "signal" in builder.__name__ else (FORECAST_RECEIPT if "forecast" in builder.__name__ else ASSESSMENT_RECEIPT))
+        for builder in (
+            build_failure_signal_recorded_event,
+            build_failure_forecast_created_event,
+            build_failure_risk_assessment_created_event,
+        ):
+            e = builder(
+                SIGNAL_RECEIPT
+                if "signal" in builder.__name__
+                else (FORECAST_RECEIPT if "forecast" in builder.__name__ else ASSESSMENT_RECEIPT)
+            )
             assert len(e["immutable_hash"]) == 64
             assert all(c in "0123456789abcdef" for c in e["immutable_hash"])
 
@@ -146,7 +149,6 @@ class TestImmutableHash:
 
 
 class TestGeneratedAt:
-
     def test_generated_at_is_iso_format(self):
         e = build_failure_signal_recorded_event(SIGNAL_RECEIPT)
         assert "T" in e["generated_at"]
@@ -156,7 +158,6 @@ class TestGeneratedAt:
 
 
 class TestSummary:
-
     def test_signal_event_summary(self):
         e = build_failure_signal_recorded_event(SIGNAL_RECEIPT)
         assert isinstance(e["summary"], str)
@@ -177,7 +178,6 @@ class TestSummary:
 
 
 class TestOffline:
-
     def test_event_produced_without_network(self):
         e = build_failure_signal_recorded_event(SIGNAL_RECEIPT)
         assert e["event_type"] is not None
@@ -188,7 +188,6 @@ class TestOffline:
 
 
 class TestValidation:
-
     def test_invalid_event_type_raises(self):
         from app.services.operations.forecasting.audit_events import _build_audit_event
 

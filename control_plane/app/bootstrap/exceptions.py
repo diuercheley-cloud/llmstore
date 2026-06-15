@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from fastapi import HTTPException, Request
-from fastapi.responses import JSONResponse
-
 from app.core.request_context import get_correlation_id
 from app.schemas.backup import BackupErrorDetail, BackupErrorResponse
 from app.services.backup.errors import (
@@ -17,6 +14,8 @@ from app.services.backup.errors import (
     RestoreRollbackError,
     RestoreStagingError,
 )
+from fastapi import HTTPException, Request
+from fastapi.responses import JSONResponse
 
 
 def _backup_status_code(exc: BackupError) -> int:
@@ -26,7 +25,9 @@ def _backup_status_code(exc: BackupError) -> int:
         return 400
     if isinstance(exc, BackupKeyError):
         return 500
-    if isinstance(exc, (RestoreStagingError, RestorePromotionError, RestoreRollbackError, BackupCryptoError)):
+    if isinstance(
+        exc, (RestoreStagingError, RestorePromotionError, RestoreRollbackError, BackupCryptoError)
+    ):
         return 500
     return 500
 

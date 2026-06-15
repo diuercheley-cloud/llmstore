@@ -12,9 +12,13 @@ class DockerSandboxProvider:
     name = "docker"
     mock = False
 
-    async def run(self, code: str, limits: Any, session_id: uuid.UUID | None = None) -> dict[str, Any]:
+    async def run(
+        self, code: str, limits: Any, session_id: uuid.UUID | None = None
+    ) -> dict[str, Any]:
         if shutil.which("docker") is None:
-            raise RuntimeError("Docker sandbox provider requested but docker binary is not available")
+            raise RuntimeError(
+                "Docker sandbox provider requested but docker binary is not available"
+            )
 
         started_at = time.time()
 
@@ -62,13 +66,15 @@ class DockerSandboxProvider:
                 stderr=asyncio.subprocess.PIPE,
             )
             try:
-                stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=limits.timeout_seconds)
+                stdout, stderr = await asyncio.wait_for(
+                    proc.communicate(), timeout=limits.timeout_seconds
+                )
                 exit_code = proc.returncode
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 proc.kill()
                 await proc.communicate()
                 stdout = b""
-                stderr = f"Execution timed out after {limits.timeout_seconds} seconds.".encode("utf-8")
+                stderr = f"Execution timed out after {limits.timeout_seconds} seconds.".encode()
                 exit_code = 124
 
         return {

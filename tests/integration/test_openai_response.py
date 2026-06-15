@@ -80,7 +80,7 @@ def test_normalize_chat_completion_preserves_native_reasoning_content():
                 "message": {
                     "role": "assistant",
                     "content": "final answer",
-                    "reasoning_content": "thinking process"
+                    "reasoning_content": "thinking process",
                 },
             }
         ],
@@ -89,6 +89,7 @@ def test_normalize_chat_completion_preserves_native_reasoning_content():
     normalized = normalize_chat_completion(payload, include_reasoning=True)
     assert normalized["choices"][0]["message"]["content"] == "final answer"
     assert normalized["choices"][0]["message"]["reasoning_content"] == "thinking process"
+
 
 def test_normalize_chat_stream_line_preserves_native_reasoning_delta():
     line = (
@@ -100,6 +101,7 @@ def test_normalize_chat_stream_line_preserves_native_reasoning_delta():
     assert normalized is not None
     assert "reasoning_content" in normalized
     assert "thinking" in normalized
+
 
 def test_normalize_chat_completion_maps_openrouter_reasoning_field():
     payload = {

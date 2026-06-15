@@ -5,6 +5,7 @@ Revises: phase72_remediation_execution
 Create Date: 2026-05-15 22:00:00.000000
 
 """
+
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
@@ -13,6 +14,7 @@ revision = "phase73_adapter_sandbox"
 down_revision = "phase72_remediation_execution"
 branch_labels = None
 depends_on = None
+
 
 def upgrade() -> None:
     # 1. AdapterManifest
@@ -30,19 +32,31 @@ def upgrade() -> None:
         sa.Column("approval_required", sa.Boolean(), nullable=False, server_default="1"),
         sa.Column("network_access_allowed", sa.Boolean(), nullable=False, server_default="0"),
         sa.Column("subprocess_allowed", sa.Boolean(), nullable=False, server_default="0"),
-        sa.Column("external_system_access_allowed", sa.Boolean(), nullable=False, server_default="0"),
-        sa.Column("deterministic_version", sa.String(length=50), nullable=False, server_default="v1"),
+        sa.Column(
+            "external_system_access_allowed", sa.Boolean(), nullable=False, server_default="0"
+        ),
+        sa.Column(
+            "deterministic_version", sa.String(length=50), nullable=False, server_default="v1"
+        ),
         sa.Column("manifest_hash", sa.String(length=64), nullable=False),
         sa.Column("immutable_hash", sa.String(length=64), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("immutable_hash")
+        sa.UniqueConstraint("immutable_hash"),
     )
-    op.create_index("ix_adapter_manifests_client_id", "adapter_manifests", ["client_id"], unique=False)
-    op.create_index("ix_adapter_manifests_adapter_name", "adapter_manifests", ["adapter_name"], unique=False)
-    op.create_index("ix_adapter_manifests_manifest_hash", "adapter_manifests", ["manifest_hash"], unique=False)
-    op.create_index("ix_adapter_manifests_immutable_hash", "adapter_manifests", ["immutable_hash"], unique=False)
+    op.create_index(
+        "ix_adapter_manifests_client_id", "adapter_manifests", ["client_id"], unique=False
+    )
+    op.create_index(
+        "ix_adapter_manifests_adapter_name", "adapter_manifests", ["adapter_name"], unique=False
+    )
+    op.create_index(
+        "ix_adapter_manifests_manifest_hash", "adapter_manifests", ["manifest_hash"], unique=False
+    )
+    op.create_index(
+        "ix_adapter_manifests_immutable_hash", "adapter_manifests", ["immutable_hash"], unique=False
+    )
 
     # 2. AdapterSandboxRun
     op.create_table(
@@ -65,15 +79,28 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["manifest_id"], ["adapter_manifests.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["execution_id"], ["remediation_executions.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["execution_id"], ["remediation_executions.id"], ondelete="CASCADE"
+        ),
         sa.ForeignKeyConstraint(["plan_id"], ["remediation_plans.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("immutable_hash")
+        sa.UniqueConstraint("immutable_hash"),
     )
-    op.create_index("ix_adapter_sandbox_runs_client_id", "adapter_sandbox_runs", ["client_id"], unique=False)
-    op.create_index("ix_adapter_sandbox_runs_manifest_id", "adapter_sandbox_runs", ["manifest_id"], unique=False)
-    op.create_index("ix_adapter_sandbox_runs_status", "adapter_sandbox_runs", ["status"], unique=False)
-    op.create_index("ix_adapter_sandbox_runs_immutable_hash", "adapter_sandbox_runs", ["immutable_hash"], unique=False)
+    op.create_index(
+        "ix_adapter_sandbox_runs_client_id", "adapter_sandbox_runs", ["client_id"], unique=False
+    )
+    op.create_index(
+        "ix_adapter_sandbox_runs_manifest_id", "adapter_sandbox_runs", ["manifest_id"], unique=False
+    )
+    op.create_index(
+        "ix_adapter_sandbox_runs_status", "adapter_sandbox_runs", ["status"], unique=False
+    )
+    op.create_index(
+        "ix_adapter_sandbox_runs_immutable_hash",
+        "adapter_sandbox_runs",
+        ["immutable_hash"],
+        unique=False,
+    )
 
     # 3. AdapterSandboxStepResult
     op.create_table(
@@ -89,13 +116,30 @@ def upgrade() -> None:
         sa.Column("immutable_hash", sa.String(length=64), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["sandbox_run_id"], ["adapter_sandbox_runs.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["sandbox_run_id"], ["adapter_sandbox_runs.id"], ondelete="CASCADE"
+        ),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("immutable_hash")
+        sa.UniqueConstraint("immutable_hash"),
     )
-    op.create_index("ix_adapter_sandbox_step_results_client_id", "adapter_sandbox_step_results", ["client_id"], unique=False)
-    op.create_index("ix_adapter_sandbox_step_results_sandbox_run_id", "adapter_sandbox_step_results", ["sandbox_run_id"], unique=False)
-    op.create_index("ix_adapter_sandbox_step_results_immutable_hash", "adapter_sandbox_step_results", ["immutable_hash"], unique=False)
+    op.create_index(
+        "ix_adapter_sandbox_step_results_client_id",
+        "adapter_sandbox_step_results",
+        ["client_id"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_adapter_sandbox_step_results_sandbox_run_id",
+        "adapter_sandbox_step_results",
+        ["sandbox_run_id"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_adapter_sandbox_step_results_immutable_hash",
+        "adapter_sandbox_step_results",
+        ["immutable_hash"],
+        unique=False,
+    )
 
     # 4. AdapterSandboxPolicyViolation
     op.create_table(
@@ -112,13 +156,30 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["manifest_id"], ["adapter_manifests.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["sandbox_run_id"], ["adapter_sandbox_runs.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["sandbox_run_id"], ["adapter_sandbox_runs.id"], ondelete="CASCADE"
+        ),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("immutable_hash")
+        sa.UniqueConstraint("immutable_hash"),
     )
-    op.create_index("ix_adapter_sandbox_policy_violations_client_id", "adapter_sandbox_policy_violations", ["client_id"], unique=False)
-    op.create_index("ix_adapter_sandbox_policy_violations_violation_type", "adapter_sandbox_policy_violations", ["violation_type"], unique=False)
-    op.create_index("ix_adapter_sandbox_policy_violations_immutable_hash", "adapter_sandbox_policy_violations", ["immutable_hash"], unique=False)
+    op.create_index(
+        "ix_adapter_sandbox_policy_violations_client_id",
+        "adapter_sandbox_policy_violations",
+        ["client_id"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_adapter_sandbox_policy_violations_violation_type",
+        "adapter_sandbox_policy_violations",
+        ["violation_type"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_adapter_sandbox_policy_violations_immutable_hash",
+        "adapter_sandbox_policy_violations",
+        ["immutable_hash"],
+        unique=False,
+    )
 
     # 5. AdapterSandboxReceipt
     op.create_table(
@@ -132,13 +193,31 @@ def upgrade() -> None:
         sa.Column("signature_placeholder", sa.String(length=255), nullable=True),
         sa.Column("generated_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["sandbox_run_id"], ["adapter_sandbox_runs.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["sandbox_run_id"], ["adapter_sandbox_runs.id"], ondelete="CASCADE"
+        ),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("immutable_hash")
+        sa.UniqueConstraint("immutable_hash"),
     )
-    op.create_index("ix_adapter_sandbox_receipts_client_id", "adapter_sandbox_receipts", ["client_id"], unique=False)
-    op.create_index("ix_adapter_sandbox_receipts_sandbox_run_id", "adapter_sandbox_receipts", ["sandbox_run_id"], unique=False)
-    op.create_index("ix_adapter_sandbox_receipts_immutable_hash", "adapter_sandbox_receipts", ["immutable_hash"], unique=False)
+    op.create_index(
+        "ix_adapter_sandbox_receipts_client_id",
+        "adapter_sandbox_receipts",
+        ["client_id"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_adapter_sandbox_receipts_sandbox_run_id",
+        "adapter_sandbox_receipts",
+        ["sandbox_run_id"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_adapter_sandbox_receipts_immutable_hash",
+        "adapter_sandbox_receipts",
+        ["immutable_hash"],
+        unique=False,
+    )
+
 
 def downgrade() -> None:
     op.drop_table("adapter_sandbox_receipts")

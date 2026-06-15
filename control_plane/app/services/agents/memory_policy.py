@@ -1,7 +1,6 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import List, Optional
 
 from app.models.agents.agents import AgentMemoryPolicy
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,15 +8,18 @@ from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
+
 class MemoryPolicyService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_policy(self, tenant_id: str, agent_id: Optional[uuid.UUID], memory_type: str) -> Optional[AgentMemoryPolicy]:
+    async def get_policy(
+        self, tenant_id: str, agent_id: uuid.UUID | None, memory_type: str
+    ) -> AgentMemoryPolicy | None:
         stmt = select(AgentMemoryPolicy).where(
             AgentMemoryPolicy.tenant_id == tenant_id,
             AgentMemoryPolicy.agent_id == agent_id,
-            AgentMemoryPolicy.memory_type == memory_type
+            AgentMemoryPolicy.memory_type == memory_type,
         )
         res = await self.db.execute(stmt)
         policy = res.scalar_one_or_none()
@@ -26,7 +28,7 @@ class MemoryPolicyService:
             stmt = select(AgentMemoryPolicy).where(
                 AgentMemoryPolicy.tenant_id == tenant_id,
                 AgentMemoryPolicy.agent_id.is_(None),
-                AgentMemoryPolicy.memory_type == memory_type
+                AgentMemoryPolicy.memory_type == memory_type,
             )
             res = await self.db.execute(stmt)
             policy = res.scalar_one_or_none()
@@ -48,13 +50,13 @@ class MemoryPolicyService:
         await self.db.refresh(policy)
         return policy
 
-    async def list_policies(self, tenant_id: str) -> List[AgentMemoryPolicy]:
+    async def list_policies(self, tenant_id: str) -> list[AgentMemoryPolicy]:
         stmt = select(AgentMemoryPolicy).where(AgentMemoryPolicy.tenant_id == tenant_id)
         res = await self.db.execute(stmt)
         return list(res.scalars().all())
 
     async def get_search_policy(
-        self, tenant_id: str, agent_id: Optional[uuid.UUID], memory_type: str
+        self, tenant_id: str, agent_id: uuid.UUID | None, memory_type: str
     ) -> dict:
         policy = await self.get_policy(tenant_id, agent_id, memory_type)
         if not policy:

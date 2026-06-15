@@ -1,13 +1,12 @@
 import logging
 import re
-from typing import List
 
 from app.services.rag_enterprise.schemas import ChunkingConfig, ChunkResult, ChunkStrategy
 
 logger = logging.getLogger(__name__)
 
 
-def chunk_by_fixed(text: str, config: ChunkingConfig) -> List[ChunkResult]:
+def chunk_by_fixed(text: str, config: ChunkingConfig) -> list[ChunkResult]:
     chunks = []
     start = 0
     text_len = len(text)
@@ -20,11 +19,13 @@ def chunk_by_fixed(text: str, config: ChunkingConfig) -> List[ChunkResult]:
 
         content = text[start:end]
         if content.strip():
-            chunks.append(ChunkResult(
-                content=content,
-                chunk_index=chunk_index,
-                metadata={"strategy": "fixed", "start_char": start, "end_char": end},
-            ))
+            chunks.append(
+                ChunkResult(
+                    content=content,
+                    chunk_index=chunk_index,
+                    metadata={"strategy": "fixed", "start_char": start, "end_char": end},
+                )
+            )
             chunk_index += 1
 
         step = config.chunk_size
@@ -35,8 +36,8 @@ def chunk_by_fixed(text: str, config: ChunkingConfig) -> List[ChunkResult]:
     return chunks
 
 
-def chunk_by_heading(text: str, config: ChunkingConfig) -> List[ChunkResult]:
-    heading_pattern = re.compile(r'^(#{1,6}\s+|(?:\w+\s?){1,10}\n[-=]+)', re.MULTILINE)
+def chunk_by_heading(text: str, config: ChunkingConfig) -> list[ChunkResult]:
+    heading_pattern = re.compile(r"^(#{1,6}\s+|(?:\w+\s?){1,10}\n[-=]+)", re.MULTILINE)
     sections = heading_pattern.split(text)
 
     chunks = []
@@ -49,7 +50,7 @@ def chunk_by_heading(text: str, config: ChunkingConfig) -> List[ChunkResult]:
         if not section:
             continue
 
-        if re.match(r'^#{1,6}\s', section) or re.match(r'^[\w\s]+\n[-=]+$', section):
+        if re.match(r"^#{1,6}\s", section) or re.match(r"^[\w\s]+\n[-=]+$", section):
             current_heading = section
             continue
 
@@ -58,11 +59,13 @@ def chunk_by_heading(text: str, config: ChunkingConfig) -> List[ChunkResult]:
             content = f"{current_heading}\n{content}"
 
         if len(current_chunk) + len(content) > config.chunk_size and current_chunk:
-            chunks.append(ChunkResult(
-                content=current_chunk.strip(),
-                chunk_index=chunk_index,
-                metadata={"strategy": "heading"},
-            ))
+            chunks.append(
+                ChunkResult(
+                    content=current_chunk.strip(),
+                    chunk_index=chunk_index,
+                    metadata={"strategy": "heading"},
+                )
+            )
             chunk_index += 1
             current_chunk = content
         else:
@@ -72,17 +75,19 @@ def chunk_by_heading(text: str, config: ChunkingConfig) -> List[ChunkResult]:
                 current_chunk = content
 
     if current_chunk.strip():
-        chunks.append(ChunkResult(
-            content=current_chunk.strip(),
-            chunk_index=chunk_index,
-            metadata={"strategy": "heading"},
-        ))
+        chunks.append(
+            ChunkResult(
+                content=current_chunk.strip(),
+                chunk_index=chunk_index,
+                metadata={"strategy": "heading"},
+            )
+        )
 
     return chunks
 
 
-def chunk_semantic_placeholder(text: str, config: ChunkingConfig) -> List[ChunkResult]:
-    paragraphs = re.split(r'\n\s*\n', text)
+def chunk_semantic_placeholder(text: str, config: ChunkingConfig) -> list[ChunkResult]:
+    paragraphs = re.split(r"\n\s*\n", text)
     chunks = []
     current_chunk = ""
     chunk_index = 0
@@ -93,11 +98,13 @@ def chunk_semantic_placeholder(text: str, config: ChunkingConfig) -> List[ChunkR
             continue
 
         if len(current_chunk) + len(para) > config.chunk_size and current_chunk:
-            chunks.append(ChunkResult(
-                content=current_chunk.strip(),
-                chunk_index=chunk_index,
-                metadata={"strategy": "semantic_placeholder"},
-            ))
+            chunks.append(
+                ChunkResult(
+                    content=current_chunk.strip(),
+                    chunk_index=chunk_index,
+                    metadata={"strategy": "semantic_placeholder"},
+                )
+            )
             chunk_index += 1
             current_chunk = para
         else:
@@ -107,11 +114,13 @@ def chunk_semantic_placeholder(text: str, config: ChunkingConfig) -> List[ChunkR
                 current_chunk = para
 
     if current_chunk.strip():
-        chunks.append(ChunkResult(
-            content=current_chunk.strip(),
-            chunk_index=chunk_index,
-            metadata={"strategy": "semantic_placeholder"},
-        ))
+        chunks.append(
+            ChunkResult(
+                content=current_chunk.strip(),
+                chunk_index=chunk_index,
+                metadata={"strategy": "semantic_placeholder"},
+            )
+        )
 
     return chunks
 
@@ -123,7 +132,7 @@ STRATEGY_MAP = {
 }
 
 
-def chunk_text(text: str, config: ChunkingConfig) -> List[ChunkResult]:
+def chunk_text(text: str, config: ChunkingConfig) -> list[ChunkResult]:
     strategy_fn = STRATEGY_MAP.get(config.strategy)
     if strategy_fn is None:
         logger.warning(f"Unknown strategy {config.strategy}, falling back to fixed")

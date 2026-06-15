@@ -1,20 +1,21 @@
 import os
 import shutil
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import yaml
 from app.core.config import Settings, get_settings
 
 
 class RuntimeProfilesService:
-    def __init__(self, profiles_dir: Optional[str] = None, env_path: Optional[str] = None):
+    def __init__(self, profiles_dir: str | None = None, env_path: str | None = None):
         base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
         if profiles_dir is None:
             profiles_dir = os.path.join(base_dir, "config/runtime-profiles")
-        
+
         import sys
+
         is_test = "pytest" in sys.modules
-        
+
         if env_path is None:
             if is_test:
                 env_path = "/tmp/llm-inference-stack-control-plane-tests/.env.test"
@@ -22,16 +23,17 @@ class RuntimeProfilesService:
                 os.makedirs(os.path.dirname(env_path), exist_ok=True)
                 if not os.path.exists(env_path):
                     with open(env_path, "w", encoding="utf-8") as f:
-                        f.write("PROJECT_NAME=test-llm-inference-stack\nDEPLOYMENT_MODE=appliance\nMAX_QUEUE_SIZE=2\n")
+                        f.write(
+                            "PROJECT_NAME=test-llm-inference-stack\nDEPLOYMENT_MODE=appliance\nMAX_QUEUE_SIZE=2\n"
+                        )
             else:
                 env_path = os.path.join(base_dir, "control_plane/.env")
-            
+
         self.profiles_dir = profiles_dir
         self.env_path = env_path
         self.backup_path = env_path + ".backup"
 
-
-    def get_all_profiles(self) -> List[Dict[str, Any]]:
+    def get_all_profiles(self) -> list[dict[str, Any]]:
         profiles = []
         if not os.path.exists(self.profiles_dir):
             return profiles
@@ -40,7 +42,7 @@ class RuntimeProfilesService:
             if filename.endswith(".yaml") or filename.endswith(".yml"):
                 path = os.path.join(self.profiles_dir, filename)
                 try:
-                    with open(path, "r", encoding="utf-8") as f:
+                    with open(path, encoding="utf-8") as f:
                         profile_data = yaml.safe_load(f)
                         if profile_data:
                             profiles.append(profile_data)
@@ -48,14 +50,14 @@ class RuntimeProfilesService:
                     pass
         return profiles
 
-    def get_profile_by_id(self, profile_id: str) -> Optional[Dict[str, Any]]:
+    def get_profile_by_id(self, profile_id: str) -> dict[str, Any] | None:
         profiles = self.get_all_profiles()
         for p in profiles:
             if p.get("profile_id") == profile_id:
                 return p
         return None
 
-    def validate_profile(self, profile_id: str) -> Tuple[bool, List[str]]:
+    def validate_profile(self, profile_id: str) -> tuple[bool, list[str]]:
         profile = self.get_profile_by_id(profile_id)
         if not profile:
             return False, [f"Profile '{profile_id}' not found."]
@@ -74,11 +76,13 @@ class RuntimeProfilesService:
         errors = []
         for key in settings_dict.keys():
             if key.upper() not in valid_fields:
-                errors.append(f"Invalid setting key '{key}' in profile. Must be a valid feature flag or configuration variable.")
+                errors.append(
+                    f"Invalid setting key '{key}' in profile. Must be a valid feature flag or configuration variable."
+                )
 
         return len(errors) == 0, errors
 
-    def get_current_settings(self) -> Dict[str, Any]:
+    def get_current_settings(self) -> dict[str, Any]:
         settings = get_settings()
         # Convert all setting fields to a dictionary of uppercase variables
         current = {}
@@ -88,7 +92,9 @@ class RuntimeProfilesService:
             current[env_key] = val
         return current
 
-    def calculate_diff(self, target_settings: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    def calculate_diff(
+        self, target_settings: dict[str, Any]
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
         current = self.get_current_settings()
         before = {}
         after = {}
@@ -96,7 +102,7 @@ class RuntimeProfilesService:
         for key, target_val in target_settings.items():
             key_upper = key.upper()
             current_val = current.get(key_upper)
-            
+
             # Normalise comparison
             # e.g. bool comparison where target_val might be str 'true'/'false'
             norm_target = target_val
@@ -109,7 +115,9 @@ class RuntimeProfilesService:
 
         return before, after
 
-    def apply_profile(self, profile_id: str, dry_run: bool = True) -> Tuple[Dict[str, Any], Dict[str, Any], str]:
+    def apply_profile(
+        self, profile_id: str, dry_run: bool = True
+    ) -> tuple[dict[str, Any], dict[str, Any], str]:
         profile = self.get_profile_by_id(profile_id)
         if not profile:
             raise ValueError(f"Profile '{profile_id}' not found.")
@@ -122,13 +130,20 @@ class RuntimeProfilesService:
         before, after = self.calculate_diff(target_settings)
 
         if not before:
-            return {}, {}, f"Profile '{profile_id}' is already fully aligned with the active configuration."
+            return (
+                {},
+                {},
+                f"Profile '{profile_id}' is already fully aligned with the active configuration.",
+            )
 
         if dry_run:
             return before, after, f"Dry-run simulation for applying profile '{profile_id}'."
 
         # Verify apply is enabled in environment or settings
-        is_apply_enabled = os.environ.get("RUNTIME_PROFILE_APPLY_ENABLED", "").lower() in ("true", "1")
+        is_apply_enabled = os.environ.get("RUNTIME_PROFILE_APPLY_ENABLED", "").lower() in (
+            "true",
+            "1",
+        )
         # Also fall back to settings check if relevant
         if not is_apply_enabled:
             raise PermissionError(
@@ -147,7 +162,7 @@ class RuntimeProfilesService:
 
         return before, after, f"Successfully applied profile '{profile_id}'."
 
-    def rollback(self, dry_run: bool = True) -> Tuple[Dict[str, Any], Dict[str, Any], str]:
+    def rollback(self, dry_run: bool = True) -> tuple[dict[str, Any], dict[str, Any], str]:
         if not os.path.exists(self.backup_path):
             raise FileNotFoundError("No configuration backup found. Cannot perform rollback.")
 
@@ -161,7 +176,10 @@ class RuntimeProfilesService:
         if dry_run:
             return before, after, "Dry-run simulation for rollback to previous configuration."
 
-        is_apply_enabled = os.environ.get("RUNTIME_PROFILE_APPLY_ENABLED", "").lower() in ("true", "1")
+        is_apply_enabled = os.environ.get("RUNTIME_PROFILE_APPLY_ENABLED", "").lower() in (
+            "true",
+            "1",
+        )
         if not is_apply_enabled:
             raise PermissionError(
                 "Rolling back runtime profiles is disabled. Set environment variable RUNTIME_PROFILE_APPLY_ENABLED=true to perform live rollback."
@@ -179,11 +197,11 @@ class RuntimeProfilesService:
 
         return before, after, "Successfully rolled back to the previous configuration."
 
-    def _read_env_file(self, path: str) -> Dict[str, Any]:
+    def _read_env_file(self, path: str) -> dict[str, Any]:
         settings = {}
         if not os.path.exists(path):
             return settings
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             for line in f:
                 stripped = line.strip()
                 if not stripped or stripped.startswith("#") or "=" not in line:
@@ -203,7 +221,7 @@ class RuntimeProfilesService:
                         settings[k] = v
         return settings
 
-    def _update_env_file(self, new_settings: Dict[str, Any]):
+    def _update_env_file(self, new_settings: dict[str, Any]):
         if not os.path.exists(self.env_path):
             with open(self.env_path, "w", encoding="utf-8") as f:
                 for k, v in new_settings.items():
@@ -211,7 +229,7 @@ class RuntimeProfilesService:
                     f.write(f"{k}={val_str}\n")
             return
 
-        with open(self.env_path, "r", encoding="utf-8") as f:
+        with open(self.env_path, encoding="utf-8") as f:
             lines = f.readlines()
 
         updated_keys = set()

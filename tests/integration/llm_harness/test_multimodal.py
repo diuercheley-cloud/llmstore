@@ -1,20 +1,18 @@
-import os
 import pytest
-from unittest.mock import MagicMock, AsyncMock
 
+from scripts.llm_harness.multimodal.adapters import adapt_content_blocks_for_provider
 from scripts.llm_harness.multimodal.content_blocks import (
-    TextBlock,
-    ImageBlock,
     AudioBlock,
+    ImageBlock,
+    TextBlock,
     VideoBlock,
 )
 from scripts.llm_harness.multimodal.images import (
-    validate_and_load_image,
     get_image_metadata,
+    validate_and_load_image,
 )
-from scripts.llm_harness.multimodal.adapters import adapt_content_blocks_for_provider
+from scripts.llm_harness.providers import StubProvider
 from scripts.llm_harness.sanitizer import Sanitizer
-from scripts.llm_harness.providers import OpenAICompatibleProvider, StubProvider
 
 
 def test_content_blocks_creation():
@@ -26,11 +24,15 @@ def test_content_blocks_creation():
     assert ib.type == "image_url"
     assert ib.image_url["url"] == "data:image/png;base64,123"
 
-    ab = AudioBlock(audio_url={"url": "data:audio/mp3;base64,123"}, metadata={"mime_type": "audio/mp3"})
+    ab = AudioBlock(
+        audio_url={"url": "data:audio/mp3;base64,123"}, metadata={"mime_type": "audio/mp3"}
+    )
     assert ab.type == "audio_url"
     assert ab.metadata["mime_type"] == "audio/mp3"
 
-    vb = VideoBlock(video_url={"url": "data:video/mp4;base64,123"}, metadata={"mime_type": "video/mp4"})
+    vb = VideoBlock(
+        video_url={"url": "data:video/mp4;base64,123"}, metadata={"mime_type": "video/mp4"}
+    )
     assert vb.type == "video_url"
     assert vb.metadata["mime_type"] == "video/mp4"
 
@@ -97,8 +99,12 @@ def test_adapt_content_blocks_for_provider():
     blocks = [
         TextBlock(text="Task instructions"),
         ImageBlock(image_url={"url": "data:image/png;base64,xyz"}),
-        AudioBlock(audio_url={"url": "data:audio/mp3;base64,123"}, metadata={"mime_type": "audio/mp3"}),
-        VideoBlock(video_url={"url": "data:video/mp4;base64,123"}, metadata={"mime_type": "video/mp4"}),
+        AudioBlock(
+            audio_url={"url": "data:audio/mp3;base64,123"}, metadata={"mime_type": "audio/mp3"}
+        ),
+        VideoBlock(
+            video_url={"url": "data:video/mp4;base64,123"}, metadata={"mime_type": "video/mp4"}
+        ),
     ]
 
     # Multimodal disabled -> should fail
@@ -148,6 +154,7 @@ def test_provider_multimodal_checks():
     # Off -> should fail clearly
     with pytest.raises(ValueError, match="does not support multimodal input"):
         import asyncio
+
         asyncio.run(stub_provider_off.chat_completion(msg))
 
     # On -> should pass (StubProvider will execute successfully or mock response)
@@ -162,7 +169,10 @@ def test_sanitizer_redacts_base64():
                 "role": "user",
                 "content": [
                     {"type": "text", "text": "See this image:"},
-                    {"type": "image_url", "image_url": {"url": "data:image/png;base64,iVBORw0KGgoAAAANS=="}},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": "data:image/png;base64,iVBORw0KGgoAAAANS=="},
+                    },
                 ],
             }
         ]

@@ -3,10 +3,10 @@ from pathlib import Path
 
 import httpx
 from app.core.config import get_settings
-from app.services.runtime_dependencies import get_db_session
 from app.models.core.client import Client
 from app.services.auth import require_client
 from app.services.billing.core import resolve_effective_plan_for_session
+from app.services.runtime_dependencies import get_db_session
 from app.services.tts_usage import check_tts_feature_blocked, ensure_tts_quota, record_tts_event
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import FileResponse
@@ -29,7 +29,7 @@ async def pocket_tts_ui():
 
 
 async def _proxy_pocket_tts(
-    request: Request, 
+    request: Request,
     path: str,
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
@@ -44,7 +44,7 @@ async def _proxy_pocket_tts(
         raise HTTPException(status_code=403, detail="TTS feature is not enabled for your plan")
 
     url = f"{POCKET_TTS_URL}/{path}"
-    
+
     request_content = None
     request_files = None
 
@@ -66,7 +66,9 @@ async def _proxy_pocket_tts(
         request_files = []
         for key, value in form_data.multi_items():
             if isinstance(value, UploadFile):
-                request_files.append((key, (value.filename, await value.read(), value.content_type)))
+                request_files.append(
+                    (key, (value.filename, await value.read(), value.content_type))
+                )
             else:
                 request_files.append((key, (None, str(value))))
     else:
@@ -100,7 +102,7 @@ async def _proxy_pocket_tts(
                 status_code=proxy_resp.status_code,
                 headers=dict(proxy_resp.headers),
             )
-            
+
             # Record usage if successful
             if path == "tts" and request.method == "POST" and proxy_resp.status_code in {200, 201}:
                 plan = await resolve_effective_plan_for_session(session, client)
@@ -108,12 +110,14 @@ async def _proxy_pocket_tts(
                     session,
                     client_id=client.id,
                     chars=chars_to_record,
-                    api_key_prefix=request.state.api_key_prefix if hasattr(request.state, "api_key_prefix") else None,
+                    api_key_prefix=request.state.api_key_prefix
+                    if hasattr(request.state, "api_key_prefix")
+                    else None,
                     audio_size_bytes=len(proxy_resp.content),
-                    plan_code=plan.code
+                    plan_code=plan.code,
                 )
                 await session.commit()
-            
+
             return response
         except httpx.RequestError as exc:
             raise HTTPException(status_code=503, detail=f"Pocket-TTS service unreachable: {exc}")

@@ -8,11 +8,15 @@ def test_no_prompt_leakage(tmp_path):
     file_path = out_dir / "test.json"
     with open(file_path, "w") as f:
         json.dump({"prompt": "sensitive query", "response": "sensitive answer"}, f)
-    
-    res = subprocess.run(["./scripts/dev/scan-real-provider-artifacts.sh", "--path", str(out_dir), "--redact"], capture_output=True, text=True)
+
+    res = subprocess.run(
+        ["./scripts/dev/scan-real-provider-artifacts.sh", "--path", str(out_dir), "--redact"],
+        capture_output=True,
+        text=True,
+    )
     assert res.returncode == 0
-    
-    with open(file_path, "r") as f:
+
+    with open(file_path) as f:
         data = json.load(f)
         assert "__redacted_sha256" in data["prompt"]
         assert "sensitive query" not in data["prompt"]

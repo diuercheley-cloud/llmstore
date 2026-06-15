@@ -24,7 +24,9 @@ class StudioAPI:
         return self.client._request("GET", f"/admin/agents/studio/debug/{run_id}")
 
     def create_version(self, flow_id: str, version_def: Dict[str, Any]) -> Dict[str, Any]:
-        return self.client._request("POST", f"/admin/agents/studio/flows/{flow_id}/versions", json=version_def)
+        return self.client._request(
+            "POST", f"/admin/agents/studio/flows/{flow_id}/versions", json=version_def
+        )
 
     def validate_version(self, version_id: str) -> Dict[str, Any]:
         return self.client._request("POST", f"/admin/agents/studio/versions/{version_id}/validate")
@@ -33,7 +35,9 @@ class StudioAPI:
         return self.client._request("POST", f"/admin/agents/studio/versions/{version_id}/compile")
 
     def dry_run_version(self, version_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
-        return self.client._request("POST", f"/admin/agents/studio/versions/{version_id}/dry-run", json=params)
+        return self.client._request(
+            "POST", f"/admin/agents/studio/versions/{version_id}/dry-run", json=params
+        )
 
     def list_templates(self) -> List[Dict[str, Any]]:
         return self.client._request("GET", "/admin/agents/studio/templates")
@@ -45,4 +49,6 @@ class StudioAPI:
         return self.client._request("POST", f"/admin/agents/studio/flows/{flow_id}/deploy")
 
     def get_dag(self, flow_id: str, version_id: str) -> Dict[str, Any]:
-        return self.client._request("GET", f"/admin/agents/studio/flows/{flow_id}/versions/{version_id}/dag")
+        return self.client._request(
+            "GET", f"/admin/agents/studio/flows/{flow_id}/versions/{version_id}/dag"
+        )

@@ -4,7 +4,6 @@ from uuid import UUID
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.services.runtime_dependencies import get_db_session
 from app.models.billing.billing_invoice import BillingInvoice
 from app.models.billing.customer_payment import CustomerPayment
 from app.schemas.public import (
@@ -19,14 +18,14 @@ from app.services.billing import (
     refresh_billing_statuses,
 )
 from app.services.public_onboarding import create_public_signup, list_public_plans
-from app.services.rate_limit import RateLimitExceeded, enforce_ip_rate_limit
-from app.services.runtime_dependencies import get_redis
 from app.services.public_seo import (
     PUBLIC_PAGES,
     generate_robots_txt,
     generate_sitemap,
     render_public_page,
 )
+from app.services.rate_limit import RateLimitExceeded, enforce_ip_rate_limit
+from app.services.runtime_dependencies import get_db_session, get_redis
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
 from sqlalchemy import select
@@ -45,52 +44,71 @@ def _base_url(request: Request) -> str:
 
 @router.get("/", include_in_schema=False)
 async def landing_page(request: Request):
-    return HTMLResponse(render_public_page(PUBLIC_PAGES["landing"], request=request, settings=settings))
+    return HTMLResponse(
+        render_public_page(PUBLIC_PAGES["landing"], request=request, settings=settings)
+    )
 
 
 @router.get("/pricing", include_in_schema=False)
 async def pricing_page(request: Request):
-    return HTMLResponse(render_public_page(PUBLIC_PAGES["pricing"], request=request, settings=settings))
+    return HTMLResponse(
+        render_public_page(PUBLIC_PAGES["pricing"], request=request, settings=settings)
+    )
 
 
 @router.get("/signup", include_in_schema=False)
 async def signup_page(request: Request):
-    return HTMLResponse(render_public_page(PUBLIC_PAGES["signup"], request=request, settings=settings))
+    return HTMLResponse(
+        render_public_page(PUBLIC_PAGES["signup"], request=request, settings=settings)
+    )
 
 
 @router.get("/docs", include_in_schema=False)
 async def docs_page(request: Request):
-    return HTMLResponse(render_public_page(PUBLIC_PAGES["docs"], request=request, settings=settings))
+    return HTMLResponse(
+        render_public_page(PUBLIC_PAGES["docs"], request=request, settings=settings)
+    )
 
 
 @router.get("/examples", include_in_schema=False)
 async def examples_page(request: Request):
-    return HTMLResponse(render_public_page(PUBLIC_PAGES["examples"], request=request, settings=settings))
+    return HTMLResponse(
+        render_public_page(PUBLIC_PAGES["examples"], request=request, settings=settings)
+    )
 
 
 @router.get("/getting-started", include_in_schema=False)
 async def getting_started_page(request: Request):
-    return HTMLResponse(render_public_page(PUBLIC_PAGES["getting_started"], request=request, settings=settings))
+    return HTMLResponse(
+        render_public_page(PUBLIC_PAGES["getting_started"], request=request, settings=settings)
+    )
 
 
 @router.get("/capabilities", include_in_schema=False)
 async def capabilities_page(request: Request):
-    return HTMLResponse(render_public_page(PUBLIC_PAGES["capabilities"], request=request, settings=settings))
+    return HTMLResponse(
+        render_public_page(PUBLIC_PAGES["capabilities"], request=request, settings=settings)
+    )
 
 
 @router.get("/sitemap.xml", include_in_schema=False)
 async def sitemap_xml(request: Request):
-    return Response(content=generate_sitemap(request=request, settings=settings), media_type="application/xml")
+    return Response(
+        content=generate_sitemap(request=request, settings=settings), media_type="application/xml"
+    )
 
 
 @router.get("/robots.txt", include_in_schema=False)
 async def robots_txt(request: Request):
-    return Response(content=generate_robots_txt(request=request, settings=settings), media_type="text/plain")
+    return Response(
+        content=generate_robots_txt(request=request, settings=settings), media_type="text/plain"
+    )
 
 
 @router.get("/public/capabilities", response_model=CapabilitiesResponse)
 async def public_capabilities():
     from app.services.feature_registry import get_public_capabilities
+
     capabilities = get_public_capabilities()
     return CapabilitiesResponse(
         version=settings.project_version,
@@ -103,14 +121,15 @@ async def public_capabilities():
             "No absolute security guarantee — consult compliance team",
         ],
         note="Capability data sourced from config/supported-surface.yaml. "
-             "Each feature includes its capability_level, limitations, and docs_url. "
-             "Features gated behind disabled feature flags are omitted.",
+        "Each feature includes its capability_level, limitations, and docs_url. "
+        "Features gated behind disabled feature flags are omitted.",
     )
 
 
 @router.get("/public/branding")
 async def public_branding():
     from app.services.branding import get_safe_branding
+
     return get_safe_branding()
 
 
@@ -195,7 +214,9 @@ async def local_payment_webhook(
         invoice.paid_at = current_time
         invoice.updated_at = current_time
 
-        pending_payment = next((p for p in invoice.payments if p.status in {"pending", "overdue"}), None)
+        pending_payment = next(
+            (p for p in invoice.payments if p.status in {"pending", "overdue"}), None
+        )
         if pending_payment:
             pending_payment.status = "paid"
             pending_payment.payment_reference = payload.payment_reference or "local_payment_webhook"
@@ -216,7 +237,9 @@ async def local_payment_webhook(
             )
 
         # Trigger unsuspend logic if applicable
-        await refresh_billing_statuses(session, suspend_after_days=settings.billing_suspend_after_days)
+        await refresh_billing_statuses(
+            session, suspend_after_days=settings.billing_suspend_after_days
+        )
         await session.commit()
         return {"status": "paid_successfully"}
 

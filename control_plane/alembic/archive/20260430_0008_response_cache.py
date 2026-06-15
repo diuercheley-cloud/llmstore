@@ -28,14 +28,19 @@ def upgrade() -> None:
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
-        sa.UniqueConstraint("cache_type", "endpoint", "model", "request_hash", name="uq_response_cache_lookup"),
+        sa.UniqueConstraint(
+            "cache_type", "endpoint", "model", "request_hash", name="uq_response_cache_lookup"
+        ),
     )
     op.create_index("ix_response_cache_endpoint", "response_cache", ["endpoint"])
     op.create_index("ix_response_cache_model", "response_cache", ["model"])
     op.create_index("ix_response_cache_request_hash", "response_cache", ["request_hash"])
     op.create_index("ix_response_cache_expires_at", "response_cache", ["expires_at"])
 
-    op.add_column("request_logs", sa.Column("cache_hit", sa.Boolean(), nullable=False, server_default=sa.text("false")))
+    op.add_column(
+        "request_logs",
+        sa.Column("cache_hit", sa.Boolean(), nullable=False, server_default=sa.text("false")),
+    )
 
 
 def downgrade() -> None:

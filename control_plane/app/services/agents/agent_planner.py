@@ -1,7 +1,6 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import List, Optional
 
 from app.core.config import get_settings
 from app.models.agents.agents import AgentPlan, AgentTask, AgentTaskDependency
@@ -12,13 +11,14 @@ from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
+
 class AgentPlanner:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.settings = get_settings()
         self.cost_planner = CostAwarePlanner(db)
 
-    async def create_plan(self, run_id: uuid.UUID, goal: str, tasks_data: List[dict]) -> AgentPlan:
+    async def create_plan(self, run_id: uuid.UUID, goal: str, tasks_data: list[dict]) -> AgentPlan:
         if not self.settings.agent_planning_enabled:
             logger.warning("Agent planning is disabled.")
 
@@ -37,13 +37,13 @@ class AgentPlanner:
             goal_hash=agent_state.compute_sha256(goal),
             status="draft",
             risk_score=min(risk_score, 1.0),
-            requires_approval=requires_approval
+            requires_approval=requires_approval,
         )
         self.db.add(plan)
         await self.db.flush()
 
-        task_map = {} # temp map to handle dependencies by index or title
-        
+        task_map = {}  # temp map to handle dependencies by index or title
+
         created_tasks = []
         for i, t_data in enumerate(tasks_data):
             task = AgentTask(
@@ -52,7 +52,7 @@ class AgentPlanner:
                 description_hash=agent_state.compute_sha256(t_data.get("description", "")),
                 task_type=t_data.get("task_type", "tool_call"),
                 max_attempts=t_data.get("max_attempts", 3),
-                input_data=t_data.get("input_data", {})
+                input_data=t_data.get("input_data", {}),
             )
             self.db.add(task)
             created_tasks.append((task, t_data))
@@ -67,13 +67,12 @@ class AgentPlanner:
             for d_ref in deps:
                 if d_ref in task_map:
                     dep = AgentTaskDependency(
-                        task_id=task.id,
-                        depends_on_task_id=task_map[d_ref].id
+                        task_id=task.id, depends_on_task_id=task_map[d_ref].id
                     )
                     self.db.add(dep)
 
         await self.db.flush()
-        
+
         # --- Cost Aware Planning ---
         try:
             await self.cost_planner.estimate_plan_cost(plan.id)
@@ -84,7 +83,7 @@ class AgentPlanner:
         await self.db.refresh(plan)
         return plan
 
-    async def get_plan(self, plan_id: uuid.UUID) -> Optional[AgentPlan]:
+    async def get_plan(self, plan_id: uuid.UUID) -> AgentPlan | None:
         res = await self.db.execute(select(AgentPlan).where(AgentPlan.id == plan_id))
         return res.scalar_one_or_none()
 

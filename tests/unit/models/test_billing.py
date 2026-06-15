@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
 from app.api.admin_billing import _serialize_billing_plan_payload
@@ -82,14 +82,18 @@ def test_should_generate_monthly_invoices_only_on_configured_day():
 
 
 def test_normalize_invoice_status_promotes_pending_to_overdue():
-    overdue_since = datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc) - timedelta(minutes=1)
+    overdue_since = datetime(2026, 5, 1, 12, 0, tzinfo=UTC) - timedelta(minutes=1)
     status = normalize_invoice_status("pending", overdue_since)
     assert status == "overdue"
 
 
 def test_derive_client_billing_status_preserves_suspension():
-    assert derive_client_billing_status(has_overdue_invoice=True, should_suspend=True) == "suspended"
-    assert derive_client_billing_status(has_overdue_invoice=True, should_suspend=False) == "past_due"
+    assert (
+        derive_client_billing_status(has_overdue_invoice=True, should_suspend=True) == "suspended"
+    )
+    assert (
+        derive_client_billing_status(has_overdue_invoice=True, should_suspend=False) == "past_due"
+    )
     assert derive_client_billing_status(has_overdue_invoice=False, should_suspend=False) == "active"
 
 
@@ -191,4 +195,4 @@ def test_serialize_billing_plan_payload_serializes_allowed_models_json():
     plan_data = _serialize_billing_plan_payload(payload)
 
     assert "allowed_models" not in plan_data
-    assert plan_data["allowed_models_json"] == "[\"model-a\", \"model-b\"]"
+    assert plan_data["allowed_models_json"] == '["model-a", "model-b"]'

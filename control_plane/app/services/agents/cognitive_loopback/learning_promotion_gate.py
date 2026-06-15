@@ -1,7 +1,7 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.core.config import get_settings
 from app.models.agents.agent_cognitive_loopback import (
@@ -15,40 +15,43 @@ from .fewshot_curator import FewShotCurator
 
 logger = logging.getLogger(__name__)
 
+
 class LearningPromotionGate:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.settings = get_settings()
         self.curator = FewShotCurator(db)
 
-    async def run_eval(self, candidate_id: uuid.UUID) -> Dict[str, Any]:
+    async def run_eval(self, candidate_id: uuid.UUID) -> dict[str, Any]:
         """
         Runs automated evals on the learning candidate.
         """
         candidate = await self.db.get(AgentLearningCandidate, candidate_id)
         if not candidate:
             raise ValueError("Candidate not found")
-            
+
         # Mock eval logic
         eval_result = {
             "passed": True,
             "score": 0.95,
-            "checks": ["no_secrets", "no_pii", "format_valid"]
+            "checks": ["no_secrets", "no_pii", "format_valid"],
         }
-        
+
         # Validation for secrets/PII
         data_str = str(candidate.candidate_data)
         if "sk-" in data_str or "password" in data_str.lower():
             eval_result["passed"] = False
             eval_result["checks"].append("failed_secret_detection")
-            
+
         candidate.eval_result = eval_result
         candidate.validation_status = "validated" if eval_result["passed"] else "rejected"
-        
+
         await self.db.commit()
         return eval_result
 
-    async def approve_candidate(self, candidate_id: uuid.UUID, reviewer_id: str, comments: Optional[str] = None):
+    async def approve_candidate(
+        self, candidate_id: uuid.UUID, reviewer_id: str, comments: str | None = None
+    ):
         """
         Approves a candidate for promotion to few-shot example.
         """
@@ -60,13 +63,13 @@ class LearningPromotionGate:
             candidate_id=candidate_id,
             reviewer_id=reviewer_id,
             decision="approve",
-            comments=comments
+            comments=comments,
         )
         self.db.add(review)
-        
+
         if self.settings.agent_auto_apply_learnings:
             await self.promote_to_example(candidate)
-        
+
         await self.db.commit()
         return {"status": "approved", "auto_promoted": self.settings.agent_auto_apply_learnings}
 
@@ -81,7 +84,7 @@ class LearningPromotionGate:
             reasoning_summary=candidate.candidate_data.get("reasoning", ""),
             tool_calls=candidate.candidate_data.get("tools", []),
             final_answer=candidate.candidate_data.get("answer", ""),
-            is_active=True
+            is_active=True,
         )
         self.db.add(example)
         candidate.validation_status = "promoted"

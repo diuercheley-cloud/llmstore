@@ -39,7 +39,7 @@ def test_architecture_full_preserves_architecture():
     assert "validate-architecture-full:" in content
     assert "validate-architecture:" in content
     idx_full = content.find("validate-architecture-full:")
-    block_after_full = content[idx_full:idx_full + 500]
+    block_after_full = content[idx_full : idx_full + 500]
     assert "validate-architecture" in block_after_full
 
 

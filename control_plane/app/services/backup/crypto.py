@@ -1,14 +1,18 @@
-import os
 import base64
 import hashlib
 import hmac
 import json
+import os
 from typing import Any
+
 from cryptography.fernet import Fernet
+
 from .errors import BackupCryptoError, BackupKeyError
+
 
 def _canonical_json(payload: Any) -> str:
     return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+
 
 class BackupCryptoService:
     def __init__(self):
@@ -61,9 +65,7 @@ class BackupCryptoService:
     def sign_payload(self, payload: dict[str, Any]) -> str:
         try:
             return hmac.new(
-                self._signing_key, 
-                _canonical_json(payload).encode("utf-8"), 
-                hashlib.sha256
+                self._signing_key, _canonical_json(payload).encode("utf-8"), hashlib.sha256
             ).hexdigest()
         except Exception as e:
             raise BackupCryptoError(f"Signing failed: {e}")

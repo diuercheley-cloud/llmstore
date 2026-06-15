@@ -44,12 +44,17 @@ def evaluate_policy(policy_dsl: dict, subject: dict) -> dict:
     matched_rules: list[dict] = []
     actions: list[str] = []
     for rule in parsed["rules"]:
-        if all(_matches(item["operator"], subject.get(item["field"]), item.get("value")) for item in rule["conditions"]):
+        if all(
+            _matches(item["operator"], subject.get(item["field"]), item.get("value"))
+            for item in rule["conditions"]
+        ):
             matched_rules.append(rule)
             actions.append(rule["action"])
     decision = resolve_decision(actions)
     status = "evaluated" if matched_rules else "no_match"
-    explanation = f"matched {len(matched_rules)} rule(s)" if matched_rules else "no policy rules matched"
+    explanation = (
+        f"matched {len(matched_rules)} rule(s)" if matched_rules else "no policy rules matched"
+    )
     return {
         "evaluation_status": status,
         "decision": decision,
@@ -58,4 +63,3 @@ def evaluate_policy(policy_dsl: dict, subject: dict) -> dict:
         "replay_safe": True,
         "conflicts": [],
     }
-

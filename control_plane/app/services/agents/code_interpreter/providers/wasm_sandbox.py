@@ -8,7 +8,9 @@ class WasmSandboxProvider:
     name = "wasm"
     mock = False
 
-    async def run(self, code: str, limits: Any, session_id: uuid.UUID | None = None) -> dict[str, Any]:
+    async def run(
+        self, code: str, limits: Any, session_id: uuid.UUID | None = None
+    ) -> dict[str, Any]:
         started_at = time.time()
         return {
             "stdout": "",

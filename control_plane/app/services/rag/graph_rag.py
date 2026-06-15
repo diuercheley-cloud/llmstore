@@ -6,7 +6,7 @@ and provides agentic retrieval loops that iteratively refine searches.
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any
 
 from app.core.config import get_settings
 from app.models.rag.rag_document_chunk import RAGDocumentChunk as RAGChunk
@@ -18,20 +18,20 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class GraphRAGContext:
-    entities: List[Dict[str, Any]] = field(default_factory=list)
-    relationships: List[Dict[str, Any]] = field(default_factory=list)
-    chunks: List[Dict[str, Any]] = field(default_factory=list)
+    entities: list[dict[str, Any]] = field(default_factory=list)
+    relationships: list[dict[str, Any]] = field(default_factory=list)
+    chunks: list[dict[str, Any]] = field(default_factory=list)
     query: str = ""
-    expanded_queries: List[str] = field(default_factory=list)
+    expanded_queries: list[str] = field(default_factory=list)
 
 
 @dataclass
 class AgenticRAGResult:
     answer: str = ""
-    sources: List[Dict[str, Any]] = field(default_factory=list)
+    sources: list[dict[str, Any]] = field(default_factory=list)
     iterations: int = 0
     confidence: float = 0.0
-    reasoning: List[str] = field(default_factory=list)
+    reasoning: list[str] = field(default_factory=list)
 
 
 class KnowledgeGraphRAGService:
@@ -44,8 +44,9 @@ class KnowledgeGraphRAGService:
         self.db = db
         self.settings = get_settings()
 
-    async def graph_enhanced_retrieval(self, query: str, tenant_id: str,
-                                       max_entities: int = 10, max_chunks: int = 20) -> GraphRAGContext:
+    async def graph_enhanced_retrieval(
+        self, query: str, tenant_id: str, max_entities: int = 10, max_chunks: int = 20
+    ) -> GraphRAGContext:
         """
         Performs graph-enhanced retrieval:
         1. Extract entities from query (via LLM or pattern matching)
@@ -80,14 +81,16 @@ class KnowledgeGraphRAGService:
 
         return ctx
 
-    async def _extract_entities(self, query: str) -> List[Dict[str, str]]:
+    async def _extract_entities(self, query: str) -> list[dict[str, str]]:
         nouns = [w for w in query.split() if w[0].isupper() and len(w) > 2] if query else []
         entities = [{"name": n, "type": "extracted"} for n in nouns]
         if not entities and query:
-            entities.append({"name": query.split()[0] if len(query.split()) > 0 else query, "type": "inferred"})
+            entities.append(
+                {"name": query.split()[0] if len(query.split()) > 0 else query, "type": "inferred"}
+            )
         return entities
 
-    async def _find_related_entities(self, entity_names: List[str], tenant_id: str) -> List[Dict]:
+    async def _find_related_entities(self, entity_names: list[str], tenant_id: str) -> list[dict]:
         if not entity_names:
             return []
 
@@ -104,16 +107,14 @@ class KnowledgeGraphRAGService:
             """)
             result = await self.db.execute(sql, {"tenant_id": tenant_id})
             rows = result.fetchall()
-            return [
-                {"name": row[0], "type": row[1], "relationship": row[2]}
-                for row in rows
-            ]
+            return [{"name": row[0], "type": row[1], "relationship": row[2]} for row in rows]
         except Exception as e:
             logger.warning("Knowledge graph query failed (may not exist): %s", e)
             return []
 
-    async def _build_expanded_queries(self, query: str, entities: List[Dict],
-                                       relationships: List[Dict]) -> List[str]:
+    async def _build_expanded_queries(
+        self, query: str, entities: list[dict], relationships: list[dict]
+    ) -> list[str]:
         expanded = []
         if relationships:
             related_names = list(set(r["name"] for r in relationships))
@@ -124,7 +125,7 @@ class KnowledgeGraphRAGService:
             expanded.append(f"{query} about {', '.join(entity_names[:3])}")
         return expanded[:3]
 
-    async def _vector_search(self, query: str, tenant_id: str, limit: int = 10) -> List[Dict]:
+    async def _vector_search(self, query: str, tenant_id: str, limit: int = 10) -> list[dict]:
         try:
             sql = text("""
                 SELECT c.id, c.content, c.document_id, c.metadata,
@@ -147,11 +148,14 @@ class KnowledgeGraphRAGService:
                 )
                 LIMIT :limit
             """)
-            result = await self.db.execute(sql, {
-                "tenant_id": tenant_id,
-                "query": query,
-                "limit": limit,
-            })
+            result = await self.db.execute(
+                sql,
+                {
+                    "tenant_id": tenant_id,
+                    "query": query,
+                    "limit": limit,
+                },
+            )
             rows = result.fetchall()
             return [
                 {
@@ -168,12 +172,18 @@ class KnowledgeGraphRAGService:
             logger.warning("Vector search fallback (no pgvector): %s", e)
             try:
                 result = await self.db.execute(
-                    select(RAGChunk).where(RAGChunk.client_id == tenant_id)
-                    .order_by(RAGChunk.created_at.desc()).limit(limit)
+                    select(RAGChunk)
+                    .where(RAGChunk.client_id == tenant_id)
+                    .order_by(RAGChunk.created_at.desc())
+                    .limit(limit)
                 )
                 return [
-                    {"id": str(c.id), "content": c.content,
-                     "metadata": c.metadata_json or {}, "content_hash": ""}
+                    {
+                        "id": str(c.id),
+                        "content": c.content,
+                        "metadata": c.metadata_json or {},
+                        "content_hash": "",
+                    }
                     for c in result.scalars().all()
                 ]
             except Exception:
@@ -207,7 +217,7 @@ class AgenticRAGService:
 
         for i in range(max_iterations):
             result.iterations = i + 1
-            reasoning.append(f"Iteration {i+1}: searching for '{current_query[:80]}'")
+            reasoning.append(f"Iteration {i + 1}: searching for '{current_query[:80]}'")
 
             if use_graph:
                 ctx = await self.graph_rag.graph_enhanced_retrieval(
@@ -229,9 +239,7 @@ class AgenticRAGService:
                 break
 
             if i < max_iterations - 1:
-                current_query = await self._generate_refined_query(
-                    current_query, new_chunks, i + 1
-                )
+                current_query = await self._generate_refined_query(current_query, new_chunks, i + 1)
                 if current_query == query:
                     reasoning.append("No refinement possible, stopping.")
                     break
@@ -242,8 +250,7 @@ class AgenticRAGService:
         result.reasoning = reasoning
 
         context = "\n\n".join(
-            f"[Source {j+1}] {c.get('content', '')[:500]}"
-            for j, c in enumerate(deduped[:10])
+            f"[Source {j + 1}] {c.get('content', '')[:500]}" for j, c in enumerate(deduped[:10])
         )
 
         if self.llm:
@@ -263,21 +270,27 @@ class AgenticRAGService:
 
         return result
 
-    async def _basic_retrieve(self, query: str, tenant_id: str, limit: int = 10) -> List[Dict]:
+    async def _basic_retrieve(self, query: str, tenant_id: str, limit: int = 10) -> list[dict]:
         try:
             result = await self.db.execute(
-                select(RAGChunk).where(RAGChunk.client_id == tenant_id)
-                .order_by(RAGChunk.created_at.desc()).limit(limit)
+                select(RAGChunk)
+                .where(RAGChunk.client_id == tenant_id)
+                .order_by(RAGChunk.created_at.desc())
+                .limit(limit)
             )
             return [
-                {"id": str(c.id), "content": c.content,
-                 "metadata": c.metadata_json or {}, "content_hash": ""}
+                {
+                    "id": str(c.id),
+                    "content": c.content,
+                    "metadata": c.metadata_json or {},
+                    "content_hash": "",
+                }
                 for c in result.scalars().all()
             ]
         except Exception:
             return []
 
-    def _evaluate_relevance(self, query: str, chunks: List[Dict]) -> float:
+    def _evaluate_relevance(self, query: str, chunks: list[dict]) -> float:
         if not chunks:
             return 0.0
         query_words = set(query.lower().split())
@@ -292,8 +305,9 @@ class AgenticRAGService:
             scores.append(matches / len(query_words))
         return sum(scores) / len(scores) if scores else 0.0
 
-    async def _generate_refined_query(self, original: str, chunks: List[Dict],
-                                       iteration: int) -> str:
+    async def _generate_refined_query(
+        self, original: str, chunks: list[dict], iteration: int
+    ) -> str:
         if not chunks:
             return original
 
@@ -309,7 +323,7 @@ class AgenticRAGService:
 
         return original
 
-    def _deduplicate(self, chunks: List[Dict]) -> List[Dict]:
+    def _deduplicate(self, chunks: list[dict]) -> list[dict]:
         seen = set()
         deduped = []
         for c in chunks:
@@ -330,7 +344,7 @@ class GraphRAGRouter:
         self.service = KnowledgeGraphRAGService(db)
         self.agentic = AgenticRAGService(db)
 
-    async def search(self, query: str, tenant_id: str, mode: str = "graph") -> Dict:
+    async def search(self, query: str, tenant_id: str, mode: str = "graph") -> dict:
         if mode == "agentic":
             result = await self.agentic.retrieve_with_iteration(query, tenant_id)
             return {

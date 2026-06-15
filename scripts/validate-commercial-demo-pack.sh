@@ -1,0 +1,1 @@
+validators/validate-commercial-demo-pack.sh

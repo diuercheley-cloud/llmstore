@@ -3,7 +3,6 @@ import uuid
 from typing import Any
 
 from app.core.config import get_settings
-from app.services.runtime_dependencies import get_db_session
 from app.models.commercial.commercial_model_supply_chain import (
     CommercialModelIntegrityEvent,
     CommercialModelIntegrityScan,
@@ -41,6 +40,7 @@ from app.services.models.signed_model_registry import (
     verify_model_signature,
 )
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import desc, func, select
@@ -63,7 +63,9 @@ class RegisterModelPayload(BaseModel):
     signature: str | None = None
     provenance_id: uuid.UUID | None = None
     tenant_scope_json: dict[str, Any] | None = None
-    trust_state: str | None = Field(default=None, pattern="^(trusted|pending|untrusted|quarantined|revoked)$")
+    trust_state: str | None = Field(
+        default=None, pattern="^(trusted|pending|untrusted|quarantined|revoked)$"
+    )
 
 
 class ApproveModelPayload(BaseModel):
@@ -77,7 +79,9 @@ class QuarantineModelPayload(BaseModel):
 
 class RevokeModelPayload(BaseModel):
     reason: str
-    revocation_type: str = Field(pattern="^(checksum_mismatch|policy_violation|security_risk|manual|expired|crl)$")
+    revocation_type: str = Field(
+        pattern="^(checksum_mismatch|policy_violation|security_risk|manual|expired|crl)$"
+    )
     revoked_by: str | None = None
 
 
@@ -105,7 +109,9 @@ class RejectBundlePayload(BaseModel):
 
 
 class ManualIntegrityScanPayload(BaseModel):
-    scan_type: str = Field(default="manual", pattern="^(boot|scheduled|manual|runtime_validation|federated)$")
+    scan_type: str = Field(
+        default="manual", pattern="^(boot|scheduled|manual|runtime_validation|federated)$"
+    )
 
 
 def _serialize_registry_entry(entry: CommercialSignedModelRegistryEntry) -> dict[str, Any]:
@@ -199,13 +205,17 @@ def _serialize_bundle(item: CommercialModelPromotionBundle) -> dict[str, Any]:
 @router.get("/supply-chain/registry")
 async def list_supply_chain_registry(db: AsyncSession = Depends(get_db_session)):
     rows = await db.execute(
-        select(CommercialSignedModelRegistryEntry).order_by(desc(CommercialSignedModelRegistryEntry.updated_at))
+        select(CommercialSignedModelRegistryEntry).order_by(
+            desc(CommercialSignedModelRegistryEntry.updated_at)
+        )
     )
     return {"items": [_serialize_registry_entry(item) for item in rows.scalars().all()]}
 
 
 @router.post("/supply-chain/register", status_code=201)
-async def post_supply_chain_register(payload: RegisterModelPayload, db: AsyncSession = Depends(get_db_session)):
+async def post_supply_chain_register(
+    payload: RegisterModelPayload, db: AsyncSession = Depends(get_db_session)
+):
     try:
         entry = await register_model_manifest(db, **payload.model_dump())
         await db.commit()
@@ -234,7 +244,9 @@ async def post_supply_chain_verify(entry_id: uuid.UUID, db: AsyncSession = Depen
         }
     )
     checksum = await verify_model_checksum(db, entry)
-    signature_valid = await verify_model_signature(manifest, entry.signature) if entry.signature else False
+    signature_valid = (
+        await verify_model_signature(manifest, entry.signature) if entry.signature else False
+    )
     await db.commit()
     return {"checksum": checksum, "signature_valid": signature_valid}
 
@@ -253,7 +265,9 @@ async def list_integrity_scans(
 
 
 @router.post("/integrity/scan")
-async def post_integrity_scan(payload: ManualIntegrityScanPayload, db: AsyncSession = Depends(get_db_session)):
+async def post_integrity_scan(
+    payload: ManualIntegrityScanPayload, db: AsyncSession = Depends(get_db_session)
+):
     result = await scan_registered_models(db, scan_type=payload.scan_type)
     await db.commit()
     return result
@@ -286,7 +300,9 @@ async def list_integrity_attestations(
 
 
 @router.post("/integrity/quarantine/{entry_id}")
-async def post_integrity_quarantine(entry_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
+async def post_integrity_quarantine(
+    entry_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)
+):
     entry = await db.get(CommercialSignedModelRegistryEntry, entry_id)
     if not entry:
         raise HTTPException(status_code=404, detail="Registry entry not found")
@@ -367,7 +383,9 @@ async def post_supply_chain_quarantine(
     db: AsyncSession = Depends(get_db_session),
 ):
     try:
-        entry = await quarantine_model(db, entry_id, reason=payload.reason, revoked_by=payload.revoked_by)
+        entry = await quarantine_model(
+            db, entry_id, reason=payload.reason, revoked_by=payload.revoked_by
+        )
         await db.commit()
         await db.refresh(entry)
         return _serialize_registry_entry(entry)
@@ -392,7 +410,9 @@ async def post_supply_chain_revoke(
         await db.commit()
         return {
             "id": str(record.id),
-            "registry_entry_id": str(record.registry_entry_id) if record.registry_entry_id else None,
+            "registry_entry_id": str(record.registry_entry_id)
+            if record.registry_entry_id
+            else None,
             "model_name": record.model_name,
             "reason": record.reason,
             "revocation_type": record.revocation_type,
@@ -406,13 +426,17 @@ async def post_supply_chain_revoke(
 @router.get("/supply-chain/provenance")
 async def list_supply_chain_provenance(db: AsyncSession = Depends(get_db_session)):
     rows = await db.execute(
-        select(CommercialModelProvenanceAttestation).order_by(desc(CommercialModelProvenanceAttestation.created_at))
+        select(CommercialModelProvenanceAttestation).order_by(
+            desc(CommercialModelProvenanceAttestation.created_at)
+        )
     )
     return {"items": [_serialize_provenance(item) for item in rows.scalars().all()]}
 
 
 @router.post("/supply-chain/provenance", status_code=201)
-async def post_supply_chain_provenance(payload: ProvenancePayload, db: AsyncSession = Depends(get_db_session)):
+async def post_supply_chain_provenance(
+    payload: ProvenancePayload, db: AsyncSession = Depends(get_db_session)
+):
     try:
         item = await create_provenance_attestation(db, **payload.model_dump())
         await db.commit()
@@ -428,7 +452,9 @@ async def get_supply_chain_bundles(db: AsyncSession = Depends(get_db_session)):
 
 
 @router.post("/supply-chain/bundles", status_code=201)
-async def post_supply_chain_bundle(payload: BundlePayload, db: AsyncSession = Depends(get_db_session)):
+async def post_supply_chain_bundle(
+    payload: BundlePayload, db: AsyncSession = Depends(get_db_session)
+):
     try:
         item = await create_model_promotion_bundle(db, **payload.model_dump())
         await db.commit()
@@ -439,7 +465,9 @@ async def post_supply_chain_bundle(payload: BundlePayload, db: AsyncSession = De
 
 
 @router.post("/supply-chain/bundles/{bundle_id}/verify")
-async def post_supply_chain_bundle_verify(bundle_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
+async def post_supply_chain_bundle_verify(
+    bundle_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)
+):
     bundle = await db.get(CommercialModelPromotionBundle, bundle_id)
     if not bundle:
         raise HTTPException(status_code=404, detail="Bundle not found")
@@ -449,7 +477,9 @@ async def post_supply_chain_bundle_verify(bundle_id: uuid.UUID, db: AsyncSession
 
 
 @router.post("/supply-chain/bundles/{bundle_id}/promote")
-async def post_supply_chain_bundle_promote(bundle_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
+async def post_supply_chain_bundle_promote(
+    bundle_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)
+):
     try:
         entry = await promote_model_from_bundle(db, bundle_id, imported_by="admin")
         await db.commit()
@@ -494,7 +524,9 @@ async def get_supply_chain_status(db: AsyncSession = Depends(get_db_session)):
         "model_risk_summary": {
             "trusted": state_counts.get("trusted", 0),
             "pending_review": state_counts.get("pending", 0),
-            "blocked": sum(state_counts.get(item, 0) for item in ("untrusted", "quarantined", "revoked")),
+            "blocked": sum(
+                state_counts.get(item, 0) for item in ("untrusted", "quarantined", "revoked")
+            ),
         },
         "tracked_models": sorted(latest.keys()),
     }

@@ -37,7 +37,7 @@ def test_no_fragile_relative_paths():
             stripped = line.strip()
             if stripped.startswith("#"):
                 continue
-            if '$(dirname "$0")' in stripped or '$(dirname $0)' in stripped:
+            if '$(dirname "$0")' in stripped or "$(dirname $0)" in stripped:
                 if stripped.startswith("ROOT_DIR=") or stripped.startswith("SCRIPT_DIR="):
                     continue
                 if "BASH_SOURCE" in stripped:
@@ -51,9 +51,9 @@ def test_no_root_lib_references():
         for line in content.splitlines():
             line = line.strip()
             if line.startswith("source ") and "lib/" in line and "scripts/dev/lib/" not in line:
-                if '${SCRIPT_DIR}/lib/' in line or '${ROOT_DIR}/scripts/dev/lib/' in line:
+                if "${SCRIPT_DIR}/lib/" in line or "${ROOT_DIR}/scripts/dev/lib/" in line:
                     continue
-                if '${ROOT_DIR}/lib/' in line:
+                if "${ROOT_DIR}/lib/" in line:
                     pytest.fail(f"{sh} references root lib/ instead of scripts/dev/lib/: {line}")
 
 
@@ -72,8 +72,14 @@ def test_project_root_sh_function():
 def test_redaction_sh_loadable():
     token = "sk-" + "1234567890123456789012345"
     result = subprocess.run(
-        ["bash", "-c", f"source {SCRIPTS_LIB / 'redaction.sh'} && echo 'my key is {token}' | redact_stream"],
-        capture_output=True, text=True, check=True
+        [
+            "bash",
+            "-c",
+            f"source {SCRIPTS_LIB / 'redaction.sh'} && echo 'my key is {token}' | redact_stream",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
     )
     assert "[REDACTED]" in result.stdout
     assert token not in result.stdout
@@ -81,16 +87,24 @@ def test_redaction_sh_loadable():
 
 def test_validation_logging_sh_loadable():
     result = subprocess.run(
-        ["bash", "-c", f"source {SCRIPTS_LIB / 'validation-logging.sh'} && log_info 'test message'"],
-        capture_output=True, text=True, check=True
+        [
+            "bash",
+            "-c",
+            f"source {SCRIPTS_LIB / 'validation-logging.sh'} && log_info 'test message'",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
     )
-    clean = re.sub(r'\x1b\[[0-9;]*m', '', result.stdout)
+    clean = re.sub(r"\x1b\[[0-9;]*m", "", result.stdout)
     assert "INFO: test message" in clean
 
 
 def test_operator_errors_sh_loadable():
     result = subprocess.run(
         ["bash", "-c", f"source {SCRIPTS_LIB / 'operator-errors.sh'} && operator_success 'loaded'"],
-        capture_output=True, text=True, check=True
+        capture_output=True,
+        text=True,
+        check=True,
     )
     assert "[SUCCESS]" in result.stdout

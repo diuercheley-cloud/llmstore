@@ -3,7 +3,7 @@ from __future__ import annotations
 import csv
 import json
 import uuid
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from io import StringIO
 
@@ -11,8 +11,8 @@ from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.billing.billing_invoice import BillingInvoice
 from app.models.billing.billing_plan import BillingPlan
-from app.models.core.client import Client
 from app.models.billing.customer_payment import CustomerPayment
+from app.models.core.client import Client
 from app.models.core.request_log import RequestLog
 from app.models.core.security_event import SecurityEvent
 from app.models.core.usage_record import UsageRecord
@@ -61,19 +61,21 @@ def _date_range_clause(column, start_date: date | None, end_date: date | None):
 def _datetime_range_clause(column, start_date: date | None, end_date: date | None):
     clauses = []
     if start_date is not None:
-        clauses.append(column >= datetime.combine(start_date, datetime.min.time(), tzinfo=timezone.utc))
+        clauses.append(column >= datetime.combine(start_date, datetime.min.time(), tzinfo=UTC))
     if end_date is not None:
-        clauses.append(column < datetime.combine(end_date + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc))
+        clauses.append(
+            column < datetime.combine(end_date + timedelta(days=1), datetime.min.time(), tzinfo=UTC)
+        )
     return clauses
 
 
 def _utc_day_window(reference: datetime) -> tuple[datetime, datetime]:
-    start = datetime.combine(reference.date(), datetime.min.time(), tzinfo=timezone.utc)
+    start = datetime.combine(reference.date(), datetime.min.time(), tzinfo=UTC)
     return start, start + timedelta(days=1)
 
 
 def _utc_month_window(reference: datetime) -> tuple[datetime, datetime]:
-    start = datetime.combine(reference.date().replace(day=1), datetime.min.time(), tzinfo=timezone.utc)
+    start = datetime.combine(reference.date().replace(day=1), datetime.min.time(), tzinfo=UTC)
     next_month = (start.replace(day=28) + timedelta(days=4)).replace(day=1)
     return start, next_month
 
@@ -89,7 +91,14 @@ def render_export_response(name: str, rows: list[dict], export_format: str):
     writer = csv.DictWriter(output, fieldnames=fieldnames)
     writer.writeheader()
     for row in rows:
-        writer.writerow({key: json.dumps(value, ensure_ascii=True) if isinstance(value, (list, dict)) else value for key, value in row.items()})
+        writer.writerow(
+            {
+                key: json.dumps(value, ensure_ascii=True)
+                if isinstance(value, (list, dict))
+                else value
+                for key, value in row.items()
+            }
+        )
     return Response(
         content=output.getvalue(),
         media_type="text/csv",
@@ -97,7 +106,13 @@ def render_export_response(name: str, rows: list[dict], export_format: str):
     )
 
 
-async def export_clients(session: AsyncSession, *, start_date: date | None, end_date: date | None, client_id: uuid.UUID | None) -> list[dict]:
+async def export_clients(
+    session: AsyncSession,
+    *,
+    start_date: date | None,
+    end_date: date | None,
+    client_id: uuid.UUID | None,
+) -> list[dict]:
     query = select(Client).order_by(Client.created_at.desc())
     clauses = _datetime_range_clause(Client.created_at, start_date, end_date)
     if client_id is not None:
@@ -128,7 +143,13 @@ async def export_clients(session: AsyncSession, *, start_date: date | None, end_
     ]
 
 
-async def export_usage(session: AsyncSession, *, start_date: date | None, end_date: date | None, client_id: uuid.UUID | None) -> list[dict]:
+async def export_usage(
+    session: AsyncSession,
+    *,
+    start_date: date | None,
+    end_date: date | None,
+    client_id: uuid.UUID | None,
+) -> list[dict]:
     query = (
         select(UsageRecord, Client.name.label("client_name"))
         .join(Client, Client.id == UsageRecord.client_id)
@@ -160,7 +181,13 @@ async def export_usage(session: AsyncSession, *, start_date: date | None, end_da
     ]
 
 
-async def export_invoices(session: AsyncSession, *, start_date: date | None, end_date: date | None, client_id: uuid.UUID | None) -> list[dict]:
+async def export_invoices(
+    session: AsyncSession,
+    *,
+    start_date: date | None,
+    end_date: date | None,
+    client_id: uuid.UUID | None,
+) -> list[dict]:
     await refresh_billing_statuses(session)
     query = (
         select(BillingInvoice, Client.name.label("client_name"))
@@ -201,7 +228,13 @@ async def export_invoices(session: AsyncSession, *, start_date: date | None, end
     ]
 
 
-async def export_payments(session: AsyncSession, *, start_date: date | None, end_date: date | None, client_id: uuid.UUID | None) -> list[dict]:
+async def export_payments(
+    session: AsyncSession,
+    *,
+    start_date: date | None,
+    end_date: date | None,
+    client_id: uuid.UUID | None,
+) -> list[dict]:
     query = (
         select(CustomerPayment, Client.name.label("client_name"))
         .join(Client, Client.id == CustomerPayment.client_id)
@@ -234,7 +267,13 @@ async def export_payments(session: AsyncSession, *, start_date: date | None, end
     ]
 
 
-async def export_security_events(session: AsyncSession, *, start_date: date | None, end_date: date | None, client_id: uuid.UUID | None) -> list[dict]:
+async def export_security_events(
+    session: AsyncSession,
+    *,
+    start_date: date | None,
+    end_date: date | None,
+    client_id: uuid.UUID | None,
+) -> list[dict]:
     query = select(SecurityEvent).order_by(SecurityEvent.created_at.desc())
     clauses = _datetime_range_clause(SecurityEvent.created_at, start_date, end_date)
     if client_id is not None:
@@ -243,19 +282,27 @@ async def export_security_events(session: AsyncSession, *, start_date: date | No
         query = query.where(and_(*clauses))
     rows = (await session.execute(query)).scalars().all()
     events = [serialize_security_event(row) for row in rows]
-    
+
     if _settings.commercial_tenant_encryption_enabled:
         controlled_events = []
         for event in events:
             c_id = uuid.UUID(event["client_id"]) if event.get("client_id") else None
-            controlled_event = await _encryption_service.confidential_export_control(session, c_id, event)
+            controlled_event = await _encryption_service.confidential_export_control(
+                session, c_id, event
+            )
             controlled_events.append(controlled_event)
         return controlled_events
-        
+
     return events
 
 
-async def export_request_logs(session: AsyncSession, *, start_date: date | None, end_date: date | None, client_id: uuid.UUID | None) -> list[dict]:
+async def export_request_logs(
+    session: AsyncSession,
+    *,
+    start_date: date | None,
+    end_date: date | None,
+    client_id: uuid.UUID | None,
+) -> list[dict]:
     query = select(RequestLog).order_by(RequestLog.created_at.desc())
     clauses = _datetime_range_clause(RequestLog.created_at, start_date, end_date)
     if client_id is not None:
@@ -290,15 +337,17 @@ async def export_request_logs(session: AsyncSession, *, start_date: date | None,
         }
         for row in rows
     ]
-    
+
     if _settings.commercial_tenant_encryption_enabled:
         controlled_logs = []
         for log in logs:
             c_id = uuid.UUID(log["client_id"]) if log["client_id"] else None
-            controlled_log = await _encryption_service.confidential_export_control(session, c_id, log)
+            controlled_log = await _encryption_service.confidential_export_control(
+                session, c_id, log
+            )
             controlled_logs.append(controlled_log)
         return controlled_logs
-        
+
     return logs
 
 
@@ -307,31 +356,95 @@ async def build_usage_by_client(session: AsyncSession) -> list[dict]:
     today_start, tomorrow_start = _utc_day_window(now)
     month_start_dt, next_month_start = _utc_month_window(now)
     rows = (
-        await session.execute(
-            select(
-                Client.id.label("client_id"),
-                Client.name.label("client_name"),
-                Client.billing_status.label("billing_status"),
-                BillingPlan.code.label("billing_plan_code"),
-                func.count(RequestLog.id).filter(RequestLog.created_at >= today_start, RequestLog.created_at < tomorrow_start).label("requests_today"),
-                func.count(RequestLog.id).filter(RequestLog.created_at >= month_start_dt, RequestLog.created_at < next_month_start).label("requests_month"),
-                func.coalesce(func.sum(RequestLog.prompt_tokens_estimated).filter(RequestLog.created_at >= today_start, RequestLog.created_at < tomorrow_start), 0).label("prompt_tokens_today"),
-                func.coalesce(func.sum(RequestLog.completion_tokens_estimated).filter(RequestLog.created_at >= today_start, RequestLog.created_at < tomorrow_start), 0).label("completion_tokens_today"),
-                func.coalesce(func.sum(RequestLog.prompt_tokens_estimated).filter(RequestLog.created_at >= month_start_dt, RequestLog.created_at < next_month_start), 0).label("prompt_tokens_month"),
-                func.coalesce(func.sum(RequestLog.completion_tokens_estimated).filter(RequestLog.created_at >= month_start_dt, RequestLog.created_at < next_month_start), 0).label("completion_tokens_month"),
-                func.coalesce(func.avg(RequestLog.latency_ms).filter(RequestLog.created_at >= month_start_dt, RequestLog.created_at < next_month_start), 0).label("avg_latency_ms_month"),
-                func.coalesce(func.count(RequestLog.id).filter(RequestLog.created_at >= month_start_dt, RequestLog.created_at < next_month_start, RequestLog.cache_hit.is_(True)), 0).label("cache_hits_month"),
-                func.coalesce(func.count(RequestLog.id).filter(RequestLog.created_at >= month_start_dt, RequestLog.created_at < next_month_start, RequestLog.cache_hit.is_(False)), 0).label("cache_misses_month"),
-                func.coalesce(func.count(RequestLog.id).filter(RequestLog.created_at >= month_start_dt, RequestLog.created_at < next_month_start, RequestLog.http_status >= 400), 0).label("errors_month"),
-                func.max(RequestLog.created_at).label("last_request_at"),
+        (
+            await session.execute(
+                select(
+                    Client.id.label("client_id"),
+                    Client.name.label("client_name"),
+                    Client.billing_status.label("billing_status"),
+                    BillingPlan.code.label("billing_plan_code"),
+                    func.count(RequestLog.id)
+                    .filter(
+                        RequestLog.created_at >= today_start, RequestLog.created_at < tomorrow_start
+                    )
+                    .label("requests_today"),
+                    func.count(RequestLog.id)
+                    .filter(
+                        RequestLog.created_at >= month_start_dt,
+                        RequestLog.created_at < next_month_start,
+                    )
+                    .label("requests_month"),
+                    func.coalesce(
+                        func.sum(RequestLog.prompt_tokens_estimated).filter(
+                            RequestLog.created_at >= today_start,
+                            RequestLog.created_at < tomorrow_start,
+                        ),
+                        0,
+                    ).label("prompt_tokens_today"),
+                    func.coalesce(
+                        func.sum(RequestLog.completion_tokens_estimated).filter(
+                            RequestLog.created_at >= today_start,
+                            RequestLog.created_at < tomorrow_start,
+                        ),
+                        0,
+                    ).label("completion_tokens_today"),
+                    func.coalesce(
+                        func.sum(RequestLog.prompt_tokens_estimated).filter(
+                            RequestLog.created_at >= month_start_dt,
+                            RequestLog.created_at < next_month_start,
+                        ),
+                        0,
+                    ).label("prompt_tokens_month"),
+                    func.coalesce(
+                        func.sum(RequestLog.completion_tokens_estimated).filter(
+                            RequestLog.created_at >= month_start_dt,
+                            RequestLog.created_at < next_month_start,
+                        ),
+                        0,
+                    ).label("completion_tokens_month"),
+                    func.coalesce(
+                        func.avg(RequestLog.latency_ms).filter(
+                            RequestLog.created_at >= month_start_dt,
+                            RequestLog.created_at < next_month_start,
+                        ),
+                        0,
+                    ).label("avg_latency_ms_month"),
+                    func.coalesce(
+                        func.count(RequestLog.id).filter(
+                            RequestLog.created_at >= month_start_dt,
+                            RequestLog.created_at < next_month_start,
+                            RequestLog.cache_hit.is_(True),
+                        ),
+                        0,
+                    ).label("cache_hits_month"),
+                    func.coalesce(
+                        func.count(RequestLog.id).filter(
+                            RequestLog.created_at >= month_start_dt,
+                            RequestLog.created_at < next_month_start,
+                            RequestLog.cache_hit.is_(False),
+                        ),
+                        0,
+                    ).label("cache_misses_month"),
+                    func.coalesce(
+                        func.count(RequestLog.id).filter(
+                            RequestLog.created_at >= month_start_dt,
+                            RequestLog.created_at < next_month_start,
+                            RequestLog.http_status >= 400,
+                        ),
+                        0,
+                    ).label("errors_month"),
+                    func.max(RequestLog.created_at).label("last_request_at"),
+                )
+                .select_from(Client)
+                .outerjoin(BillingPlan, BillingPlan.id == Client.billing_plan_id)
+                .outerjoin(RequestLog, RequestLog.client_id == Client.id)
+                .group_by(Client.id, Client.name, Client.billing_status, BillingPlan.code)
+                .order_by(Client.created_at.desc())
             )
-            .select_from(Client)
-            .outerjoin(BillingPlan, BillingPlan.id == Client.billing_plan_id)
-            .outerjoin(RequestLog, RequestLog.client_id == Client.id)
-            .group_by(Client.id, Client.name, Client.billing_status, BillingPlan.code)
-            .order_by(Client.created_at.desc())
         )
-    ).mappings().all()
+        .mappings()
+        .all()
+    )
     payload = []
     for row in rows:
         requests_today = int(row["requests_today"] or 0)
@@ -365,7 +478,11 @@ async def build_usage_by_client(session: AsyncSession) -> list[dict]:
                 "avg_latency_ms": round(float(row["avg_latency_ms_month"] or 0), 2),
                 "cache_hits_month": cache_hits_month,
                 "cache_misses_month": cache_misses_month,
-                "cache_hit_rate_month": round(cache_hits_month / (cache_hits_month + cache_misses_month), 4) if (cache_hits_month + cache_misses_month) else 0.0,
+                "cache_hit_rate_month": round(
+                    cache_hits_month / (cache_hits_month + cache_misses_month), 4
+                )
+                if (cache_hits_month + cache_misses_month)
+                else 0.0,
                 "errors_month": int(row["errors_month"] or 0),
                 "errors_total": int(row["errors_month"] or 0),
                 "estimated_cost_usd": 0.0,
@@ -380,26 +497,97 @@ async def build_usage_by_model(session: AsyncSession) -> list[dict]:
     today_start, tomorrow_start = _utc_day_window(now)
     month_start_dt, next_month_start = _utc_month_window(now)
     rows = (
-        await session.execute(
-            select(
-                RequestLog.model.label("model"),
-                func.count(RequestLog.id).filter(RequestLog.created_at >= today_start, RequestLog.created_at < tomorrow_start).label("requests_today"),
-                func.count(RequestLog.id).filter(RequestLog.created_at >= month_start_dt, RequestLog.created_at < next_month_start).label("requests_month"),
-                func.coalesce(func.sum(RequestLog.prompt_tokens_estimated).filter(RequestLog.created_at >= today_start, RequestLog.created_at < tomorrow_start), 0).label("prompt_tokens_today"),
-                func.coalesce(func.sum(RequestLog.completion_tokens_estimated).filter(RequestLog.created_at >= today_start, RequestLog.created_at < tomorrow_start), 0).label("completion_tokens_today"),
-                func.coalesce(func.sum(RequestLog.prompt_tokens_estimated).filter(RequestLog.created_at >= month_start_dt, RequestLog.created_at < next_month_start), 0).label("prompt_tokens_month"),
-                func.coalesce(func.sum(RequestLog.completion_tokens_estimated).filter(RequestLog.created_at >= month_start_dt, RequestLog.created_at < next_month_start), 0).label("completion_tokens_month"),
-                func.coalesce(func.avg(RequestLog.latency_ms).filter(RequestLog.created_at >= month_start_dt, RequestLog.created_at < next_month_start), 0).label("avg_latency_ms_month"),
-                func.coalesce(func.count(RequestLog.id).filter(RequestLog.created_at >= month_start_dt, RequestLog.created_at < next_month_start, RequestLog.http_status >= 500), 0).label("backend_errors_month"),
-                func.coalesce(func.count(RequestLog.id).filter(RequestLog.created_at >= month_start_dt, RequestLog.created_at < next_month_start, RequestLog.http_status.between(400, 499)), 0).label("model_errors_month"),
-                func.coalesce(func.count(RequestLog.id).filter(RequestLog.created_at >= month_start_dt, RequestLog.created_at < next_month_start, RequestLog.cache_hit.is_(True)), 0).label("cache_hits_month"),
-                func.coalesce(func.count(RequestLog.id).filter(RequestLog.created_at >= month_start_dt, RequestLog.created_at < next_month_start, RequestLog.cache_hit.is_(False)), 0).label("cache_misses_month"),
+        (
+            await session.execute(
+                select(
+                    RequestLog.model.label("model"),
+                    func.count(RequestLog.id)
+                    .filter(
+                        RequestLog.created_at >= today_start, RequestLog.created_at < tomorrow_start
+                    )
+                    .label("requests_today"),
+                    func.count(RequestLog.id)
+                    .filter(
+                        RequestLog.created_at >= month_start_dt,
+                        RequestLog.created_at < next_month_start,
+                    )
+                    .label("requests_month"),
+                    func.coalesce(
+                        func.sum(RequestLog.prompt_tokens_estimated).filter(
+                            RequestLog.created_at >= today_start,
+                            RequestLog.created_at < tomorrow_start,
+                        ),
+                        0,
+                    ).label("prompt_tokens_today"),
+                    func.coalesce(
+                        func.sum(RequestLog.completion_tokens_estimated).filter(
+                            RequestLog.created_at >= today_start,
+                            RequestLog.created_at < tomorrow_start,
+                        ),
+                        0,
+                    ).label("completion_tokens_today"),
+                    func.coalesce(
+                        func.sum(RequestLog.prompt_tokens_estimated).filter(
+                            RequestLog.created_at >= month_start_dt,
+                            RequestLog.created_at < next_month_start,
+                        ),
+                        0,
+                    ).label("prompt_tokens_month"),
+                    func.coalesce(
+                        func.sum(RequestLog.completion_tokens_estimated).filter(
+                            RequestLog.created_at >= month_start_dt,
+                            RequestLog.created_at < next_month_start,
+                        ),
+                        0,
+                    ).label("completion_tokens_month"),
+                    func.coalesce(
+                        func.avg(RequestLog.latency_ms).filter(
+                            RequestLog.created_at >= month_start_dt,
+                            RequestLog.created_at < next_month_start,
+                        ),
+                        0,
+                    ).label("avg_latency_ms_month"),
+                    func.coalesce(
+                        func.count(RequestLog.id).filter(
+                            RequestLog.created_at >= month_start_dt,
+                            RequestLog.created_at < next_month_start,
+                            RequestLog.http_status >= 500,
+                        ),
+                        0,
+                    ).label("backend_errors_month"),
+                    func.coalesce(
+                        func.count(RequestLog.id).filter(
+                            RequestLog.created_at >= month_start_dt,
+                            RequestLog.created_at < next_month_start,
+                            RequestLog.http_status.between(400, 499),
+                        ),
+                        0,
+                    ).label("model_errors_month"),
+                    func.coalesce(
+                        func.count(RequestLog.id).filter(
+                            RequestLog.created_at >= month_start_dt,
+                            RequestLog.created_at < next_month_start,
+                            RequestLog.cache_hit.is_(True),
+                        ),
+                        0,
+                    ).label("cache_hits_month"),
+                    func.coalesce(
+                        func.count(RequestLog.id).filter(
+                            RequestLog.created_at >= month_start_dt,
+                            RequestLog.created_at < next_month_start,
+                            RequestLog.cache_hit.is_(False),
+                        ),
+                        0,
+                    ).label("cache_misses_month"),
+                )
+                .select_from(RequestLog)
+                .group_by(RequestLog.model)
+                .order_by(func.count(RequestLog.id).desc())
             )
-            .select_from(RequestLog)
-            .group_by(RequestLog.model)
-            .order_by(func.count(RequestLog.id).desc())
         )
-    ).mappings().all()
+        .mappings()
+        .all()
+    )
     payload = []
     for row in rows:
         cache_hits_month = int(row["cache_hits_month"] or 0)
@@ -413,7 +601,8 @@ async def build_usage_by_model(session: AsyncSession) -> list[dict]:
                 "requests_month": int(row["requests_month"] or 0),
                 "prompt_tokens_today": int(row["prompt_tokens_today"] or 0),
                 "completion_tokens_today": int(row["completion_tokens_today"] or 0),
-                "tokens_today": int(row["prompt_tokens_today"] or 0) + int(row["completion_tokens_today"] or 0),
+                "tokens_today": int(row["prompt_tokens_today"] or 0)
+                + int(row["completion_tokens_today"] or 0),
                 "prompt_tokens_month": prompt_month,
                 "completion_tokens_month": completion_month,
                 "tokens_month": prompt_month + completion_month,
@@ -422,7 +611,11 @@ async def build_usage_by_model(session: AsyncSession) -> list[dict]:
                 "model_errors_month": int(row["model_errors_month"] or 0),
                 "cache_hits_month": cache_hits_month,
                 "cache_misses_month": cache_misses_month,
-                "cache_hit_rate_month": round(cache_hits_month / (cache_hits_month + cache_misses_month), 4) if (cache_hits_month + cache_misses_month) else 0.0,
+                "cache_hit_rate_month": round(
+                    cache_hits_month / (cache_hits_month + cache_misses_month), 4
+                )
+                if (cache_hits_month + cache_misses_month)
+                else 0.0,
             }
         )
     return payload
@@ -435,15 +628,66 @@ async def build_usage_summary(session: AsyncSession, *, queue_snapshot: dict | N
     request_totals = (
         await session.execute(
             select(
-                func.count(RequestLog.id).filter(RequestLog.created_at >= today_start, RequestLog.created_at < tomorrow_start).label("requests_today"),
-                func.count(RequestLog.id).filter(RequestLog.created_at >= month_start_dt, RequestLog.created_at < next_month_start).label("requests_month"),
-                func.coalesce(func.sum(RequestLog.prompt_tokens_estimated).filter(RequestLog.created_at >= today_start, RequestLog.created_at < tomorrow_start), 0).label("prompt_tokens_today"),
-                func.coalesce(func.sum(RequestLog.completion_tokens_estimated).filter(RequestLog.created_at >= today_start, RequestLog.created_at < tomorrow_start), 0).label("completion_tokens_today"),
-                func.coalesce(func.sum(RequestLog.prompt_tokens_estimated).filter(RequestLog.created_at >= month_start_dt, RequestLog.created_at < next_month_start), 0).label("prompt_tokens_month"),
-                func.coalesce(func.sum(RequestLog.completion_tokens_estimated).filter(RequestLog.created_at >= month_start_dt, RequestLog.created_at < next_month_start), 0).label("completion_tokens_month"),
-                func.coalesce(func.avg(RequestLog.latency_ms).filter(RequestLog.created_at >= month_start_dt, RequestLog.created_at < next_month_start), 0).label("avg_latency_ms_month"),
-                func.coalesce(func.count(RequestLog.id).filter(RequestLog.created_at >= month_start_dt, RequestLog.created_at < next_month_start, RequestLog.cache_hit.is_(True)), 0).label("cache_hits_month"),
-                func.coalesce(func.count(RequestLog.id).filter(RequestLog.created_at >= month_start_dt, RequestLog.created_at < next_month_start, RequestLog.cache_hit.is_(False)), 0).label("cache_misses_month"),
+                func.count(RequestLog.id)
+                .filter(
+                    RequestLog.created_at >= today_start, RequestLog.created_at < tomorrow_start
+                )
+                .label("requests_today"),
+                func.count(RequestLog.id)
+                .filter(
+                    RequestLog.created_at >= month_start_dt,
+                    RequestLog.created_at < next_month_start,
+                )
+                .label("requests_month"),
+                func.coalesce(
+                    func.sum(RequestLog.prompt_tokens_estimated).filter(
+                        RequestLog.created_at >= today_start, RequestLog.created_at < tomorrow_start
+                    ),
+                    0,
+                ).label("prompt_tokens_today"),
+                func.coalesce(
+                    func.sum(RequestLog.completion_tokens_estimated).filter(
+                        RequestLog.created_at >= today_start, RequestLog.created_at < tomorrow_start
+                    ),
+                    0,
+                ).label("completion_tokens_today"),
+                func.coalesce(
+                    func.sum(RequestLog.prompt_tokens_estimated).filter(
+                        RequestLog.created_at >= month_start_dt,
+                        RequestLog.created_at < next_month_start,
+                    ),
+                    0,
+                ).label("prompt_tokens_month"),
+                func.coalesce(
+                    func.sum(RequestLog.completion_tokens_estimated).filter(
+                        RequestLog.created_at >= month_start_dt,
+                        RequestLog.created_at < next_month_start,
+                    ),
+                    0,
+                ).label("completion_tokens_month"),
+                func.coalesce(
+                    func.avg(RequestLog.latency_ms).filter(
+                        RequestLog.created_at >= month_start_dt,
+                        RequestLog.created_at < next_month_start,
+                    ),
+                    0,
+                ).label("avg_latency_ms_month"),
+                func.coalesce(
+                    func.count(RequestLog.id).filter(
+                        RequestLog.created_at >= month_start_dt,
+                        RequestLog.created_at < next_month_start,
+                        RequestLog.cache_hit.is_(True),
+                    ),
+                    0,
+                ).label("cache_hits_month"),
+                func.coalesce(
+                    func.count(RequestLog.id).filter(
+                        RequestLog.created_at >= month_start_dt,
+                        RequestLog.created_at < next_month_start,
+                        RequestLog.cache_hit.is_(False),
+                    ),
+                    0,
+                ).label("cache_misses_month"),
             )
         )
     ).mappings().first() or {}
@@ -462,15 +706,21 @@ async def build_usage_summary(session: AsyncSession, *, queue_snapshot: dict | N
             select(
                 func.count(Client.id).label("clients_total"),
                 func.count().filter(Client.billing_status == "active").label("clients_active"),
-                func.count().filter(Client.billing_status == "suspended").label("clients_suspended"),
+                func.count()
+                .filter(Client.billing_status == "suspended")
+                .label("clients_suspended"),
                 func.count().filter(Client.is_blocked.is_(True)).label("clients_blocked"),
             )
         )
     ).mappings().first() or {}
     cache_hits_month = int(request_totals.get("cache_hits_month") or 0)
     cache_misses_month = int(request_totals.get("cache_misses_month") or 0)
-    tokens_today = int(request_totals.get("prompt_tokens_today") or 0) + int(request_totals.get("completion_tokens_today") or 0)
-    tokens_month = int(request_totals.get("prompt_tokens_month") or 0) + int(request_totals.get("completion_tokens_month") or 0)
+    tokens_today = int(request_totals.get("prompt_tokens_today") or 0) + int(
+        request_totals.get("completion_tokens_today") or 0
+    )
+    tokens_month = int(request_totals.get("prompt_tokens_month") or 0) + int(
+        request_totals.get("completion_tokens_month") or 0
+    )
     summary = {
         "generated_at": now.isoformat(),
         "requests_today": int(request_totals.get("requests_today") or 0),
@@ -484,7 +734,9 @@ async def build_usage_summary(session: AsyncSession, *, queue_snapshot: dict | N
         "avg_latency_ms_month": round(float(request_totals.get("avg_latency_ms_month") or 0), 2),
         "cache_hits_month": cache_hits_month,
         "cache_misses_month": cache_misses_month,
-        "cache_hit_rate_month": round(cache_hits_month / (cache_hits_month + cache_misses_month), 4) if (cache_hits_month + cache_misses_month) else 0.0,
+        "cache_hit_rate_month": round(cache_hits_month / (cache_hits_month + cache_misses_month), 4)
+        if (cache_hits_month + cache_misses_month)
+        else 0.0,
         "invoices_pending": int(invoice_totals.get("invoices_pending") or 0),
         "invoices_paid": int(invoice_totals.get("invoices_paid") or 0),
         "invoices_overdue": int(invoice_totals.get("invoices_overdue") or 0),
@@ -511,43 +763,74 @@ async def build_monthly_report(session: AsyncSession, *, month: str | None = Non
     period_end = next_month - timedelta(days=1)
 
     invoices = (
-        await session.execute(
-            select(BillingInvoice)
-            .options(selectinload(BillingInvoice.client))
-            .where(BillingInvoice.period_start == report_month)
-        )
-    ).scalars().all()
-    payments = (
-        await session.execute(
-            select(CustomerPayment).where(
-                CustomerPayment.created_at >= datetime.combine(report_month, datetime.min.time(), tzinfo=timezone.utc),
-                CustomerPayment.created_at < datetime.combine(next_month, datetime.min.time(), tzinfo=timezone.utc),
+        (
+            await session.execute(
+                select(BillingInvoice)
+                .options(selectinload(BillingInvoice.client))
+                .where(BillingInvoice.period_start == report_month)
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
+    payments = (
+        (
+            await session.execute(
+                select(CustomerPayment).where(
+                    CustomerPayment.created_at
+                    >= datetime.combine(report_month, datetime.min.time(), tzinfo=UTC),
+                    CustomerPayment.created_at
+                    < datetime.combine(next_month, datetime.min.time(), tzinfo=UTC),
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
     active_clients = int(
         (
             await session.execute(
-                select(func.count(Client.id)).where(Client.is_blocked.is_(False), Client.billing_status == "active")
+                select(func.count(Client.id)).where(
+                    Client.is_blocked.is_(False), Client.billing_status == "active"
+                )
             )
         ).scalar_one()
         or 0
     )
     usage_rows = (
-        await session.execute(
-            select(UsageRecord).where(
-                UsageRecord.period_type == "monthly",
-                UsageRecord.period_start == report_month,
+        (
+            await session.execute(
+                select(UsageRecord).where(
+                    UsageRecord.period_type == "monthly",
+                    UsageRecord.period_start == report_month,
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     snapshots = await list_client_billing_snapshots(session, usage_reference_date=report_month)
-    forecast_revenue = round(sum(float(item["invoice_preview"]["total_estimated"]) for item in snapshots), 6)
-    paid_revenue = round(sum(float(payment.amount) for payment in payments if payment.status == "paid"), 6)
-    overdue_revenue = round(sum(float(invoice.total_amount) for invoice in invoices if invoice.status in {"pending", "overdue"}), 6)
+    forecast_revenue = round(
+        sum(float(item["invoice_preview"]["total_estimated"]) for item in snapshots), 6
+    )
+    paid_revenue = round(
+        sum(float(payment.amount) for payment in payments if payment.status == "paid"), 6
+    )
+    overdue_revenue = round(
+        sum(
+            float(invoice.total_amount)
+            for invoice in invoices
+            if invoice.status in {"pending", "overdue"}
+        ),
+        6,
+    )
     consumed_tokens = sum(int(row.prompt_tokens + row.completion_tokens) for row in usage_rows)
-    estimated_cost = round((Decimal(consumed_tokens) / Decimal(1000) * Decimal("0.010000")), 6) if consumed_tokens else Decimal("0.000000")
+    estimated_cost = (
+        round((Decimal(consumed_tokens) / Decimal(1000) * Decimal("0.010000")), 6)
+        if consumed_tokens
+        else Decimal("0.000000")
+    )
     estimated_margin = round(Decimal(str(forecast_revenue)) - estimated_cost, 6)
     return {
         "month": report_month.strftime("%Y-%m"),

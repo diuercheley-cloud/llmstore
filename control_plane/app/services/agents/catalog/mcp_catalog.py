@@ -9,10 +9,7 @@ class MCPCatalogService:
         self.db = db
 
     async def register_mcp(self, catalog_entry_id: uuid.UUID, endpoint: str):
-        mcp = MCPCatalogEntry(
-            catalog_entry_id=catalog_entry_id,
-            mcp_endpoint=endpoint
-        )
+        mcp = MCPCatalogEntry(catalog_entry_id=catalog_entry_id, mcp_endpoint=endpoint)
         self.db.add(mcp)
         await self.db.commit()
         return mcp

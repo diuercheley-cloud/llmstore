@@ -296,8 +296,12 @@ def build_provider_configuration() -> dict[str, Any]:
     )
     azure_openai_api_key = env_values.get("AZURE_OPENAI_API_KEY", settings.azure_openai_api_key)
     azure_openai_endpoint = env_values.get("AZURE_OPENAI_ENDPOINT", settings.azure_openai_endpoint)
-    azure_openai_api_version = env_values.get("AZURE_OPENAI_API_VERSION", settings.azure_openai_api_version)
-    azure_openai_deployment = env_values.get("AZURE_OPENAI_DEPLOYMENT", settings.azure_openai_deployment)
+    azure_openai_api_version = env_values.get(
+        "AZURE_OPENAI_API_VERSION", settings.azure_openai_api_version
+    )
+    azure_openai_deployment = env_values.get(
+        "AZURE_OPENAI_DEPLOYMENT", settings.azure_openai_deployment
+    )
 
     bedrock_enabled = _coerce_bool(
         env_values.get("BEDROCK_PROVIDER_ENABLED"),
@@ -378,29 +382,15 @@ def build_provider_configuration() -> dict[str, Any]:
     xai_configured = is_real_api_key_configured(xai_api_key)
     fireworks_configured = is_real_api_key_configured(fireworks_api_key)
     ai21_configured = is_real_api_key_configured(ai21_api_key)
-    openai_effective = (
-        cloud_enabled
-        and validation_enabled
-        and openai_enabled
-        and openai_configured
-    )
+    openai_effective = cloud_enabled and validation_enabled and openai_enabled and openai_configured
     deepseek_effective = (
-        cloud_enabled
-        and validation_enabled
-        and deepseek_enabled
-        and deepseek_configured
+        cloud_enabled and validation_enabled and deepseek_enabled and deepseek_configured
     )
     anthropic_effective = (
-        cloud_enabled
-        and validation_enabled
-        and anthropic_enabled
-        and anthropic_configured
+        cloud_enabled and validation_enabled and anthropic_enabled and anthropic_configured
     )
     openrouter_effective = (
-        cloud_enabled
-        and validation_enabled
-        and openrouter_enabled
-        and openrouter_configured
+        cloud_enabled and validation_enabled and openrouter_enabled and openrouter_configured
     )
     lmstudio_effective = lmstudio_enabled and lmstudio_configured
     return {
@@ -459,14 +449,20 @@ def build_provider_configuration() -> dict[str, Any]:
             },
             "gemini": {
                 "enabled": gemini_enabled,
-                "effective_enabled": cloud_enabled and validation_enabled and gemini_enabled and gemini_configured,
+                "effective_enabled": cloud_enabled
+                and validation_enabled
+                and gemini_enabled
+                and gemini_configured,
                 "configured": gemini_configured,
                 "masked_api_key": masked_real_api_key(gemini_api_key),
                 "base_url": gemini_base_url or "https://generativelanguage.googleapis.com/v1beta",
             },
             "azure_openai": {
                 "enabled": azure_openai_enabled,
-                "effective_enabled": cloud_enabled and validation_enabled and azure_openai_enabled and azure_openai_configured,
+                "effective_enabled": cloud_enabled
+                and validation_enabled
+                and azure_openai_enabled
+                and azure_openai_configured,
                 "configured": azure_openai_configured,
                 "masked_api_key": masked_real_api_key(azure_openai_api_key),
                 "endpoint": azure_openai_endpoint,
@@ -475,7 +471,10 @@ def build_provider_configuration() -> dict[str, Any]:
             },
             "bedrock": {
                 "enabled": bedrock_enabled,
-                "effective_enabled": cloud_enabled and validation_enabled and bedrock_enabled and bedrock_configured,
+                "effective_enabled": cloud_enabled
+                and validation_enabled
+                and bedrock_enabled
+                and bedrock_configured,
                 "configured": bedrock_configured,
                 "masked_aws_access_key_id": _mask(aws_access_key_id),
                 "masked_aws_secret_access_key": _mask(aws_secret_access_key),
@@ -544,46 +543,78 @@ def env_updates_from_payload(payload: dict[str, Any]) -> dict[str, str]:
     global_cfg = payload.get("global", {})
     providers = payload.get("providers", {})
     updates = {
-        "PROVIDERS_ENABLED": str(global_cfg.get("providers_enabled", settings.providers_enabled)).strip(),
+        "PROVIDERS_ENABLED": str(
+            global_cfg.get("providers_enabled", settings.providers_enabled)
+        ).strip(),
         "CLOUD_PROVIDERS_ENABLED": _bool_string(bool(global_cfg.get("cloud_providers_enabled"))),
-        "REAL_PROVIDER_VALIDATION_ENABLED": _bool_string(bool(global_cfg.get("real_provider_validation_enabled"))),
+        "REAL_PROVIDER_VALIDATION_ENABLED": _bool_string(
+            bool(global_cfg.get("real_provider_validation_enabled"))
+        ),
         "REAL_PROVIDER_MAX_COST_BRL": str(global_cfg.get("real_provider_max_cost_brl", 2.0)),
-        "REAL_PROVIDER_TIMEOUT_SECONDS": str(int(global_cfg.get("real_provider_timeout_seconds", 30))),
+        "REAL_PROVIDER_TIMEOUT_SECONDS": str(
+            int(global_cfg.get("real_provider_timeout_seconds", 30))
+        ),
         "PROVIDER_MAX_RETRIES": str(int(global_cfg.get("provider_max_retries", 2))),
         "PROVIDER_FAIL_CLOSED": _bool_string(bool(global_cfg.get("provider_fail_closed", True))),
-        "REAL_PROVIDER_LOG_PROMPTS": _bool_string(bool(global_cfg.get("real_provider_log_prompts", False))),
-        "REAL_PROVIDER_STORE_RESPONSES": _bool_string(bool(global_cfg.get("real_provider_store_responses", False))),
+        "REAL_PROVIDER_LOG_PROMPTS": _bool_string(
+            bool(global_cfg.get("real_provider_log_prompts", False))
+        ),
+        "REAL_PROVIDER_STORE_RESPONSES": _bool_string(
+            bool(global_cfg.get("real_provider_store_responses", False))
+        ),
         "LMSTUDIO_ENABLED": _bool_string(bool(providers.get("lmstudio", {}).get("enabled"))),
         "LMSTUDIO_BASE_URL": str(providers.get("lmstudio", {}).get("base_url", "")).strip(),
         "LMSTUDIO_CHAT_MODEL": str(providers.get("lmstudio", {}).get("chat_model", "")).strip(),
         "OPENAI_PROVIDER_ENABLED": _bool_string(bool(providers.get("openai", {}).get("enabled"))),
         "OPENAI_BASE_URL": str(providers.get("openai", {}).get("base_url", "")).strip(),
         "OPENAI_CHAT_MODEL": str(providers.get("openai", {}).get("chat_model", "")).strip(),
-        "OPENAI_EMBEDDINGS_MODEL": str(providers.get("openai", {}).get("embeddings_model", "")).strip(),
-        "DEEPSEEK_PROVIDER_ENABLED": _bool_string(bool(providers.get("deepseek", {}).get("enabled"))),
+        "OPENAI_EMBEDDINGS_MODEL": str(
+            providers.get("openai", {}).get("embeddings_model", "")
+        ).strip(),
+        "DEEPSEEK_PROVIDER_ENABLED": _bool_string(
+            bool(providers.get("deepseek", {}).get("enabled"))
+        ),
         "DEEPSEEK_BASE_URL": str(providers.get("deepseek", {}).get("base_url", "")).strip(),
         "DEEPSEEK_CHAT_MODEL": str(providers.get("deepseek", {}).get("chat_model", "")).strip(),
-        "ANTHROPIC_PROVIDER_ENABLED": _bool_string(bool(providers.get("anthropic", {}).get("enabled"))),
+        "ANTHROPIC_PROVIDER_ENABLED": _bool_string(
+            bool(providers.get("anthropic", {}).get("enabled"))
+        ),
         "ANTHROPIC_BASE_URL": str(providers.get("anthropic", {}).get("base_url", "")).strip(),
         "ANTHROPIC_MODEL": str(providers.get("anthropic", {}).get("model", "")).strip(),
-        "OPENROUTER_PROVIDER_ENABLED": _bool_string(bool(providers.get("openrouter", {}).get("enabled"))),
+        "OPENROUTER_PROVIDER_ENABLED": _bool_string(
+            bool(providers.get("openrouter", {}).get("enabled"))
+        ),
         "OPENROUTER_BASE_URL": str(providers.get("openrouter", {}).get("base_url", "")).strip(),
         "GEMINI_PROVIDER_ENABLED": _bool_string(bool(providers.get("gemini", {}).get("enabled"))),
         "GEMINI_BASE_URL": str(providers.get("gemini", {}).get("base_url", "")).strip(),
-        "AZURE_OPENAI_PROVIDER_ENABLED": _bool_string(bool(providers.get("azure_openai", {}).get("enabled"))),
+        "AZURE_OPENAI_PROVIDER_ENABLED": _bool_string(
+            bool(providers.get("azure_openai", {}).get("enabled"))
+        ),
         "AZURE_OPENAI_ENDPOINT": str(providers.get("azure_openai", {}).get("endpoint", "")).strip(),
-        "AZURE_OPENAI_API_VERSION": str(providers.get("azure_openai", {}).get("api_version", "")).strip(),
-        "AZURE_OPENAI_DEPLOYMENT": str(providers.get("azure_openai", {}).get("deployment", "")).strip(),
+        "AZURE_OPENAI_API_VERSION": str(
+            providers.get("azure_openai", {}).get("api_version", "")
+        ).strip(),
+        "AZURE_OPENAI_DEPLOYMENT": str(
+            providers.get("azure_openai", {}).get("deployment", "")
+        ).strip(),
         "BEDROCK_PROVIDER_ENABLED": _bool_string(bool(providers.get("bedrock", {}).get("enabled"))),
         "AWS_REGION": str(providers.get("bedrock", {}).get("region", "")).strip(),
         "MISTRAL_PROVIDER_ENABLED": _bool_string(bool(providers.get("mistral", {}).get("enabled"))),
         "COHERE_PROVIDER_ENABLED": _bool_string(bool(providers.get("cohere", {}).get("enabled"))),
         "GROQ_PROVIDER_ENABLED": _bool_string(bool(providers.get("groq", {}).get("enabled"))),
-        "TOGETHER_PROVIDER_ENABLED": _bool_string(bool(providers.get("together", {}).get("enabled"))),
-        "PERPLEXITY_PROVIDER_ENABLED": _bool_string(bool(providers.get("perplexity", {}).get("enabled"))),
-        "REPLICATE_PROVIDER_ENABLED": _bool_string(bool(providers.get("replicate", {}).get("enabled"))),
+        "TOGETHER_PROVIDER_ENABLED": _bool_string(
+            bool(providers.get("together", {}).get("enabled"))
+        ),
+        "PERPLEXITY_PROVIDER_ENABLED": _bool_string(
+            bool(providers.get("perplexity", {}).get("enabled"))
+        ),
+        "REPLICATE_PROVIDER_ENABLED": _bool_string(
+            bool(providers.get("replicate", {}).get("enabled"))
+        ),
         "XAI_PROVIDER_ENABLED": _bool_string(bool(providers.get("xai", {}).get("enabled"))),
-        "FIREWORKS_PROVIDER_ENABLED": _bool_string(bool(providers.get("fireworks", {}).get("enabled"))),
+        "FIREWORKS_PROVIDER_ENABLED": _bool_string(
+            bool(providers.get("fireworks", {}).get("enabled"))
+        ),
         "AI21_PROVIDER_ENABLED": _bool_string(bool(providers.get("ai21", {}).get("enabled"))),
     }
 
@@ -613,7 +644,11 @@ def env_updates_from_payload(payload: dict[str, Any]) -> dict[str, str]:
     for provider_key, mappings in provider_secret_keys.items():
         provider = providers.get(provider_key, {})
         for field, env_key in mappings:
-            if provider.get(f"clear_{field}") or provider.get("clear_api_key") and field == "api_key":
+            if (
+                provider.get(f"clear_{field}")
+                or provider.get("clear_api_key")
+                and field == "api_key"
+            ):
                 updates[env_key] = ""
                 continue
             value = provider.get(field)

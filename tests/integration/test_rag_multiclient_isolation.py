@@ -32,11 +32,12 @@ async def clients_and_session(isolated_db_url, fake_redis):
     app.dependency_overrides.clear()
     await engine.dispose()
 
+
 @pytest.mark.asyncio
 @patch("app.services.auth.verify_secret", return_value=True)
 async def test_rag_multiclient_isolation(mock_verify, clients_and_session):
     async_client, sessionmaker = clients_and_session
-    
+
     async with sessionmaker() as session:
         # Client A
         client_a = Client(name="client-a", billing_status="active")
@@ -47,45 +48,49 @@ async def test_rag_multiclient_isolation(mock_verify, clients_and_session):
         await session.commit()
         await session.refresh(client_a)
         await session.refresh(client_b)
-        
+
         # API Keys
-        prefix_a = "sk-cl-a-1234" # 12 chars
+        prefix_a = "sk-cl-a-1234"  # 12 chars
         api_key_a = ApiKey(client_id=client_a.id, name="a", key_prefix=prefix_a, key_hash="ha")
         session.add(api_key_a)
-        
-        prefix_b = "sk-cl-b-1234" # 12 chars
+
+        prefix_b = "sk-cl-b-1234"  # 12 chars
         api_key_b = ApiKey(client_id=client_b.id, name="b", key_prefix=prefix_b, key_hash="hb")
         session.add(api_key_b)
         await session.commit()
-        
+
         headers_a = {"Authorization": f"Bearer {prefix_a}.val"}
         headers_b = {"Authorization": f"Bearer {prefix_b}.val"}
-        
+
         with patch("app.api.rag.redis_client") as mock_redis:
             mock_redis.rpush = AsyncMock()
-            
+
             # 1. Client A uploads a file
             response = await async_client.post(
                 "/client/rag/documents",
                 headers=headers_a,
-                files={"file": ("doc_a.txt", b"secret a content")}
+                files={"file": ("doc_a.txt", b"secret a content")},
             )
             assert response.status_code == 200
             doc_a_id = response.json()["id"]
-            
+
             # 2. Client B lists files - should be empty
             response = await async_client.get("/client/rag/documents", headers=headers_b)
             assert response.status_code == 200
             assert len(response.json()["data"]) == 0
-            
+
             # 3. Client B tries to GET doc_a_id - should be 404
-            response = await async_client.get(f"/client/rag/documents/{doc_a_id}", headers=headers_b)
+            response = await async_client.get(
+                f"/client/rag/documents/{doc_a_id}", headers=headers_b
+            )
             assert response.status_code == 404
-            
+
             # 4. Client B tries to DELETE doc_a_id - should be 404
-            response = await async_client.delete(f"/client/rag/documents/{doc_a_id}", headers=headers_b)
+            response = await async_client.delete(
+                f"/client/rag/documents/{doc_a_id}", headers=headers_b
+            )
             assert response.status_code == 404
-            
+
             # 5. Verify Client A still has the file
             response = await async_client.get("/client/rag/documents", headers=headers_a)
             assert len(response.json()["data"]) == 1

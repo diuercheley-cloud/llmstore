@@ -1,7 +1,5 @@
 """Tests for Anthropic billing BRL mapping — cost estimation, pricing engine integration."""
 
-
-
 from app.services.billing.pricing_engine import (
     calculate_customer_price,
     calculate_financials,

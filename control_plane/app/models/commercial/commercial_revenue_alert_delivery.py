@@ -24,5 +24,7 @@ class CommercialRevenueAlertDelivery(Base):
     response_code: Mapped[int | None] = mapped_column(Integer, nullable=True)
     response_summary: Mapped[str | None] = mapped_column(Text(), nullable=True)
     payload_hash: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False, index=True
+    )
     delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

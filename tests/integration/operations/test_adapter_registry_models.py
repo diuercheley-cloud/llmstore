@@ -24,11 +24,11 @@ class TestAdapterRegistryModels:
             registry_status="draft",
             registry_hash="reg_hash123",
             signature="sig_abc",
-            immutable_hash="imm_hash123"
+            immutable_hash="imm_hash123",
         )
         session.add(entry)
         await session.commit()
-        
+
         stmt = select(SignedAdapterRegistryEntry).where(SignedAdapterRegistryEntry.id == entry.id)
         result = await session.execute(stmt)
         stored = result.scalar_one()
@@ -43,11 +43,11 @@ class TestAdapterRegistryModels:
             allowed_adapter_types_json={"allowed_types": ["remediation"]},
             denied_capabilities_json={"denied": ["network"]},
             require_sandbox=True,
-            immutable_hash="pol_imm_hash123"
+            immutable_hash="pol_imm_hash123",
         )
         session.add(policy)
         await session.commit()
-        
+
         stmt = select(AdapterRegistryPolicy).where(AdapterRegistryPolicy.id == policy.id)
         result = await session.execute(stmt)
         stored = result.scalar_one()

@@ -1,5 +1,4 @@
 import logging
-from typing import List, Optional
 
 from app.core.time import utc_now
 from app.models.core.mobile import MobileDevice
@@ -7,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
+
 
 class DeviceRegistryService:
     def __init__(self, db: AsyncSession):
@@ -18,8 +18,8 @@ class DeviceRegistryService:
         user_id: str,
         device_token: str,
         platform: str,
-        model: Optional[str] = None,
-        app_version: Optional[str] = None,
+        model: str | None = None,
+        app_version: str | None = None,
     ) -> MobileDevice:
         # Check if device already exists
         stmt = select(MobileDevice).where(MobileDevice.device_token == device_token)
@@ -52,11 +52,11 @@ class DeviceRegistryService:
         logger.info(f"Registered device {device.id} for user {user_id} (platform: {platform})")
         return device
 
-    async def get_user_devices(self, tenant_id: str, user_id: str) -> List[MobileDevice]:
+    async def get_user_devices(self, tenant_id: str, user_id: str) -> list[MobileDevice]:
         stmt = select(MobileDevice).where(
             MobileDevice.tenant_id == tenant_id,
             MobileDevice.user_id == user_id,
-            MobileDevice.is_active == True
+            MobileDevice.is_active == True,
         )
         res = await self.db.execute(stmt)
         return list(res.scalars().all())

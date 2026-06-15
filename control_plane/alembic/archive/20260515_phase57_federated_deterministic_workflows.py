@@ -21,7 +21,9 @@ def _dialect_name() -> str:
 
 
 def _uuid_type():
-    return postgresql.UUID(as_uuid=True) if _dialect_name() == "postgresql" else sa.String(length=36)
+    return (
+        postgresql.UUID(as_uuid=True) if _dialect_name() == "postgresql" else sa.String(length=36)
+    )
 
 
 def _json_type():
@@ -64,11 +66,31 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["workflow_execution_id"], ["commercial_workflow_executions.id"]),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("workflow_execution_id", "region_id", "cluster_id", name="uq_fed_workflow_exec_region_cluster"),
+        sa.UniqueConstraint(
+            "workflow_execution_id",
+            "region_id",
+            "cluster_id",
+            name="uq_fed_workflow_exec_region_cluster",
+        ),
     )
-    op.create_index("ix_fed_workflow_exec_lookup", "commercial_federated_workflow_executions", ["tenant_id", "workflow_id", "cluster_id"], unique=False)
-    op.create_index("ix_fed_workflow_exec_status", "commercial_federated_workflow_executions", ["consensus_status", "replay_status", "federation_mode"], unique=False)
-    op.create_index("ix_fed_workflow_exec_chain", "commercial_federated_workflow_executions", ["immutable_hash", "previous_hash"], unique=False)
+    op.create_index(
+        "ix_fed_workflow_exec_lookup",
+        "commercial_federated_workflow_executions",
+        ["tenant_id", "workflow_id", "cluster_id"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_fed_workflow_exec_status",
+        "commercial_federated_workflow_executions",
+        ["consensus_status", "replay_status", "federation_mode"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_fed_workflow_exec_chain",
+        "commercial_federated_workflow_executions",
+        ["immutable_hash", "previous_hash"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_workflow_execution_peers",
@@ -99,12 +121,26 @@ def upgrade() -> None:
         sa.Column("metadata_json", _json_type(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["federated_execution_id"], ["commercial_federated_workflow_executions.id"]),
+        sa.ForeignKeyConstraint(
+            ["federated_execution_id"], ["commercial_federated_workflow_executions.id"]
+        ),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("federated_execution_id", "peer_cluster_id", name="uq_fed_workflow_peer_cluster"),
+        sa.UniqueConstraint(
+            "federated_execution_id", "peer_cluster_id", name="uq_fed_workflow_peer_cluster"
+        ),
     )
-    op.create_index("ix_fed_workflow_peer_scope", "commercial_workflow_execution_peers", ["tenant_id", "peer_cluster_id", "trust_status"], unique=False)
-    op.create_index("ix_fed_workflow_peer_chain", "commercial_workflow_execution_peers", ["immutable_hash", "previous_hash"], unique=False)
+    op.create_index(
+        "ix_fed_workflow_peer_scope",
+        "commercial_workflow_execution_peers",
+        ["tenant_id", "peer_cluster_id", "trust_status"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_fed_workflow_peer_chain",
+        "commercial_workflow_execution_peers",
+        ["immutable_hash", "previous_hash"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_workflow_execution_leases",
@@ -134,12 +170,29 @@ def upgrade() -> None:
         sa.Column("renewed_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("metadata_json", _json_type(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["federated_execution_id"], ["commercial_federated_workflow_executions.id"]),
+        sa.ForeignKeyConstraint(
+            ["federated_execution_id"], ["commercial_federated_workflow_executions.id"]
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_fed_workflow_leases_active", "commercial_workflow_execution_leases", ["federated_execution_id", "status", "expires_at"], unique=False)
-    op.create_index("ix_fed_workflow_leases_owner", "commercial_workflow_execution_leases", ["lease_owner", "cluster_id", "status"], unique=False)
-    op.create_index("ix_fed_workflow_leases_chain", "commercial_workflow_execution_leases", ["immutable_hash", "previous_hash"], unique=False)
+    op.create_index(
+        "ix_fed_workflow_leases_active",
+        "commercial_workflow_execution_leases",
+        ["federated_execution_id", "status", "expires_at"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_fed_workflow_leases_owner",
+        "commercial_workflow_execution_leases",
+        ["lease_owner", "cluster_id", "status"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_fed_workflow_leases_chain",
+        "commercial_workflow_execution_leases",
+        ["immutable_hash", "previous_hash"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_workflow_consensus_events",
@@ -169,12 +222,24 @@ def upgrade() -> None:
         sa.Column("quorum_threshold", sa.Integer(), nullable=False),
         sa.Column("event_payload_json", _json_type(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["federated_execution_id"], ["commercial_federated_workflow_executions.id"]),
+        sa.ForeignKeyConstraint(
+            ["federated_execution_id"], ["commercial_federated_workflow_executions.id"]
+        ),
         sa.ForeignKeyConstraint(["peer_id"], ["commercial_workflow_execution_peers.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_fed_workflow_consensus_scope", "commercial_workflow_consensus_events", ["federated_execution_id", "event_type", "created_at"], unique=False)
-    op.create_index("ix_fed_workflow_consensus_chain", "commercial_workflow_consensus_events", ["immutable_hash", "previous_hash"], unique=False)
+    op.create_index(
+        "ix_fed_workflow_consensus_scope",
+        "commercial_workflow_consensus_events",
+        ["federated_execution_id", "event_type", "created_at"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_fed_workflow_consensus_chain",
+        "commercial_workflow_consensus_events",
+        ["immutable_hash", "previous_hash"],
+        unique=False,
+    )
 
     op.create_table(
         "commercial_workflow_replay_federation_reports",
@@ -205,29 +270,57 @@ def upgrade() -> None:
         sa.Column("report_signature", sa.Text(), nullable=True),
         sa.Column("report_bundle_json", _json_type(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["federated_execution_id"], ["commercial_federated_workflow_executions.id"]),
+        sa.ForeignKeyConstraint(
+            ["federated_execution_id"], ["commercial_federated_workflow_executions.id"]
+        ),
         sa.ForeignKeyConstraint(["source_execution_id"], ["commercial_workflow_executions.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_fed_workflow_replay_scope", "commercial_workflow_replay_federation_reports", ["federated_execution_id", "replay_status", "created_at"], unique=False)
-    op.create_index("ix_fed_workflow_replay_chain", "commercial_workflow_replay_federation_reports", ["immutable_hash", "previous_hash"], unique=False)
+    op.create_index(
+        "ix_fed_workflow_replay_scope",
+        "commercial_workflow_replay_federation_reports",
+        ["federated_execution_id", "replay_status", "created_at"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_fed_workflow_replay_chain",
+        "commercial_workflow_replay_federation_reports",
+        ["immutable_hash", "previous_hash"],
+        unique=False,
+    )
 
 
 def downgrade() -> None:
-    op.drop_index("ix_fed_workflow_replay_chain", table_name="commercial_workflow_replay_federation_reports")
-    op.drop_index("ix_fed_workflow_replay_scope", table_name="commercial_workflow_replay_federation_reports")
+    op.drop_index(
+        "ix_fed_workflow_replay_chain", table_name="commercial_workflow_replay_federation_reports"
+    )
+    op.drop_index(
+        "ix_fed_workflow_replay_scope", table_name="commercial_workflow_replay_federation_reports"
+    )
     op.drop_table("commercial_workflow_replay_federation_reports")
-    op.drop_index("ix_fed_workflow_consensus_chain", table_name="commercial_workflow_consensus_events")
-    op.drop_index("ix_fed_workflow_consensus_scope", table_name="commercial_workflow_consensus_events")
+    op.drop_index(
+        "ix_fed_workflow_consensus_chain", table_name="commercial_workflow_consensus_events"
+    )
+    op.drop_index(
+        "ix_fed_workflow_consensus_scope", table_name="commercial_workflow_consensus_events"
+    )
     op.drop_table("commercial_workflow_consensus_events")
     op.drop_index("ix_fed_workflow_leases_chain", table_name="commercial_workflow_execution_leases")
     op.drop_index("ix_fed_workflow_leases_owner", table_name="commercial_workflow_execution_leases")
-    op.drop_index("ix_fed_workflow_leases_active", table_name="commercial_workflow_execution_leases")
+    op.drop_index(
+        "ix_fed_workflow_leases_active", table_name="commercial_workflow_execution_leases"
+    )
     op.drop_table("commercial_workflow_execution_leases")
     op.drop_index("ix_fed_workflow_peer_chain", table_name="commercial_workflow_execution_peers")
     op.drop_index("ix_fed_workflow_peer_scope", table_name="commercial_workflow_execution_peers")
     op.drop_table("commercial_workflow_execution_peers")
-    op.drop_index("ix_fed_workflow_exec_chain", table_name="commercial_federated_workflow_executions")
-    op.drop_index("ix_fed_workflow_exec_status", table_name="commercial_federated_workflow_executions")
-    op.drop_index("ix_fed_workflow_exec_lookup", table_name="commercial_federated_workflow_executions")
+    op.drop_index(
+        "ix_fed_workflow_exec_chain", table_name="commercial_federated_workflow_executions"
+    )
+    op.drop_index(
+        "ix_fed_workflow_exec_status", table_name="commercial_federated_workflow_executions"
+    )
+    op.drop_index(
+        "ix_fed_workflow_exec_lookup", table_name="commercial_federated_workflow_executions"
+    )
     op.drop_table("commercial_federated_workflow_executions")

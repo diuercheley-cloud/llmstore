@@ -35,7 +35,13 @@ class SemanticVersioningService:
         if order == 0 and left["prerelease"] != right["prerelease"]:
             order = -1 if left["prerelease"] and not right["prerelease"] else 1
             if left["prerelease"] and right["prerelease"]:
-                order = -1 if left["prerelease"] < right["prerelease"] else 1 if left["prerelease"] > right["prerelease"] else 0
+                order = (
+                    -1
+                    if left["prerelease"] < right["prerelease"]
+                    else 1
+                    if left["prerelease"] > right["prerelease"]
+                    else 0
+                )
         return {
             "source": left,
             "target": right,

@@ -4,7 +4,6 @@ from typing import Any
 
 from app.api.dependencies import get_current_admin
 from app.core.time import utc_now
-from app.services.runtime_dependencies import get_db_session
 from app.models.operations.failure_signals import (
     FailureForecast,
     FailureRiskAssessment,
@@ -21,6 +20,7 @@ from app.services.operations.forecasting.receipts import (
 from app.services.operations.forecasting.risk_scoring import (
     FailureRiskScoringService,
 )
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import select

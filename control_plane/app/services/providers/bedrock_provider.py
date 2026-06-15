@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 try:
     import aioboto3
     from botocore.exceptions import ClientError
+
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -59,9 +60,19 @@ class BedrockProvider(ProviderAdapter):
         if not self.enabled:
             return {"provider_id": "bedrock", "healthy": None, "latency_ms": 0, "error": "disabled"}
         if not self.configured:
-            return {"provider_id": "bedrock", "healthy": None, "latency_ms": 0, "error": "not configured"}
+            return {
+                "provider_id": "bedrock",
+                "healthy": None,
+                "latency_ms": 0,
+                "error": "not configured",
+            }
         if not HAS_BOTO:
-            return {"provider_id": "bedrock", "healthy": False, "latency_ms": 0, "error": "aioboto3 not installed"}
+            return {
+                "provider_id": "bedrock",
+                "healthy": False,
+                "latency_ms": 0,
+                "error": "aioboto3 not installed",
+            }
         try:
             session = aioboto3.Session(
                 aws_access_key_id=self._aws_access_key,
@@ -157,10 +168,7 @@ class BedrockProvider(ProviderAdapter):
     def _to_openai_format(bedrock_response: dict, model: str) -> dict:
         content = bedrock_response.get("content", [])
         if isinstance(content, list):
-            text = " ".join(
-                c.get("text", "") if isinstance(c, dict) else str(c)
-                for c in content
-            )
+            text = " ".join(c.get("text", "") if isinstance(c, dict) else str(c) for c in content)
         else:
             text = str(content)
 
@@ -168,11 +176,13 @@ class BedrockProvider(ProviderAdapter):
         return {
             "id": bedrock_response.get("id", ""),
             "object": "chat.completion",
-            "choices": [{
-                "index": 0,
-                "message": {"role": "assistant", "content": text},
-                "finish_reason": bedrock_response.get("stop_reason", "end_turn"),
-            }],
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": text},
+                    "finish_reason": bedrock_response.get("stop_reason", "end_turn"),
+                }
+            ],
             "model": model,
             "usage": {
                 "prompt_tokens": usage.get("input_tokens", 0),

@@ -52,7 +52,10 @@ def test_dry_run_does_not_modify_repo():
 
     result = subprocess.run(
         ["bash", str(SCRIPT), "--dry-run"],
-        cwd=ROOT, capture_output=True, text=True, timeout=60,
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        timeout=60,
     )
     assert result.returncode == 0
 

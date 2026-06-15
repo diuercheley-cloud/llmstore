@@ -9,12 +9,10 @@ import { cn } from "../../lib/utils"
 
 interface TablePaginationProps<TData> {
   table: Table<TData>
-  onPaginationChange?: (pagination: { pageIndex: number, pageSize: number }) => void
 }
 
 export function TablePagination<TData>({
-  table,
-  onPaginationChange
+  table
 }: TablePaginationProps<TData>) {
   return (
     <div className="flex items-center justify-between px-2">
@@ -30,10 +28,6 @@ export function TablePagination<TData>({
             onChange={(e) => {
               const size = Number(e.target.value)
               table.setPageSize(size)
-              onPaginationChange?.({ 
-                pageIndex: table.getState().pagination.pageIndex, 
-                pageSize: size 
-              })
             }}
             className="h-8 w-[70px] bg-card border border-border rounded-lg text-xs font-bold focus:ring-2 focus:ring-primary outline-none transition-all"
           >

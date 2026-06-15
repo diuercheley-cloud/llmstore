@@ -69,8 +69,7 @@ async def save_workflow_checkpoint(
         raise ValueError("workflow_execution_not_found")
     stage = (
         await db.execute(
-            select(CommercialWorkflowStage)
-            .where(
+            select(CommercialWorkflowStage).where(
                 CommercialWorkflowStage.execution_id == execution_id,
                 CommercialWorkflowStage.stage_order == step_index,
             )
@@ -104,8 +103,16 @@ async def save_workflow_checkpoint(
         execution=execution,
         stage=None,
         step_index=step_index,
-        input_hash=None if input_data is None else hashlib.sha256(json.dumps(input_data, sort_keys=True, default=str).encode()).hexdigest(),
-        output_hash=None if output_data is None else hashlib.sha256(json.dumps(output_data, sort_keys=True, default=str).encode()).hexdigest(),
+        input_hash=None
+        if input_data is None
+        else hashlib.sha256(
+            json.dumps(input_data, sort_keys=True, default=str).encode()
+        ).hexdigest(),
+        output_hash=None
+        if output_data is None
+        else hashlib.sha256(
+            json.dumps(output_data, sort_keys=True, default=str).encode()
+        ).hexdigest(),
         state_snapshot=state,
     )
     execution.current_step_index = max(execution.current_step_index, step_index + 1)

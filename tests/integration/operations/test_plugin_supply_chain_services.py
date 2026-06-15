@@ -76,6 +76,8 @@ def test_dependency_governance_blocks_denied_classes_and_requires_signature():
 def test_receipts_and_audit_events_are_signature_only():
     record = _provenance_record()
     receipt = build_supply_chain_receipt("provenance_receipt", record, record.provenance_hash)
-    audit = build_plugin_supply_chain_audit_event("provenance_created", str(record.client_id), {"token": "secret", "artifact_name": "bundle"})
+    audit = build_plugin_supply_chain_audit_event(
+        "provenance_created", str(record.client_id), {"token": "secret", "artifact_name": "bundle"}
+    )
     assert len(receipt.signature) > 0
     assert audit["payload"]["token"] == "redacted"

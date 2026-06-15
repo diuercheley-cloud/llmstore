@@ -17,15 +17,11 @@ Usage:
 
 from __future__ import annotations
 
-import json
-import os
-import re
 import sys
+from datetime import date, datetime
 from pathlib import Path
-from datetime import datetime, date
 
 import yaml
-
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CURRENT_VERSION = (REPO_ROOT / "VERSION").read_text(encoding="utf-8").strip()
@@ -88,15 +84,12 @@ def check_api_surface() -> list[str]:
         # 2. A replacement or justification
         if not entry.get("replacement") and not entry.get("justification"):
             errors.append(
-                f"[SEM_SUBSTITUTO] {ref} está deprecated mas não tem replacement "
-                f"ou justification"
+                f"[SEM_SUBSTITUTO] {ref} está deprecated mas não tem replacement ou justification"
             )
 
         # 3. A sunset_date or removal_date
         has_deadline = bool(
-            entry.get("sunset_date")
-            or entry.get("removal_date")
-            or entry.get("removal_version")
+            entry.get("sunset_date") or entry.get("removal_date") or entry.get("removal_version")
         )
         if not has_deadline:
             errors.append(
@@ -148,14 +141,11 @@ def check_supported_surface() -> list[str]:
 
         if not cap.get("replacement") and not cap.get("limitations"):
             errors.append(
-                f"[SEM_SUBSTITUTO] Capability '{cap_id}' deprecated sem "
-                f"replacement ou limitations"
+                f"[SEM_SUBSTITUTO] Capability '{cap_id}' deprecated sem replacement ou limitations"
             )
 
         has_deadline = bool(
-            cap.get("removal_date")
-            or cap.get("removal_version")
-            or cap.get("sunset_date")
+            cap.get("removal_date") or cap.get("removal_version") or cap.get("sunset_date")
         )
         if not has_deadline:
             errors.append(
@@ -195,15 +185,11 @@ def check_feature_flags() -> list[str]:
             errors.append(f"[SEM_OWNER] Feature flag '{name}' deprecated sem owner")
 
         if not entry.get("replacement"):
-            errors.append(
-                f"[SEM_SUBSTITUTO] Feature flag '{name}' deprecated sem replacement"
-            )
+            errors.append(f"[SEM_SUBSTITUTO] Feature flag '{name}' deprecated sem replacement")
 
         remove_after = entry.get("remove_after")
         if not remove_after:
-            errors.append(
-                f"[SEM_PRAZO] Feature flag '{name}' deprecated sem remove_after"
-            )
+            errors.append(f"[SEM_PRAZO] Feature flag '{name}' deprecated sem remove_after")
         elif _version_le(str(remove_after), CURRENT_VERSION):
             errors.append(
                 f"[PRAZO_EXPIRADO] Feature flag '{name}' remove_after="
@@ -245,9 +231,7 @@ def check_deprecated_python_modules() -> list[str]:
     for check in checks:
         path = REPO_ROOT / check["path"]
         if not path.exists():
-            errors.append(
-                f"[MISSING] {check['name']} ({check['path']}) não encontrado"
-            )
+            errors.append(f"[MISSING] {check['name']} ({check['path']}) não encontrado")
             continue
 
         content = path.read_text(encoding="utf-8")
@@ -255,14 +239,10 @@ def check_deprecated_python_modules() -> list[str]:
 
         # Skip whole-file deprecation check for files that contain shims within active modules
         check_path = check["path"]
-        is_shim_within_active = (
-            "main.py" in check_path or "middleware.py" in check_path
-        )
+        is_shim_within_active = "main.py" in check_path or "middleware.py" in check_path
         if not is_shim_within_active:
             if "DEPRECATED" not in content and "deprecated" not in content.lower():
-                errors.append(
-                    f"[SEM_MARCAÇÃO] {ref} não possui marcador de deprecação"
-                )
+                errors.append(f"[SEM_MARCAÇÃO] {ref} não possui marcador de deprecação")
 
         if not check.get("owner"):
             errors.append(f"[SEM_OWNER] {ref} sem owner")
@@ -314,8 +294,7 @@ def check_deprecation_shims() -> list[str]:
 
         if not shim.get("removal_version") and not shim.get("removal_date"):
             errors.append(
-                f"[SEM_PRAZO] Shim {ref} não tem removal_version ou "
-                f"removal_date definido"
+                f"[SEM_PRAZO] Shim {ref} não tem removal_version ou removal_date definido"
             )
 
         removal_ver = shim.get("removal_version")

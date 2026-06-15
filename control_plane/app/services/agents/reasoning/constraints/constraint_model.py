@@ -1,17 +1,18 @@
 # Owner: agent-platform
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
 
 class Constraint(BaseModel):
     id: str
-    type: str # comparison|arithmetic|logic|resource
+    type: str  # comparison|arithmetic|logic|resource
     target_field: str
-    operator: str # eq|gt|lt|ge|le|neq|in|subset
+    operator: str  # eq|gt|lt|ge|le|neq|in|subset
     value: Any
-    message: Optional[str] = None
+    message: str | None = None
+
 
 class ConstraintModel(BaseModel):
-    constraints: List[Constraint] = Field(default_factory=list)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    constraints: list[Constraint] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)

@@ -17,16 +17,16 @@ async def test_public_plans_fields(admin_client: httpx.AsyncClient, admin_token_
         "rag_enabled": True,
         "tts_enabled": True,
         "support_level": "Ultra",
-        "is_active": True
+        "is_active": True,
     }
     await admin_client.post("/admin/billing/plans", json=full_plan, headers=admin_token_headers)
-    
+
     # 2. Check public plans
     resp = await admin_client.get("/public/plans")
     assert resp.status_code == 200
     data = resp.json()
     plans = data["plans"]
-    
+
     test_plan = next((p for p in plans if p["code"] == "full-test"), None)
     assert test_plan is not None
     assert test_plan["max_context_tokens"] == 32768

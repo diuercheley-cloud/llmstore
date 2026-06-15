@@ -5,7 +5,6 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from app.services.runtime_dependencies import get_db_session
 from app.models.commercial.commercial_cryptographic_receipts import (
     CommercialInferenceReceipt,
     CommercialInferenceReceiptLedgerEvent,
@@ -19,6 +18,7 @@ from app.services.inference.cryptographic_receipts import (
     verify_receipt,
 )
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import desc, select
@@ -56,30 +56,34 @@ def _serialize_receipt(item: CommercialInferenceReceipt) -> dict[str, Any]:
 
 
 def _serialize_ledger(item: CommercialInferenceReceiptLedgerEvent) -> dict[str, Any]:
-    return sanitize_report_payload({
-        "id": str(item.id),
-        "receipt_id": str(item.receipt_id),
-        "event_type": item.event_type,
-        "summary": item.summary,
-        "immutable_hash": (item.immutable_hash or "")[:16] or None,
-        "created_at": item.created_at.isoformat(),
-    })
+    return sanitize_report_payload(
+        {
+            "id": str(item.id),
+            "receipt_id": str(item.receipt_id),
+            "event_type": item.event_type,
+            "summary": item.summary,
+            "immutable_hash": (item.immutable_hash or "")[:16] or None,
+            "created_at": item.created_at.isoformat(),
+        }
+    )
 
 
 def _serialize_report(item: CommercialInferenceReceiptVerificationReport) -> dict[str, Any]:
-    return sanitize_report_payload({
-        "id": str(item.id),
-        "receipt_id": str(item.receipt_id),
-        "verification_result": item.verification_result,
-        "chain_valid": item.chain_valid,
-        "signature_valid": item.signature_valid,
-        "timestamp_valid": item.timestamp_valid,
-        "runtime_match": item.runtime_match,
-        "replay_match": item.replay_match,
-        "drift_detected": item.drift_detected,
-        "report_hash": (item.report_hash or "")[:16],
-        "created_at": item.created_at.isoformat(),
-    })
+    return sanitize_report_payload(
+        {
+            "id": str(item.id),
+            "receipt_id": str(item.receipt_id),
+            "verification_result": item.verification_result,
+            "chain_valid": item.chain_valid,
+            "signature_valid": item.signature_valid,
+            "timestamp_valid": item.timestamp_valid,
+            "runtime_match": item.runtime_match,
+            "replay_match": item.replay_match,
+            "drift_detected": item.drift_detected,
+            "report_hash": (item.report_hash or "")[:16],
+            "created_at": item.created_at.isoformat(),
+        }
+    )
 
 
 @router.get("/admin/inference/receipts")
@@ -89,7 +93,11 @@ async def list_receipts(
     verification_status: str | None = None,
     db: AsyncSession = Depends(get_db_session),
 ):
-    stmt = select(CommercialInferenceReceipt).order_by(desc(CommercialInferenceReceipt.created_at)).limit(limit)
+    stmt = (
+        select(CommercialInferenceReceipt)
+        .order_by(desc(CommercialInferenceReceipt.created_at))
+        .limit(limit)
+    )
     if client_id:
         stmt = stmt.where(CommercialInferenceReceipt.client_id == client_id)
     if verification_status:
@@ -151,7 +159,11 @@ async def list_receipt_ledger(
     event_type: str | None = None,
     db: AsyncSession = Depends(get_db_session),
 ):
-    stmt = select(CommercialInferenceReceiptLedgerEvent).order_by(desc(CommercialInferenceReceiptLedgerEvent.created_at)).limit(limit)
+    stmt = (
+        select(CommercialInferenceReceiptLedgerEvent)
+        .order_by(desc(CommercialInferenceReceiptLedgerEvent.created_at))
+        .limit(limit)
+    )
     if event_type:
         stmt = stmt.where(CommercialInferenceReceiptLedgerEvent.event_type == event_type)
     rows = (await db.execute(stmt)).scalars().all()
@@ -164,9 +176,15 @@ async def list_verification_reports(
     verification_result: str | None = None,
     db: AsyncSession = Depends(get_db_session),
 ):
-    stmt = select(CommercialInferenceReceiptVerificationReport).order_by(desc(CommercialInferenceReceiptVerificationReport.created_at)).limit(limit)
+    stmt = (
+        select(CommercialInferenceReceiptVerificationReport)
+        .order_by(desc(CommercialInferenceReceiptVerificationReport.created_at))
+        .limit(limit)
+    )
     if verification_result:
-        stmt = stmt.where(CommercialInferenceReceiptVerificationReport.verification_result == verification_result)
+        stmt = stmt.where(
+            CommercialInferenceReceiptVerificationReport.verification_result == verification_result
+        )
     rows = (await db.execute(stmt)).scalars().all()
     return {"items": [_serialize_report(item) for item in rows]}
 
@@ -187,6 +205,7 @@ async def verify_receipt_endpoint_new(
 @router.get("/admin/receipts/public-key")
 async def get_public_key_endpoint():
     from app.services.inference.cryptographic_receipts import get_key_id, get_public_key_pem
+
     try:
         return {"public_key": get_public_key_pem(), "key_id": get_key_id()}
     except Exception as e:

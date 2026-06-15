@@ -3,10 +3,9 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import datetime, timedelta, timezone
-from typing import Any, List, Optional
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from app.services.runtime_dependencies import get_db_session
 from app.schemas.routing import (
     CommercialCalibrationSimulateRequest,
     CommercialCalibrationSimulateResponse,
@@ -25,6 +24,7 @@ from app.services.routing import (
     commercial_calibration,
 )
 from app.services.routing.commercial_config_store import CommercialConfigStore
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -47,9 +47,7 @@ async def get_calibration_report(
     Returns a calibration report based on historical routing events.
     """
     return await commercial_calibration.generate_calibration_report(
-        db, 
-        days=days, 
-        min_samples=min_samples
+        db, days=days, min_samples=min_samples
     )
 
 
@@ -63,18 +61,13 @@ async def simulate_calibration(
     Simulates a calibration adjustment for a specific provider and model.
     """
     error_summary = await commercial_calibration.calculate_estimation_error(
-        db,
-        days=req.actual_cost_history_days,
-        provider=req.provider,
-        model=req.model,
-        min_samples=1
+        db, days=req.actual_cost_history_days, provider=req.provider, model=req.model, min_samples=1
     )
-    
+
     multiplier = commercial_calibration.recommend_cost_multiplier(
-        error_summary.get("cost_error_percent", 0),
-        error_summary.get("confidence", "low")
+        error_summary.get("cost_error_percent", 0), error_summary.get("confidence", "low")
     )
-    
+
     return CommercialCalibrationSimulateResponse(
         current_estimated_cost_brl=req.current_estimated_cost_brl,
         recommended_multiplier=round(multiplier, 2),
@@ -119,7 +112,7 @@ async def get_routing_summary(
     return await commercial_analytics.summarize_today(db)
 
 
-@router.get("/commercial-configs", response_model=List[CommercialConfigRead])
+@router.get("/commercial-configs", response_model=list[CommercialConfigRead])
 async def list_commercial_configs(
     active_only: bool = True,
     admin_user: Any = Depends(get_admin_user),
@@ -132,6 +125,7 @@ async def list_commercial_configs(
     configs = await store.list_configs(active_only=active_only)
     return configs
 
+
 @router.post("/commercial-configs/apply-recommendation", response_model=CommercialConfigRead)
 async def apply_commercial_recommendation(
     req: CommercialConfigApplyRequest,
@@ -142,10 +136,12 @@ async def apply_commercial_recommendation(
     Applies a calibration recommendation manually.
     """
     if req.confidence == "low" and not req.force:
-        raise HTTPException(status_code=400, detail="Cannot apply low confidence recommendation without force=true")
-        
+        raise HTTPException(
+            status_code=400, detail="Cannot apply low confidence recommendation without force=true"
+        )
+
     store = CommercialConfigStore(db)
-    
+
     scope_type = "global"
     if req.provider and req.model:
         scope_type = "provider_model"
@@ -153,7 +149,7 @@ async def apply_commercial_recommendation(
         scope_type = "model"
     elif req.provider:
         scope_type = "provider"
-        
+
     try:
         config = await store.apply_config(
             scope_type=scope_type,
@@ -163,11 +159,12 @@ async def apply_commercial_recommendation(
             source="calibration",
             created_by=getattr(admin_user, "email", "admin"),
             notes=req.notes,
-            force=req.force
+            force=req.force,
         )
         return config
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
 
 @router.post("/commercial-configs/{config_id}/deactivate")
 async def deactivate_commercial_config(
@@ -184,11 +181,12 @@ async def deactivate_commercial_config(
         raise HTTPException(status_code=404, detail="Active config not found")
     return {"status": "success"}
 
+
 @router.post("/commercial-configs/rollback")
 async def rollback_commercial_config(
     scope_type: str,
-    provider: Optional[str] = None,
-    model: Optional[str] = None,
+    provider: str | None = None,
+    model: str | None = None,
     admin_user: Any = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -200,13 +198,14 @@ async def rollback_commercial_config(
         scope_type=scope_type,
         provider=provider,
         model=model,
-        actor=getattr(admin_user, "email", "admin")
+        actor=getattr(admin_user, "email", "admin"),
     )
     if not config:
         raise HTTPException(status_code=404, detail="No previous config found for rollback")
     return config
 
-@router.get("/commercial-configs/canaries", response_model=List[CommercialConfigRead])
+
+@router.get("/commercial-configs/canaries", response_model=list[CommercialConfigRead])
 async def list_commercial_canaries(
     admin_user: Any = Depends(get_admin_user),
     db: AsyncSession = Depends(get_db_session),
@@ -216,6 +215,7 @@ async def list_commercial_canaries(
     """
     store = CommercialConfigStore(db)
     return await store.list_canaries()
+
 
 @router.post("/commercial-configs/auto-apply/dry-run")
 async def auto_apply_dry_run(
@@ -227,22 +227,19 @@ async def auto_apply_dry_run(
     """
     service = commercial_auto_apply.CommercialAutoApplyService(db)
     report = await commercial_calibration.generate_calibration_report(db)
-    
+
     results = []
     for model_key, recommendation in report.get("recommendations", {}).items():
         # model_key format: "provider:model"
         if ":" not in model_key:
             continue
         provider, model = model_key.split(":", 1)
-        
+
         eval_result = await service.evaluate_auto_apply_candidate(provider, model, recommendation)
         results.append(eval_result)
-        
-    return {
-        "mode": "dry_run",
-        "results": results,
-        "timestamp": datetime.now(timezone.utc).isoformat()
-    }
+
+    return {"mode": "dry_run", "results": results, "timestamp": datetime.now(UTC).isoformat()}
+
 
 from app.services.routing.commercial_canary_promotion import CommercialCanaryPromotionService
 from app.services.routing.commercial_executive_dashboard import CommercialExecutiveDashboardService
@@ -254,6 +251,7 @@ from app.services.routing.commercial_report_export import (
 )
 
 # ... (existing code)
+
 
 @router.get("/executive-dashboard/overview")
 async def get_executive_overview(
@@ -269,10 +267,7 @@ async def get_executive_overview(
     """
     service = CommercialExecutiveDashboardService(db)
     return await service.get_overview(
-        hours=hours,
-        client_id=client_id,
-        provider=provider,
-        model=model
+        hours=hours, client_id=client_id, provider=provider, model=model
     )
 
 
@@ -286,11 +281,11 @@ async def get_executive_anomalies(
     Lists detected commercial anomalies for the period.
     """
     service = CommercialExecutiveDashboardService(db)
-    since = datetime.now(timezone.utc) - timedelta(hours=hours)
-    
+    since = datetime.now(UTC) - timedelta(hours=hours)
+
     profitability = await service.get_profitability_overview(since)
     drift = await service.get_drift_overview(since)
-    
+
     return await service.detect_anomalies(since, profitability, drift)
 
 
@@ -304,13 +299,13 @@ async def get_executive_recommendations(
     Returns executive recommendations based on current anomalies.
     """
     service = CommercialExecutiveDashboardService(db)
-    since = datetime.now(timezone.utc) - timedelta(hours=hours)
-    
+    since = datetime.now(UTC) - timedelta(hours=hours)
+
     profitability = await service.get_profitability_overview(since)
     drift = await service.get_drift_overview(since)
     anomalies = await service.detect_anomalies(since, profitability, drift)
     canaries = await service.summarize_canary_health()
-    
+
     return await service.generate_executive_recommendations(anomalies, canaries)
 
 
@@ -384,7 +379,9 @@ async def preview_executive_dashboard_report(
     return HTMLResponse(content=export_executive_report_html(report, preview=True))
 
 
-@router.get("/executive-dashboard/report-schedules", response_model=List[CommercialReportScheduleRead])
+@router.get(
+    "/executive-dashboard/report-schedules", response_model=list[CommercialReportScheduleRead]
+)
 async def list_report_schedules(
     db: AsyncSession = Depends(get_db_session),
     admin_user: Any = Depends(get_admin_user),
@@ -400,10 +397,15 @@ async def create_report_schedule(
     admin_user: Any = Depends(get_admin_user),
 ):
     service = CommercialReportExportService(db)
-    return await service.create_schedule(payload.model_dump(), actor=getattr(admin_user, "email", "admin"))
+    return await service.create_schedule(
+        payload.model_dump(), actor=getattr(admin_user, "email", "admin")
+    )
 
 
-@router.post("/executive-dashboard/report-schedules/{schedule_id}/run-now", response_model=CommercialReportScheduleRunResponse)
+@router.post(
+    "/executive-dashboard/report-schedules/{schedule_id}/run-now",
+    response_model=CommercialReportScheduleRunResponse,
+)
 async def run_report_schedule_now(
     schedule_id: uuid.UUID,
     db: AsyncSession = Depends(get_db_session),
@@ -413,7 +415,10 @@ async def run_report_schedule_now(
     return await service.run_schedule_now(schedule_id)
 
 
-@router.post("/executive-dashboard/report-schedules/{schedule_id}/send-test-email", response_model=CommercialReportSendTestResponse)
+@router.post(
+    "/executive-dashboard/report-schedules/{schedule_id}/send-test-email",
+    response_model=CommercialReportSendTestResponse,
+)
 async def send_report_schedule_test_email(
     schedule_id: uuid.UUID,
     db: AsyncSession = Depends(get_db_session),
@@ -423,7 +428,9 @@ async def send_report_schedule_test_email(
     return await service.send_test_email(schedule_id)
 
 
-@router.get("/executive-dashboard/report-deliveries", response_model=CommercialReportDeliveryListResponse)
+@router.get(
+    "/executive-dashboard/report-deliveries", response_model=CommercialReportDeliveryListResponse
+)
 async def list_report_deliveries(
     status: str | None = None,
     recipient: str | None = None,
@@ -443,7 +450,10 @@ async def list_report_deliveries(
     )
 
 
-@router.post("/executive-dashboard/report-schedules/{schedule_id}/disable", response_model=CommercialReportScheduleRead)
+@router.post(
+    "/executive-dashboard/report-schedules/{schedule_id}/disable",
+    response_model=CommercialReportScheduleRead,
+)
 async def disable_report_schedule(
     schedule_id: uuid.UUID,
     db: AsyncSession = Depends(get_db_session),
@@ -453,7 +463,10 @@ async def disable_report_schedule(
     return await service.set_schedule_enabled(schedule_id, False)
 
 
-@router.post("/executive-dashboard/report-schedules/{schedule_id}/enable", response_model=CommercialReportScheduleRead)
+@router.post(
+    "/executive-dashboard/report-schedules/{schedule_id}/enable",
+    response_model=CommercialReportScheduleRead,
+)
 async def enable_report_schedule(
     schedule_id: uuid.UUID,
     db: AsyncSession = Depends(get_db_session),
@@ -501,14 +514,12 @@ async def canary_promotions_dry_run(
 
     results = []
     for p in promotions:
-        res = await service.promote_canary_step(uuid.UUID(p["id"]), actor=getattr(admin_user, "email", "admin"))
+        res = await service.promote_canary_step(
+            uuid.UUID(p["id"]), actor=getattr(admin_user, "email", "admin")
+        )
         results.append(res)
 
-    return {
-        "mode": "dry_run",
-        "results": results,
-        "timestamp": datetime.now(timezone.utc).isoformat()
-    }
+    return {"mode": "dry_run", "results": results, "timestamp": datetime.now(UTC).isoformat()}
 
 
 @router.post("/commercial-configs/{config_id}/canary/promote-step")
@@ -535,7 +546,9 @@ async def trigger_canary_rollback(
     Evaluates and potentially rolls back a canary if it's unhealthy.
     """
     service = CommercialCanaryPromotionService(db)
-    return await service.auto_rollback_if_unhealthy(config_id, actor=getattr(admin_user, "email", "admin"))
+    return await service.auto_rollback_if_unhealthy(
+        config_id, actor=getattr(admin_user, "email", "admin")
+    )
 
 
 @router.post("/commercial-configs/auto-apply/run")
@@ -548,36 +561,38 @@ async def auto_apply_run(
     """
     service = commercial_auto_apply.CommercialAutoApplyService(db)
     report = await commercial_calibration.generate_calibration_report(db)
-    
+
     applied = []
     rejected = []
-    
+
     for model_key, recommendation in report.get("recommendations", {}).items():
         if ":" not in model_key:
             continue
         provider, model = model_key.split(":", 1)
-        
-        config = await service.run_auto_apply(provider, model, recommendation, actor=getattr(admin_user, "email", "admin"))
+
+        config = await service.run_auto_apply(
+            provider, model, recommendation, actor=getattr(admin_user, "email", "admin")
+        )
         if config:
-            applied.append({
-                "provider": provider,
-                "model": model,
-                "config_id": str(config.id),
-                "canary_percent": config.canary_percent
-            })
+            applied.append(
+                {
+                    "provider": provider,
+                    "model": model,
+                    "config_id": str(config.id),
+                    "canary_percent": config.canary_percent,
+                }
+            )
         else:
-            rejected.append({
-                "provider": provider,
-                "model": model
-            })
-            
+            rejected.append({"provider": provider, "model": model})
+
     return {
         "status": "completed",
         "applied_count": len(applied),
         "applied": applied,
         "rejected_count": len(rejected),
-        "timestamp": datetime.now(timezone.utc).isoformat()
+        "timestamp": datetime.now(UTC).isoformat(),
     }
+
 
 @router.post("/commercial-configs/{config_id}/canary/promote", response_model=CommercialConfigRead)
 async def promote_commercial_canary(
@@ -594,6 +609,7 @@ async def promote_commercial_canary(
         raise HTTPException(status_code=404, detail="Active canary config not found")
     return config
 
+
 @router.post("/commercial-configs/{config_id}/canary/rollback")
 async def rollback_commercial_canary(
     config_id: uuid.UUID,
@@ -609,9 +625,10 @@ async def rollback_commercial_canary(
         raise HTTPException(status_code=404, detail="Canary config not found")
     return {"status": "success", "config_id": str(config_id)}
 
+
 @router.post("/commercial-configs/auto-apply-settings")
 async def update_auto_apply_settings(
-    settings_patch: dict, # Simplified for now
+    settings_patch: dict,  # Simplified for now
     admin_user: Any = Depends(get_admin_user),
 ):
     """
@@ -621,8 +638,9 @@ async def update_auto_apply_settings(
     # This is a placeholder as per requirements: "auto-apply-settings deve permitir: enabled, mode, etc."
     # In this project, settings are mostly env-based or global.
     from app.core.config import get_settings
+
     s = get_settings()
-    
+
     return {
         "current_settings": {
             "enabled": s.commercial_calibration_auto_apply,
@@ -630,6 +648,6 @@ async def update_auto_apply_settings(
             "max_change_percent": s.commercial_calibration_auto_apply_max_change_percent,
             "min_confidence": s.commercial_calibration_auto_apply_min_confidence,
             "canary_default_percent": s.commercial_calibration_canary_default_percent,
-            "canary_max_percent": s.commercial_calibration_canary_max_percent
+            "canary_max_percent": s.commercial_calibration_canary_max_percent,
         }
     }

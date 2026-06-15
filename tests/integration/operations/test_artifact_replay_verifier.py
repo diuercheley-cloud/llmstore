@@ -1,4 +1,3 @@
-
 from app.services.operations.reproducible_builds.artifact_verification import (
     ArtifactVerificationService,
 )
@@ -23,8 +22,12 @@ def test_artifact_replay_verifier():
         }
     )
     artifact_service = ArtifactVerificationService()
-    record = artifact_service.verify_artifact(manifest, {"artifact_name": "bundle", "artifact_version": "1.0.0", "artifact_payload": {}})
-    lineage = SourceArtifactLineageService().create_lineage(manifest, "b" * 64, record.artifact_hash)
+    record = artifact_service.verify_artifact(
+        manifest, {"artifact_name": "bundle", "artifact_version": "1.0.0", "artifact_payload": {}}
+    )
+    lineage = SourceArtifactLineageService().create_lineage(
+        manifest, "b" * 64, record.artifact_hash
+    )
     verifier = ArtifactReplayVerifier()
     assert verifier.replay_build_manifest(manifest)["match"] is True
     assert verifier.replay_artifact(record)["match"] is True

@@ -33,7 +33,9 @@ class AzureOpenAIProvider(ProviderAdapter):
 
     async def _client(self) -> httpx.AsyncClient:
         headers = {"api-key": self._api_key, "Content-Type": "application/json"}
-        return httpx.AsyncClient(base_url=self._endpoint.rstrip("/"), timeout=self._timeout, headers=headers)
+        return httpx.AsyncClient(
+            base_url=self._endpoint.rstrip("/"), timeout=self._timeout, headers=headers
+        )
 
     def _url(self, path: str) -> str:
         deployment = self._deployment or "{deployment}"
@@ -41,15 +43,35 @@ class AzureOpenAIProvider(ProviderAdapter):
 
     async def health_check(self) -> dict[str, Any]:
         if not self.enabled:
-            return {"provider_id": "azure_openai", "healthy": None, "latency_ms": 0, "error": "disabled"}
+            return {
+                "provider_id": "azure_openai",
+                "healthy": None,
+                "latency_ms": 0,
+                "error": "disabled",
+            }
         if not self.configured:
-            return {"provider_id": "azure_openai", "healthy": None, "latency_ms": 0, "error": "not configured"}
+            return {
+                "provider_id": "azure_openai",
+                "healthy": None,
+                "latency_ms": 0,
+                "error": "not configured",
+            }
         try:
             async with await self._client() as client:
                 resp = await client.get(self._url("models"))
-                return {"provider_id": "azure_openai", "healthy": resp.is_success, "latency_ms": 0, "error": None}
+                return {
+                    "provider_id": "azure_openai",
+                    "healthy": resp.is_success,
+                    "latency_ms": 0,
+                    "error": None,
+                }
         except Exception as e:
-            return {"provider_id": "azure_openai", "healthy": False, "latency_ms": 0, "error": str(e)}
+            return {
+                "provider_id": "azure_openai",
+                "healthy": False,
+                "latency_ms": 0,
+                "error": str(e),
+            }
 
     async def list_models(self) -> list[str]:
         if not self.enabled or not self.configured:

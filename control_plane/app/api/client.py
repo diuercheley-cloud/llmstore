@@ -7,10 +7,8 @@ from time import perf_counter
 from app.api.deps import EmbeddingService, get_embedding_service, get_inference_proxy
 from app.core.config import get_settings
 from app.core.request_context import get_correlation_id, get_tenant_id
-from app.services.runtime_dependencies import get_db_session, get_redis
-from app.models.core.client import Client
-from app.services.runtime_dependencies import get_semantic_cache
 from app.models.commercial.commercial_cluster_registry import CommercialClusterRegistry
+from app.models.core.client import Client
 from app.models.core.model_backend_route import ModelBackendRoute
 from app.schemas.inference import (
     ChatCompletionRequest,
@@ -41,7 +39,6 @@ from app.services.commercial_guardrails import (
     record_enforcement_outcome,
     record_report_only_events,
 )
-from app.services.routing.commercial_cross_cluster_forwarder import CommercialCrossClusterForwarder
 from app.services.context_manager import ContextManager, get_context_manager
 from app.services.embeddings_mock import process_mock_embeddings
 from app.services.generation_jobs import (
@@ -61,7 +58,6 @@ from app.services.model_policy import (
     serialize_model_card,
 )
 from app.services.provider_classification import is_cloud_provider
-from sqlalchemy import select
 from app.services.quota import (
     QuotaExceeded,
     ensure_embeddings_quota,
@@ -78,7 +74,9 @@ from app.services.response_cache import (
     store_exact_cache,
 )
 from app.services.routing import commercial_analytics
+from app.services.routing.commercial_cross_cluster_forwarder import CommercialCrossClusterForwarder
 from app.services.routing.commercial_global_traffic_shifter import CommercialGlobalTrafficShifter
+from app.services.runtime_dependencies import get_db_session, get_redis, get_semantic_cache
 from app.services.security_monitor import (
     maybe_record_plan_usage_anomaly,
     maybe_record_repeated_large_prompt,
@@ -99,6 +97,7 @@ from app.utils.tool_calling import (
 )
 from app.utils.validation import normalize_messages, validate_params_for_session
 from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse, Response
 
@@ -113,7 +112,9 @@ class CommercialGuardrailBlockedError(Exception):
     pass
 
 
-async def _ensure_client_billing_plan_loaded(session: AsyncSession, client: Client | None) -> Client | None:
+async def _ensure_client_billing_plan_loaded(
+    session: AsyncSession, client: Client | None
+) -> Client | None:
     if client is None:
         return None
     await resolve_effective_plan_for_session(session, client)
@@ -173,11 +174,7 @@ def _apply_compat_headers(response: Response, headers: dict[str, str]) -> Respon
 
 def _passthrough_response_headers(headers: dict[str, str]) -> dict[str, str]:
     excluded = {"content-length", "content-type"}
-    return {
-        key: value
-        for key, value in headers.items()
-        if key.lower() not in excluded
-    }
+    return {key: value for key, value in headers.items() if key.lower() not in excluded}
 
 
 def _responses_input_to_messages(payload: ResponsesRequest) -> list[dict[str, str]]:
@@ -280,13 +277,14 @@ async def _chat_with_fallback(
     allow_default_model_fallback: bool = True,
 ):
     from app.services.routing.commercial_qos import CommercialQoSService
+
     qos_tier = None
     if session:
         client = await _ensure_client_billing_plan_loaded(session, client)
         qos_tier = await CommercialQoSService.resolve_qos_tier(
-            session, 
-            client.id if client else None, 
-            client.billing_plan.code if client and client.billing_plan else None
+            session,
+            client.id if client else None,
+            client.billing_plan.code if client and client.billing_plan else None,
         )
 
     routes = plan_routing_order(
@@ -296,7 +294,7 @@ async def _chat_with_fallback(
         commercial_guardrail_context=commercial_guardrail_context,
         qos_tier=qos_tier,
     )
-    
+
     # Record commercial routing analytics event (best-effort)
     if session:
         from app.schemas.routing import TaskType
@@ -304,35 +302,47 @@ async def _chat_with_fallback(
             calculate_customer_price,
             estimate_provider_cost,
         )
-        
+
         selected_pid = routes[0].inference_backend.provider if routes else None
         est_cost = 0.0
         est_rev = 0.0
         if selected_pid:
             est_cost_res = estimate_provider_cost(selected_pid, 100, 500)
-            est_rev_res = calculate_customer_price(client.billing_plan.code if client and client.billing_plan else "free", 100, 500)
+            est_rev_res = calculate_customer_price(
+                client.billing_plan.code if client and client.billing_plan else "free", 100, 500
+            )
             est_cost = est_cost_res.cost_brl
             est_rev = est_rev_res.price_brl
-        
+
         await commercial_analytics.record_routing_event(
             session,
             client_id=client.id if client else None,
             correlation_id=get_correlation_id(),
-            endpoint="/v1/chat/completions", # Simplified
+            endpoint="/v1/chat/completions",  # Simplified
             model_requested=selected_model.model_id,
             task_type=TaskType.general,
             policy="commercial_profit",
             selected_provider=selected_pid,
             selected_model=routes[0].inference_backend.name if routes else None,
             selected_is_cloud=is_cloud_provider(selected_pid) if selected_pid else False,
-            blocked=not routes and bool(commercial_guardrail_context and commercial_guardrail_context.get("blocked_without_fallback")),
-            block_reason="guardrail_block" if not routes and commercial_guardrail_context and commercial_guardrail_context.get("blocked_without_fallback") else None,
+            blocked=not routes
+            and bool(
+                commercial_guardrail_context
+                and commercial_guardrail_context.get("blocked_without_fallback")
+            ),
+            block_reason="guardrail_block"
+            if not routes
+            and commercial_guardrail_context
+            and commercial_guardrail_context.get("blocked_without_fallback")
+            else None,
             estimated_cost_brl=est_cost,
             estimated_revenue_brl=est_rev,
             estimated_margin_brl=est_rev - est_cost,
             estimated_margin_percent=((est_rev - est_cost) / est_rev * 100) if est_rev > 0 else 0,
             ranked_routes=routes,
-            guardrail_decisions=commercial_guardrail_context.get("blocked_candidates", []) if commercial_guardrail_context else [],
+            guardrail_decisions=commercial_guardrail_context.get("blocked_candidates", [])
+            if commercial_guardrail_context
+            else [],
             qos_tier=qos_tier.name if qos_tier else None,
             sla_pass=len(routes) > 0,
             qos_priority=qos_tier.priority if qos_tier else None,
@@ -340,7 +350,9 @@ async def _chat_with_fallback(
 
     record_report_only_events(commercial_guardrail_context)
     if not routes:
-        if commercial_guardrail_context and commercial_guardrail_context.get("blocked_without_fallback"):
+        if commercial_guardrail_context and commercial_guardrail_context.get(
+            "blocked_without_fallback"
+        ):
             record_enforcement_outcome(commercial_guardrail_context, blocked_without_fallback=True)
             raise CommercialGuardrailBlockedError()
         raise HTTPException(status_code=503, detail="model backend is not active")
@@ -363,7 +375,7 @@ async def _chat_with_fallback(
         backend = route.inference_backend
         if backend is None:
             continue
-            
+
         api_key = None
         if backend.metadata_json:
             try:
@@ -371,7 +383,7 @@ async def _chat_with_fallback(
                 api_key = metadata.get("api_key")
             except json.JSONDecodeError:
                 pass
-                
+
         try:
             backend_url = backend.backend_url
             if session:
@@ -391,9 +403,14 @@ async def _chat_with_fallback(
                 is_admin=is_admin,
             )
             result.attempts = attempt
-            result.fallback_used = attempt > 1 or bool(commercial_guardrail_context and commercial_guardrail_context.get("guardrail_fallback_active"))
+            result.fallback_used = attempt > 1 or bool(
+                commercial_guardrail_context
+                and commercial_guardrail_context.get("guardrail_fallback_active")
+            )
             result.backend_errors = backend_errors
-            record_enforcement_outcome(commercial_guardrail_context, selected_provider=backend.provider)
+            record_enforcement_outcome(
+                commercial_guardrail_context, selected_provider=backend.provider
+            )
             return result
         except HTTPException as exc:
             last_exc = exc
@@ -452,13 +469,14 @@ async def _completion_with_fallback(
     session: AsyncSession | None = None,
 ):
     from app.services.routing.commercial_qos import CommercialQoSService
+
     qos_tier = None
     if session:
         client = await _ensure_client_billing_plan_loaded(session, client)
         qos_tier = await CommercialQoSService.resolve_qos_tier(
-            session, 
-            client.id if client else None, 
-            client.billing_plan.code if client and client.billing_plan else None
+            session,
+            client.id if client else None,
+            client.billing_plan.code if client and client.billing_plan else None,
         )
 
     routes = plan_routing_order(
@@ -468,7 +486,7 @@ async def _completion_with_fallback(
         commercial_guardrail_context=commercial_guardrail_context,
         qos_tier=qos_tier,
     )
-    
+
     # Record commercial routing analytics event (best-effort)
     if session:
         from app.schemas.routing import TaskType
@@ -476,35 +494,47 @@ async def _completion_with_fallback(
             calculate_customer_price,
             estimate_provider_cost,
         )
-        
+
         selected_pid = routes[0].inference_backend.provider if routes else None
         est_cost = 0.0
         est_rev = 0.0
         if selected_pid:
             est_cost_res = estimate_provider_cost(selected_pid, 100, 500)
-            est_rev_res = calculate_customer_price(client.billing_plan.code if client and client.billing_plan else "free", 100, 500)
+            est_rev_res = calculate_customer_price(
+                client.billing_plan.code if client and client.billing_plan else "free", 100, 500
+            )
             est_cost = est_cost_res.cost_brl
             est_rev = est_rev_res.price_brl
-        
+
         await commercial_analytics.record_routing_event(
             session,
             client_id=client.id if client else None,
             correlation_id=get_correlation_id(),
-            endpoint="/v1/chat/completions", # Simplified
+            endpoint="/v1/chat/completions",  # Simplified
             model_requested=selected_model.model_id,
             task_type=TaskType.general,
             policy="commercial_profit",
             selected_provider=selected_pid,
             selected_model=routes[0].inference_backend.name if routes else None,
             selected_is_cloud=is_cloud_provider(selected_pid) if selected_pid else False,
-            blocked=not routes and bool(commercial_guardrail_context and commercial_guardrail_context.get("blocked_without_fallback")),
-            block_reason="guardrail_block" if not routes and commercial_guardrail_context and commercial_guardrail_context.get("blocked_without_fallback") else None,
+            blocked=not routes
+            and bool(
+                commercial_guardrail_context
+                and commercial_guardrail_context.get("blocked_without_fallback")
+            ),
+            block_reason="guardrail_block"
+            if not routes
+            and commercial_guardrail_context
+            and commercial_guardrail_context.get("blocked_without_fallback")
+            else None,
             estimated_cost_brl=est_cost,
             estimated_revenue_brl=est_rev,
             estimated_margin_brl=est_rev - est_cost,
             estimated_margin_percent=((est_rev - est_cost) / est_rev * 100) if est_rev > 0 else 0,
             ranked_routes=routes,
-            guardrail_decisions=commercial_guardrail_context.get("blocked_candidates", []) if commercial_guardrail_context else [],
+            guardrail_decisions=commercial_guardrail_context.get("blocked_candidates", [])
+            if commercial_guardrail_context
+            else [],
             qos_tier=qos_tier.name if qos_tier else None,
             sla_pass=len(routes) > 0,
             qos_priority=qos_tier.priority if qos_tier else None,
@@ -512,7 +542,9 @@ async def _completion_with_fallback(
 
     record_report_only_events(commercial_guardrail_context)
     if not routes:
-        if commercial_guardrail_context and commercial_guardrail_context.get("blocked_without_fallback"):
+        if commercial_guardrail_context and commercial_guardrail_context.get(
+            "blocked_without_fallback"
+        ):
             record_enforcement_outcome(commercial_guardrail_context, blocked_without_fallback=True)
             raise CommercialGuardrailBlockedError()
         raise HTTPException(status_code=503, detail="model backend is not active")
@@ -535,7 +567,7 @@ async def _completion_with_fallback(
         backend = route.inference_backend
         if backend is None:
             continue
-            
+
         api_key = None
         if backend.metadata_json:
             try:
@@ -561,9 +593,14 @@ async def _completion_with_fallback(
                 is_admin=is_admin,
             )
             result.attempts = attempt
-            result.fallback_used = attempt > 1 or bool(commercial_guardrail_context and commercial_guardrail_context.get("guardrail_fallback_active"))
+            result.fallback_used = attempt > 1 or bool(
+                commercial_guardrail_context
+                and commercial_guardrail_context.get("guardrail_fallback_active")
+            )
             result.backend_errors = backend_errors
-            record_enforcement_outcome(commercial_guardrail_context, selected_provider=backend.provider)
+            record_enforcement_outcome(
+                commercial_guardrail_context, selected_provider=backend.provider
+            )
             return result
         except HTTPException as exc:
             last_exc = exc
@@ -606,7 +643,7 @@ async def list_models(
     """
     allowed = get_effective_allowed_models(client)
     models = await list_active_registry_models(session)
-    
+
     # Adiciona o modelo de embedding mock/default se habilitado
     if settings.embeddings_enabled:
         filtered = [
@@ -616,23 +653,27 @@ async def list_models(
         ]
         # Always include the default embedding model for now if enabled
         if not any(m["id"] == settings.default_embedding_model for m in filtered):
-            filtered.append({
-                "id": settings.default_embedding_model,
-                "object": "model",
-                "owned_by": "local-mock" if settings.embeddings_backend == "mock" else "local",
-                "capabilities": {
-                    "chat": False,
-                    "streaming": False,
-                    "embeddings": True,
-                    "responses": False,
-                    "tools": False,
-                },
-                "enabled": True,
-                "backend_status": "healthy" if settings.embeddings_backend == "mock" else "unknown",
-                "production_ready": settings.app_env == "production",
-                "local_ready": True,
-                "metadata": {"type": "embedding", "dimensions": settings.embedding_dimensions}
-            })
+            filtered.append(
+                {
+                    "id": settings.default_embedding_model,
+                    "object": "model",
+                    "owned_by": "local-mock" if settings.embeddings_backend == "mock" else "local",
+                    "capabilities": {
+                        "chat": False,
+                        "streaming": False,
+                        "embeddings": True,
+                        "responses": False,
+                        "tools": False,
+                    },
+                    "enabled": True,
+                    "backend_status": "healthy"
+                    if settings.embeddings_backend == "mock"
+                    else "unknown",
+                    "production_ready": settings.app_env == "production",
+                    "local_ready": True,
+                    "metadata": {"type": "embedding", "dimensions": settings.embedding_dimensions},
+                }
+            )
         return ModelList(data=filtered)
 
     filtered = [
@@ -670,8 +711,8 @@ async def embeddings(
     if isinstance(inputs, list):
         if len(inputs) > effective_plan.embeddings_max_inputs_per_request:
             raise HTTPException(
-                status_code=400, 
-                detail=f"too many inputs: max {effective_plan.embeddings_max_inputs_per_request} allowed per request"
+                status_code=400,
+                detail=f"too many inputs: max {effective_plan.embeddings_max_inputs_per_request} allowed per request",
             )
     else:
         inputs = [inputs]
@@ -679,26 +720,26 @@ async def embeddings(
     # Contagem real de tokens
     token_res = await tokenizer.count_embedding_tokens(inputs, model=payload.model)
     total_tokens = token_res.input_tokens
-    
+
     try:
         source_ip = getattr(request.state, "source_ip", "unknown")
         await enforce_ip_rate_limit(redis, source_ip)
-        
+
         await apply_api_rate_limit(
             redis=redis,
             session=session,
             client=client,
             endpoint="/v1/embeddings",
             limit=effective_plan.rate_limit_per_minute,
-            response=response
+            response=response,
         )
 
         await ensure_embeddings_quota(
-            session, 
-            client.id, 
-            effective_plan.embeddings_requests_per_month, 
-            effective_plan.embeddings_tokens_per_month, 
-            total_tokens
+            session,
+            client.id,
+            effective_plan.embeddings_requests_per_month,
+            effective_plan.embeddings_tokens_per_month,
+            total_tokens,
         )
     except RateLimitExceeded as exc:
         raise HTTPException(status_code=429, detail=str(exc)) from exc
@@ -707,12 +748,10 @@ async def embeddings(
 
     started = perf_counter()
     backend_name = "local"
-    
+
     if settings.embeddings_backend == "mock":
         response_data = process_mock_embeddings(
-            inputs, 
-            model=payload.model, 
-            dimensions=settings.embedding_dimensions
+            inputs, model=payload.model, dimensions=settings.embedding_dimensions
         )
         latency_ms = int((perf_counter() - started) * 1000)
     elif settings.embeddings_backend == "local":
@@ -721,19 +760,12 @@ async def embeddings(
             vectors = await embedding_service.embed_batch(inputs)
             data = []
             for i, vector in enumerate(vectors):
-                data.append({
-                    "object": "embedding",
-                    "index": i,
-                    "embedding": vector
-                })
+                data.append({"object": "embedding", "index": i, "embedding": vector})
             response_data = {
                 "object": "list",
                 "data": data,
                 "model": payload.model,
-                "usage": {
-                    "prompt_tokens": total_tokens,
-                    "total_tokens": total_tokens
-                }
+                "usage": {"prompt_tokens": total_tokens, "total_tokens": total_tokens},
             }
             latency_ms = int((perf_counter() - started) * 1000)
             backend_name = "local-transformers"
@@ -741,31 +773,27 @@ async def embeddings(
             logger.error(f"Local embedding failed: {e}")
             # Fallback to mock for reliability in dev environments
             response_data = process_mock_embeddings(
-                inputs, 
-                model=payload.model, 
-                dimensions=settings.embedding_dimensions
+                inputs, model=payload.model, dimensions=settings.embedding_dimensions
             )
             latency_ms = int((perf_counter() - started) * 1000)
             backend_name = "local-fallback-mock"
     else:
         # Fallback to mock for other backends not yet implemented
         response_data = process_mock_embeddings(
-            inputs, 
-            model=payload.model, 
-            dimensions=settings.embedding_dimensions
+            inputs, model=payload.model, dimensions=settings.embedding_dimensions
         )
         latency_ms = int((perf_counter() - started) * 1000)
         backend_name = f"{settings.embeddings_backend}-mock"
 
     await record_embedding_usage(
-        session, 
-        client.id, 
-        len(inputs), 
+        session,
+        client.id,
+        len(inputs),
         total_tokens,
         token_count_method=token_res.method,
-        tokens_estimated=token_res.is_estimated
+        tokens_estimated=token_res.is_estimated,
     )
-    
+
     # Log request (reusando log_request se possível, ou criando um específico)
     # log_request espera prompt_tokens e completion_tokens
     await log_request(
@@ -778,7 +806,7 @@ async def embeddings(
         latency_ms=latency_ms,
         status_code=200,
         is_stream=False,
-        estimated_cost_usd=0.0, # Embeddings por enquanto free em termos de overage
+        estimated_cost_usd=0.0,  # Embeddings por enquanto free em termos de overage
         backend_name=f"embeddings:{backend_name}",
         attempts=1,
         fallback_used=False,
@@ -789,7 +817,7 @@ async def embeddings(
         plan_code=effective_plan.code,
     )
     await session.commit()
-    
+
     return response_data
 
 
@@ -827,6 +855,7 @@ async def chat_completions(
 async def responses(
     payload: ResponsesRequest,
     request: Request,
+    response: Response,
     client: Client = Depends(require_client),
     session: AsyncSession = Depends(get_db_session),
     redis=Depends(get_redis),
@@ -846,7 +875,9 @@ async def responses(
 
     effective_plan = await resolve_effective_plan_for_session(session, client)
     if not effective_plan.responses_enabled:
-        raise HTTPException(status_code=403, detail="responses feature is not enabled for your plan")
+        raise HTTPException(
+            status_code=403, detail="responses feature is not enabled for your plan"
+        )
 
     messages = _responses_input_to_messages(payload)
 
@@ -863,9 +894,10 @@ async def responses(
         response_format=payload.response_format,
     )
 
-    response = await _process_chat_completion(
+    result = await _process_chat_completion(
         payload=chat_payload,
         request=request,
+        response=response,
         client=client,
         session=session,
         redis=redis,
@@ -875,12 +907,12 @@ async def responses(
         endpoint="/v1/responses",
     )
 
-    if isinstance(response, JSONResponse):
-        if response.status_code >= 400:
-            return response
-        data = json.loads(response.body.decode("utf-8"))
+    if isinstance(result, JSONResponse):
+        if result.status_code >= 400:
+            return result
+        data = json.loads(result.body.decode("utf-8"))
         if "choices" not in data:
-            return response
+            return result
         choices = data.get("choices") or []
         output = []
         output_text = ""
@@ -898,16 +930,21 @@ async def responses(
             model=data.get("model"),
             output=output,
             output_text=output_text,
-            usage=UsageInfo(**(data.get("usage") or {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0})),
-            metadata=payload.metadata or {}
+            usage=UsageInfo(
+                **(
+                    data.get("usage")
+                    or {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+                )
+            ),
+            metadata=payload.metadata or {},
         )
         return JSONResponse(
-            status_code=response.status_code,
+            status_code=result.status_code,
             content=responses_payload.model_dump(exclude_none=True),
-            headers=_passthrough_response_headers(dict(response.headers)),
+            headers=_passthrough_response_headers(dict(result.headers)),
         )
-    
-    return response
+
+    return result
 
 
 async def _process_chat_completion(
@@ -941,7 +978,7 @@ async def _process_chat_completion(
         requested_model=payload.model,
     )
     endpoint = request.url.path
-    
+
     # Phase 18: Cross-Cluster Forwarding
     if endpoint in ["/v1/chat/completions", "/v1/completions"]:
         request_payload = {
@@ -949,22 +986,30 @@ async def _process_chat_completion(
             "provider": selected_model.provider if selected_model else None,
             "model": payload.model,
             "correlation_id": get_correlation_id(),
-            "client_id": str(client.id)
+            "client_id": str(client.id),
         }
         shifter = CommercialGlobalTrafficShifter(session)
         decision = await shifter.decide_cluster_for_request(request_payload)
 
         if decision.decision == "shift_to_target" and decision.target_cluster_id:
-            res = await session.execute(select(CommercialClusterRegistry).where(CommercialClusterRegistry.cluster_id == decision.target_cluster_id))
+            res = await session.execute(
+                select(CommercialClusterRegistry).where(
+                    CommercialClusterRegistry.cluster_id == decision.target_cluster_id
+                )
+            )
             target_cluster = res.scalar_one_or_none()
             if target_cluster:
                 forwarder = CommercialCrossClusterForwarder(session)
                 if forwarder.should_forward_request(target_cluster):
                     body_bytes = await request.body()
                     if payload.stream:
-                        response = await forwarder.stream_sse_forward(request, target_cluster, body_bytes)
+                        response = await forwarder.stream_sse_forward(
+                            request, target_cluster, body_bytes
+                        )
                     else:
-                        response = await forwarder.forward_request(request, target_cluster, body_bytes)
+                        response = await forwarder.forward_request(
+                            request, target_cluster, body_bytes
+                        )
                     if response is not None:
                         return response
                     # Fallback local if response is None
@@ -972,10 +1017,14 @@ async def _process_chat_completion(
     # If cloud is blocked by guardrail and the selected model is ONLY cloud, we should ideally fallback to a local default
     # But resolve_requested_model doesn't know about guardrails yet.
     # For now, plan_routing_order will return an empty list if ONLY cloud routes exist and are blocked.
-    
-    if payload.tools and not model_supports_native_tools(selected_model.provider, selected_model.metadata_json):
-        return _capability_not_supported_response(provider=selected_model.provider, endpoint=endpoint)
-    
+
+    if payload.tools and not model_supports_native_tools(
+        selected_model.provider, selected_model.metadata_json
+    ):
+        return _capability_not_supported_response(
+            provider=selected_model.provider, endpoint=endpoint
+        )
+
     logger.debug(
         "chat completions request resolved",
         extra={
@@ -988,16 +1037,18 @@ async def _process_chat_completion(
             }
         },
     )
-    
+
     # Normalize messages (handling content parts)
     messages = normalize_messages([item.model_dump(exclude_none=True) for item in payload.messages])
-    
+
     # Apply Client System Prompt if available
     if client.system_prompt:
         # Check if there is already a system message
         system_msg_idx = next((i for i, m in enumerate(messages) if m["role"] == "system"), None)
         if system_msg_idx is not None:
-            messages[system_msg_idx]["content"] = f"{client.system_prompt}\n\n{messages[system_msg_idx]['content']}"
+            messages[system_msg_idx]["content"] = (
+                f"{client.system_prompt}\n\n{messages[system_msg_idx]['content']}"
+            )
         else:
             messages.insert(0, {"role": "system", "content": client.system_prompt})
 
@@ -1013,10 +1064,14 @@ async def _process_chat_completion(
     token_count_method = context_metrics.get("token_count_method", "estimated")
     tokens_estimated = context_metrics.get("tokens_estimated", True)
     if prompt_tokens > client.max_context_tokens:
-        raise HTTPException(status_code=413, detail="prompt exceeds client context limit after management")
-    
+        raise HTTPException(
+            status_code=413, detail="prompt exceeds client context limit after management"
+        )
+
     # Still call validate_params for plan and basic params, but use capped max_tokens if needed
-    _, temperature, top_p, effective_plan = await validate_params_for_session(session, client, payload)
+    _, temperature, top_p, effective_plan = await validate_params_for_session(
+        session, client, payload
+    )
     max_tokens = max_tokens_capped
 
     # Improve behavior for local small models
@@ -1025,12 +1080,7 @@ async def _process_chat_completion(
     if payload.top_p is None and selected_model.provider in {"llama.cpp", "ollama"}:
         top_p = 0.9
 
-    logger.info(
-        "Inference context optimized",
-        extra={
-            "extra_data": context_metrics
-        }
-    )
+    logger.info("Inference context optimized", extra={"extra_data": context_metrics})
 
     incoming_tokens = prompt_tokens + max_tokens
     try:
@@ -1041,20 +1091,19 @@ async def _process_chat_completion(
             redis=redis,
             session=session,
             client=client,
-            endpoint=request.url.path, # Will automatically handle /v1/chat/completions or /v1/completions
+            endpoint=request.url.path,  # Will automatically handle /v1/chat/completions or /v1/completions
             limit=effective_plan.rate_limit_per_minute,
-            response=response
+            response=response,
         )
 
         await ensure_quota(
             session,
             client.id,
- 
-            effective_plan.daily_token_quota, 
-            effective_plan.weekly_token_quota, 
-            effective_plan.monthly_token_quota, 
+            effective_plan.daily_token_quota,
+            effective_plan.weekly_token_quota,
+            effective_plan.monthly_token_quota,
             incoming_tokens,
-            requests_per_day_limit=effective_plan.requests_per_day
+            requests_per_day_limit=effective_plan.requests_per_day,
         )
     except RateLimitExceeded as exc:
         raise HTTPException(status_code=429, detail=str(exc)) from exc
@@ -1063,9 +1112,7 @@ async def _process_chat_completion(
 
     body = payload.model_dump(exclude={"include_reasoning", "safety_profile"}, exclude_none=True)
     body = filter_unsupported_tooling_parameters(
-        selected_model.provider,
-        body,
-        selected_model.metadata_json
+        selected_model.provider, body, selected_model.metadata_json
     )
     body["messages"] = messages
     body["model"] = selected_model.model_id
@@ -1095,8 +1142,12 @@ async def _process_chat_completion(
     )
     usage_snapshot = await get_current_usage_snapshot(session, client.id)
     daily_used_before = int(usage_snapshot["daily"].used_tokens) if usage_snapshot["daily"] else 0
-    weekly_used_before = int(usage_snapshot["weekly"].used_tokens) if usage_snapshot["weekly"] else 0
-    monthly_used_before = int(usage_snapshot["monthly"].used_tokens) if usage_snapshot["monthly"] else 0
+    weekly_used_before = (
+        int(usage_snapshot["weekly"].used_tokens) if usage_snapshot["weekly"] else 0
+    )
+    monthly_used_before = (
+        int(usage_snapshot["monthly"].used_tokens) if usage_snapshot["monthly"] else 0
+    )
     estimated_request_cost = float(
         estimate_request_cost(
             monthly_tokens_used_before=monthly_used_before,
@@ -1109,7 +1160,9 @@ async def _process_chat_completion(
         messages,
         include_reasoning=getattr(payload, "include_reasoning", False),
         tool_count=len(payload.tools or []),
-        tool_choice=payload.tool_choice if isinstance(payload.tool_choice, str) else ((payload.tool_choice or {}).get("function") or {}).get("name"),
+        tool_choice=payload.tool_choice
+        if isinstance(payload.tool_choice, str)
+        else ((payload.tool_choice or {}).get("function") or {}).get("name"),
     )
     await maybe_record_repeated_large_prompt(
         session,
@@ -1147,24 +1200,26 @@ async def _process_chat_completion(
                 request_hash=cache_key,
                 plan_code=effective_plan.code,
             )
-            
+
             # Semantic Cache Fallback
             if not cached.hit and settings.semantic_cache_enabled:
                 sem_cache = get_semantic_cache(redis)
                 # Combine messages into a single string for semantic lookup
-                prompt_text = "\n".join([f"{m.get('role')}: {m.get('content')}" for m in payload.messages])
+                prompt_text = "\n".join(
+                    [f"{m.get('role')}: {m.get('content')}" for m in payload.messages]
+                )
                 sem_hit = await sem_cache.get(
                     tenant_id=get_tenant_id(),
                     client_id=str(client.id),
                     model=selected_model.model_id,
-                    prompt=prompt_text
+                    prompt=prompt_text,
                 )
                 if sem_hit:
                     cached.hit = True
                     cached.payload = sem_hit
                     # Estimate tokens for semantic hit (simple approximation or use tokenizer)
                     cached.prompt_tokens = prompt_tokens
-                    cached.completion_tokens = 0 # Will be updated if available in payload
+                    cached.completion_tokens = 0  # Will be updated if available in payload
 
             if cached.hit and cached.payload is not None:
                 if not proxy._chat_response_has_visible_output(
@@ -1175,14 +1230,16 @@ async def _process_chat_completion(
                     cached.payload = None
                 else:
                     latency_ms = int((perf_counter() - started) * 1000)
-                    cached_tool_calls = sanitize_tool_calls(extract_tool_calls_from_chat_payload(cached.payload))
+                    cached_tool_calls = sanitize_tool_calls(
+                        extract_tool_calls_from_chat_payload(cached.payload)
+                    )
                     await record_usage(
-                        session, 
-                        client.id, 
-                        prompt_tokens, 
+                        session,
+                        client.id,
+                        prompt_tokens,
                         cached.completion_tokens,
                         token_count_method=token_count_method,
-                        tokens_estimated=tokens_estimated
+                        tokens_estimated=tokens_estimated,
                     )
                     await log_request(
                         session,
@@ -1250,12 +1307,12 @@ async def _process_chat_completion(
         if payload.stream:
             estimated_stream_tokens = max_tokens
             await record_usage(
-                session, 
-                client.id, 
-                prompt_tokens, 
+                session,
+                client.id,
+                prompt_tokens,
                 estimated_stream_tokens,
                 token_count_method=token_count_method,
-                tokens_estimated=tokens_estimated
+                tokens_estimated=tokens_estimated,
             )
             await log_request(
                 session,
@@ -1289,17 +1346,22 @@ async def _process_chat_completion(
                     "model_metadata_json": selected_model.metadata_json,
                     "metadata_json": {"audit_event": "replay_disabled_stream", "stream": True},
                 },
-                )
-            
+            )
+
             # Update commercial routing analytics with actual results (stream)
             try:
                 from app.services.billing.pricing_engine import (
                     calculate_customer_price,
                     estimate_provider_cost,
                 )
-                act_cost_res = estimate_provider_cost(result.backend_name, prompt_tokens, estimated_stream_tokens)
-                act_rev_res = calculate_customer_price(effective_plan.code, prompt_tokens, estimated_stream_tokens)
-                
+
+                act_cost_res = estimate_provider_cost(
+                    result.backend_name, prompt_tokens, estimated_stream_tokens
+                )
+                act_rev_res = calculate_customer_price(
+                    effective_plan.code, prompt_tokens, estimated_stream_tokens
+                )
+
                 await commercial_analytics.update_actual_financials(
                     session,
                     correlation_id=get_correlation_id(),
@@ -1341,21 +1403,23 @@ async def _process_chat_completion(
 
         if settings.semantic_cache_enabled:
             sem_cache = get_semantic_cache(redis)
-            prompt_text = "\n".join([f"{m.get('role')}: {m.get('content')}" for m in payload.messages])
+            prompt_text = "\n".join(
+                [f"{m.get('role')}: {m.get('content')}" for m in payload.messages]
+            )
             await sem_cache.set(
                 tenant_id=get_tenant_id(),
                 client_id=str(client.id),
                 model=selected_model.model_id,
                 prompt=prompt_text,
-                response=response_payload
+                response=response_payload,
             )
         await record_usage(
-            session, 
-            client.id, 
-            prompt_tokens, 
+            session,
+            client.id,
+            prompt_tokens,
             completion_tokens,
             token_count_method=token_count_method,
-            tokens_estimated=tokens_estimated
+            tokens_estimated=tokens_estimated,
         )
         await log_request(
             session,
@@ -1390,16 +1454,21 @@ async def _process_chat_completion(
                 "metadata_json": {"cache_hit": False},
             },
         )
-        
+
         # Update commercial routing analytics with actual results
         try:
             from app.services.billing.pricing_engine import (
                 calculate_customer_price,
                 estimate_provider_cost,
             )
-            act_cost_res = estimate_provider_cost(result.backend_name, prompt_tokens, completion_tokens)
-            act_rev_res = calculate_customer_price(effective_plan.code, prompt_tokens, completion_tokens)
-            
+
+            act_cost_res = estimate_provider_cost(
+                result.backend_name, prompt_tokens, completion_tokens
+            )
+            act_rev_res = calculate_customer_price(
+                effective_plan.code, prompt_tokens, completion_tokens
+            )
+
             await commercial_analytics.update_actual_financials(
                 session,
                 correlation_id=get_correlation_id(),
@@ -1420,12 +1489,14 @@ async def _process_chat_completion(
             client_id=client.id,
             model=selected_model.model_id,
             endpoint=endpoint,
-            prompt_tokens=prompt_tokens if 'prompt_tokens' in locals() else 0,
+            prompt_tokens=prompt_tokens if "prompt_tokens" in locals() else 0,
             completion_tokens=0,
             latency_ms=latency_ms,
             status_code=503,
             is_stream=payload.stream,
-            estimated_cost_usd=estimated_request_cost if 'estimated_request_cost' in locals() else 0,
+            estimated_cost_usd=estimated_request_cost
+            if "estimated_request_cost" in locals()
+            else 0,
             backend_name=None,
             attempts=0,
             fallback_used=False,
@@ -1434,17 +1505,21 @@ async def _process_chat_completion(
             tool_calls=None,
             backend_errors=[],
             error_message=payload_body["error"]["message"],
-            request_summary=request_summary if 'request_summary' in locals() else "",
-            plan_code=effective_plan.code if 'effective_plan' in locals() else "free",
+            request_summary=request_summary if "request_summary" in locals() else "",
+            plan_code=effective_plan.code if "effective_plan" in locals() else "free",
             safety_profile=getattr(payload, "safety_profile", "default"),
-            request_payload=body if 'body' in locals() else None,
+            request_payload=body if "body" in locals() else None,
             response_payload=None,
             reproducibility_context={
-                "model_alias": selected_model.model_alias if 'selected_model' in locals() else None,
-                "provider": selected_model.provider if 'selected_model' in locals() else None,
-                "prompt_template": selected_model.prompt_template if 'selected_model' in locals() else None,
-                "runtime_engine": selected_model.provider if 'selected_model' in locals() else None,
-                "model_metadata_json": selected_model.metadata_json if 'selected_model' in locals() else None,
+                "model_alias": selected_model.model_alias if "selected_model" in locals() else None,
+                "provider": selected_model.provider if "selected_model" in locals() else None,
+                "prompt_template": selected_model.prompt_template
+                if "selected_model" in locals()
+                else None,
+                "runtime_engine": selected_model.provider if "selected_model" in locals() else None,
+                "model_metadata_json": selected_model.metadata_json
+                if "selected_model" in locals()
+                else None,
                 "metadata_json": {"audit_event": "replay_failed_guardrail"},
             },
         )
@@ -1458,12 +1533,14 @@ async def _process_chat_completion(
             client_id=client.id,
             model=selected_model.model_id,
             endpoint=endpoint,
-            prompt_tokens=prompt_tokens if 'prompt_tokens' in locals() else 0,
+            prompt_tokens=prompt_tokens if "prompt_tokens" in locals() else 0,
             completion_tokens=0,
             latency_ms=latency_ms,
             status_code=exc.status_code,
             is_stream=payload.stream,
-            estimated_cost_usd=estimated_request_cost if 'estimated_request_cost' in locals() else 0,
+            estimated_cost_usd=estimated_request_cost
+            if "estimated_request_cost" in locals()
+            else 0,
             backend_name=backend_errors[-1]["backend_name"] if backend_errors else None,
             attempts=max(len(backend_errors), 1),
             fallback_used=len(backend_errors) > 1,
@@ -1472,17 +1549,21 @@ async def _process_chat_completion(
             tool_calls=None,
             backend_errors=backend_errors,
             error_message=_error_message_for_log(exc.detail),
-            request_summary=request_summary if 'request_summary' in locals() else "",
-            plan_code=effective_plan.code if 'effective_plan' in locals() else "free",
+            request_summary=request_summary if "request_summary" in locals() else "",
+            plan_code=effective_plan.code if "effective_plan" in locals() else "free",
             safety_profile=getattr(payload, "safety_profile", "default"),
-            request_payload=body if 'body' in locals() else None,
+            request_payload=body if "body" in locals() else None,
             response_payload=None,
             reproducibility_context={
-                "model_alias": selected_model.model_alias if 'selected_model' in locals() else None,
-                "provider": selected_model.provider if 'selected_model' in locals() else None,
-                "prompt_template": selected_model.prompt_template if 'selected_model' in locals() else None,
-                "runtime_engine": selected_model.provider if 'selected_model' in locals() else None,
-                "model_metadata_json": selected_model.metadata_json if 'selected_model' in locals() else None,
+                "model_alias": selected_model.model_alias if "selected_model" in locals() else None,
+                "provider": selected_model.provider if "selected_model" in locals() else None,
+                "prompt_template": selected_model.prompt_template
+                if "selected_model" in locals()
+                else None,
+                "runtime_engine": selected_model.provider if "selected_model" in locals() else None,
+                "model_metadata_json": selected_model.metadata_json
+                if "selected_model" in locals()
+                else None,
                 "metadata_json": {"audit_event": "replay_failed_http_exception"},
             },
         )
@@ -1508,10 +1589,7 @@ async def chat_completions_async(
     job = await create_chat_generation_job(session, redis, client, payload)
     await session.commit()
     await enqueue_generation_job(
-        redis, 
-        job.id, 
-        priority=job.priority, 
-        effective_priority=float(job.effective_priority or 0)
+        redis, job.id, priority=job.priority, effective_priority=float(job.effective_priority or 0)
     )
     return {
         "id": job.id,
@@ -1564,7 +1642,7 @@ async def completions(
         requested_model=payload.model,
     )
     endpoint = request.url.path
-    
+
     logger.debug(
         "completions request resolved",
         extra={
@@ -1576,18 +1654,22 @@ async def completions(
             }
         },
     )
-    
-    token_res_early = await tokenizer.count_text_tokens(payload.prompt, model=selected_model.model_id)
+
+    token_res_early = await tokenizer.count_text_tokens(
+        payload.prompt, model=selected_model.model_id
+    )
     if token_res_early.input_tokens > client.max_context_tokens:
         raise HTTPException(status_code=413, detail="prompt exceeds client context limit")
-    
+
     # Using validate_params instead of _validated_params
-    max_tokens, temperature, top_p, effective_plan = await validate_params_for_session(session, client, payload)
-    
+    max_tokens, temperature, top_p, effective_plan = await validate_params_for_session(
+        session, client, payload
+    )
+
     prompt = payload.prompt
     if client.system_prompt:
         prompt = f"{client.system_prompt}\n\n{prompt}"
-    
+
     # Model template for completions: assume it might wrap the prompt
     if selected_model.prompt_template:
         # Example simple template usage
@@ -1600,10 +1682,10 @@ async def completions(
     prompt_tokens = token_res.input_tokens
     token_count_method = token_res.method
     tokens_estimated = token_res.is_estimated
-    
+
     if prompt_tokens > client.max_context_tokens:
         raise HTTPException(status_code=413, detail="prompt exceeds client context limit")
-    
+
     incoming_tokens = prompt_tokens + max_tokens
     try:
         source_ip = getattr(request.state, "source_ip", "unknown")
@@ -1613,20 +1695,19 @@ async def completions(
             redis=redis,
             session=session,
             client=client,
-            endpoint=request.url.path, # Will automatically handle /v1/chat/completions or /v1/completions
+            endpoint=request.url.path,  # Will automatically handle /v1/chat/completions or /v1/completions
             limit=effective_plan.rate_limit_per_minute,
-            response=response
+            response=response,
         )
 
         await ensure_quota(
             session,
             client.id,
- 
-            effective_plan.daily_token_quota, 
-            effective_plan.weekly_token_quota, 
-            effective_plan.monthly_token_quota, 
+            effective_plan.daily_token_quota,
+            effective_plan.weekly_token_quota,
+            effective_plan.monthly_token_quota,
             incoming_tokens,
-            requests_per_day_limit=effective_plan.requests_per_day
+            requests_per_day_limit=effective_plan.requests_per_day,
         )
     except RateLimitExceeded as exc:
         raise HTTPException(status_code=429, detail=str(exc)) from exc
@@ -1657,8 +1738,12 @@ async def completions(
     )
     usage_snapshot = await get_current_usage_snapshot(session, client.id)
     daily_used_before = int(usage_snapshot["daily"].used_tokens) if usage_snapshot["daily"] else 0
-    weekly_used_before = int(usage_snapshot["weekly"].used_tokens) if usage_snapshot["weekly"] else 0
-    monthly_used_before = int(usage_snapshot["monthly"].used_tokens) if usage_snapshot["monthly"] else 0
+    weekly_used_before = (
+        int(usage_snapshot["weekly"].used_tokens) if usage_snapshot["weekly"] else 0
+    )
+    monthly_used_before = (
+        int(usage_snapshot["monthly"].used_tokens) if usage_snapshot["monthly"] else 0
+    )
     estimated_request_cost = float(
         estimate_request_cost(
             monthly_tokens_used_before=monthly_used_before,
@@ -1712,7 +1797,7 @@ async def completions(
                     tenant_id=get_tenant_id(),
                     client_id=str(client.id),
                     model=selected_model.model_id,
-                    prompt=payload.prompt
+                    prompt=payload.prompt,
                 )
                 if sem_hit:
                     cached.hit = True
@@ -1721,15 +1806,14 @@ async def completions(
                     cached.completion_tokens = 0
 
             if cached.hit and cached.payload is not None:
-
                 latency_ms = int((perf_counter() - started) * 1000)
                 await record_usage(
-                    session, 
-                    client.id, 
-                    prompt_tokens, 
+                    session,
+                    client.id,
+                    prompt_tokens,
                     cached.completion_tokens,
                     token_count_method=token_count_method,
-                    tokens_estimated=tokens_estimated
+                    tokens_estimated=tokens_estimated,
                 )
                 await log_request(
                     session,
@@ -1769,12 +1853,12 @@ async def completions(
         if payload.stream:
             estimated_stream_tokens = max_tokens
             await record_usage(
-                session, 
-                client.id, 
-                prompt_tokens, 
+                session,
+                client.id,
+                prompt_tokens,
                 estimated_stream_tokens,
                 token_count_method=token_count_method,
-                tokens_estimated=tokens_estimated
+                tokens_estimated=tokens_estimated,
             )
             await log_request(
                 session,
@@ -1824,15 +1908,15 @@ async def completions(
                 client_id=str(client.id),
                 model=selected_model.model_id,
                 prompt=payload.prompt,
-                response=response_payload
+                response=response_payload,
             )
         await record_usage(
-            session, 
-            client.id, 
-            prompt_tokens, 
+            session,
+            client.id,
+            prompt_tokens,
             completion_tokens,
             token_count_method=token_count_method,
-            tokens_estimated=tokens_estimated
+            tokens_estimated=tokens_estimated,
         )
         await log_request(
             session,
@@ -1855,18 +1939,23 @@ async def completions(
             plan_code=effective_plan.code,
             safety_profile=payload.safety_profile,
         )
-        
+
         # Update commercial routing analytics with actual results
         try:
             from app.services.billing.pricing_engine import (
                 calculate_customer_price,
                 estimate_provider_cost,
             )
+
             # Try to get completion tokens from local scope if available
-            c_tokens = locals().get("completion_tokens") or locals().get("estimated_stream_tokens") or 0
-            act_cost_res = estimate_provider_cost(result.backend_name if 'result' in locals() else "unknown", prompt_tokens, c_tokens)
+            c_tokens = (
+                locals().get("completion_tokens") or locals().get("estimated_stream_tokens") or 0
+            )
+            act_cost_res = estimate_provider_cost(
+                result.backend_name if "result" in locals() else "unknown", prompt_tokens, c_tokens
+            )
             act_rev_res = calculate_customer_price(effective_plan.code, prompt_tokens, c_tokens)
-            
+
             await commercial_analytics.update_actual_financials(
                 session,
                 correlation_id=get_correlation_id(),
@@ -1903,18 +1992,23 @@ async def completions(
             plan_code=effective_plan.code,
             safety_profile=payload.safety_profile,
         )
-        
+
         # Update commercial routing analytics with actual results
         try:
             from app.services.billing.pricing_engine import (
                 calculate_customer_price,
                 estimate_provider_cost,
             )
+
             # Try to get completion tokens from local scope if available
-            c_tokens = locals().get("completion_tokens") or locals().get("estimated_stream_tokens") or 0
-            act_cost_res = estimate_provider_cost(result.backend_name if 'result' in locals() else "unknown", prompt_tokens, c_tokens)
+            c_tokens = (
+                locals().get("completion_tokens") or locals().get("estimated_stream_tokens") or 0
+            )
+            act_cost_res = estimate_provider_cost(
+                result.backend_name if "result" in locals() else "unknown", prompt_tokens, c_tokens
+            )
             act_rev_res = calculate_customer_price(effective_plan.code, prompt_tokens, c_tokens)
-            
+
             await commercial_analytics.update_actual_financials(
                 session,
                 correlation_id=get_correlation_id(),

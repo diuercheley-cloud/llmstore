@@ -16,7 +16,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _checkpoint_signature(checkpoint_hash: str, algorithm: str = "ed25519") -> str:
-    return f"{algorithm}:{sha256_hex({'checkpoint_hash': checkpoint_hash, 'scope': 'workflow'})[:48]}"
+    return (
+        f"{algorithm}:{sha256_hex({'checkpoint_hash': checkpoint_hash, 'scope': 'workflow'})[:48]}"
+    )
 
 
 class WorkflowCheckpointReplayService:
@@ -73,7 +75,9 @@ class WorkflowCheckpointReplayService:
                     "created_at": utc_now().isoformat(),
                 }
             ),
-            replay_nonce=sha256_hex(f"{execution.id}:{stage.stage_key if stage else 'checkpoint'}:{step_index}")[:32],
+            replay_nonce=sha256_hex(
+                f"{execution.id}:{stage.stage_key if stage else 'checkpoint'}:{step_index}"
+            )[:32],
         )
         db.add(checkpoint)
         await db.flush()
@@ -88,12 +92,19 @@ class WorkflowCheckpointReplayService:
         execution_id,
     ) -> dict[str, Any]:
         rows = (
-            await db.execute(
-                select(CommercialWorkflowCheckpoint)
-                .where(CommercialWorkflowCheckpoint.execution_id == execution_id)
-                .order_by(CommercialWorkflowCheckpoint.step_index.asc(), CommercialWorkflowCheckpoint.created_at.asc())
+            (
+                await db.execute(
+                    select(CommercialWorkflowCheckpoint)
+                    .where(CommercialWorkflowCheckpoint.execution_id == execution_id)
+                    .order_by(
+                        CommercialWorkflowCheckpoint.step_index.asc(),
+                        CommercialWorkflowCheckpoint.created_at.asc(),
+                    )
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         issues: list[str] = []
         previous_hash = None
         for row in rows:
@@ -116,12 +127,16 @@ class WorkflowCheckpointReplayService:
         if checkpoint is None or checkpoint.execution_id != execution.id:
             raise ValueError("checkpoint_not_found")
         stage_rows = (
-            await db.execute(
-                select(CommercialWorkflowStage)
-                .where(CommercialWorkflowStage.execution_id == execution.id)
-                .order_by(CommercialWorkflowStage.stage_order.asc())
+            (
+                await db.execute(
+                    select(CommercialWorkflowStage)
+                    .where(CommercialWorkflowStage.execution_id == execution.id)
+                    .order_by(CommercialWorkflowStage.stage_order.asc())
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         cleared: list[str] = []
         for stage in stage_rows:
             if stage.stage_order > checkpoint.step_index:
@@ -138,7 +153,9 @@ class WorkflowCheckpointReplayService:
         execution.paused_at = utc_now()
         execution.current_step_index = checkpoint.step_index
         execution.last_checkpoint_hash = checkpoint.snapshot_hash
-        rollback_stage = next((row for row in stage_rows if row.stage_order == checkpoint.step_index), None)
+        rollback_stage = next(
+            (row for row in stage_rows if row.stage_order == checkpoint.step_index), None
+        )
         if rollback_stage is not None:
             await self.policy_enforcement.rollback_stage_policy(
                 db,
@@ -154,7 +171,10 @@ class WorkflowCheckpointReplayService:
             actor_id="system",
             actor_metadata={"checkpoint_id": str(checkpoint.id)},
             event_summary=f"Workflow rolled back to checkpoint {checkpoint.id}",
-            event_payload={"rolled_back_stages": cleared, "resume_from_stage_index": checkpoint.step_index},
+            event_payload={
+                "rolled_back_stages": cleared,
+                "resume_from_stage_index": checkpoint.step_index,
+            },
         )
         return {
             "execution_id": str(execution.id),
@@ -172,12 +192,19 @@ class WorkflowCheckpointReplayService:
         if execution is None:
             raise ValueError("execution_not_found")
         checkpoints = (
-            await db.execute(
-                select(CommercialWorkflowCheckpoint)
-                .where(CommercialWorkflowCheckpoint.execution_id == execution_id)
-                .order_by(CommercialWorkflowCheckpoint.step_index.asc(), CommercialWorkflowCheckpoint.created_at.asc())
+            (
+                await db.execute(
+                    select(CommercialWorkflowCheckpoint)
+                    .where(CommercialWorkflowCheckpoint.execution_id == execution_id)
+                    .order_by(
+                        CommercialWorkflowCheckpoint.step_index.asc(),
+                        CommercialWorkflowCheckpoint.created_at.asc(),
+                    )
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         bundle = {
             "execution_id": str(execution.id),
             "tenant_id": execution.tenant_id,

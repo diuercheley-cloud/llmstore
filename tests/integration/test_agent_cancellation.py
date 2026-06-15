@@ -19,7 +19,9 @@ async def test_agent_cancellation_cancel_run_updates_run_without_job(monkeypatch
     update_run = AsyncMock()
     log_run_event = AsyncMock()
     monkeypatch.setattr("app.services.agents.agent_cancellation.agent_state.update_run", update_run)
-    monkeypatch.setattr("app.services.agents.agent_cancellation.agent_state.log_run_event", log_run_event)
+    monkeypatch.setattr(
+        "app.services.agents.agent_cancellation.agent_state.log_run_event", log_run_event
+    )
 
     result = await AgentCancellationService.cancel_run(db, run_id)
 

@@ -1,11 +1,10 @@
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
-
+from typing import Any
 
 from app.core.time import utc_now
+from pydantic import BaseModel, Field
 
 
 class MetricType(str, Enum):
@@ -19,9 +18,9 @@ class ObservabilityMetric(BaseModel):
     value: float
     type: MetricType
     unit: str
-    tenant_id: Optional[str] = "default"
-    agent_id: Optional[str] = None
-    tags: Dict[str, str] = Field(default_factory=dict)
+    tenant_id: str | None = "default"
+    agent_id: str | None = None
+    tags: dict[str, str] = Field(default_factory=dict)
     timestamp: datetime = Field(default_factory=utc_now)
 
 
@@ -30,19 +29,19 @@ class TraceEvent(BaseModel):
     name: str
     span_id: uuid.UUID
     trace_id: uuid.UUID
-    payload: Dict[str, Any] = Field(default_factory=dict)
+    payload: dict[str, Any] = Field(default_factory=dict)
     timestamp: datetime = Field(default_factory=utc_now)
 
 
 class Span(BaseModel):
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
     trace_id: uuid.UUID
-    parent_id: Optional[uuid.UUID] = None
+    parent_id: uuid.UUID | None = None
     name: str
     start_time: datetime = Field(default_factory=utc_now)
-    end_time: Optional[datetime] = None
+    end_time: datetime | None = None
     status: str = "running"
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class AnomalySeverity(str, Enum):
@@ -60,4 +59,4 @@ class Anomaly(BaseModel):
     value: float
     baseline: float
     timestamp: datetime = Field(default_factory=utc_now)
-    evidence: Dict[str, Any] = Field(default_factory=dict)
+    evidence: dict[str, Any] = Field(default_factory=dict)

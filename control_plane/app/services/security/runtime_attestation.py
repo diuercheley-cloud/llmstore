@@ -18,7 +18,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _canonical_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+    )
 
 
 def _hash_bytes(data: bytes) -> str:
@@ -32,6 +34,7 @@ def _hash_payload(payload: dict[str, Any]) -> str:
 def _runtime_fingerprint() -> dict[str, Any]:
     import os
     import platform
+
     return {
         "platform": platform.platform(),
         "architecture": platform.machine(),
@@ -61,6 +64,7 @@ def _attestation_mode_from_settings() -> str:
 
 
 # --- Enclave Placeholders ---
+
 
 def tpm_placeholder() -> dict[str, Any]:
     return {
@@ -125,6 +129,7 @@ def collect_enclave_evidence(enclave_type: str | None = None) -> dict[str, Any]:
 
 # --- Runtime Attestation Core ---
 
+
 def _build_attestation_evidence(
     runtime_hash: str,
     model_hash: str | None,
@@ -133,14 +138,16 @@ def _build_attestation_evidence(
     enclave_evidence: dict[str, Any],
 ) -> dict[str, Any]:
     fp = _runtime_fingerprint()
-    return sanitize_report_payload({
-        "runtime_hash": runtime_hash,
-        "model_hash": model_hash,
-        "workflow_hash": workflow_hash,
-        "policy_hash": policy_hash,
-        "enclave_evidence": enclave_evidence,
-        "runtime_fingerprint": fp,
-    })
+    return sanitize_report_payload(
+        {
+            "runtime_hash": runtime_hash,
+            "model_hash": model_hash,
+            "workflow_hash": workflow_hash,
+            "policy_hash": policy_hash,
+            "enclave_evidence": enclave_evidence,
+            "runtime_fingerprint": fp,
+        }
+    )
 
 
 def _build_attestation_measurement(
@@ -150,13 +157,15 @@ def _build_attestation_measurement(
     routing_hash: str | None = None,
     runtime_binary_hash: str | None = None,
 ) -> dict[str, Any]:
-    return sanitize_report_payload({
-        "loaded_model_hashes": [model_hash] if model_hash else [],
-        "workflow_hashes": [workflow_hash] if workflow_hash else [],
-        "policy_bundle_hashes": [policy_hash] if policy_hash else [],
-        "routing_hashes": [routing_hash] if routing_hash else [],
-        "runtime_binary_hashes": [runtime_binary_hash] if runtime_binary_hash else [],
-    })
+    return sanitize_report_payload(
+        {
+            "loaded_model_hashes": [model_hash] if model_hash else [],
+            "workflow_hashes": [workflow_hash] if workflow_hash else [],
+            "policy_bundle_hashes": [policy_hash] if policy_hash else [],
+            "routing_hashes": [routing_hash] if routing_hash else [],
+            "runtime_binary_hashes": [runtime_binary_hash] if runtime_binary_hash else [],
+        }
+    )
 
 
 async def create_runtime_attestation(
@@ -234,7 +243,8 @@ async def create_runtime_attestation(
         measurement_json=measurement,
         metadata_json={},
         attested_at=utc_now(),
-        expires_at=utc_now() + timedelta(seconds=settings.commercial_runtime_attestation_evidence_ttl_seconds),
+        expires_at=utc_now()
+        + timedelta(seconds=settings.commercial_runtime_attestation_evidence_ttl_seconds),
     )
     db.add(record)
     await db.flush()
@@ -299,7 +309,12 @@ async def compute_trust_score(
         score -= record.drift_score
     if record.enclave_type == "software_attested":
         score -= 0.2
-    if record.enclave_type in ("tpm_placeholder", "sev_placeholder", "sgx_placeholder", "vbs_placeholder"):
+    if record.enclave_type in (
+        "tpm_placeholder",
+        "sev_placeholder",
+        "sgx_placeholder",
+        "vbs_placeholder",
+    ):
         score += 0.1
     if record.measurement_chain_hash:
         score += 0.1
@@ -405,26 +420,41 @@ async def revoke_attestation(
 
 async def summarize_attestation_status(db: AsyncSession) -> dict[str, Any]:
     total = (await db.execute(select(func.count(CommercialRuntimeAttestation.id)))).scalar() or 0
-    trusted = (await db.execute(
-        select(func.count(CommercialRuntimeAttestation.id))
-        .where(CommercialRuntimeAttestation.trusted.is_(True))
-    )).scalar() or 0
-    drift_count = (await db.execute(
-        select(func.count(CommercialRuntimeAttestation.id))
-        .where(CommercialRuntimeAttestation.drift_detected.is_(True))
-    )).scalar() or 0
-    untrusted_count = (await db.execute(
-        select(func.count(CommercialRuntimeAttestation.id))
-        .where(CommercialRuntimeAttestation.status == "untrusted")
-    )).scalar() or 0
-    expired_count = (await db.execute(
-        select(func.count(CommercialRuntimeAttestation.id))
-        .where(CommercialRuntimeAttestation.status == "expired")
-    )).scalar() or 0
-    revoked_count = (await db.execute(
-        select(func.count(CommercialRuntimeAttestation.id))
-        .where(CommercialRuntimeAttestation.status == "revoked")
-    )).scalar() or 0
+    trusted = (
+        await db.execute(
+            select(func.count(CommercialRuntimeAttestation.id)).where(
+                CommercialRuntimeAttestation.trusted.is_(True)
+            )
+        )
+    ).scalar() or 0
+    drift_count = (
+        await db.execute(
+            select(func.count(CommercialRuntimeAttestation.id)).where(
+                CommercialRuntimeAttestation.drift_detected.is_(True)
+            )
+        )
+    ).scalar() or 0
+    untrusted_count = (
+        await db.execute(
+            select(func.count(CommercialRuntimeAttestation.id)).where(
+                CommercialRuntimeAttestation.status == "untrusted"
+            )
+        )
+    ).scalar() or 0
+    expired_count = (
+        await db.execute(
+            select(func.count(CommercialRuntimeAttestation.id)).where(
+                CommercialRuntimeAttestation.status == "expired"
+            )
+        )
+    ).scalar() or 0
+    revoked_count = (
+        await db.execute(
+            select(func.count(CommercialRuntimeAttestation.id)).where(
+                CommercialRuntimeAttestation.status == "revoked"
+            )
+        )
+    ).scalar() or 0
 
     recent = await db.execute(
         select(CommercialRuntimeAttestation)
@@ -433,9 +463,7 @@ async def summarize_attestation_status(db: AsyncSession) -> dict[str, Any]:
     )
     items = recent.scalars().all()
 
-    avg_trust = await db.execute(
-        select(func.avg(CommercialRuntimeAttestation.trust_score))
-    )
+    avg_trust = await db.execute(select(func.avg(CommercialRuntimeAttestation.trust_score)))
     avg_trust_score = float(avg_trust.scalar() or 0.0)
 
     return {

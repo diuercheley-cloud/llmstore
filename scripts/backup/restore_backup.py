@@ -1,8 +1,8 @@
 import argparse
-import httpx
-import json
 import os
 import sys
+
+import httpx
 
 API_URL = os.environ.get("CONTROL_PLANE_URL", "http://localhost:8080")
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "test-admin-token")
@@ -44,8 +44,11 @@ def restore_backup(backup_id, dry_run=True):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--id", required=True, help="Backup ID to restore")
-    parser.add_argument("--yes-really-restore", action="store_true",
-                        help="Perform real restore (Warning! Requires approval workflow in production)")
+    parser.add_argument(
+        "--yes-really-restore",
+        action="store_true",
+        help="Perform real restore (Warning! Requires approval workflow in production)",
+    )
     args = parser.parse_args()
 
     restore_backup(args.id, dry_run=not args.yes_really_restore)

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
@@ -10,7 +9,9 @@ from app.services.inference.backend_router import UniversalInferenceRouter
 
 class FakeProxy:
     def __init__(self) -> None:
-        self.health_backend = AsyncMock(return_value={"ok": True, "status": "healthy", "latency_ms": 12.5})
+        self.health_backend = AsyncMock(
+            return_value={"ok": True, "status": "healthy", "latency_ms": 12.5}
+        )
         self.list_models = AsyncMock(return_value={"data": [{"id": "model-a"}, {"id": "model-b"}]})
 
 

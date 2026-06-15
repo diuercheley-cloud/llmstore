@@ -1,6 +1,6 @@
 import logging
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.api.deps import get_current_user, get_db
 from app.models.agents.agent_studio import AgentFlowDefinition, AgentFlowVersion
@@ -18,18 +18,22 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin/agents/studio", tags=["Agent Studio GA"])
 
+
 class CreateFlowRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
-    description: Optional[str] = None
+    description: str | None = None
+
 
 class SaveVersionRequest(BaseModel):
     graph: dict
     label: str = Field(..., min_length=1)
     make_active: bool = False
 
+
 def get_tenant_id(user) -> str:
     tenant_id = getattr(user, "tenant_id", None) or getattr(user, "id", None) or "default"
     return str(tenant_id)
+
 
 @router.post("/flows")
 async def create_flow(
@@ -40,6 +44,7 @@ async def create_flow(
     tenant_id = get_tenant_id(user)
     service = FlowVersioningService(db)
     return await service.create_flow(tenant_id, req.name, req.description)
+
 
 @router.post("/flows/{flow_id}/versions")
 async def save_flow_version(
@@ -54,6 +59,7 @@ async def save_flow_version(
         raise HTTPException(status_code=404, detail="Flow not found")
     service = FlowVersioningService(db)
     return await service.save_version(flow_id, req.graph, req.label, req.make_active)
+
 
 @router.post("/versions/{version_id}/validate")
 async def validate_flow_version(
@@ -71,6 +77,7 @@ async def validate_flow_version(
     validator = FlowValidator()
     return validator.validate(version)
 
+
 @router.post("/versions/{version_id}/compile")
 async def compile_flow_version(
     version_id: uuid.UUID,
@@ -87,10 +94,11 @@ async def compile_flow_version(
     compiler = FlowCompiler()
     return compiler.compile(version)
 
+
 @router.post("/versions/{version_id}/deploy-real")
 async def deploy_real_flow_version(
     version_id: uuid.UUID,
-    input_data: Dict[str, Any],
+    input_data: dict[str, Any],
     db: AsyncSession = Depends(get_db),
     user=Depends(get_current_user),
 ):
@@ -104,10 +112,12 @@ async def deploy_real_flow_version(
     adapter = FlowRuntimeAdapter(db)
     return await adapter.deploy_real(version_id, input_data)
 
+
 @router.get("/templates")
 async def list_templates():
     gallery = TemplateGalleryService()
     return {"templates": gallery.list_templates()}
+
 
 @router.get("/templates/{template_id}")
 async def get_template(template_id: str):
@@ -121,7 +131,7 @@ async def get_template(template_id: str):
 @router.post("/flows/{flow_id}/deploy")
 async def deploy_flow(
     flow_id: uuid.UUID,
-    input_data: Optional[Dict[str, Any]] = None,
+    input_data: dict[str, Any] | None = None,
     db: AsyncSession = Depends(get_db),
     user=Depends(get_current_user),
 ):

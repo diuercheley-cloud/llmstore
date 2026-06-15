@@ -12,6 +12,7 @@ Covers:
   8. GraphRAG injects path with provenance
   9. Existing: entity persistence, provenance, cross-tenant, write-flag, redaction
 """
+
 import uuid
 from unittest.mock import AsyncMock, MagicMock
 

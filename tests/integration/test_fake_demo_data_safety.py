@@ -17,8 +17,16 @@ class TestFakeDataSafetyNoRealInfo:
 
     def test_no_real_company_names(self):
         real_companies = [
-            "Microsoft", "Google", "Amazon", "Meta", "Apple",
-            "Petrobras", "Vale", "Itau", "Bradesco", "Santander",
+            "Microsoft",
+            "Google",
+            "Amazon",
+            "Meta",
+            "Apple",
+            "Petrobras",
+            "Vale",
+            "Itau",
+            "Bradesco",
+            "Santander",
         ]
         for f in FAKE_DIR.rglob("*"):
             if f.is_file() and f.suffix in (".json", ".txt"):
@@ -46,7 +54,11 @@ class TestFakeDataSafetyNoRealInfo:
         for f in FAKE_DIR.rglob("*"):
             if f.is_file() and f.suffix in (".json", ".txt"):
                 content = f.read_text().lower()
-                if "trabalhista" in content or "indenizatoria" in content or "reclamacao" in content:
+                if (
+                    "trabalhista" in content
+                    or "indenizatoria" in content
+                    or "reclamacao" in content
+                ):
                     assert "ficticio" in content or "demo" in content
 
     def test_no_sequential_real_phone_numbers(self):

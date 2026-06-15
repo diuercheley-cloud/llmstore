@@ -11,8 +11,8 @@ from pathlib import Path
 
 import psutil
 from app.core.config import get_settings
+from app.core.security import verify_secret
 from app.core.time import utc_now
-from app.services.runtime_dependencies import get_db_session
 from app.models.billing.billing_plan import BillingPlan
 from app.models.core.admin_action_log import AdminActionLog
 from app.models.core.api_key import ApiKey
@@ -21,8 +21,8 @@ from app.models.core.client_feature_block import ClientFeatureBlock
 from app.models.core.quota_counter import QuotaCounter
 from app.models.core.usage_record import UsageRecord
 from app.schemas.admin import TestCommand, TestRunRequest, TestRunResponse
-from app.core.security import verify_secret
 from app.services.auth import get_admin_role, require_admin
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy import delete, func, select
@@ -79,17 +79,50 @@ def _discover_tests() -> list[dict]:
         result.append({"filename": str(rel), "category": category})
     return result
 
+
 router = APIRouter(prefix="/admin", tags=["admin-tests"], dependencies=[Depends(require_admin)])
 
 WHITELISTED_COMMANDS = {
-    "health-full": {"name": "Health full", "description": "Run full system health validation", "command": "./scripts/validate-system-health.sh --full"},
-    "local-smoke": {"name": "Local production smoke", "description": "Run local production smoke tests", "command": "./scripts/local-production-smoke.sh"},
-    "ui-health": {"name": "UI health", "description": "Check UI health", "command": "./scripts/ui-health.sh"},
-    "validate-e2e": {"name": "Validate E2E", "description": "Run full E2E validation", "command": "./scripts/validate-e2e.sh"},
-    "backup": {"name": "Backup", "description": "Trigger system backup", "command": "./scripts/backup.sh"},
-    "dr-test": {"name": "DR test", "description": "Run Disaster Recovery test", "command": "./scripts/dr-test.sh"},
-    "benchmark": {"name": "Benchmark quick", "description": "Run quick benchmark", "command": "./scripts/benchmark.sh --quick"},
-    "test-fallback": {"name": "Real fallback test", "description": "Test real-world fallback routing", "command": "./scripts/test-real-fallback.sh"},
+    "health-full": {
+        "name": "Health full",
+        "description": "Run full system health validation",
+        "command": "./scripts/validate-system-health.sh --full",
+    },
+    "local-smoke": {
+        "name": "Local production smoke",
+        "description": "Run local production smoke tests",
+        "command": "./scripts/local-production-smoke.sh",
+    },
+    "ui-health": {
+        "name": "UI health",
+        "description": "Check UI health",
+        "command": "./scripts/ui-health.sh",
+    },
+    "validate-e2e": {
+        "name": "Validate E2E",
+        "description": "Run full E2E validation",
+        "command": "./scripts/validate-e2e.sh",
+    },
+    "backup": {
+        "name": "Backup",
+        "description": "Trigger system backup",
+        "command": "./scripts/backup.sh",
+    },
+    "dr-test": {
+        "name": "DR test",
+        "description": "Run Disaster Recovery test",
+        "command": "./scripts/dr-test.sh",
+    },
+    "benchmark": {
+        "name": "Benchmark quick",
+        "description": "Run quick benchmark",
+        "command": "./scripts/benchmark.sh --quick",
+    },
+    "test-fallback": {
+        "name": "Real fallback test",
+        "description": "Test real-world fallback routing",
+        "command": "./scripts/test-real-fallback.sh",
+    },
 }
 
 
@@ -97,19 +130,26 @@ WHITELISTED_COMMANDS = {
 # Helper: build a user/quotas response matching the admin-tests HTML page
 # ---------------------------------------------------------------------------
 
+
 async def _client_quota_response(client: Client, session: AsyncSession) -> dict:
     today = date.today()
     month_start = today.replace(day=1)
 
     daily_result = await session.execute(
-        select(func.coalesce(func.sum(QuotaCounter.used_tokens), 0))
-        .where(QuotaCounter.client_id == client.id, QuotaCounter.period_start == today, QuotaCounter.period_type == "day")
+        select(func.coalesce(func.sum(QuotaCounter.used_tokens), 0)).where(
+            QuotaCounter.client_id == client.id,
+            QuotaCounter.period_start == today,
+            QuotaCounter.period_type == "day",
+        )
     )
     daily = daily_result.scalar() or 0
 
     monthly_result = await session.execute(
-        select(func.coalesce(func.sum(QuotaCounter.used_tokens), 0))
-        .where(QuotaCounter.client_id == client.id, QuotaCounter.period_start == month_start, QuotaCounter.period_type == "month")
+        select(func.coalesce(func.sum(QuotaCounter.used_tokens), 0)).where(
+            QuotaCounter.client_id == client.id,
+            QuotaCounter.period_start == month_start,
+            QuotaCounter.period_type == "month",
+        )
     )
     monthly = monthly_result.scalar() or 0
 
@@ -133,8 +173,31 @@ async def _client_quota_response(client: Client, session: AsyncSession) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# OpenRouter helpers
+# ---------------------------------------------------------------------------
+
+
+async def _fetch_openrouter_model_metadata(model_id: str) -> dict:
+    """Fetch model metadata from OpenRouter API."""
+    import httpx
+    settings = get_settings()
+    api_key = settings.openrouter_api_key or ""
+    headers = {"Authorization": f"Bearer {api_key}"}
+    url = f"https://openrouter.ai/api/v1/models/{model_id}"
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(url, headers=headers)
+            if resp.status_code == 200:
+                return resp.json()
+    except Exception:
+        pass
+    return {}
+
+
+# ---------------------------------------------------------------------------
 # Auth
 # ---------------------------------------------------------------------------
+
 
 @router.get("/tests/auth/whoami")
 async def tests_whoami(request: Request):
@@ -149,6 +212,7 @@ async def tests_whoami(request: Request):
 # Plans
 # ---------------------------------------------------------------------------
 
+
 @router.get("/tests/plans")
 async def tests_list_plans(session: AsyncSession = Depends(get_db_session)):
     result = await session.execute(select(BillingPlan).order_by(BillingPlan.created_at.asc()))
@@ -160,26 +224,35 @@ async def tests_list_plans(session: AsyncSession = Depends(get_db_session)):
 # System Resources
 # ---------------------------------------------------------------------------
 
+
 @router.get("/tests/system/resources")
 async def tests_system_resources():
     def _get_gpu_metrics():
         try:
             output = subprocess.check_output(
-                ["nvidia-smi", "--query-gpu=index,name,utilization.gpu,memory.used,memory.total,temperature.gpu", "--format=csv,noheader,nounits"],
-                encoding="utf-8", stderr=subprocess.DEVNULL, timeout=5
+                [
+                    "nvidia-smi",
+                    "--query-gpu=index,name,utilization.gpu,memory.used,memory.total,temperature.gpu",
+                    "--format=csv,noheader,nounits",
+                ],
+                encoding="utf-8",
+                stderr=subprocess.DEVNULL,
+                timeout=5,
             )
             gpus = []
             for line in output.strip().split("\n"):
                 parts = [p.strip() for p in line.split(", ")]
                 if len(parts) >= 6:
-                    gpus.append({
-                        "index": int(parts[0]),
-                        "name": parts[1],
-                        "utilization": float(parts[2]),
-                        "memory_used": float(parts[3]),
-                        "memory_total": float(parts[4]),
-                        "temperature": float(parts[5]),
-                    })
+                    gpus.append(
+                        {
+                            "index": int(parts[0]),
+                            "name": parts[1],
+                            "utilization": float(parts[2]),
+                            "memory_used": float(parts[3]),
+                            "memory_total": float(parts[4]),
+                            "temperature": float(parts[5]),
+                        }
+                    )
             return gpus
         except Exception:
             return []
@@ -213,6 +286,7 @@ async def tests_system_resources():
 # Token Lookup
 # ---------------------------------------------------------------------------
 
+
 @router.get("/tests/tokens/lookup")
 async def tests_token_lookup(
     token: str = Query(...),
@@ -220,11 +294,13 @@ async def tests_token_lookup(
 ):
     prefix = token[:12]
     result = await session.execute(
-        select(ApiKey).where(
+        select(ApiKey)
+        .where(
             ApiKey.key_prefix == prefix,
             ApiKey.is_active == True,
             ApiKey.revoked_at.is_(None),
-        ).order_by(ApiKey.created_at.desc())
+        )
+        .order_by(ApiKey.created_at.desc())
     )
     api_keys = result.scalars().all()
     api_key = next((item for item in api_keys if verify_secret(token, item.key_hash)), None)
@@ -239,6 +315,7 @@ async def tests_token_lookup(
 # ---------------------------------------------------------------------------
 # User CRUD
 # ---------------------------------------------------------------------------
+
 
 @router.get("/tests/users/{user_id}")
 async def tests_get_user(user_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
@@ -298,6 +375,7 @@ async def tests_set_user_plan(
 # Quota Management
 # ---------------------------------------------------------------------------
 
+
 @router.post("/tests/users/{user_id}/quota/reset")
 async def tests_reset_quota(user_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
     client = await session.get(Client, user_id)
@@ -350,7 +428,9 @@ async def tests_set_quota(
 
 
 @router.delete("/tests/users/{user_id}/quota/override")
-async def tests_delete_quota_override(user_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
+async def tests_delete_quota_override(
+    user_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)
+):
     client = await session.get(Client, user_id)
     if client is None:
         raise HTTPException(status_code=404, detail="client not found")
@@ -365,6 +445,7 @@ async def tests_delete_quota_override(user_id: uuid.UUID, session: AsyncSession 
 # ---------------------------------------------------------------------------
 # Audit
 # ---------------------------------------------------------------------------
+
 
 @router.get("/tests/audit")
 async def tests_audit_logs(
@@ -394,13 +475,16 @@ async def tests_audit_logs(
 # RAG Status & Per-Client RAG
 # ---------------------------------------------------------------------------
 
+
 @router.get("/tests/rag/status")
 async def tests_rag_status(session: AsyncSession = Depends(get_db_session)):
     total_docs = await session.execute(select(func.count()).select_from(ClientFeatureBlock))
     total_blocks = total_docs.scalar() or 0
 
     rag_blocks = await session.execute(
-        select(ClientFeatureBlock).where(ClientFeatureBlock.feature == "rag", ClientFeatureBlock.blocked.is_(True))
+        select(ClientFeatureBlock).where(
+            ClientFeatureBlock.feature == "rag", ClientFeatureBlock.blocked.is_(True)
+        )
     )
     blocked_clients = rag_blocks.scalars().all()
 
@@ -413,7 +497,9 @@ async def tests_rag_status(session: AsyncSession = Depends(get_db_session)):
 
 
 @router.get("/tests/rag/clients/{client_id}/usage")
-async def tests_rag_client_usage(client_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
+async def tests_rag_client_usage(
+    client_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)
+):
     client = await session.get(Client, client_id)
     if client is None:
         raise HTTPException(status_code=404, detail="client not found")
@@ -431,7 +517,9 @@ async def tests_rag_client_usage(client_id: uuid.UUID, session: AsyncSession = D
         reason = block.reason
 
     doc_count = await session.execute(
-        select(func.count()).select_from(UsageRecord).where(
+        select(func.count())
+        .select_from(UsageRecord)
+        .where(
             UsageRecord.client_id == client_id,
         )
     )
@@ -548,13 +636,23 @@ async def tests_pytest_run(body: PytestRunRequest):
                 break
             filepath = TESTS_DIR / filename
             if not filepath.exists():
-                run_state["results"][filename] = {"status": "error", "output": f"File not found: {filename}", "duration": 0}
+                run_state["results"][filename] = {
+                    "status": "error",
+                    "output": f"File not found: {filename}",
+                    "duration": 0,
+                }
                 run_state["errors"] += 1
                 run_state["completed"] += 1
                 continue
             try:
                 proc = await asyncio.create_subprocess_exec(
-                    sys.executable, "-m", "pytest", str(filepath), "-v", "--tb=short", "--no-header",
+                    sys.executable,
+                    "-m",
+                    "pytest",
+                    str(filepath),
+                    "-v",
+                    "--tb=short",
+                    "--no-header",
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.STDOUT,
                     cwd=str(TESTS_DIR.parent),
@@ -564,7 +662,11 @@ async def tests_pytest_run(body: PytestRunRequest):
                 except TimeoutError:
                     proc.kill()
                     await proc.wait()
-                    run_state["results"][filename] = {"status": "timeout", "output": f"Test timed out after {timeout}s", "duration": timeout}
+                    run_state["results"][filename] = {
+                        "status": "timeout",
+                        "output": f"Test timed out after {timeout}s",
+                        "duration": timeout,
+                    }
                     run_state["timeouts"] += 1
                     run_state["completed"] += 1
                     continue
@@ -579,9 +681,17 @@ async def tests_pytest_run(body: PytestRunRequest):
                 else:
                     status = "error"
                     run_state["errors"] += 1
-                run_state["results"][filename] = {"status": status, "output": output, "duration": elapsed}
+                run_state["results"][filename] = {
+                    "status": status,
+                    "output": output,
+                    "duration": elapsed,
+                }
             except Exception as e:
-                run_state["results"][filename] = {"status": "error", "output": str(e), "duration": 0}
+                run_state["results"][filename] = {
+                    "status": "error",
+                    "output": str(e),
+                    "duration": 0,
+                }
                 run_state["errors"] += 1
             run_state["completed"] += 1
         run_state["elapsed_seconds"] = round(time.time() - start_time, 2)
@@ -613,6 +723,7 @@ async def tests_pytest_cancel(run_id: str):
 # Existing routes (preserved)
 # ---------------------------------------------------------------------------
 
+
 @router.post("/test/clients/{client_id}/reset-usage")
 async def reset_client_usage(client_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
     current_settings = get_settings()
@@ -622,9 +733,7 @@ async def reset_client_usage(client_id: uuid.UUID, session: AsyncSession = Depen
     if client is None:
         raise HTTPException(status_code=404, detail="client not found")
 
-    await session.execute(
-        select(QuotaCounter).where(QuotaCounter.client_id == client_id)
-    )
+    await session.execute(select(QuotaCounter).where(QuotaCounter.client_id == client_id))
     await session.execute(delete(QuotaCounter).where(QuotaCounter.client_id == client_id))
     await session.execute(delete(UsageRecord).where(UsageRecord.client_id == client_id))
     await session.commit()
@@ -665,7 +774,7 @@ async def run_test_command(payload: TestRunRequest):
             text=True,
             timeout=60,
             cwd=str(Path(__file__).resolve().parents[2]),
-            env=env
+            env=env,
         )
         duration = time.time() - start_time
         return TestRunResponse(
@@ -676,7 +785,7 @@ async def run_test_command(payload: TestRunRequest):
             stderr=result.stderr,
             exit_code=result.returncode,
             duration_seconds=round(duration, 2),
-            created_at=utc_now()
+            created_at=utc_now(),
         )
     except subprocess.TimeoutExpired as e:
         duration = time.time() - start_time
@@ -688,7 +797,7 @@ async def run_test_command(payload: TestRunRequest):
             stderr=e.stderr.decode() if e.stderr else "Timeout after 60s",
             exit_code=124,
             duration_seconds=round(duration, 2),
-            created_at=utc_now()
+            created_at=utc_now(),
         )
     except Exception as e:
         duration = time.time() - start_time
@@ -699,5 +808,5 @@ async def run_test_command(payload: TestRunRequest):
             stderr=str(e),
             exit_code=1,
             duration_seconds=round(duration, 2),
-            created_at=utc_now()
+            created_at=utc_now(),
         )

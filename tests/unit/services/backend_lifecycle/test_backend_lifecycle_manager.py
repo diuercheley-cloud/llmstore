@@ -2,9 +2,7 @@ from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
-
 from app.contracts.backend_lifecycle import (
-    BackendDesiredState,
     BackendLifecycleCapabilities,
     BackendObservedState,
     LifecycleActionResult,
@@ -13,16 +11,28 @@ from app.services.backend_lifecycle.manager import BackendLifecycleManager
 from app.services.backend_lifecycle.providers import ProviderUnavailableError
 
 
-def _make_caps(can_start=True, can_stop=True, can_restart=True, can_observe=True, provider_type="test"):
+def _make_caps(
+    can_start=True, can_stop=True, can_restart=True, can_observe=True, provider_type="test"
+):
     return BackendLifecycleCapabilities(
-        can_start=can_start, can_stop=can_stop, can_restart=can_restart,
-        can_observe=can_observe, provider_type=provider_type,
+        can_start=can_start,
+        can_stop=can_stop,
+        can_restart=can_restart,
+        can_observe=can_observe,
+        provider_type=provider_type,
     )
 
 
-def _backend_mock(backend_id=None, name="test-backend", provider="llama.cpp",
-                   url="http://localhost:8080", is_active=True, status="running",
-                   metadata_json=None, updated_at=None):
+def _backend_mock(
+    backend_id=None,
+    name="test-backend",
+    provider="llama.cpp",
+    url="http://localhost:8080",
+    is_active=True,
+    status="running",
+    metadata_json=None,
+    updated_at=None,
+):
     b = Mock()
     b.id = backend_id or uuid4()
     b.name = name
@@ -46,18 +56,38 @@ def mock_db():
 def mock_provider():
     provider = Mock()
     provider.capabilities = Mock(return_value=_make_caps())
-    provider.get_observed_state = AsyncMock(return_value=BackendObservedState(
-        backend_id=uuid4(), provider="test", running=True, healthy=True,
-    ))
-    provider.start_backend = AsyncMock(return_value=LifecycleActionResult(
-        success=True, action="start", backend_id=uuid4(), message="started",
-    ))
-    provider.stop_backend = AsyncMock(return_value=LifecycleActionResult(
-        success=True, action="stop", backend_id=uuid4(), message="stopped",
-    ))
-    provider.restart_backend = AsyncMock(return_value=LifecycleActionResult(
-        success=True, action="restart", backend_id=uuid4(), message="restarted",
-    ))
+    provider.get_observed_state = AsyncMock(
+        return_value=BackendObservedState(
+            backend_id=uuid4(),
+            provider="test",
+            running=True,
+            healthy=True,
+        )
+    )
+    provider.start_backend = AsyncMock(
+        return_value=LifecycleActionResult(
+            success=True,
+            action="start",
+            backend_id=uuid4(),
+            message="started",
+        )
+    )
+    provider.stop_backend = AsyncMock(
+        return_value=LifecycleActionResult(
+            success=True,
+            action="stop",
+            backend_id=uuid4(),
+            message="stopped",
+        )
+    )
+    provider.restart_backend = AsyncMock(
+        return_value=LifecycleActionResult(
+            success=True,
+            action="restart",
+            backend_id=uuid4(),
+            message="restarted",
+        )
+    )
     return provider
 
 
@@ -164,10 +194,15 @@ async def test_manager_drift_history(mock_db, mock_provider):
 @pytest.mark.asyncio
 async def test_manager_provider_unavailable_error(mock_db):
     provider = Mock()
-    provider.capabilities = Mock(return_value=_make_caps(
-        can_start=False, can_stop=False, can_restart=False,
-        can_observe=True, provider_type="disabled",
-    ))
+    provider.capabilities = Mock(
+        return_value=_make_caps(
+            can_start=False,
+            can_stop=False,
+            can_restart=False,
+            can_observe=True,
+            provider_type="disabled",
+        )
+    )
     mock_db.get.return_value = _backend_mock()
     manager = BackendLifecycleManager(db=mock_db, provider=provider)
     with pytest.raises(ProviderUnavailableError):
@@ -176,8 +211,6 @@ async def test_manager_provider_unavailable_error(mock_db):
 
 @pytest.mark.asyncio
 async def test_manager_reconcile_all(mock_db, mock_provider):
-    from sqlalchemy import select
-    from app.models.core.inference_backend import InferenceBackend
 
     result_mock = Mock()
     result_mock.scalars.return_value.all.return_value = [

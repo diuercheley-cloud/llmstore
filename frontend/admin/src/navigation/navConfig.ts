@@ -692,6 +692,14 @@ export const navConfig: NavRoute[] = [
     status: 'active',
     description: 'Checklist de prontidão para produção Enterprise.',
   },
+  {
+    label: 'Vendas & Leads',
+    path: '/enterprise/sales',
+    icon: Briefcase,
+    section: 'enterprise',
+    status: 'active',
+    description: 'Gerenciamento de leads, CRM e simulação de orçamentos.',
+  },
 
   // ── Advanced ──────────────────────────────────────
   {

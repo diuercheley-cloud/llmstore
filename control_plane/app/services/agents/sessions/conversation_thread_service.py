@@ -3,7 +3,7 @@ import hashlib
 import inspect
 import logging
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.models.agents.agent_sessions import (
     AgentConversationThread,
@@ -25,7 +25,7 @@ class ConversationThreadService:
         self.db = db
 
     async def create_thread(
-        self, session_id: uuid.UUID, title: Optional[str] = None
+        self, session_id: uuid.UUID, title: str | None = None
     ) -> AgentConversationThread:
         thread = AgentConversationThread(
             id=uuid.uuid4(),
@@ -37,12 +37,8 @@ class ConversationThreadService:
         await self.db.flush()
         return thread
 
-    async def get_thread(
-        self, thread_id: uuid.UUID
-    ) -> Optional[AgentConversationThread]:
-        stmt = select(AgentConversationThread).where(
-            AgentConversationThread.id == thread_id
-        )
+    async def get_thread(self, thread_id: uuid.UUID) -> AgentConversationThread | None:
+        stmt = select(AgentConversationThread).where(AgentConversationThread.id == thread_id)
         res = await self.db.execute(stmt)
         thread = res.scalar_one_or_none()
         if inspect.isawaitable(thread):
@@ -52,9 +48,7 @@ class ConversationThreadService:
             return None
         return thread
 
-    async def get_default_thread(
-        self, session_id: uuid.UUID
-    ) -> Optional[AgentConversationThread]:
+    async def get_default_thread(self, session_id: uuid.UUID) -> AgentConversationThread | None:
         stmt = (
             select(AgentConversationThread)
             .where(
@@ -76,9 +70,9 @@ class ConversationThreadService:
         session_id: uuid.UUID,
         role: str,
         content: str,
-        thread_id: Optional[uuid.UUID] = None,
-        run_id: Optional[uuid.UUID] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        thread_id: uuid.UUID | None = None,
+        run_id: uuid.UUID | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> AgentThreadMessage:
         if thread_id is None:
             thread = await self.get_default_thread(session_id)
@@ -105,8 +99,8 @@ class ConversationThreadService:
         session_id: uuid.UUID,
         limit: int = 100,
         offset: int = 0,
-        before_id: Optional[uuid.UUID] = None,
-    ) -> List[AgentThreadMessage]:
+        before_id: uuid.UUID | None = None,
+    ) -> list[AgentThreadMessage]:
         stmt = (
             select(AgentThreadMessage)
             .where(AgentThreadMessage.session_id == session_id)
@@ -114,9 +108,7 @@ class ConversationThreadService:
         )
         if before_id:
             before_msg = await self.db.execute(
-                select(AgentThreadMessage.created_at).where(
-                    AgentThreadMessage.id == before_id
-                )
+                select(AgentThreadMessage.created_at).where(AgentThreadMessage.id == before_id)
             )
             before_ts = before_msg.scalar_one_or_none()
             if before_ts:
@@ -135,7 +127,7 @@ class ConversationThreadService:
 
     async def get_thread_messages(
         self, thread_id: uuid.UUID, limit: int = 100, offset: int = 0
-    ) -> List[AgentThreadMessage]:
+    ) -> list[AgentThreadMessage]:
         stmt = (
             select(AgentThreadMessage)
             .where(AgentThreadMessage.thread_id == thread_id)
@@ -147,9 +139,7 @@ class ConversationThreadService:
         return list(res.scalars().all())
 
     async def delete_session_messages(self, session_id: uuid.UUID) -> int:
-        stmt = delete(AgentThreadMessage).where(
-            AgentThreadMessage.session_id == session_id
-        )
+        stmt = delete(AgentThreadMessage).where(AgentThreadMessage.session_id == session_id)
         res = await self.db.execute(stmt)
         await self.db.commit()
         return res.rowcount
@@ -159,7 +149,7 @@ class ConversationThreadService:
         session_id: uuid.UUID,
         max_messages: int = 50,
         include_summary: bool = False,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         messages = await self.get_messages(session_id, limit=max_messages)
         history = []
         for msg in messages:

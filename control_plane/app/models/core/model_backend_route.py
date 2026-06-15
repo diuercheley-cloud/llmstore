@@ -11,7 +11,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 class ModelBackendRoute(Base):
     __tablename__ = "model_backend_routes"
     __table_args__ = (
-        UniqueConstraint("model_registry_id", "inference_backend_id", name="uq_model_backend_route"),
+        UniqueConstraint(
+            "model_registry_id", "inference_backend_id", name="uq_model_backend_route"
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -30,8 +32,12 @@ class ModelBackendRoute(Base):
     priority: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
     weight: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
     state: Mapped[str] = mapped_column(String(16), default="healthy", nullable=False, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
 
     model = relationship("ModelRegistry", back_populates="backend_routes")
     inference_backend = relationship("InferenceBackend", back_populates="model_routes")

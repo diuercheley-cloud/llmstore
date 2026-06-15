@@ -47,6 +47,7 @@ class FakeRedis:
 @pytest_asyncio.fixture
 async def app():
     from app.main import app as _app
+
     engine = create_async_engine("sqlite+aiosqlite://", echo=False)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -99,7 +100,9 @@ async def demo_client(app, db_session):
 async def portal_client(app, demo_client):
     _app, _session_local, _redis = app
     client_obj, token = demo_client
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=_app), base_url="http://testserver") as c:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=_app), base_url="http://testserver"
+    ) as c:
         c.headers = {"Authorization": f"Bearer {token}"}
         yield c
 
@@ -136,7 +139,9 @@ async def test_portal_wallet_shows_transactions(portal_client):
 @pytest.mark.asyncio
 async def test_portal_wallet_requires_auth(app):
     _app, _session_local, _redis = app
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=_app), base_url="http://testserver") as c:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=_app), base_url="http://testserver"
+    ) as c:
         resp = await c.get("/portal/wallet")
     assert resp.status_code in (401, 403)
 

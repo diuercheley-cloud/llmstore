@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 async def log_request(
     session: AsyncSession,
     *,
@@ -81,20 +82,23 @@ async def log_request(
         prompt_tokens=prompt_tokens,
         completion_tokens=completion_tokens,
     )
-    
+
     # Model Experiments Phase
     try:
         from app.services.model_experiments.context import get_experiment_context
         from app.services.model_experiments.experiment_metrics import ExperimentMetrics
+
         exp_ctx = get_experiment_context()
         if exp_ctx:
             exp_metrics = ExperimentMetrics(session)
             exp_id = exp_ctx["experiment_id"]
             var_id = exp_ctx["variant_id"]
-            
+
             # Record base metrics
             await exp_metrics.record_metric(exp_id, var_id, "latency", float(latency_ms))
-            await exp_metrics.record_metric(exp_id, var_id, "error_rate", 1.0 if status_code >= 400 else 0.0)
+            await exp_metrics.record_metric(
+                exp_id, var_id, "error_rate", 1.0 if status_code >= 400 else 0.0
+            )
             await exp_metrics.record_metric(exp_id, var_id, "cost", float(estimated_cost_usd))
     except Exception:
         logger.exception("failed to record model experiment metrics")

@@ -147,7 +147,12 @@ def validate_sections() -> list[dict[str, str]]:
         content = path.read_text(encoding="utf-8")
         for section in required_sections_for(path):
             if section not in content:
-                failures.append({"path": str(path.relative_to(REPO_ROOT)), "issue": f"missing section: {section}"})
+                failures.append(
+                    {
+                        "path": str(path.relative_to(REPO_ROOT)),
+                        "issue": f"missing section: {section}",
+                    }
+                )
     return failures
 
 
@@ -160,7 +165,10 @@ def validate_prohibited_claims() -> list[dict[str, str]]:
         for claim in PROHIBITED_CLAIMS:
             if claim.lower() in content:
                 failures.append(
-                    {"path": str(path.relative_to(REPO_ROOT)), "issue": f"contains prohibited claim: {claim}"}
+                    {
+                        "path": str(path.relative_to(REPO_ROOT)),
+                        "issue": f"contains prohibited claim: {claim}",
+                    }
                 )
     return failures
 
@@ -177,7 +185,10 @@ def validate_current_adr_dates() -> list[dict[str, str]]:
 
         if not front_matter_date:
             failures.append(
-                {"path": str(path.relative_to(REPO_ROOT)), "issue": "missing front matter field: date"}
+                {
+                    "path": str(path.relative_to(REPO_ROOT)),
+                    "issue": "missing front matter field: date",
+                }
             )
         elif not DATE_PATTERN.fullmatch(front_matter_date):
             failures.append(
@@ -188,10 +199,18 @@ def validate_current_adr_dates() -> list[dict[str, str]]:
             )
 
         if not section_date:
-            failures.append({"path": str(path.relative_to(REPO_ROOT)), "issue": "missing value for section: Data"})
+            failures.append(
+                {
+                    "path": str(path.relative_to(REPO_ROOT)),
+                    "issue": "missing value for section: Data",
+                }
+            )
         elif not DATE_PATTERN.fullmatch(section_date):
             failures.append(
-                {"path": str(path.relative_to(REPO_ROOT)), "issue": f"invalid section date format: {section_date}"}
+                {
+                    "path": str(path.relative_to(REPO_ROOT)),
+                    "issue": f"invalid section date format: {section_date}",
+                }
             )
 
         if front_matter_date and section_date and front_matter_date != section_date:
@@ -220,13 +239,19 @@ def validate_current_adr_status() -> list[dict[str, str]]:
 
         if not front_matter_status:
             failures.append(
-                {"path": str(path.relative_to(REPO_ROOT)), "issue": "missing front matter field: status"}
+                {
+                    "path": str(path.relative_to(REPO_ROOT)),
+                    "issue": "missing front matter field: status",
+                }
             )
             continue
 
         if not section_status:
             failures.append(
-                {"path": str(path.relative_to(REPO_ROOT)), "issue": "missing value for section: Status"}
+                {
+                    "path": str(path.relative_to(REPO_ROOT)),
+                    "issue": "missing value for section: Status",
+                }
             )
             continue
 
@@ -251,7 +276,10 @@ def validate_current_adr_owner() -> list[dict[str, str]]:
 
         if not front_matter_owner:
             failures.append(
-                {"path": str(path.relative_to(REPO_ROOT)), "issue": "missing front matter field: owner"}
+                {
+                    "path": str(path.relative_to(REPO_ROOT)),
+                    "issue": "missing front matter field: owner",
+                }
             )
             continue
 

@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 import pytest_asyncio
@@ -14,15 +14,18 @@ from app.services.agents.agent_readiness import AgentReadinessService
 async def setup_db():
     async with engine.begin() as conn:
         import app.models.agents.agents  # noqa
+
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
+
 @pytest.mark.asyncio
 async def test_readiness_degraded_worker_down():
     async with SessionLocal() as db:
         from app.core.config import get_settings
+
         settings = get_settings()
         settings.agent_runtime_enabled = True
         # No heartbeats -> degraded (active_workers = 0)
@@ -31,10 +34,12 @@ async def test_readiness_degraded_worker_down():
         assert res["status"] == "degraded"
         assert res["checks"]["active_workers"]["status"] == "warn"
 
+
 @pytest.mark.asyncio
 async def test_readiness_unhealthy_critical_incident():
     async with SessionLocal() as db:
         from app.core.config import get_settings
+
         settings = get_settings()
         settings.agent_runtime_enabled = True
         # Create critical incident
@@ -44,32 +49,31 @@ async def test_readiness_unhealthy_critical_incident():
             incident_type="memory_isolation_violation",
             title="CRITICAL",
             severity="critical",
-            status="open"
+            status="open",
         )
         db.add(inc)
         await db.commit()
-        
+
         svc = AgentReadinessService(db)
         res = await svc.check_readiness()
         assert res["status"] == "unhealthy"
         assert res["checks"]["critical_incidents"]["status"] == "fail"
 
+
 @pytest.mark.asyncio
 async def test_readiness_pass_all():
     async with SessionLocal() as db:
         # Add heartbeat
-        hb = AgentWorkerHeartbeat(
-            worker_id="w1",
-            last_heartbeat=datetime.now(timezone.utc)
-        )
+        hb = AgentWorkerHeartbeat(worker_id="w1", last_heartbeat=datetime.now(UTC))
         db.add(hb)
         await db.commit()
-        
+
         # Override settings for test
         from app.core.config import get_settings
+
         settings = get_settings()
         settings.agent_runtime_enabled = True
-        
+
         svc = AgentReadinessService(db)
         res = await svc.check_readiness()
         # Since we have hb and no incidents/stuck runs
@@ -80,13 +84,11 @@ async def test_readiness_pass_all():
 async def test_readiness_dlq_zero():
     async with SessionLocal() as db:
         from app.core.config import get_settings
+
         settings = get_settings()
         settings.agent_runtime_enabled = True
 
-        hb = AgentWorkerHeartbeat(
-            worker_id="w-dlq-test",
-            last_heartbeat=datetime.now(timezone.utc)
-        )
+        hb = AgentWorkerHeartbeat(worker_id="w-dlq-test", last_heartbeat=datetime.now(UTC))
         db.add(hb)
         await db.commit()
 
@@ -100,8 +102,6 @@ async def test_readiness_dlq_zero():
 @pytest.mark.asyncio
 async def test_readiness_retry_backlog():
     async with SessionLocal() as db:
-        from datetime import timezone
-
         from app.core.config import get_settings
         from app.models.agents.agent_execution import AgentExecutionRetry
 
@@ -114,8 +114,8 @@ async def test_readiness_retry_backlog():
                 job_id=uuid.uuid4(),
                 attempt=1,
                 error_message="test",
-                attempted_at=datetime.now(timezone.utc),
-                next_attempt_at=datetime.now(timezone.utc) + timedelta(minutes=5),
+                attempted_at=datetime.now(UTC),
+                next_attempt_at=datetime.now(UTC) + timedelta(minutes=5),
             )
             db.add(retry)
         await db.commit()
@@ -135,6 +135,7 @@ async def test_compose_config_has_agent_worker():
     import os
 
     import yaml
+
     compose_path = os.path.join(os.path.dirname(__file__), "../../docker-compose.yml")
     with open(compose_path) as f:
         compose = yaml.safe_load(f)
@@ -150,6 +151,7 @@ async def test_compose_config_has_agent_worker():
 async def test_readiness_degraded_when_worker_enabled_but_no_heartbeat():
     async with SessionLocal() as db:
         from app.core.config import get_settings
+
         settings = get_settings()
         settings.agent_runtime_enabled = True
 
@@ -165,12 +167,13 @@ async def test_readiness_degraded_when_worker_enabled_but_no_heartbeat():
 async def test_readiness_ok_with_heartbeat_mock():
     async with SessionLocal() as db:
         from app.core.config import get_settings
+
         settings = get_settings()
         settings.agent_runtime_enabled = True
 
         hb = AgentWorkerHeartbeat(
             worker_id="w-healthy",
-            last_heartbeat=datetime.now(timezone.utc),
+            last_heartbeat=datetime.now(UTC),
             status="active",
         )
         db.add(hb)
@@ -185,6 +188,7 @@ async def test_readiness_ok_with_heartbeat_mock():
 @pytest.mark.asyncio
 async def test_embedded_worker_off_by_default():
     from app.core.config import get_settings
+
     settings = get_settings()
     assert settings.agent_embedded_worker_enabled is False
 
@@ -192,8 +196,10 @@ async def test_embedded_worker_off_by_default():
 @pytest.mark.asyncio
 async def test_queue_inspect_script_syntax():
     import subprocess
+
     result = subprocess.run(
         ["bash", "-n", "scripts/dev/agent-queue-inspect.sh"],
-        capture_output=True, text=True,
+        capture_output=True,
+        text=True,
     )
     assert result.returncode == 0, f"Syntax error: {result.stderr}"

@@ -1,18 +1,17 @@
 # Owner: agent-platform
 import hashlib
 import json
-from typing import Tuple
 
 from .sab_manifest import AgentSABManifest
 
 
 class SABVerifier:
-    def verify(self, manifest: AgentSABManifest) -> Tuple[bool, str]:
+    def verify(self, manifest: AgentSABManifest) -> tuple[bool, str]:
         # 1. Verify Checksum
         data_to_hash = manifest.model_dump(exclude={"checksums", "signature"})
         payload = json.dumps(data_to_hash, sort_keys=True).encode()
         actual_checksum = hashlib.sha256(payload).hexdigest()
-        
+
         if actual_checksum != manifest.checksums.get("manifest"):
             return False, "Checksum mismatch: bundle might be tampered."
 

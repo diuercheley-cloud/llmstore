@@ -1,0 +1,1 @@
+validators/validate-clean-install-validator.sh

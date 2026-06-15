@@ -1,15 +1,17 @@
 import logging
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
+
+from app.models.agents.agents import AgentRun, AgentRunStep
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.agents.agents import AgentRun, AgentRunStep
 
 logger = logging.getLogger(__name__)
 
+
 class SimulationRuntime:
     @staticmethod
-    def classify_tool(tool_name: str, tool_category: Optional[str] = None) -> str:
+    def classify_tool(tool_name: str, tool_category: str | None = None) -> str:
         name_lower = tool_name.lower()
         cat_lower = (tool_category or "").lower()
 
@@ -78,7 +80,9 @@ class SimulationRuntime:
         return "other"
 
     @staticmethod
-    def simulate_tool_execution(tool_name: str, category: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+    def simulate_tool_execution(
+        tool_name: str, category: str, parameters: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Simulate a tool execution, ensuring NO real side effects occur,
         but returning a schema-compatible response for the agent.
@@ -96,7 +100,9 @@ class SimulationRuntime:
                 "status": "success",
                 "message": f"Simulated filesystem operation: {tool_name} at path '{parameters.get('path', 'unknown')}'",
                 "path": parameters.get("path"),
-                "bytes_written": len(str(parameters.get("content", ""))) if "content" in parameters else 0,
+                "bytes_written": len(str(parameters.get("content", "")))
+                if "content" in parameters
+                else 0,
                 "simulated": True,
             }
         elif category == "shell":
@@ -131,7 +137,9 @@ class SimulationRuntime:
             }
 
     @classmethod
-    async def generate_simulation_report(cls, db: AsyncSession, run_id: uuid.UUID) -> Dict[str, Any]:
+    async def generate_simulation_report(
+        cls, db: AsyncSession, run_id: uuid.UUID
+    ) -> dict[str, Any]:
         """
         Compiles the agent run's steps into a simulation report, and saves it on the AgentRun record.
         """
@@ -143,7 +151,11 @@ class SimulationRuntime:
             return {}
 
         # Fetch steps
-        stmt_steps = select(AgentRunStep).where(AgentRunStep.run_id == run_id).order_by(AgentRunStep.step_number.asc())
+        stmt_steps = (
+            select(AgentRunStep)
+            .where(AgentRunStep.run_id == run_id)
+            .order_by(AgentRunStep.step_number.asc())
+        )
         res_steps = await db.execute(stmt_steps)
         steps = res_steps.scalars().all()
 
@@ -170,13 +182,15 @@ class SimulationRuntime:
                 else:
                     category_counts["other"] += 1
 
-                intercepted_actions.append({
-                    "step_number": step.step_number,
-                    "tool_name": tool_name,
-                    "category": category,
-                    "parameters": tool_input,
-                    "simulated_output": tool_output,
-                })
+                intercepted_actions.append(
+                    {
+                        "step_number": step.step_number,
+                        "tool_name": tool_name,
+                        "category": category,
+                        "parameters": tool_input,
+                        "simulated_output": tool_output,
+                    }
+                )
 
         report = {
             "status": "success",

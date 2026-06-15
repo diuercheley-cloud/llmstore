@@ -45,14 +45,13 @@ class MerkleInclusionProof:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "MerkleInclusionProof":
+    def from_dict(cls, data: dict[str, Any]) -> MerkleInclusionProof:
         return cls(
             leaf_hash=data["leaf_hash"],
             leaf_index=data["leaf_index"],
             root=data["root"],
             steps=[
-                MerkleProofStep(step["sibling_hash"], step["is_right"])
-                for step in data["steps"]
+                MerkleProofStep(step["sibling_hash"], step["is_right"]) for step in data["steps"]
             ],
         )
 
@@ -61,11 +60,14 @@ class MerkleInclusionProof:
 # Core Merkle primitives
 # ---------------------------------------------------------------------------
 
+
 def _sha256(data: bytes) -> bytes:
     return hashlib.sha256(data).digest()
 
 
-def canonical_leaf_hash(source_id: str, source_type: str, payload: dict[str, Any] | None = None) -> str:
+def canonical_leaf_hash(
+    source_id: str, source_type: str, payload: dict[str, Any] | None = None
+) -> str:
     """Produce a deterministic SHA256 leaf hash for an item.
 
     The input is canonicalised as JSON (no extra whitespace, sorted keys)
@@ -170,6 +172,7 @@ def verify_inclusion_proof(proof: MerkleInclusionProof) -> bool:
 # ---------------------------------------------------------------------------
 # Timeline sealing / chain validation
 # ---------------------------------------------------------------------------
+
 
 def seal_timeline(
     leaves: list[str],

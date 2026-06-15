@@ -14,9 +14,12 @@ def _extract_path(output: str, suffix: str) -> str | None:
 
 def test_generate_checklist_basic():
     cmd = [
-        "bash", SCRIPT,
-        "--company-name", "Test Client",
-        "--operator-name", "Test Provider",
+        "bash",
+        SCRIPT,
+        "--company-name",
+        "Test Client",
+        "--operator-name",
+        "Test Provider",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
     assert "Implementation checklist generated successfully" in result.stdout
@@ -29,13 +32,13 @@ def test_generate_checklist_basic():
     assert os.path.exists(md_path)
     assert os.path.exists(json_path)
 
-    with open(md_path, "r") as f:
+    with open(md_path) as f:
         content = f.read()
     assert "Test Client" in content
     assert "Test Provider" in content
     assert "NOT_STARTED" in content
 
-    with open(json_path, "r") as f:
+    with open(json_path) as f:
         data = json.load(f)
     assert data["company_name"] == "Test Client"
     assert data["operator_name"] == "Test Provider"
@@ -51,10 +54,14 @@ def test_generate_checklist_basic():
 def test_generate_checklist_custom_output():
     output_dir = "/tmp/test-pic-output"
     cmd = [
-        "bash", SCRIPT,
-        "--company-name", "Custom Client",
-        "--operator-name", "Custom Provider",
-        "--output-dir", output_dir,
+        "bash",
+        SCRIPT,
+        "--company-name",
+        "Custom Client",
+        "--operator-name",
+        "Custom Provider",
+        "--output-dir",
+        output_dir,
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
@@ -94,15 +101,18 @@ def test_generate_checklist_help():
 
 def test_json_valid_structure():
     cmd = [
-        "bash", SCRIPT,
-        "--company-name", "JSON Test",
-        "--operator-name", "JSON Validator",
+        "bash",
+        SCRIPT,
+        "--company-name",
+        "JSON Test",
+        "--operator-name",
+        "JSON Validator",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
     json_path = _extract_path(result.stdout, "implementation-checklist.json")
 
-    with open(json_path, "r") as f:
+    with open(json_path) as f:
         data = json.load(f)
 
     assert "template" in data

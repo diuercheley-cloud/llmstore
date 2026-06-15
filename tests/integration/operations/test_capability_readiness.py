@@ -6,11 +6,16 @@ from httpx import ASGITransport, AsyncClient
 
 @pytest_asyncio.fixture
 async def readiness_client():
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         yield client
 
+
 @pytest.mark.asyncio
-async def test_capability_readiness_endpoints(readiness_client: AsyncClient, admin_token_headers: dict):
+async def test_capability_readiness_endpoints(
+    readiness_client: AsyncClient, admin_token_headers: dict
+):
     capabilities = [
         "agent-runtime",
         "stateful-workflows",
@@ -19,13 +24,12 @@ async def test_capability_readiness_endpoints(readiness_client: AsyncClient, adm
         "graphrag",
         "observability",
         "tool-execution",
-        "memory-governance"
+        "memory-governance",
     ]
-    
+
     for cap in capabilities:
         response = await readiness_client.get(
-            f"/admin/readiness/{cap}",
-            headers=admin_token_headers
+            f"/admin/readiness/{cap}", headers=admin_token_headers
         )
         # Should be 200 if ready, or 503 if not ready but endpoint exists
         assert response.status_code in [200, 503]
@@ -33,6 +37,7 @@ async def test_capability_readiness_endpoints(readiness_client: AsyncClient, adm
             data = response.json()
             assert data["capability"] == cap
             assert "status" in data
+
 
 @pytest.mark.asyncio
 async def test_capability_readiness_unauthorized(readiness_client: AsyncClient):

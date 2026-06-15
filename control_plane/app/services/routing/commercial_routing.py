@@ -37,7 +37,15 @@ PROVIDER_TIER_MAP: dict[str, str] = {
     "openrouter": "premium",
 }
 
-CODING_PROVIDER_ORDER = ["anthropic", "openai", "deepseek", "local", "lmstudio", "openrouter", "mock"]
+CODING_PROVIDER_ORDER = [
+    "anthropic",
+    "openai",
+    "deepseek",
+    "local",
+    "lmstudio",
+    "openrouter",
+    "mock",
+]
 LOW_COST_ORDER = ["deepseek", "local", "lmstudio", "openai", "anthropic", "openrouter", "mock"]
 PREMIUM_ORDER = ["openai", "anthropic", "local", "lmstudio", "deepseek", "openrouter", "mock"]
 LOCAL_FIRST_ORDER = ["local", "lmstudio", "deepseek", "openai", "anthropic", "openrouter", "mock"]
@@ -46,6 +54,7 @@ DEFAULT_CODING_PROVIDER = "anthropic"
 
 def _get_customer_pricing_config() -> dict[str, Any]:
     from app.services.billing.pricing_engine import _get_customer_pricing
+
     return _get_customer_pricing()
 
 
@@ -65,10 +74,14 @@ def _estimate_price_brl(plan_code: str, prompt_tokens: int, completion_tokens: i
     return result.price_brl
 
 
-def _determine_tier(plan: str, task_type: TaskType, billing_status: str, wallet_balance: float | None) -> str:
+def _determine_tier(
+    plan: str, task_type: TaskType, billing_status: str, wallet_balance: float | None
+) -> str:
     if billing_status in ("suspended", "blocked", "overdue"):
         return "suspended"
-    if wallet_balance is not None and wallet_balance <= _get_commercial_routing_config().get("low_balance_threshold_brl", 5.0):
+    if wallet_balance is not None and wallet_balance <= _get_commercial_routing_config().get(
+        "low_balance_threshold_brl", 5.0
+    ):
         return "low_balance"
     tier_map = {
         "free": "basic",
@@ -110,6 +123,7 @@ def _get_strategy_for_tier(tier: str) -> RoutingStrategy:
 
 def _is_provider_healthy(provider_id: str) -> bool:
     from app.services.routing.smart_router import _provider_health
+
     state = _provider_health(provider_id)
     return state in ("healthy", "unknown_async", "unregistered")
 
@@ -135,7 +149,7 @@ def _evaluate_candidate(
     is_cloud = provider in CLOUD_PROVIDERS
     reasons: list[str] = []
 
-    max_cost = plan_cfg.get("max_cost_per_request_brl", None)
+    max_cost = plan_cfg.get("max_cost_per_request_brl")
     commercial_cfg = _get_commercial_routing_config()
     if max_cost is None:
         max_cost = commercial_cfg.get("default_max_cost_per_request_brl", 0.50)
@@ -163,7 +177,9 @@ def _evaluate_candidate(
             reasons.append(f"cost {cost_brl:.6f} exceeds wallet balance {wallet_balance or 0}")
 
     if tier in ("basic", "pro", "premium"):
-        min_margin = plan_cfg.get("minimum_margin_percent", commercial_cfg.get("default_minimum_margin_percent", 5.0))
+        min_margin = plan_cfg.get(
+            "minimum_margin_percent", commercial_cfg.get("default_minimum_margin_percent", 5.0)
+        )
         if margin.margin_percent is not None and margin.margin_percent < min_margin and is_cloud:
             reasons.append(f"margin {margin.margin_percent:.2f}% below minimum {min_margin}%")
 
@@ -180,7 +196,9 @@ def _evaluate_candidate(
         estimated_cost_brl=round(cost_brl, 8),
         estimated_price_brl=round(price_brl, 8),
         estimated_margin_brl=round(margin.gross_profit_brl, 8),
-        estimated_margin_percent=round(margin.margin_percent, 4) if margin.margin_percent is not None else None,
+        estimated_margin_percent=round(margin.margin_percent, 4)
+        if margin.margin_percent is not None
+        else None,
         is_cloud=is_cloud,
         rejected=rejected,
         rejection_reason="; ".join(reasons) if reasons else None,
@@ -261,10 +279,15 @@ def simulate_commercial_routing(req: CommercialSimulateRequest) -> CommercialSim
     effective_cloud_allowed = cloud_allowed and cloud_enabled_globally
 
     tier = _determine_tier(req.plan, req.task_type, req.billing_status, req.wallet_balance_brl)
-    constraints = get_active_revenue_protection_constraints(client_id=req.client_id, model=req.model, qos_tier=tier)
+    constraints = get_active_revenue_protection_constraints(
+        client_id=req.client_id, model=req.model, qos_tier=tier
+    )
     if constraints.get("force_local_only"):
         effective_cloud_allowed = False
-    if constraints.get("qos_priority_override") == "reduced" and tier not in {"suspended", "low_balance"}:
+    if constraints.get("qos_priority_override") == "reduced" and tier not in {
+        "suspended",
+        "low_balance",
+    }:
         tier = "basic"
 
     provider_order = _get_providers_for_tier(tier, effective_cloud_allowed)

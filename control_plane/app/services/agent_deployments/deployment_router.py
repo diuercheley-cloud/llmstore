@@ -1,7 +1,6 @@
 # Owner: agent-platform
 import logging
 import time
-from typing import Dict
 
 from app.models.agents.agent_deployments import AgentApiDeployment
 
@@ -23,8 +22,8 @@ class DeploymentRouter:
     """
 
     def __init__(self):
-        self._rate_counters: Dict[str, list] = {}  # key -> [timestamps]
-        self._concurrency_counters: Dict[str, int] = {}  # deployment_id -> count
+        self._rate_counters: dict[str, list] = {}  # key -> [timestamps]
+        self._concurrency_counters: dict[str, int] = {}  # deployment_id -> count
 
     def _rate_key(self, deployment_id: str, window: str = "minute") -> str:
         return f"rate:{deployment_id}:{window}"
@@ -51,9 +50,7 @@ class DeploymentRouter:
         day_ago = now - 86400
         if day_key not in self._rate_counters:
             self._rate_counters[day_key] = []
-        self._rate_counters[day_key] = [
-            t for t in self._rate_counters[day_key] if t > day_ago
-        ]
+        self._rate_counters[day_key] = [t for t in self._rate_counters[day_key] if t > day_ago]
         if len(self._rate_counters[day_key]) >= day_limit:
             return False
 
@@ -81,7 +78,7 @@ class DeploymentRouter:
     def get_concurrent_count(self, deployment_id: str) -> int:
         return self._concurrency_counters.get(str(deployment_id), 0)
 
-    def get_rate_usage(self, deployment_id: str) -> Dict[str, int]:
+    def get_rate_usage(self, deployment_id: str) -> dict[str, int]:
         """Get current rate usage for a deployment."""
         now = time.time()
         minute_key = self._rate_key(str(deployment_id), "minute")

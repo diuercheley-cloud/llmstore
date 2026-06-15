@@ -2,9 +2,10 @@
 import hashlib
 import json
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 logger = logging.getLogger(__name__)
+
 
 # Formal state machines states definitions
 class AgentRunState:
@@ -119,27 +120,32 @@ class DeterministicStateGraph:
         if from_state == to_state:
             return True  # Self-transitions are idempotent/no-op
 
-        if from_state not in machine_class.VALID_STATES or to_state not in machine_class.VALID_STATES:
+        if (
+            from_state not in machine_class.VALID_STATES
+            or to_state not in machine_class.VALID_STATES
+        ):
             logger.warning(f"Invalid state referenced: {from_state} or {to_state}")
             return False
 
         version_rules = machine_class.TRANSITIONS.get(self.version)
         if not version_rules:
-            logger.error(f"Version {self.version} not defined for state machine {machine_class.__name__}")
+            logger.error(
+                f"Version {self.version} not defined for state machine {machine_class.__name__}"
+            )
             return False
 
         allowed_to = version_rules.get(from_state, set())
         if to_state not in allowed_to:
-            logger.warning(f"Forbidden transition from '{from_state}' to '{to_state}' in version {self.version}")
+            logger.warning(
+                f"Forbidden transition from '{from_state}' to '{to_state}' in version {self.version}"
+            )
             return False
 
         return True
 
     @staticmethod
     def calculate_replay_hash(
-        state_transitions: List[Dict[str, Any]],
-        receipts: List[Dict[str, Any]],
-        output_data: Any
+        state_transitions: list[dict[str, Any]], receipts: list[dict[str, Any]], output_data: Any
     ) -> str:
         """
         Calculates a deterministic cryptographic SHA-256 hash of the execution history,
@@ -148,17 +154,21 @@ class DeterministicStateGraph:
         hasher = hashlib.sha256()
 
         # Deterministically encode state transitions
-        sorted_transitions = sorted(state_transitions, key=lambda x: (x.get("timestamp", ""), x.get("id", "")))
+        sorted_transitions = sorted(
+            state_transitions, key=lambda x: (x.get("timestamp", ""), x.get("id", ""))
+        )
         transitions_str = json.dumps(sorted_transitions, sort_keys=True)
-        hasher.update(f"transitions:{transitions_str}".encode("utf-8"))
+        hasher.update(f"transitions:{transitions_str}".encode())
 
         # Deterministically encode receipts (proof of execution)
-        sorted_receipts = sorted(receipts, key=lambda x: (x.get("step_number", 0), x.get("signature", "")))
+        sorted_receipts = sorted(
+            receipts, key=lambda x: (x.get("step_number", 0), x.get("signature", ""))
+        )
         receipts_str = json.dumps(sorted_receipts, sort_keys=True)
-        hasher.update(f"receipts:{receipts_str}".encode("utf-8"))
+        hasher.update(f"receipts:{receipts_str}".encode())
 
         # Deterministically encode final output data
         output_str = json.dumps(output_data, sort_keys=True)
-        hasher.update(f"output:{output_str}".encode("utf-8"))
+        hasher.update(f"output:{output_str}".encode())
 
         return hasher.hexdigest()

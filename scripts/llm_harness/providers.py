@@ -113,11 +113,8 @@ class CodeAgentProvider(abc.ABC):
                 provider_name = "stub"
 
         from ._code_agents import CodeAgent
-        self.agent_helper = CodeAgent(
-            agent_id=self.agent_id,
-            provider=provider_name,
-            config=config
-        )
+
+        self.agent_helper = CodeAgent(agent_id=self.agent_id, provider=provider_name, config=config)
 
     def _resolve_stream_default(self, configured_stream: Any) -> bool:
         if configured_stream is not None:
@@ -142,6 +139,7 @@ class CodeAgentProvider(abc.ABC):
             return True
         # Treat private / local network IPs as local endpoints
         import ipaddress
+
         try:
             addr = ipaddress.ip_address(host)
             return addr.is_private or addr.is_loopback
@@ -178,16 +176,13 @@ class CodeAgentProvider(abc.ABC):
         if callable(self.event_callback):
             self.event_callback(payload)
 
-
     UNSUPPORTED_MEDIA_TYPES = frozenset({"audio_url", "video_url"})
 
     def _warn_unsupported_media(self, content: Any) -> list[dict[str, Any]]:
         from .multimodal import adapt_content_blocks_for_provider
+
         if isinstance(content, list):
-            content = adapt_content_blocks_for_provider(
-                content,
-                multimodal_enabled=True
-            )
+            content = adapt_content_blocks_for_provider(content, multimodal_enabled=True)
         else:
             return [{"type": "text", "text": str(content)}]
         filtered = []
@@ -198,13 +193,17 @@ class CodeAgentProvider(abc.ABC):
                 mime = meta.get("mime_type", "unknown")
                 logger.warning(
                     "Provider %s does not support %s (mime=%s).",
-                    self.__class__.__name__, mtype, mime,
+                    self.__class__.__name__,
+                    mtype,
+                    mime,
                 )
                 text = f"[{mtype} skipped — {mime} not supported by this provider]"
-                filtered.append({
-                    "type": "text",
-                    "text": text,
-                })
+                filtered.append(
+                    {
+                        "type": "text",
+                        "text": text,
+                    }
+                )
             else:
                 filtered.append(block)
         return filtered
@@ -253,7 +252,7 @@ class CodeAgentProvider(abc.ABC):
             "replace_content",
             "grep",
             "ast_search",
-            "parallel"
+            "parallel",
         }
         action_type = action.get("type")
         if action_type not in valid_types:
@@ -321,9 +320,18 @@ class CodeAgentProvider(abc.ABC):
             raise ValueError("schema_validation_failed")
 
         supported = {
-            "plan", "read_file", "apply_patch", "run_shell",
-            "run_tests", "parallel", "final", "grep",
-            "ast_search", "list_files", "replace_content", "write_file"
+            "plan",
+            "read_file",
+            "apply_patch",
+            "run_shell",
+            "run_tests",
+            "parallel",
+            "final",
+            "grep",
+            "ast_search",
+            "list_files",
+            "replace_content",
+            "write_file",
         }
         if action_type not in supported:
             raise ValueError("unsupported_action")
@@ -433,10 +441,11 @@ class CodeAgentProvider(abc.ABC):
         probe = await self._probe_native_tool_calling()
         self._last_native_probe_result = dict(probe)
         supported = probe.get("supported", False)
-        
+
         if self.tool_calling == "native":
             if not supported:
                 from .sanitizer import Sanitizer
+
                 provider_name = getattr(self, "provider", self.__class__.__name__)
                 sanitized_url = Sanitizer.sanitize_text(self.base_url)
                 msg = (
@@ -449,7 +458,7 @@ class CodeAgentProvider(abc.ABC):
                 )
                 raise ValueError(msg)
             return "native"
-            
+
         if self.tool_calling == "auto":
             if self._is_local_provider():
                 if self.allow_native_tools_for_local and supported:
@@ -457,7 +466,7 @@ class CodeAgentProvider(abc.ABC):
                 return "json"
             else:
                 return "native" if supported else "json"
-                
+
         return self.tool_calling
 
     def _is_plain_chat_mode(self) -> bool:
@@ -517,9 +526,7 @@ class CodeAgentProvider(abc.ABC):
             simplified.insert(0, {"role": "system", "content": "\n\n".join(system_parts)})
         return simplified
 
-    def _fold_system_into_first_user(
-        self, messages: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    def _fold_system_into_first_user(self, messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
         system_parts: list[str] = []
         rewritten: list[dict[str, Any]] = []
         injected = False
@@ -616,10 +623,7 @@ class CodeAgentProvider(abc.ABC):
         if not (self._is_local_provider() and self._is_plain_chat_mode() and not self.stream):
             return False
         state = self._extract_plain_chat_response_state(data)
-        return (
-            not state["content"].strip()
-            and state["finish_reason"] == "length"
-        )
+        return not state["content"].strip() and state["finish_reason"] == "length"
 
     async def _retry_local_compat_mode(
         self,
@@ -639,9 +643,7 @@ class CodeAgentProvider(abc.ABC):
         data = response.json()
         return self._process_chat_response(data, tool_mode)
 
-    async def _iter_sse_data(
-        self, response: httpx.Response
-    ) -> AsyncIterator[str]:
+    async def _iter_sse_data(self, response: httpx.Response) -> AsyncIterator[str]:
         buffer: list[str] = []
         async for line in response.aiter_lines():
             if line == "":
@@ -760,6 +762,7 @@ class CodeAgentProvider(abc.ABC):
 
         # 2. Try persistent cache if available
         from .cache import LocalCache as _LocalCache
+
         cache = self.config.get("cache")
         if isinstance(cache, _LocalCache):
             cached_data = cache.get_json("capabilities", cache_key)
@@ -769,7 +772,10 @@ class CodeAgentProvider(abc.ABC):
                 if result.get("status") != "skipped_by_compat_mode":
                     result["capability_probe_cache_hit"] = True
                     # Sync back to in-memory for this process
-                    _PROBE_CACHE[cache_key] = {"timestamp": cached_data["timestamp"], "result": result}
+                    _PROBE_CACHE[cache_key] = {
+                        "timestamp": cached_data["timestamp"],
+                        "result": result,
+                    }
                     return result
 
         if not self._is_local_provider():
@@ -853,7 +859,7 @@ class CodeAgentProvider(abc.ABC):
                 "status": "probe_failed",
                 "reason": Sanitizer.sanitize_text(str(last_exc)),
             }
-        
+
         result["capability_probe_cache_hit"] = False
         if isinstance(cache, _LocalCache):
             cache.set_json("capabilities", cache_key, {"timestamp": now, "result": result})
@@ -916,7 +922,6 @@ class OpenAICompatibleProvider(CodeAgentProvider):
                 f"API key not found in environment variable {self.api_key_env} "
                 f"for provider {self.config.get('provider')}"
             )
-
 
     def _build_headers(self) -> dict[str, str]:
         headers = {"Content-Type": "application/json"}
@@ -1043,23 +1048,23 @@ class OpenAICompatibleProvider(CodeAgentProvider):
                 "Return EXACTLY one JSON object for each step. "
                 "DO NOT include any text outside the JSON.\n"
                 "Available actions:\n"
-                "- plan: {\"type\":\"plan\", \"payload\":{\"message\":\"...\"}}\n"
-                "- read_file: {\"type\":\"read_file\", \"payload\":{\"path\":\"...\"}}\n"
-                "- write_file: {\"type\":\"write_file\", "
-                "\"payload\":{\"path\":\"...\", \"content\":\"...\"}}\n"
-                "- list_files: {\"type\":\"list_files\", \"payload\":{\"path\":\".\"}}\n"
-                "- replace_content: {\"type\":\"replace_content\", "
-                "\"payload\":{\"path\":\"...\", \"old_content\":\"...\", "
-                "\"new_content\":\"...\"}}\n"
-                "- apply_patch: {\"type\":\"apply_patch\", \"payload\":{\"diff\":\"...\"}}\n"
-                "- run_shell: {\"type\":\"run_shell\", "
-                "\"payload\":{\"command\":\"...\", \"timeout\":30}}\n"
-                "- run_tests: {\"type\":\"run_tests\", \"payload\":{\"test_path\":\"tests/\"}}\n"
-                "- grep: {\"type\":\"grep\", \"payload\":{\"pattern\":\"...\", "
-                "\"path\":\".\", \"recursive\":true}}\n"
-                "- ast_search: {\"type\":\"ast_search\", "
-                "\"payload\":{\"symbol_name\":\"...\", \"path\":\".\"}}\n"
-                "- final: {\"type\":\"final\", \"payload\":{\"message\":\"Summary of work\"}}\n\n"
+                '- plan: {"type":"plan", "payload":{"message":"..."}}\n'
+                '- read_file: {"type":"read_file", "payload":{"path":"..."}}\n'
+                '- write_file: {"type":"write_file", '
+                '"payload":{"path":"...", "content":"..."}}\n'
+                '- list_files: {"type":"list_files", "payload":{"path":"."}}\n'
+                '- replace_content: {"type":"replace_content", '
+                '"payload":{"path":"...", "old_content":"...", '
+                '"new_content":"..."}}\n'
+                '- apply_patch: {"type":"apply_patch", "payload":{"diff":"..."}}\n'
+                '- run_shell: {"type":"run_shell", '
+                '"payload":{"command":"...", "timeout":30}}\n'
+                '- run_tests: {"type":"run_tests", "payload":{"test_path":"tests/"}}\n'
+                '- grep: {"type":"grep", "payload":{"pattern":"...", '
+                '"path":".", "recursive":true}}\n'
+                '- ast_search: {"type":"ast_search", '
+                '"payload":{"symbol_name":"...", "path":"."}}\n'
+                '- final: {"type":"final", "payload":{"message":"Summary of work"}}\n\n'
                 "Constraints:\n"
                 "- No shell redirection (>, >>, |). Use write_file or replace_content instead.\n"
                 "- Keep actions small and incremental.\n"
@@ -1072,25 +1077,24 @@ class OpenAICompatibleProvider(CodeAgentProvider):
             tool_call_id = m.get("tool_call_id")
             if isinstance(content, list):
                 from .multimodal import adapt_content_blocks_for_provider
+
                 adapted_content = adapt_content_blocks_for_provider(
-                    content,
-                    multimodal_enabled=self.config.get("multimodal", False)
+                    content, multimodal_enabled=self.config.get("multimodal", False)
                 )
                 sanitized_content = []
                 for block in adapted_content:
                     if block.get("type") == "text":
-                        sanitized_content.append({
-                            "type": "text",
-                            "text": Sanitizer.strip_control_chars(block.get("text", ""))
-                        })
+                        sanitized_content.append(
+                            {
+                                "type": "text",
+                                "text": Sanitizer.strip_control_chars(block.get("text", "")),
+                            }
+                        )
                     else:
                         sanitized_content.append(block)
                 enriched_messages.append({"role": role, "content": sanitized_content})
             else:
-                entry = {
-                    "role": role,
-                    "content": Sanitizer.strip_control_chars(str(content))
-                }
+                entry = {"role": role, "content": Sanitizer.strip_control_chars(str(content))}
                 if role == "assistant" and isinstance(tool_calls, list):
                     entry["tool_calls"] = tool_calls
                 if role == "tool" and tool_call_id:
@@ -1109,9 +1113,9 @@ class OpenAICompatibleProvider(CodeAgentProvider):
         local_compat_retry_used = False
         local_semantic_retry_used = False
         local_plain_chat_retry_used = False
-        
+
         resolved_tool_mode = await self.resolve_tool_calling_mode()
-        
+
         for url in self._build_chat_paths():
             try:
                 tool_mode = "plain" if self._is_plain_chat_mode() else resolved_tool_mode
@@ -1308,13 +1312,13 @@ class OpenAICompatibleProvider(CodeAgentProvider):
                         for tool_delta in delta.get("tool_calls", []):
                             index = int(tool_delta.get("index", 0))
                             current = tool_calls.setdefault(
-                            index,
-                            {
-                                "id": tool_delta.get("id"),
-                                "type": "function",
-                                "function": {"name": "", "arguments": ""},
-                            },
-                        )
+                                index,
+                                {
+                                    "id": tool_delta.get("id"),
+                                    "type": "function",
+                                    "function": {"name": "", "arguments": ""},
+                                },
+                            )
                             function = tool_delta.get("function", {})
                             if function.get("name"):
                                 current["function"]["name"] = function["name"]
@@ -1526,7 +1530,6 @@ class LocalOpenAICompatibleProvider(OpenAICompatibleProvider):
             return [base]
         return [f"{base}/v1/chat/completions"]
 
-
     def _build_headers(self) -> dict[str, str]:
         headers = {"Content-Type": "application/json"}
         api_key = self._get_api_key()
@@ -1583,22 +1586,26 @@ class AnthropicProvider(CodeAgentProvider):
             anthropic_blocks = []
             for block in content:
                 if block.get("type") == "text":
-                    anthropic_blocks.append({
-                        "type": "text",
-                        "text": block.get("text", ""),
-                    })
+                    anthropic_blocks.append(
+                        {
+                            "type": "text",
+                            "text": block.get("text", ""),
+                        }
+                    )
                 elif block.get("type") == "image_url":
                     img_url = block.get("image_url", {}).get("url", "")
                     if img_url.startswith("data:"):
                         mime_part, _, b64_data = img_url[5:].partition(";base64,")
-                        anthropic_blocks.append({
-                            "type": "image",
-                            "source": {
-                                "type": "base64",
-                                "media_type": mime_part or "image/png",
-                                "data": b64_data,
-                            },
-                        })
+                        anthropic_blocks.append(
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": mime_part or "image/png",
+                                    "data": b64_data,
+                                },
+                            }
+                        )
                     else:
                         anthropic_blocks.append(block)
                 else:
@@ -1613,15 +1620,18 @@ class AnthropicProvider(CodeAgentProvider):
             content = m.get("content", "")
             if isinstance(content, list):
                 has_image = any(
-                    isinstance(b, dict) and b.get("type") == "image_url"
-                    for b in content
+                    isinstance(b, dict) and b.get("type") == "image_url" for b in content
                 )
                 if has_image and not self.config.get("multimodal", False):
                     raise ValueError(
                         "Provider or model does not support multimodal input. "
                         "Enable 'multimodal' or choose a multimodal model."
                     )
-        url = f"{self.base_url}/v1/messages" if self.base_url else "https://api.anthropic.com/v1/messages"
+        url = (
+            f"{self.base_url}/v1/messages"
+            if self.base_url
+            else "https://api.anthropic.com/v1/messages"
+        )
 
         system_content = []
         anthropic_messages = []
@@ -1633,10 +1643,12 @@ class AnthropicProvider(CodeAgentProvider):
             else:
                 if role not in ["user", "assistant"]:
                     role = "user"
-                anthropic_messages.append({
-                    "role": role,
-                    "content": self._convert_to_anthropic_content(content),
-                })
+                anthropic_messages.append(
+                    {
+                        "role": role,
+                        "content": self._convert_to_anthropic_content(content),
+                    }
+                )
 
         instruction = (
             "Return exactly one JSON object with this schema: "
@@ -1679,7 +1691,7 @@ class AnthropicProvider(CodeAgentProvider):
                 "prompt_tokens": data.get("usage", {}).get("input_tokens", 0),
                 "completion_tokens": data.get("usage", {}).get("output_tokens", 0),
                 "total_tokens": data.get("usage", {}).get("input_tokens", 0)
-                + data.get("usage", {}).get("output_tokens", 0)
+                + data.get("usage", {}).get("output_tokens", 0),
             },
         }
         return self._sanitize_response(standardized)
@@ -1693,8 +1705,7 @@ class GoogleProvider(CodeAgentProvider):
     def _validate_config(self):
         if not self._get_api_key():
             raise ValueError(
-                f"API key not found in environment variable {self.api_key_env} "
-                "for provider google"
+                f"API key not found in environment variable {self.api_key_env} for provider google"
             )
 
     def _convert_to_google_parts(self, content: Any) -> list[dict[str, Any]]:
@@ -1708,12 +1719,14 @@ class GoogleProvider(CodeAgentProvider):
                     img_url = block.get("image_url", {}).get("url", "")
                     if img_url.startswith("data:"):
                         mime_part, _, b64_data = img_url[5:].partition(";base64,")
-                        parts.append({
-                            "inline_data": {
-                                "mime_type": mime_part or "image/png",
-                                "data": b64_data,
-                            },
-                        })
+                        parts.append(
+                            {
+                                "inline_data": {
+                                    "mime_type": mime_part or "image/png",
+                                    "data": b64_data,
+                                },
+                            }
+                        )
                     else:
                         parts.append({"text": str(block)})
                 else:
@@ -1728,8 +1741,7 @@ class GoogleProvider(CodeAgentProvider):
             content = m.get("content", "")
             if isinstance(content, list):
                 has_image = any(
-                    isinstance(b, dict) and b.get("type") == "image_url"
-                    for b in content
+                    isinstance(b, dict) and b.get("type") == "image_url" for b in content
                 )
                 if has_image and not self.config.get("multimodal", False):
                     raise ValueError(
@@ -1751,10 +1763,12 @@ class GoogleProvider(CodeAgentProvider):
                 system_content.append(content)
             else:
                 mapped_role = "user" if role == "user" else "model"
-                contents.append({
-                    "role": mapped_role,
-                    "parts": self._convert_to_google_parts(content),
-                })
+                contents.append(
+                    {
+                        "role": mapped_role,
+                        "parts": self._convert_to_google_parts(content),
+                    }
+                )
 
         instruction = (
             "Return exactly one JSON object with this schema: "
@@ -1766,12 +1780,8 @@ class GoogleProvider(CodeAgentProvider):
 
         payload = {
             "contents": contents,
-            "systemInstruction": {
-                "parts": [{"text": "\n".join(system_content)}]
-            },
-            "generationConfig": {
-                "responseMimeType": "application/json"
-            },
+            "systemInstruction": {"parts": [{"text": "\n".join(system_content)}]},
+            "generationConfig": {"responseMimeType": "application/json"},
         }
 
         response = await self._request_with_retry(
@@ -1807,7 +1817,7 @@ class GoogleProvider(CodeAgentProvider):
             "usage": {
                 "prompt_tokens": data.get("usageMetadata", {}).get("promptTokenCount", 0),
                 "completion_tokens": data.get("usageMetadata", {}).get("candidatesTokenCount", 0),
-                "total_tokens": data.get("usageMetadata", {}).get("totalTokenCount", 0)
+                "total_tokens": data.get("usageMetadata", {}).get("totalTokenCount", 0),
             },
         }
         return self._sanitize_response(standardized)
@@ -1820,7 +1830,6 @@ class GoogleProvider(CodeAgentProvider):
 class ControlPlaneProvider(CodeAgentProvider):
     def _validate_config(self):
         self.agent_helper.validate_config()
-
 
     def _build_headers(self) -> dict[str, str]:
         headers = {"Content-Type": "application/json"}
@@ -1840,8 +1849,7 @@ class ControlPlaneProvider(CodeAgentProvider):
             )
         except httpx.TimeoutException:
             raise RuntimeError(
-                f"Control plane at {self.base_url} timed out. "
-                "Check if the service is healthy."
+                f"Control plane at {self.base_url} timed out. Check if the service is healthy."
             )
         task = str(messages[-1]["content"]) if messages else ""
         run_data = await self.start_run(task)

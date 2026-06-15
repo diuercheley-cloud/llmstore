@@ -11,12 +11,10 @@ if not API_KEY:
     print("Error: CLIENT_API_KEY is not set.")
     exit(1)
 
+
 def main():
     url = f"{BASE_URL}/v1/responses"
-    headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "Content-Type": "application/json"
-    }
+    headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
     data = {
         "model": "default",
         "input": "What is the capital of France?",
@@ -34,6 +32,7 @@ def main():
     else:
         print(f"Error: {response.status_code}")
         print(response.text)
+
 
 if __name__ == "__main__":
     main()

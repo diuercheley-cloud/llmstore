@@ -38,6 +38,54 @@ interface ApprovalRequest {
   updated_at: string
 }
 
+// Risk Badge component
+const RiskBadge = ({ risk }: { risk: string }) => {
+  const riskLower = risk.toLowerCase()
+  let styles = "bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-900/40 dark:text-slate-300 dark:border-slate-800"
+  if (riskLower === 'medium') {
+    styles = "bg-amber-100/80 text-amber-800 border-amber-200 dark:bg-amber-950/20 dark:text-amber-300 dark:border-amber-900/50"
+  } else if (riskLower === 'high') {
+    styles = "bg-orange-100/80 text-orange-800 border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-900"
+  } else if (riskLower === 'critical') {
+    styles = "bg-rose-100/80 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900 animate-pulse"
+  }
+
+  return (
+    <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full border ${styles}`}>
+      <ShieldAlert className="w-3.5 h-3.5" />
+      <span className="capitalize">{risk}</span>
+    </span>
+  )
+}
+
+// Status Badge component
+const StatusBadge = ({ status }: { status: string }) => {
+  let styles = "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300"
+  let icon = <Clock className="w-3.5 h-3.5" />
+
+  if (status === 'pending') {
+    styles = "bg-yellow-500/10 text-yellow-600 border-yellow-500/20 dark:bg-yellow-500/10 dark:text-yellow-400"
+  } else if (status === 'approved') {
+    styles = "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400"
+    icon = <ShieldCheck className="w-3.5 h-3.5" />
+  } else if (status === 'rejected') {
+    styles = "bg-red-500/10 text-red-600 border-red-500/20 dark:bg-red-500/10 dark:text-red-400"
+    icon = <XOctagon className="w-3.5 h-3.5" />
+  } else if (status === 'cancelled') {
+    styles = "bg-blue-500/10 text-blue-600 border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400"
+    icon = <AlertTriangle className="w-3.5 h-3.5" />
+  } else if (status === 'expired') {
+    styles = "bg-zinc-500/10 text-zinc-500 border-zinc-500/20 dark:bg-zinc-500/10 dark:text-zinc-400"
+  }
+
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold capitalize ${styles}`}>
+      {icon}
+      {status === 'cancelled' ? 'Alterações solicitadas' : status}
+    </span>
+  )
+}
+
 export default function AgentApprovals() {
   const queryClient = useQueryClient()
   const [selectedRequest, setSelectedRequest] = useState<ApprovalRequest | null>(null)
@@ -107,54 +155,6 @@ export default function AgentApprovals() {
     } catch {
       return isoString
     }
-  }
-
-  // Risk Badge component
-  const RiskBadge = ({ risk }: { risk: string }) => {
-    const riskLower = risk.toLowerCase()
-    let styles = "bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-900/40 dark:text-slate-300 dark:border-slate-800"
-    if (riskLower === 'medium') {
-      styles = "bg-amber-100/80 text-amber-800 border-amber-200 dark:bg-amber-950/20 dark:text-amber-300 dark:border-amber-900/50"
-    } else if (riskLower === 'high') {
-      styles = "bg-orange-100/80 text-orange-800 border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-900"
-    } else if (riskLower === 'critical') {
-      styles = "bg-rose-100/80 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900 animate-pulse"
-    }
-
-    return (
-      <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full border ${styles}`}>
-        <ShieldAlert className="w-3.5 h-3.5" />
-        <span className="capitalize">{risk}</span>
-      </span>
-    )
-  }
-
-  // Status Badge component
-  const StatusBadge = ({ status }: { status: string }) => {
-    let styles = "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300"
-    let icon = <Clock className="w-3.5 h-3.5" />
-
-    if (status === 'pending') {
-      styles = "bg-yellow-500/10 text-yellow-600 border-yellow-500/20 dark:bg-yellow-500/10 dark:text-yellow-400"
-    } else if (status === 'approved') {
-      styles = "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400"
-      icon = <ShieldCheck className="w-3.5 h-3.5" />
-    } else if (status === 'rejected') {
-      styles = "bg-red-500/10 text-red-600 border-red-500/20 dark:bg-red-500/10 dark:text-red-400"
-      icon = <XOctagon className="w-3.5 h-3.5" />
-    } else if (status === 'cancelled') {
-      styles = "bg-blue-500/10 text-blue-600 border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400"
-      icon = <AlertTriangle className="w-3.5 h-3.5" />
-    } else if (status === 'expired') {
-      styles = "bg-zinc-500/10 text-zinc-500 border-zinc-500/20 dark:bg-zinc-500/10 dark:text-zinc-400"
-    }
-
-    return (
-      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold capitalize ${styles}`}>
-        {icon}
-        {status === 'cancelled' ? 'Alterações solicitadas' : status}
-      </span>
-    )
   }
 
   return (

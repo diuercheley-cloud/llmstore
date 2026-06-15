@@ -1,8 +1,11 @@
 import pytest
 import pytest_asyncio
 from app.db.base import Base
+from app.models.commercial.commercial_rag_vault_vault import (
+    CommercialRAGPoisoningAlert,
+    CommercialRAGVault,
+)
 from app.models.core.client import Client
-from app.models.commercial.commercial_rag_vault_vault import CommercialRAGPoisoningAlert, CommercialRAGVault
 from app.services.rag.rag_poison_detection import (
     analyze_and_record_poisoning,
     inspect_text_for_poisoning,
@@ -33,7 +36,13 @@ async def test_poison_alert_persisted(session: AsyncSession):
     client = Client(name="tenant")
     session.add(client)
     await session.flush()
-    vault = CommercialRAGVault(client_id=client.id, vault_name="regulated", vault_mode="confidential", encryption_required=True, retrieval_mode="hybrid")
+    vault = CommercialRAGVault(
+        client_id=client.id,
+        vault_name="regulated",
+        vault_mode="confidential",
+        encryption_required=True,
+        retrieval_mode="hybrid",
+    )
     session.add(vault)
     await session.commit()
 

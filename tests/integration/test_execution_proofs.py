@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
@@ -56,7 +56,7 @@ async def test_build_receipt_timeline_deterministic_root(session):
             prompt_hash=hashlib.sha256(f"p{i}".encode()).hexdigest(),
             response_hash=hashlib.sha256(f"r{i}".encode()).hexdigest(),
             receipt_hash=hashlib.sha256(f"receipt{i}".encode()).hexdigest(),
-            signed_at=datetime.now(timezone.utc),
+            signed_at=datetime.now(UTC),
             timestamp_mode="local",
             verification_status="valid",
         )
@@ -65,7 +65,7 @@ async def test_build_receipt_timeline_deterministic_root(session):
 
     from app.services.inference.execution_proofs import build_receipt_timeline
 
-    end = datetime.now(timezone.utc)
+    end = datetime.now(UTC)
     start = end.replace(hour=end.hour - 1)
     timeline = await build_receipt_timeline(session, start, end)
     assert timeline.leaf_count == 4
@@ -78,7 +78,7 @@ async def test_build_receipt_timeline_empty_raises(session):
     from app.services.inference.execution_proofs import build_receipt_timeline
     from app.services.inference.merkle_timelines import MerkleError
 
-    end = datetime.now(timezone.utc)
+    end = datetime.now(UTC)
     start = end.replace(year=end.year - 10)
     with pytest.raises(MerkleError):
         await build_receipt_timeline(session, start, end)
@@ -93,7 +93,7 @@ async def test_generate_execution_proof(session):
         prompt_hash=hashlib.sha256(b"p1").hexdigest(),
         response_hash=hashlib.sha256(b"r1").hexdigest(),
         receipt_hash=hashlib.sha256(b"receipt1").hexdigest(),
-        signed_at=datetime.now(timezone.utc),
+        signed_at=datetime.now(UTC),
         timestamp_mode="local",
         verification_status="valid",
         runtime_snapshot_hash=hashlib.sha256(b"snap").hexdigest(),
@@ -101,15 +101,21 @@ async def test_generate_execution_proof(session):
     session.add(receipt)
     await session.commit()
 
-    leaf_hash = canonical_leaf_hash(str(receipt.id), "inference_receipt", _sanitize_metadata({
-        "client_id": "client-1",
-        "model_name": "m1",
-    }))
+    leaf_hash = canonical_leaf_hash(
+        str(receipt.id),
+        "inference_receipt",
+        _sanitize_metadata(
+            {
+                "client_id": "client-1",
+                "model_name": "m1",
+            }
+        ),
+    )
     timeline = CommercialMerkleTimeline(
         id=uuid4(),
         timeline_type="inference_receipts",
-        period_start=datetime.now(timezone.utc),
-        period_end=datetime.now(timezone.utc),
+        period_start=datetime.now(UTC),
+        period_end=datetime.now(UTC),
         leaf_count=1,
         merkle_root=seal_timeline([leaf_hash]),
         timeline_hash=seal_timeline([leaf_hash]),
@@ -147,15 +153,15 @@ async def test_generate_execution_proof_receipt_not_found(session):
         prompt_hash=hashlib.sha256(b"p1").hexdigest(),
         response_hash=hashlib.sha256(b"r1").hexdigest(),
         receipt_hash=hashlib.sha256(b"receipt1").hexdigest(),
-        signed_at=datetime.now(timezone.utc),
+        signed_at=datetime.now(UTC),
         timestamp_mode="local",
         verification_status="valid",
     )
     timeline = CommercialMerkleTimeline(
         id=uuid4(),
         timeline_type="inference_receipts",
-        period_start=datetime.now(timezone.utc),
-        period_end=datetime.now(timezone.utc),
+        period_start=datetime.now(UTC),
+        period_end=datetime.now(UTC),
         leaf_count=0,
         merkle_root=hashlib.sha256(b"root").hexdigest(),
         timeline_hash=hashlib.sha256(b"root").hexdigest(),
@@ -176,7 +182,7 @@ async def test_verify_execution_proof_valid(session):
         prompt_hash=hashlib.sha256(b"p1").hexdigest(),
         response_hash=hashlib.sha256(b"r1").hexdigest(),
         receipt_hash=hashlib.sha256(b"receipt1").hexdigest(),
-        signed_at=datetime.now(timezone.utc),
+        signed_at=datetime.now(UTC),
         timestamp_mode="local",
         verification_status="valid",
     )
@@ -186,8 +192,8 @@ async def test_verify_execution_proof_valid(session):
     timeline = CommercialMerkleTimeline(
         id=uuid4(),
         timeline_type="inference_receipts",
-        period_start=datetime.now(timezone.utc),
-        period_end=datetime.now(timezone.utc),
+        period_start=datetime.now(UTC),
+        period_end=datetime.now(UTC),
         leaf_count=1,
         merkle_root=seal_timeline([leaf_hash]),
         timeline_hash=seal_timeline([leaf_hash]),
@@ -225,21 +231,18 @@ async def test_verify_execution_proof_invalid_after_tamper(session):
         prompt_hash=hashlib.sha256(b"p1").hexdigest(),
         response_hash=hashlib.sha256(b"r1").hexdigest(),
         receipt_hash=hashlib.sha256(b"receipt1").hexdigest(),
-        signed_at=datetime.now(timezone.utc),
+        signed_at=datetime.now(UTC),
         timestamp_mode="local",
         verification_status="valid",
     )
     session.add(target_receipt)
 
-    leaf_hashes = [
-        canonical_leaf_hash(str(rid), "inference_receipt", {})
-        for rid in receipt_ids
-    ]
+    leaf_hashes = [canonical_leaf_hash(str(rid), "inference_receipt", {}) for rid in receipt_ids]
     timeline = CommercialMerkleTimeline(
         id=uuid4(),
         timeline_type="inference_receipts",
-        period_start=datetime.now(timezone.utc),
-        period_end=datetime.now(timezone.utc),
+        period_start=datetime.now(UTC),
+        period_end=datetime.now(UTC),
         leaf_count=4,
         merkle_root=seal_timeline(leaf_hashes),
         timeline_hash=seal_timeline(leaf_hashes),
@@ -263,7 +266,9 @@ async def test_verify_execution_proof_invalid_after_tamper(session):
 
     proof = await generate_execution_proof(session, timeline, target_receipt, leaves)
     # Tamper with the first sibling hash in the inclusion proof
-    proof.proof_json["merkle_inclusion_proof"]["steps"][0]["sibling_hash"] = hashlib.sha256(b"tamper").hexdigest()
+    proof.proof_json["merkle_inclusion_proof"]["steps"][0]["sibling_hash"] = hashlib.sha256(
+        b"tamper"
+    ).hexdigest()
     session.add(proof)
     await session.commit()
 

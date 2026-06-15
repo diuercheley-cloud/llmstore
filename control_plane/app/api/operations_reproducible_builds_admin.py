@@ -204,7 +204,9 @@ def _serialize_receipt(item: ReproducibleBuildReceipt) -> dict[str, Any]:
     }
 
 
-async def _get_manifest(db: AsyncSession, manifest_id: str, client_id: UUID) -> ReproducibleBuildManifest:
+async def _get_manifest(
+    db: AsyncSession, manifest_id: str, client_id: UUID
+) -> ReproducibleBuildManifest:
     manifest = (
         await db.execute(
             select(ReproducibleBuildManifest).where(
@@ -218,7 +220,9 @@ async def _get_manifest(db: AsyncSession, manifest_id: str, client_id: UUID) -> 
     return manifest
 
 
-async def _get_artifact_verification(db: AsyncSession, artifact_verification_id: str, client_id: UUID) -> ArtifactVerificationRecord:
+async def _get_artifact_verification(
+    db: AsyncSession, artifact_verification_id: str, client_id: UUID
+) -> ArtifactVerificationRecord:
     record = (
         await db.execute(
             select(ArtifactVerificationRecord).where(
@@ -279,12 +283,16 @@ async def list_build_manifests(
     _admin: Any = Depends(get_current_admin),
 ):
     rows = (
-        await db.execute(
-            select(ReproducibleBuildManifest)
-            .where(ReproducibleBuildManifest.client_id == client_id)
-            .order_by(ReproducibleBuildManifest.created_at.desc())
+        (
+            await db.execute(
+                select(ReproducibleBuildManifest)
+                .where(ReproducibleBuildManifest.client_id == client_id)
+                .order_by(ReproducibleBuildManifest.created_at.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return [_serialize_manifest(item) for item in rows]
 
 
@@ -314,14 +322,29 @@ async def verify_build_manifest(
     verification = BUILD_SERVICE.validate_build_manifest(manifest)
     integration = PROVENANCE_INTEGRATION.validate_supply_chain_alignment(manifest)
     verification_result = ReproducibilityVerificationResult(
-        id=sha256_hex({"kind": "reproducibility_verification_result_id", "manifest_id": manifest.id, "verification_type": "hash_replay"}),
+        id=sha256_hex(
+            {
+                "kind": "reproducibility_verification_result_id",
+                "manifest_id": manifest.id,
+                "verification_type": "hash_replay",
+            }
+        ),
         client_id=manifest.client_id,
         build_manifest_id=manifest.id,
         verification_type="hash_replay",
         verification_status="passed" if verification["valid"] else "blocked",
         replay_safe=verification["replay_safe"],
-        reproducibility_summary=json.dumps({"manifest_verification": verification, "supply_chain_alignment": integration}, sort_keys=True),
-        immutable_hash=sha256_hex({"kind": "reproducibility_verification_result_immutable", "manifest_id": manifest.id, "status": verification["reproducibility_status"]}),
+        reproducibility_summary=json.dumps(
+            {"manifest_verification": verification, "supply_chain_alignment": integration},
+            sort_keys=True,
+        ),
+        immutable_hash=sha256_hex(
+            {
+                "kind": "reproducibility_verification_result_immutable",
+                "manifest_id": manifest.id,
+                "status": verification["reproducibility_status"],
+            }
+        ),
     )
     db.add(verification_result)
     await db.commit()
@@ -398,7 +421,9 @@ async def replay_verify(
     manifest = await _get_manifest(db, request.build_manifest_id, request.client_id)
     response: dict[str, Any] = {"manifest_replay": REPLAY_VERIFIER.replay_build_manifest(manifest)}
     if request.artifact_verification_id:
-        artifact = await _get_artifact_verification(db, request.artifact_verification_id, request.client_id)
+        artifact = await _get_artifact_verification(
+            db, request.artifact_verification_id, request.client_id
+        )
         response["artifact_replay"] = REPLAY_VERIFIER.replay_artifact(artifact)
     if request.lineage_id:
         lineage = await _get_lineage(db, request.lineage_id, request.client_id)
@@ -406,7 +431,11 @@ async def replay_verify(
     response["audit_event"] = build_reproducible_build_audit_event(
         "replay_verification_completed",
         str(request.client_id),
-        {"manifest_id": manifest.id, "artifact_verification_id": request.artifact_verification_id, "lineage_id": request.lineage_id},
+        {
+            "manifest_id": manifest.id,
+            "artifact_verification_id": request.artifact_verification_id,
+            "lineage_id": request.lineage_id,
+        },
     )
     return response
 
@@ -419,7 +448,9 @@ async def validate_environment(
 ):
     constraint = ENVIRONMENT_SERVICE.validate_environment_constraints(request.model_dump())
     offline = ENVIRONMENT_SERVICE.enforce_offline_constraints(constraint)
-    determinism = ENVIRONMENT_SERVICE.enforce_determinism_constraints(constraint, {"blocked_markers": request.blocked_markers})
+    determinism = ENVIRONMENT_SERVICE.enforce_determinism_constraints(
+        constraint, {"blocked_markers": request.blocked_markers}
+    )
     db.add(constraint)
     await db.commit()
     return {
@@ -444,35 +475,47 @@ async def create_receipt(
 ):
     manifest = await _get_manifest(db, manifest_id, request.client_id)
     verification_result = (
-        await db.execute(
-            select(ReproducibilityVerificationResult)
-            .where(
-                ReproducibilityVerificationResult.build_manifest_id == manifest.id,
-                ReproducibilityVerificationResult.client_id == request.client_id,
+        (
+            await db.execute(
+                select(ReproducibilityVerificationResult)
+                .where(
+                    ReproducibilityVerificationResult.build_manifest_id == manifest.id,
+                    ReproducibilityVerificationResult.client_id == request.client_id,
+                )
+                .order_by(ReproducibilityVerificationResult.created_at.desc())
             )
-            .order_by(ReproducibilityVerificationResult.created_at.desc())
         )
-    ).scalars().first()
+        .scalars()
+        .first()
+    )
     artifact = (
-        await db.execute(
-            select(ArtifactVerificationRecord)
-            .where(
-                ArtifactVerificationRecord.build_manifest_id == manifest.id,
-                ArtifactVerificationRecord.client_id == request.client_id,
+        (
+            await db.execute(
+                select(ArtifactVerificationRecord)
+                .where(
+                    ArtifactVerificationRecord.build_manifest_id == manifest.id,
+                    ArtifactVerificationRecord.client_id == request.client_id,
+                )
+                .order_by(ArtifactVerificationRecord.created_at.desc())
             )
-            .order_by(ArtifactVerificationRecord.created_at.desc())
         )
-    ).scalars().first()
+        .scalars()
+        .first()
+    )
     lineage = (
-        await db.execute(
-            select(SourceArtifactLineage)
-            .where(
-                SourceArtifactLineage.build_manifest_id == manifest.id,
-                SourceArtifactLineage.client_id == request.client_id,
+        (
+            await db.execute(
+                select(SourceArtifactLineage)
+                .where(
+                    SourceArtifactLineage.build_manifest_id == manifest.id,
+                    SourceArtifactLineage.client_id == request.client_id,
+                )
+                .order_by(SourceArtifactLineage.created_at.desc())
             )
-            .order_by(SourceArtifactLineage.created_at.desc())
         )
-    ).scalars().first()
+        .scalars()
+        .first()
+    )
 
     if request.receipt_type == "artifact_verification_receipt":
         if not artifact:
@@ -496,7 +539,11 @@ async def create_receipt(
         "audit_event": build_reproducible_build_audit_event(
             "reproducible_build_receipt_created",
             str(request.client_id),
-            {"manifest_id": manifest.id, "receipt_id": receipt.id, "receipt_type": receipt.receipt_type},
+            {
+                "manifest_id": manifest.id,
+                "receipt_id": receipt.id,
+                "receipt_type": receipt.receipt_type,
+            },
         ),
     }
 
@@ -508,11 +555,17 @@ async def reproducible_build_dashboard(
     _admin: Any = Depends(get_current_admin),
 ):
     manifest_count = (
-        await db.execute(select(func.count()).select_from(ReproducibleBuildManifest).where(ReproducibleBuildManifest.client_id == client_id))
+        await db.execute(
+            select(func.count())
+            .select_from(ReproducibleBuildManifest)
+            .where(ReproducibleBuildManifest.client_id == client_id)
+        )
     ).scalar_one()
     reproducible_count = (
         await db.execute(
-            select(func.count()).select_from(ReproducibleBuildManifest).where(
+            select(func.count())
+            .select_from(ReproducibleBuildManifest)
+            .where(
                 ReproducibleBuildManifest.client_id == client_id,
                 ReproducibleBuildManifest.reproducibility_status == "reproducible",
             )
@@ -520,7 +573,9 @@ async def reproducible_build_dashboard(
     ).scalar_one()
     warning_count = (
         await db.execute(
-            select(func.count()).select_from(ReproducibleBuildManifest).where(
+            select(func.count())
+            .select_from(ReproducibleBuildManifest)
+            .where(
                 ReproducibleBuildManifest.client_id == client_id,
                 ReproducibleBuildManifest.reproducibility_status == "warning",
             )
@@ -528,26 +583,48 @@ async def reproducible_build_dashboard(
     ).scalar_one()
     blocked_count = (
         await db.execute(
-            select(func.count()).select_from(ReproducibleBuildManifest).where(
+            select(func.count())
+            .select_from(ReproducibleBuildManifest)
+            .where(
                 ReproducibleBuildManifest.client_id == client_id,
                 ReproducibleBuildManifest.reproducibility_status == "blocked",
             )
         )
     ).scalar_one()
     artifact_count = (
-        await db.execute(select(func.count()).select_from(ArtifactVerificationRecord).where(ArtifactVerificationRecord.client_id == client_id))
+        await db.execute(
+            select(func.count())
+            .select_from(ArtifactVerificationRecord)
+            .where(ArtifactVerificationRecord.client_id == client_id)
+        )
     ).scalar_one()
     replay_count = (
-        await db.execute(select(func.count()).select_from(ArtifactReplayVerification).where(ArtifactReplayVerification.client_id == client_id))
+        await db.execute(
+            select(func.count())
+            .select_from(ArtifactReplayVerification)
+            .where(ArtifactReplayVerification.client_id == client_id)
+        )
     ).scalar_one()
     lineage_count = (
-        await db.execute(select(func.count()).select_from(SourceArtifactLineage).where(SourceArtifactLineage.client_id == client_id))
+        await db.execute(
+            select(func.count())
+            .select_from(SourceArtifactLineage)
+            .where(SourceArtifactLineage.client_id == client_id)
+        )
     ).scalar_one()
     environment_count = (
-        await db.execute(select(func.count()).select_from(BuildEnvironmentConstraint).where(BuildEnvironmentConstraint.client_id == client_id))
+        await db.execute(
+            select(func.count())
+            .select_from(BuildEnvironmentConstraint)
+            .where(BuildEnvironmentConstraint.client_id == client_id)
+        )
     ).scalar_one()
     receipt_count = (
-        await db.execute(select(func.count()).select_from(ReproducibleBuildReceipt).where(ReproducibleBuildReceipt.client_id == client_id))
+        await db.execute(
+            select(func.count())
+            .select_from(ReproducibleBuildReceipt)
+            .where(ReproducibleBuildReceipt.client_id == client_id)
+        )
     ).scalar_one()
     return {
         "section": "Reproducible Build & Artifact Verification Framework",

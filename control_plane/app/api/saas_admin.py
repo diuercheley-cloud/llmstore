@@ -1,12 +1,12 @@
 # Owner: platform-ops
 import logging
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 from app.core.config import get_settings
-from app.services.runtime_dependencies import get_db_session
-from app.models.core.client import Client
 from app.models.billing.request_financial import RequestFinancial
+from app.models.core.client import Client
 from app.services.auth import require_admin
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,19 +20,20 @@ router = APIRouter(
     dependencies=[Depends(require_admin)],
 )
 
+
 @router.get("/overview")
 async def saas_overview(
     session: AsyncSession = Depends(get_db_session),
 ):
     today = date.today()
-    
+
     # 1. Client counts
     total_clients = 0
     active_clients = 0
     try:
         total_stmt = select(func.count(Client.id))
         total_clients = (await session.execute(total_stmt)).scalar() or 0
-        
+
         active_stmt = select(func.count(Client.id)).where(Client.is_active == True)
         active_clients = (await session.execute(active_stmt)).scalar() or 0
     except Exception as e:
@@ -43,15 +44,15 @@ async def saas_overview(
     provider_cost_today = 0.0
     revenue_today = 0.0
     margin_today = 0.0
-    
+
     try:
         financial_stmt = select(
             func.count(RequestFinancial.id).label("requests"),
             func.sum(RequestFinancial.provider_cost_brl).label("cost"),
             func.sum(RequestFinancial.customer_price_brl).label("revenue"),
-            func.sum(RequestFinancial.gross_profit_brl).label("profit")
+            func.sum(RequestFinancial.gross_profit_brl).label("profit"),
         ).where(func.date(RequestFinancial.created_at) == today)
-        
+
         row = (await session.execute(financial_stmt)).first()
         if row:
             requests_today = row.requests or 0
@@ -66,7 +67,10 @@ async def saas_overview(
     # 3. Guardrails
     blocked_by_cost = False
     if settings.deployment_mode == "saas":
-        if settings.max_global_provider_cost_per_day_brl > 0 and provider_cost_today >= settings.max_global_provider_cost_per_day_brl:
+        if (
+            settings.max_global_provider_cost_per_day_brl > 0
+            and provider_cost_today >= settings.max_global_provider_cost_per_day_brl
+        ):
             blocked_by_cost = True
 
     return {
@@ -79,5 +83,5 @@ async def saas_overview(
         "margin_today_percent": round(margin_today, 2),
         "blocked_by_cost_guardrail": blocked_by_cost,
         "global_cost_limit_brl": settings.max_global_provider_cost_per_day_brl,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }

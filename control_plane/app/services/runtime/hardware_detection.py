@@ -3,7 +3,6 @@ import os
 import platform
 import subprocess
 from dataclasses import dataclass
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +23,7 @@ def detect_hardware() -> HardwareSpecs:
         cpu_count = os.cpu_count() or 0
         memory_total_gb = _get_total_memory_gb()
         gpu_info = _get_gpu_info()
-        
+
         return HardwareSpecs(
             cpu_count=cpu_count,
             memory_total_gb=memory_total_gb,
@@ -32,7 +31,7 @@ def detect_hardware() -> HardwareSpecs:
             gpu_type=gpu_info.get("type", "unknown"),
             vram_total_gb=gpu_info.get("vram_gb", 0.0),
             cuda_available=gpu_info.get("cuda", False),
-            platform=platform.system()
+            platform=platform.system(),
         )
     except Exception as e:
         logger.error(f"Hardware detection failed: {e}")
@@ -43,14 +42,14 @@ def detect_hardware() -> HardwareSpecs:
             gpu_type="unknown",
             vram_total_gb=0.0,
             cuda_available=False,
-            platform=platform.system()
+            platform=platform.system(),
         )
 
 
 def _get_total_memory_gb() -> float:
     try:
         if platform.system() == "Linux":
-            with open("/proc/meminfo", "r") as f:
+            with open("/proc/meminfo") as f:
                 for line in f:
                     if "MemTotal" in line:
                         kb = int(line.split()[1])
@@ -68,7 +67,7 @@ def _get_gpu_info() -> dict:
         res = subprocess.run(
             ["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader,nounits"],
             capture_output=True,
-            text=True
+            text=True,
         )
         if res.returncode == 0:
             lines = res.stdout.strip().split("\n")
@@ -81,5 +80,5 @@ def _get_gpu_info() -> dict:
                 info["vram_gb"] = total_vram_mb / 1024.0
     except Exception:
         pass
-    
+
     return info

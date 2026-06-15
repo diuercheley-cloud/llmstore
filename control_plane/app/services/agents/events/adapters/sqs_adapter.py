@@ -2,7 +2,8 @@
 import asyncio
 import json
 import logging
-from typing import Any, Awaitable, Callable, Dict, Optional
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 from app.core.config import get_settings
 
@@ -10,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from aioboto3 import Session
+
     HAS_SQS = True
 except ImportError:
     HAS_SQS = False
@@ -17,6 +19,7 @@ except ImportError:
 
 try:
     import boto3
+
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -27,19 +30,25 @@ class SQSAdapter:
     Adapter for AWS SQS event triggering.
     Supports both real (aioboto3/boto3) and simulated modes.
     """
+
     def __init__(self):
         self.settings = get_settings()
         self._client = None
         self._running = False
-        self._task: Optional[asyncio.Task] = None
-        self._callback: Optional[Callable[[Dict[str, Any]], Awaitable[None]]] = None
+        self._task: asyncio.Task | None = None
+        self._callback: Callable[[dict[str, Any]], Awaitable[None]] | None = None
         self._queue_url: str = ""
 
     def _is_enabled(self) -> bool:
-        return getattr(self.settings, 'sqs_trigger_enabled',
-                       getattr(self.settings, 'agent_event_driven_enabled', False))
+        return getattr(
+            self.settings,
+            "sqs_trigger_enabled",
+            getattr(self.settings, "agent_event_driven_enabled", False),
+        )
 
-    async def start_consumer(self, queue_url: str, callback: Callable[[Dict[str, Any]], Awaitable[None]]):
+    async def start_consumer(
+        self, queue_url: str, callback: Callable[[dict[str, Any]], Awaitable[None]]
+    ):
         if not self._is_enabled():
             logger.warning("SQS trigger is disabled. Skipping consumer start.")
             return
@@ -50,11 +59,11 @@ class SQSAdapter:
 
         if HAS_SQS:
             session = Session()
-            self._client = await session.client('sqs').__aenter__()
+            self._client = await session.client("sqs").__aenter__()
             self._task = asyncio.create_task(self._consume_loop())
             logger.info(f"SQS consumer started for queue: {queue_url}")
         elif HAS_BOTO3:
-            self._client = boto3.client('sqs')
+            self._client = boto3.client("sqs")
             self._task = asyncio.create_task(self._consume_loop_sync())
             logger.info(f"SQS consumer started (boto3 sync) for queue: {queue_url}")
         else:
@@ -68,16 +77,16 @@ class SQSAdapter:
                     MaxNumberOfMessages=10,
                     WaitTimeSeconds=20,
                 )
-                messages = response.get('Messages', [])
+                messages = response.get("Messages", [])
                 for msg in messages:
                     if not self._running:
                         break
                     try:
-                        body = json.loads(msg['Body'])
+                        body = json.loads(msg["Body"])
                         await self._callback(body)
                         await self._client.delete_message(
                             QueueUrl=self._queue_url,
-                            ReceiptHandle=msg['ReceiptHandle'],
+                            ReceiptHandle=msg["ReceiptHandle"],
                         )
                     except Exception as e:
                         logger.error(f"SQS callback error: {e}")
@@ -89,6 +98,7 @@ class SQSAdapter:
 
     def _consume_loop_sync(self):
         import threading
+
         def _run():
             while self._running:
                 try:
@@ -97,26 +107,28 @@ class SQSAdapter:
                         MaxNumberOfMessages=10,
                         WaitTimeSeconds=20,
                     )
-                    messages = response.get('Messages', [])
+                    messages = response.get("Messages", [])
                     for msg in messages:
                         if not self._running:
                             break
                         try:
-                            body = json.loads(msg['Body'])
+                            body = json.loads(msg["Body"])
                             asyncio.run_coroutine_threadsafe(
                                 self._callback(body),
                                 asyncio.get_event_loop(),
                             )
                             self._client.delete_message(
                                 QueueUrl=self._queue_url,
-                                ReceiptHandle=msg['ReceiptHandle'],
+                                ReceiptHandle=msg["ReceiptHandle"],
                             )
                         except Exception as e:
                             logger.error(f"SQS callback error: {e}")
                 except Exception as e:
                     logger.error(f"SQS receive error: {e}")
                     import time
+
                     time.sleep(5)
+
         thread = threading.Thread(target=_run, daemon=True)
         thread.start()
 

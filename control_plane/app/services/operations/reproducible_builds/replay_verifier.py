@@ -19,7 +19,9 @@ class ArtifactReplayVerifier:
             "build_environment_hash": manifest.build_environment_hash,
             "replay_safe": manifest.replay_safe,
         }
-        return self.compare_replay_hashes(manifest.build_manifest_hash, compute_build_manifest_hash(logical_payload))
+        return self.compare_replay_hashes(
+            manifest.build_manifest_hash, compute_build_manifest_hash(logical_payload)
+        )
 
     def replay_artifact(self, record: Any) -> dict[str, Any]:
         logical_payload = getattr(record, "_logical_payload", None) or {
@@ -28,7 +30,9 @@ class ArtifactReplayVerifier:
             "artifact_name": record.artifact_name,
             "artifact_version": record.artifact_version,
         }
-        return self.compare_replay_hashes(record.artifact_hash, compute_artifact_hash(logical_payload))
+        return self.compare_replay_hashes(
+            record.artifact_hash, compute_artifact_hash(logical_payload)
+        )
 
     def replay_lineage(self, lineage: Any) -> dict[str, Any]:
         logical_payload = getattr(lineage, "_logical_payload", None) or {
@@ -37,7 +41,9 @@ class ArtifactReplayVerifier:
             "source_hash": lineage.source_hash,
             "artifact_hash": lineage.artifact_hash,
         }
-        return self.compare_replay_hashes(lineage.lineage_hash, compute_lineage_hash(logical_payload))
+        return self.compare_replay_hashes(
+            lineage.lineage_hash, compute_lineage_hash(logical_payload)
+        )
 
     def compare_replay_hashes(self, original: str, replayed: str) -> dict[str, Any]:
         replay_hash = compute_replay_hash({"original": original, "replayed": replayed})

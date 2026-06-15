@@ -6,10 +6,7 @@ from app.services.operations.adapter_promotion.audit_events import build_promoti
 
 def test_audit_event_generation():
     workflow = AdapterPromotionWorkflow(
-        id=uuid.uuid4(),
-        client_id=uuid.uuid4(),
-        adapter_name="test",
-        adapter_version="1.0.0"
+        id=uuid.uuid4(), client_id=uuid.uuid4(), adapter_name="test", adapter_version="1.0.0"
     )
     event = build_promotion_audit_event("adapter_promoted", workflow, {"stage": "prod"})
     assert event["event_type"] == "adapter_promoted"

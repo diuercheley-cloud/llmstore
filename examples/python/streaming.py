@@ -11,19 +11,17 @@ if not API_KEY:
     print("Error: CLIENT_API_KEY is not set.")
     exit(1)
 
+
 def main():
     url = f"{BASE_URL}/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "Content-Type": "application/json"
-    }
+    headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
     data = {
         "model": "default",
         "messages": [
             {"role": "user", "content": "Tell me a story about a brave robot in 3 paragraphs."}
         ],
         "stream": True,
-        "temperature": 0.7
+        "temperature": 0.7,
     }
 
     print(f"Sending streaming request to {url}...")
@@ -50,6 +48,7 @@ def main():
                 except json.JSONDecodeError:
                     pass
     print("\nStream finished.")
+
 
 if __name__ == "__main__":
     main()

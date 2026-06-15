@@ -8,8 +8,8 @@ frontend:test:
     - bash scripts/ci/frontend-ci.sh
   artifacts:
     paths:
-      - frontend/admin/dist/
-      - frontend/admin/storybook-static/
+      - control_plane/app/static/admin-v2/
+      - frontend/client/dist/
     expire_in: 7 days
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"

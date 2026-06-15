@@ -55,9 +55,7 @@ def test_lite_plan_omits_postgres_and_observability(tmp_path):
 
 
 def test_agentic_plan_enables_agent_worker(tmp_path):
-    plan = build_install_plan(
-        _answers(tmp_path, has_gpu=True, nvidia=True, users=20, agentic=True)
-    )
+    plan = build_install_plan(_answers(tmp_path, has_gpu=True, nvidia=True, users=20, agentic=True))
     write_install_artifacts(plan)
 
     compose = yaml.safe_load((tmp_path / "docker-compose.yml").read_text(encoding="utf-8"))

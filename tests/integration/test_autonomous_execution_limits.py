@@ -1,14 +1,20 @@
 import pytest
 from app.models.commercial.commercial_attestation_runtime import CommercialRuntimeAttestation
-from app.models.commercial.commercial_autonomous_guardrails import CommercialAutonomousExecutionPolicy
+from app.models.commercial.commercial_autonomous_guardrails import (
+    CommercialAutonomousExecutionPolicy,
+)
 from app.models.commercial.commercial_governance import CommercialPolicyBundle
 from app.models.commercial.commercial_runtime_fabric import CommercialRuntimeFabricHealth
-from app.models.commercial.commercial_sovereign_governance import CommercialHardwareAttestationRecord
+from app.models.commercial.commercial_sovereign_governance import (
+    CommercialHardwareAttestationRecord,
+)
 from app.services.governance.autonomous_execution_limits import AutonomousExecutionLimitsService
 from app.services.governance.blast_radius_analysis import BlastRadiusAnalysisService, sha256_hex
 
 
-async def _seed_enforcement_state(session, *, action_type: str, runtime_freeze: bool = False, rollback_allowed: bool = False):
+async def _seed_enforcement_state(
+    session, *, action_type: str, runtime_freeze: bool = False, rollback_allowed: bool = False
+):
     bundle = CommercialPolicyBundle(
         bundle_name="guardrails-bundle",
         bundle_version="1.0.0",
@@ -80,12 +86,26 @@ async def test_runtime_freeze_blocks_execution(session):
     service = AutonomousExecutionLimitsService()
     blast_radius = await BlastRadiusAnalysisService().analyze_and_record(
         session,
-        request={"action_type": "safe_throttle", "target_type": "runtime_node", "target_id": "node-1", "tenant_id": "tenant-a", "node_id": "node-1", "cluster_id": "cluster-a"},
+        request={
+            "action_type": "safe_throttle",
+            "target_type": "runtime_node",
+            "target_id": "node-1",
+            "tenant_id": "tenant-a",
+            "node_id": "node-1",
+            "cluster_id": "cluster-a",
+        },
     )
 
     result = await service.evaluate(
         session,
-        request={"action_type": "safe_throttle", "target_type": "runtime_node", "target_id": "node-1", "tenant_id": "tenant-a", "node_id": "node-1", "cluster_id": "cluster-a"},
+        request={
+            "action_type": "safe_throttle",
+            "target_type": "runtime_node",
+            "target_id": "node-1",
+            "tenant_id": "tenant-a",
+            "node_id": "node-1",
+            "cluster_id": "cluster-a",
+        },
         blast_radius=blast_radius,
     )
 

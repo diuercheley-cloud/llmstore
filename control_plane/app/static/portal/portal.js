@@ -277,11 +277,22 @@
   }
 
   async function initPortal() {
-    const [me, usage, models] = await Promise.all([
-      apiFetch('/portal/me'),
+    // Authentication must depend only on the identity endpoint. Optional portal
+    // modules can be temporarily unavailable without rejecting a valid API key.
+    const me = await apiFetch('/portal/me');
+    const [usageResult, modelsResult] = await Promise.allSettled([
       apiFetch('/portal/usage'),
       apiFetch('/portal/models')
     ]);
+    const usage = usageResult.status === 'fulfilled' ? usageResult.value : {
+      requests_today: 0,
+      tokens_month: 0,
+      wallet_balance_brl: 0,
+      monthly_usage: { used_tokens: 0, quota: null },
+      quota_remaining: { monthly_tokens: null },
+      invoice_preview: { currency: 'BRL', total_estimated: 0 }
+    };
+    const models = modelsResult.status === 'fulfilled' ? modelsResult.value : [];
     state.client = me;
     state.models = models;
     state.demoMode = me.demo_mode === true;
@@ -299,7 +310,14 @@
 
     renderOverview(me, usage);
     renderModelSelects();
-    await loadPageData();
+    try {
+      await loadPageData();
+    } catch (error) {
+      showToast(`Login concluído, mas um módulo do portal está indisponível: ${error.message}`);
+    }
+    if (usageResult.status === 'rejected' || modelsResult.status === 'rejected') {
+      showToast('Login concluído. Alguns dados do portal estão temporariamente indisponíveis.');
+    }
   }
 
   function renderOverview(me, usage) {
@@ -646,8 +664,9 @@
     `).join('') : renderEmpty('Nenhum modelo habilitado para este cliente.', 5);
   }
 
-  async function loadPlansPage() {
-    const plans = await apiFetch('/portal/plans');
+  async function loadPlansPage({ publicCatalog = false } = {}) {
+    const payload = await apiFetch(publicCatalog ? '/public/plans' : '/portal/plans');
+    const plans = Array.isArray(payload) ? payload : (payload.plans || []);
     const table = byId('plansTableBody');
     if (!table) return;
     const currentPlan = state.client ? state.client.plan : null;
@@ -655,9 +674,11 @@
       <tr>
         <td><strong>${esc(plan.name)}</strong><br><code>${esc(plan.code)}</code></td>
         <td>${formatMoney(plan.currency, plan.monthly_price)}</td>
-        <td>${plan.rate_limit_rpm || '-'}</td>
+        <td>${plan.rate_limit_rpm || plan.rate_limit_per_minute || '-'}</td>
         <td>${formatTokenLimit(plan.monthly_token_quota)}</td>
-        <td>${currentPlan && currentPlan.code === plan.code ? '<span class="badge badge-active">Atual</span>' : `<button onclick="upgradePlan('${plan.code}')">Migrar</button>`}</td>
+        <td>${currentPlan && currentPlan.code === plan.code
+          ? '<span class="badge badge-active">Atual</span>'
+          : (state.apiKey ? `<button onclick="upgradePlan('${plan.code}')">Migrar</button>` : '<span class="badge">Entre para migrar</span>')}</td>
       </tr>
     `).join('') : renderEmpty('Nenhum plano ativo encontrado.', 5);
   }
@@ -1216,6 +1237,11 @@
   if (bootKey) {
     attemptLogin(bootKey, { persist: Boolean(urlKey) || Boolean(savedKey) }).catch(() => {
       if (urlKey) alert('A API key fornecida na URL e invalida ou nao conseguiu autenticar no portal.');
+    });
+  } else if (page === 'plans') {
+    if (els.loginOverlay) els.loginOverlay.style.display = 'none';
+    loadPlansPage({ publicCatalog: true }).catch((error) => {
+      showToast(`Não foi possível carregar os planos: ${error.message}`);
     });
   }
 })();

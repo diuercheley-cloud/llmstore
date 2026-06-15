@@ -15,7 +15,7 @@ import json
 import os
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -63,8 +63,16 @@ CLOUD_PROVIDER_MAP = {
         "env_model": "OPENAI_CHAT_MODEL",
         "default_model": "gpt-4o-mini",
         "endpoint": "/v1/chat/completions",
-        "headers_func": lambda k: {"Authorization": f"Bearer {k}", "Content-Type": "application/json"},
-        "payload_func": lambda m: {"model": m, "messages": [{"role": "user", "content": "Responda apenas: OK"}], "max_tokens": 50, "temperature": 0.0},
+        "headers_func": lambda k: {
+            "Authorization": f"Bearer {k}",
+            "Content-Type": "application/json",
+        },
+        "payload_func": lambda m: {
+            "model": m,
+            "messages": [{"role": "user", "content": "Responda apenas: OK"}],
+            "max_tokens": 50,
+            "temperature": 0.0,
+        },
     },
     "anthropic": {
         "env_enabled": "ANTHROPIC_PROVIDER_ENABLED",
@@ -72,8 +80,17 @@ CLOUD_PROVIDER_MAP = {
         "env_model": "ANTHROPIC_MODEL",
         "default_model": "claude-3-haiku-20240307",
         "endpoint": "/v1/messages",
-        "headers_func": lambda k: {"x-api-key": k, "anthropic-version": "2023-06-01", "Content-Type": "application/json"},
-        "payload_func": lambda m: {"model": m, "messages": [{"role": "user", "content": "Responda apenas: OK"}], "max_tokens": 50, "temperature": 0.0},
+        "headers_func": lambda k: {
+            "x-api-key": k,
+            "anthropic-version": "2023-06-01",
+            "Content-Type": "application/json",
+        },
+        "payload_func": lambda m: {
+            "model": m,
+            "messages": [{"role": "user", "content": "Responda apenas: OK"}],
+            "max_tokens": 50,
+            "temperature": 0.0,
+        },
     },
     "deepseek": {
         "env_enabled": "DEEPSEEK_PROVIDER_ENABLED",
@@ -81,8 +98,16 @@ CLOUD_PROVIDER_MAP = {
         "env_model": "DEEPSEEK_CHAT_MODEL",
         "default_model": "deepseek-chat",
         "endpoint": "/v1/chat/completions",
-        "headers_func": lambda k: {"Authorization": f"Bearer {k}", "Content-Type": "application/json"},
-        "payload_func": lambda m: {"model": m, "messages": [{"role": "user", "content": "Responda apenas: OK"}], "max_tokens": 50, "temperature": 0.0},
+        "headers_func": lambda k: {
+            "Authorization": f"Bearer {k}",
+            "Content-Type": "application/json",
+        },
+        "payload_func": lambda m: {
+            "model": m,
+            "messages": [{"role": "user", "content": "Responda apenas: OK"}],
+            "max_tokens": 50,
+            "temperature": 0.0,
+        },
     },
 }
 
@@ -108,9 +133,11 @@ class FallbackValidator:
         self.env = env
         self.dry_run = args.dry_run
         self.provider_pref = args.provider or "auto"
-        self.max_cost_brl = args.max_cost_brl or float(env.get("REAL_PROVIDER_MAX_COST_BRL", "2.00"))
+        self.max_cost_brl = args.max_cost_brl or float(
+            env.get("REAL_PROVIDER_MAX_COST_BRL", "2.00")
+        )
         self.output_dir = Path(args.output_dir)
-        self.timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        self.timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         self.report: dict[str, Any] = {
             "validator": "fallback-local-to-cloud",
             "timestamp": self.timestamp,
@@ -142,7 +169,11 @@ class FallbackValidator:
     def run(self) -> dict[str, Any]:
         rpv = self.env.get("REAL_PROVIDER_VALIDATION_ENABLED", "false")
         if rpv not in ("true", "1"):
-            self._check("env.real_provider_validation_enabled", "skip", "REAL_PROVIDER_VALIDATION_ENABLED is not true")
+            self._check(
+                "env.real_provider_validation_enabled",
+                "skip",
+                "REAL_PROVIDER_VALIDATION_ENABLED is not true",
+            )
             self.report["status"] = "FALLBACK_REAL_SKIP"
             return self.report
 
@@ -161,7 +192,11 @@ class FallbackValidator:
         self.report["provider"] = provider
         self.report["model"] = model
 
-        self._check("env.guards", "pass", f"REAL_PROVIDER_VALIDATION_ENABLED=true, provider={provider} configured/enabled")
+        self._check(
+            "env.guards",
+            "pass",
+            f"REAL_PROVIDER_VALIDATION_ENABLED=true, provider={provider} configured/enabled",
+        )
 
         steps = []
         simulated_decisions = []
@@ -172,7 +207,9 @@ class FallbackValidator:
         simulated_decisions.append(("normal", normal_decision))
         self._check(
             "routing.normal",
-            "pass" if normal_decision.get("selected_provider", "") in ("local", "lmstudio", "mock") else "warn",
+            "pass"
+            if normal_decision.get("selected_provider", "") in ("local", "lmstudio", "mock")
+            else "warn",
             f"provider={normal_decision.get('selected_provider')}, fallback_chain={normal_decision.get('fallback_chain')}",
             decision=normal_decision,
         )
@@ -183,7 +220,9 @@ class FallbackValidator:
         simulated_decisions.append(("failed", failed_decision))
         self._check(
             "routing.local_failure",
-            "pass" if failed_decision.get("selected_provider", "") not in ("local", "lmstudio") else "fail",
+            "pass"
+            if failed_decision.get("selected_provider", "") not in ("local", "lmstudio")
+            else "fail",
             f"provider={failed_decision.get('selected_provider')}, fallback_chain={failed_decision.get('fallback_chain')}",
             decision=failed_decision,
         )
@@ -199,7 +238,10 @@ class FallbackValidator:
         steps.append("cloud_used_check")
 
         # ── Step 4: Validate fallback_used flag ─────────────────────
-        fallback_used = failed_decision.get("fallback_chain", []) and len(failed_decision.get("fallback_chain", [])) > 1
+        fallback_used = (
+            failed_decision.get("fallback_chain", [])
+            and len(failed_decision.get("fallback_chain", [])) > 1
+        )
         if normal_decision.get("selected_provider") != failed_decision.get("selected_provider"):
             fallback_used = True
         self._check(
@@ -232,8 +274,11 @@ class FallbackValidator:
 
     def _simulate_routing(self, force_local_failure: bool) -> dict[str, Any]:
         try:
-            os.environ["ROUTING_TEST_FORCE_LOCAL_FAILURE"] = "true" if force_local_failure else "false"
+            os.environ["ROUTING_TEST_FORCE_LOCAL_FAILURE"] = (
+                "true" if force_local_failure else "false"
+            )
             from app.core.config import get_settings
+
             get_settings.cache_clear()
 
             from app.schemas.routing import EndpointType, RoutingStrategy, SmartRouterInput
@@ -257,11 +302,20 @@ class FallbackValidator:
                 "warnings": decision.warnings,
             }
         except Exception as e:
-            return {"selected_provider": "error", "fallback_chain": [], "cloud_used": False, "reason": str(e), "warnings": [str(e)]}
+            return {
+                "selected_provider": "error",
+                "fallback_chain": [],
+                "cloud_used": False,
+                "reason": str(e),
+                "warnings": [str(e)],
+            }
 
-    def _do_real_call(self, provider: str, api_key: str, model: str, base_url: str, cfg: dict[str, Any]):
+    def _do_real_call(
+        self, provider: str, api_key: str, model: str, base_url: str, cfg: dict[str, Any]
+    ):
         os.environ["ROUTING_TEST_FORCE_LOCAL_FAILURE"] = "true"
         from app.core.config import get_settings
+
         get_settings.cache_clear()
 
         payload = cfg["payload_func"](model)
@@ -277,13 +331,36 @@ class FallbackValidator:
                 data = resp.json()
                 usage = data.get("usage", {}) or {}
                 prompt_tokens = usage.get("input_tokens", 0) or usage.get("prompt_tokens", 0)
-                completion_tokens = usage.get("output_tokens", 0) or usage.get("completion_tokens", 0)
-                self._check("cloud.call", "pass", f"latency={latency}ms, tokens={prompt_tokens}+{completion_tokens}", latency_ms=latency, prompt_tokens=prompt_tokens, completion_tokens=completion_tokens)
-                self.report["billing"] = {"provider": provider, "model": model, "prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens, "total_tokens": prompt_tokens + completion_tokens, "latency_ms": latency}
-                self._check("fallback.used", "pass", "fallback_used=true — local failed, cloud responded")
+                completion_tokens = usage.get("output_tokens", 0) or usage.get(
+                    "completion_tokens", 0
+                )
+                self._check(
+                    "cloud.call",
+                    "pass",
+                    f"latency={latency}ms, tokens={prompt_tokens}+{completion_tokens}",
+                    latency_ms=latency,
+                    prompt_tokens=prompt_tokens,
+                    completion_tokens=completion_tokens,
+                )
+                self.report["billing"] = {
+                    "provider": provider,
+                    "model": model,
+                    "prompt_tokens": prompt_tokens,
+                    "completion_tokens": completion_tokens,
+                    "total_tokens": prompt_tokens + completion_tokens,
+                    "latency_ms": latency,
+                }
+                self._check(
+                    "fallback.used", "pass", "fallback_used=true — local failed, cloud responded"
+                )
                 self._check("cloud.used", "pass", "cloud_used=true — cloud provider served request")
             else:
-                self._check("cloud.call", "fail", f"HTTP {resp.status_code}: {resp.text[:200]}", latency_ms=latency)
+                self._check(
+                    "cloud.call",
+                    "fail",
+                    f"HTTP {resp.status_code}: {resp.text[:200]}",
+                    latency_ms=latency,
+                )
         except Exception as e:
             self._check("cloud.call", "fail", str(e), latency_ms=0)
 
@@ -350,11 +427,19 @@ class FallbackValidator:
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Validate fallback local-to-cloud real provider")
     p.add_argument("--dry-run", action="store_true", help="Simulate routing only, no real calls")
-    p.add_argument("--real", action="store_true", help="Make real API calls with forced local failure")
-    p.add_argument("--provider", default="auto", help="Cloud provider: openai, anthropic, deepseek, or auto")
+    p.add_argument(
+        "--real", action="store_true", help="Make real API calls with forced local failure"
+    )
+    p.add_argument(
+        "--provider", default="auto", help="Cloud provider: openai, anthropic, deepseek, or auto"
+    )
     p.add_argument("--model", default=None, help="Model to use for real call")
     p.add_argument("--max-cost-brl", type=float, default=None, help="Max cost in BRL")
-    p.add_argument("--output-dir", default=str(PROJECT_ROOT / "artifacts" / "real-provider-validation" / "fallback"), help="Output directory")
+    p.add_argument(
+        "--output-dir",
+        default=str(PROJECT_ROOT / "artifacts" / "real-provider-validation" / "fallback"),
+        help="Output directory",
+    )
     return p.parse_args(argv)
 
 

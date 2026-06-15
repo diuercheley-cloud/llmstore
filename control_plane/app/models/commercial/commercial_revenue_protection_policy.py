@@ -22,7 +22,11 @@ class CommercialRevenueProtectionPolicy(Base):
     mode: Mapped[str] = mapped_column(String(32), nullable=False, default="report_only")
     cooldown_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=60)
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
 
     actions = relationship("CommercialRevenueProtectionAction", back_populates="policy")

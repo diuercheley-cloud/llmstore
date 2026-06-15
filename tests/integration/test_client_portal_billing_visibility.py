@@ -1,4 +1,3 @@
-
 from app.services.billing.pricing_engine import calculate_financials
 
 
@@ -46,7 +45,12 @@ def test_client_can_see_own_price_only():
 def test_margin_field_not_accidentally_exposed_in_portal_context():
     portal_response = {
         "usage": [
-            {"date": "2026-05-01", "prompt_tokens": 100, "completion_tokens": 50, "price_brl": 0.005},
+            {
+                "date": "2026-05-01",
+                "prompt_tokens": 100,
+                "completion_tokens": 50,
+                "price_brl": 0.005,
+            },
         ]
     }
     for entry in portal_response["usage"]:

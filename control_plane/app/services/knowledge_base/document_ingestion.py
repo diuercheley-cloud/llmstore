@@ -13,10 +13,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class DocumentIngestionService:
     """
     Orchestrates the end-to-end ingestion process for KB documents.
     """
+
     def __init__(self, db: AsyncSession):
         self.db = db
         self.registry = KBRegistry(db)
@@ -29,19 +31,19 @@ class DocumentIngestionService:
         Processes an uploaded file.
         """
         job = await self._create_job(kb_id)
-        
+
         try:
             # 1. Register doc
             doc = await self.registry.register_document(kb_id, name, "file")
-            
+
             # 2. Extract text (assuming PDF for now)
             extracted = await self.pdf_ingestor.ingest(content)
             text = extracted["text"]
-            
+
             # 3. Create version
             content_hash = hashlib.sha256(content).hexdigest()
             version = await self.registry.create_document_version(doc.id, "v1", content_hash)
-            
+
             # 4. Chunk and store
             chunks = self.chunker.split_document(text, extracted["metadata"])
             for c in chunks:
@@ -49,15 +51,15 @@ class DocumentIngestionService:
                     version_id=version.id,
                     chunk_index=c["chunk_index"],
                     content=c["content"],
-                    metadata_json=c["metadata"]
+                    metadata_json=c["metadata"],
                 )
                 self.db.add(chunk_obj)
-            
+
             await self._complete_job(job)
         except Exception as e:
             await self._fail_job(job, str(e))
             raise e
-            
+
         await self.db.commit()
         return job
 
@@ -66,20 +68,20 @@ class DocumentIngestionService:
         Processes a web URL.
         """
         job = await self._create_job(kb_id)
-        
+
         try:
             # 1. Register doc
             name = url.split("/")[-1] or "web_doc"
             doc = await self.registry.register_document(kb_id, name, "url", source_url=url)
-            
+
             # 2. Scrape
             extracted = await self.web_ingestor.ingest(url)
             text = extracted["text"]
-            
+
             # 3. Create version
             content_hash = hashlib.sha256(text.encode()).hexdigest()
             version = await self.registry.create_document_version(doc.id, "v1", content_hash)
-            
+
             # 4. Chunk and store
             chunks = self.chunker.split_document(text, extracted["metadata"])
             for c in chunks:
@@ -87,25 +89,21 @@ class DocumentIngestionService:
                     version_id=version.id,
                     chunk_index=c["chunk_index"],
                     content=c["content"],
-                    metadata_json=c["metadata"]
+                    metadata_json=c["metadata"],
                 )
                 self.db.add(chunk_obj)
-                
+
             await self._complete_job(job)
         except Exception as e:
             await self._fail_job(job, str(e))
             raise e
-            
+
         await self.db.commit()
         return job
 
     async def _create_job(self, kb_id: uuid.UUID) -> KBIngestionJob:
         kb = await self.registry.get_kb(kb_id)
-        job = KBIngestionJob(
-            kb_id=kb_id,
-            tenant_id=kb.tenant_id,
-            status="running"
-        )
+        job = KBIngestionJob(kb_id=kb_id, tenant_id=kb.tenant_id, status="running")
         self.db.add(job)
         await self.db.flush()
         return job

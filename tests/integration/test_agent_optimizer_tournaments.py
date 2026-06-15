@@ -135,8 +135,24 @@ class TestABTesting:
         service = ABTestingService()
         ca = AgentOptimizationTournamentCandidate(id=uuid.uuid4(), label="A")
         cb = AgentOptimizationTournamentCandidate(id=uuid.uuid4(), label="B")
-        metrics_a = {"success_rate": 0.9, "latency_p50": 100, "latency_p95": 200, "cost": 0.01, "tool_error_rate": 0, "policy_denial_rate": 0, "safety_failure_rate": 0}
-        metrics_b = {"success_rate": 0.7, "latency_p50": 300, "latency_p95": 600, "cost": 0.05, "tool_error_rate": 0.1, "policy_denial_rate": 0, "safety_failure_rate": 0}
+        metrics_a = {
+            "success_rate": 0.9,
+            "latency_p50": 100,
+            "latency_p95": 200,
+            "cost": 0.01,
+            "tool_error_rate": 0,
+            "policy_denial_rate": 0,
+            "safety_failure_rate": 0,
+        }
+        metrics_b = {
+            "success_rate": 0.7,
+            "latency_p50": 300,
+            "latency_p95": 600,
+            "cost": 0.05,
+            "tool_error_rate": 0.1,
+            "policy_denial_rate": 0,
+            "safety_failure_rate": 0,
+        }
         winner_id, score_a, score_b = service.compare_pairwise(ca, cb, metrics_a, metrics_b)
         assert winner_id == ca.id
         assert score_a > score_b
@@ -148,9 +164,33 @@ class TestABTesting:
         tc2 = AgentOptimizationTournamentCandidate(id=uuid.uuid4())
         tc3 = AgentOptimizationTournamentCandidate(id=uuid.uuid4())
         metrics_map = {
-            tc1.id: {"success_rate": 0.9, "latency_p50": 100, "latency_p95": 200, "cost": 0.01, "tool_error_rate": 0, "policy_denial_rate": 0, "safety_failure_rate": 0},
-            tc2.id: {"success_rate": 0.8, "latency_p50": 150, "latency_p95": 300, "cost": 0.02, "tool_error_rate": 0, "policy_denial_rate": 0, "safety_failure_rate": 0},
-            tc3.id: {"success_rate": 0.7, "latency_p50": 200, "latency_p95": 400, "cost": 0.03, "tool_error_rate": 0, "policy_denial_rate": 0, "safety_failure_rate": 0},
+            tc1.id: {
+                "success_rate": 0.9,
+                "latency_p50": 100,
+                "latency_p95": 200,
+                "cost": 0.01,
+                "tool_error_rate": 0,
+                "policy_denial_rate": 0,
+                "safety_failure_rate": 0,
+            },
+            tc2.id: {
+                "success_rate": 0.8,
+                "latency_p50": 150,
+                "latency_p95": 300,
+                "cost": 0.02,
+                "tool_error_rate": 0,
+                "policy_denial_rate": 0,
+                "safety_failure_rate": 0,
+            },
+            tc3.id: {
+                "success_rate": 0.7,
+                "latency_p50": 200,
+                "latency_p95": 400,
+                "cost": 0.03,
+                "tool_error_rate": 0,
+                "policy_denial_rate": 0,
+                "safety_failure_rate": 0,
+            },
         }
         results = service.build_pairwise_results(tournament, [tc1, tc2, tc3], metrics_map)
         assert len(results) == 3
@@ -165,8 +205,24 @@ class TestCandidateRanker:
         tc2 = AgentOptimizationTournamentCandidate(id=uuid.uuid4())
         candidates = [tc1, tc2]
         metrics_map = {
-            tc1.id: {"success_rate": 0.95, "latency_p50": 50, "latency_p95": 100, "cost": 0.01, "tool_error_rate": 0, "policy_denial_rate": 0, "safety_failure_rate": 0},
-            tc2.id: {"success_rate": 0.60, "latency_p50": 500, "latency_p95": 1000, "cost": 0.10, "tool_error_rate": 0.2, "policy_denial_rate": 0, "safety_failure_rate": 0.3},
+            tc1.id: {
+                "success_rate": 0.95,
+                "latency_p50": 50,
+                "latency_p95": 100,
+                "cost": 0.01,
+                "tool_error_rate": 0,
+                "policy_denial_rate": 0,
+                "safety_failure_rate": 0,
+            },
+            tc2.id: {
+                "success_rate": 0.60,
+                "latency_p50": 500,
+                "latency_p95": 1000,
+                "cost": 0.10,
+                "tool_error_rate": 0.2,
+                "policy_denial_rate": 0,
+                "safety_failure_rate": 0.3,
+            },
         }
         results = ranker.rank_candidates(tournament, candidates, metrics_map, {})
         assert len(results) == 2
@@ -175,8 +231,12 @@ class TestCandidateRanker:
 
     def test_select_winner_skips_safety_regression(self):
         ranker = CandidateRanker()
-        r1 = AgentOptimizationTournamentResult(tournament_candidate_id=uuid.uuid4(), score=0.8, rank=1, safety_regression=True)
-        r2 = AgentOptimizationTournamentResult(tournament_candidate_id=uuid.uuid4(), score=0.6, rank=2, safety_regression=False)
+        r1 = AgentOptimizationTournamentResult(
+            tournament_candidate_id=uuid.uuid4(), score=0.8, rank=1, safety_regression=True
+        )
+        r2 = AgentOptimizationTournamentResult(
+            tournament_candidate_id=uuid.uuid4(), score=0.6, rank=2, safety_regression=False
+        )
         winner = ranker.select_winner([r1, r2])
         assert winner == r2
 
@@ -187,8 +247,24 @@ class TestCandidateRanker:
         tc_cheap = AgentOptimizationTournamentCandidate(id=uuid.uuid4())
         candidates = [tc_best, tc_cheap]
         metrics_map = {
-            tc_best.id: {"success_rate": 0.95, "latency_p50": 100, "latency_p95": 200, "cost": 0.10, "tool_error_rate": 0, "policy_denial_rate": 0, "safety_failure_rate": 0},
-            tc_cheap.id: {"success_rate": 0.30, "latency_p50": 100, "latency_p95": 200, "cost": 0.001, "tool_error_rate": 0, "policy_denial_rate": 0, "safety_failure_rate": 0},
+            tc_best.id: {
+                "success_rate": 0.95,
+                "latency_p50": 100,
+                "latency_p95": 200,
+                "cost": 0.10,
+                "tool_error_rate": 0,
+                "policy_denial_rate": 0,
+                "safety_failure_rate": 0,
+            },
+            tc_cheap.id: {
+                "success_rate": 0.30,
+                "latency_p50": 100,
+                "latency_p95": 200,
+                "cost": 0.001,
+                "tool_error_rate": 0,
+                "policy_denial_rate": 0,
+                "safety_failure_rate": 0,
+            },
         }
         results = ranker.rank_candidates(tournament, candidates, metrics_map, {})
         assert results[0].rank == 1
@@ -210,7 +286,9 @@ class TestTournamentRunner:
             AsyncMock(scalar_one_or_none=MagicMock(return_value=candidates[2])),
         ]
 
-        with patch("app.services.agents.optimization.tournament_runner.get_settings") as mock_settings:
+        with patch(
+            "app.services.agents.optimization.tournament_runner.get_settings"
+        ) as mock_settings:
             settings = MagicMock()
             settings.agent_optimizer_tournaments_enabled = True
             mock_settings.return_value = settings
@@ -229,7 +307,9 @@ class TestTournamentRunner:
         with patch.object(runner, "_evaluate_all_candidates") as mock_eval:
             mock_eval.return_value = {}
 
-            with patch("app.services.agents.optimization.tournament_runner.get_settings") as mock_settings:
+            with patch(
+                "app.services.agents.optimization.tournament_runner.get_settings"
+            ) as mock_settings:
                 settings = MagicMock()
                 settings.agent_optimizer_tournaments_enabled = True
                 settings.agent_optimizer_parallel_evals_enabled = True
@@ -258,8 +338,24 @@ class TestTournamentRunner:
         tc_unsafe = AgentOptimizationTournamentCandidate(id=uuid.uuid4())
         candidates = [tc_unsafe, tc_safe]
         metrics_map = {
-            tc_safe.id: {"success_rate": 0.8, "latency_p50": 100, "latency_p95": 200, "cost": 0.05, "tool_error_rate": 0, "policy_denial_rate": 0, "safety_failure_rate": 0},
-            tc_unsafe.id: {"success_rate": 0.9, "latency_p50": 100, "latency_p95": 200, "cost": 0.05, "tool_error_rate": 0, "policy_denial_rate": 0, "safety_failure_rate": 0.5},
+            tc_safe.id: {
+                "success_rate": 0.8,
+                "latency_p50": 100,
+                "latency_p95": 200,
+                "cost": 0.05,
+                "tool_error_rate": 0,
+                "policy_denial_rate": 0,
+                "safety_failure_rate": 0,
+            },
+            tc_unsafe.id: {
+                "success_rate": 0.9,
+                "latency_p50": 100,
+                "latency_p95": 200,
+                "cost": 0.05,
+                "tool_error_rate": 0,
+                "policy_denial_rate": 0,
+                "safety_failure_rate": 0.5,
+            },
         }
         results = ranker.rank_candidates(tournament, candidates, metrics_map, {})
         winner = ranker.select_winner(results)
@@ -268,7 +364,9 @@ class TestTournamentRunner:
 
     @pytest.mark.asyncio
     async def test_winner_does_not_apply_without_approval(self, runner, mock_db):
-        with patch("app.services.agents.optimization.tournament_runner.get_settings") as mock_settings:
+        with patch(
+            "app.services.agents.optimization.tournament_runner.get_settings"
+        ) as mock_settings:
             settings = MagicMock()
             settings.agent_optimizer_tournaments_enabled = True
             settings.agent_optimizer_apply_winner_enabled = True
@@ -290,7 +388,9 @@ class TestTournamentRunner:
 
     @pytest.mark.asyncio
     async def test_rollback_point_created(self, runner, mock_db, agent):
-        with patch("app.services.agents.optimization.tournament_runner.get_settings") as mock_settings:
+        with patch(
+            "app.services.agents.optimization.tournament_runner.get_settings"
+        ) as mock_settings:
             settings = MagicMock()
             settings.agent_optimizer_tournaments_enabled = True
             mock_settings.return_value = settings

@@ -1,5 +1,5 @@
 import abc
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class VectorStoreBase(abc.ABC):
@@ -12,9 +12,9 @@ class VectorStoreBase(abc.ABC):
         self,
         collection_name: str,
         id: str,
-        vector: List[float],
-        metadata: Optional[Dict[str, Any]] = None,
-        namespace: Optional[str] = None,
+        vector: list[float],
+        metadata: dict[str, Any] | None = None,
+        namespace: str | None = None,
     ) -> None:
         """
         Insert or update a vector in the store.
@@ -25,11 +25,11 @@ class VectorStoreBase(abc.ABC):
     async def search(
         self,
         collection_name: str,
-        vector: List[float],
+        vector: list[float],
         limit: int = 5,
-        filters: Optional[Dict[str, Any]] = None,
-        namespace: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        filters: dict[str, Any] | None = None,
+        namespace: str | None = None,
+    ) -> list[dict[str, Any]]:
         """
         Search for similar vectors.
         """
@@ -39,8 +39,8 @@ class VectorStoreBase(abc.ABC):
     async def delete(
         self,
         collection_name: str,
-        ids: List[str],
-        namespace: Optional[str] = None,
+        ids: list[str],
+        namespace: str | None = None,
     ) -> None:
         """
         Delete vectors by ID.
@@ -52,7 +52,7 @@ class VectorStoreBase(abc.ABC):
         self,
         collection_name: str,
         dimension: int,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """
         Create a new collection.
@@ -70,7 +70,7 @@ class VectorStoreBase(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def healthcheck(self) -> Dict[str, Any]:
+    async def healthcheck(self) -> dict[str, Any]:
         """
         Check the health of the vector store.
         """

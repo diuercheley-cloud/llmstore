@@ -1,5 +1,4 @@
 import pytest
-
 from app.services.agents.guardrails.content_moderator import ContentModerator
 
 

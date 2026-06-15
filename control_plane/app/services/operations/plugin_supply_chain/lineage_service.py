@@ -5,7 +5,9 @@ from app.services.operations.plugin_supply_chain.hash_utils import compute_linea
 
 
 class PluginArtifactLineageService:
-    def create_lineage(self, provenance_record: Any, parent_artifact_hash: str | None = None) -> PluginArtifactLineage:
+    def create_lineage(
+        self, provenance_record: Any, parent_artifact_hash: str | None = None
+    ) -> PluginArtifactLineage:
         logical_payload = {
             "client_id": str(provenance_record.client_id),
             "provenance_record_id": provenance_record.id,
@@ -22,12 +24,16 @@ class PluginArtifactLineageService:
             parent_artifact_hash=parent_artifact_hash,
             lineage_hash=lineage_hash,
             replay_verifiable=True,
-            immutable_hash=sha256_hex({"kind": "plugin_artifact_lineage_immutable", "lineage_hash": lineage_hash}),
+            immutable_hash=sha256_hex(
+                {"kind": "plugin_artifact_lineage_immutable", "lineage_hash": lineage_hash}
+            ),
         )
         lineage._logical_payload = logical_payload
         return lineage
 
-    def verify_lineage(self, lineage: PluginArtifactLineage, provenance_record: Any) -> dict[str, Any]:
+    def verify_lineage(
+        self, lineage: PluginArtifactLineage, provenance_record: Any
+    ) -> dict[str, Any]:
         logical_payload = getattr(lineage, "_logical_payload", None) or {
             "client_id": str(lineage.client_id),
             "provenance_record_id": lineage.provenance_record_id,

@@ -3,7 +3,7 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Set
+from typing import Any
 
 import yaml
 
@@ -16,7 +16,7 @@ class SurfaceAuditService:
             base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../"))
         self.base_dir = Path(base_dir)
 
-    def run_audit(self) -> Dict[str, Any]:
+    def run_audit(self) -> dict[str, Any]:
         return {
             "apis": self.audit_apis(),
             "ui_pages": self.audit_ui_pages(),
@@ -37,13 +37,13 @@ class SurfaceAuditService:
             logger.error("Failed to load %s: %s", path, exc)
             return default
 
-    def _load_supported_capabilities(self) -> List[Dict[str, Any]]:
+    def _load_supported_capabilities(self) -> list[dict[str, Any]]:
         data = self._load_yaml(self.base_dir / "config/supported-surface.yaml", {})
         if isinstance(data, dict):
             return data.get("capabilities", []) or []
         return []
 
-    def audit_apis(self) -> Dict[str, Any]:
+    def audit_apis(self) -> dict[str, Any]:
         yaml_path = self.base_dir / "config/api-surface.yaml"
         yaml_endpoints = []
         yaml_deprecated = []
@@ -81,7 +81,9 @@ class SurfaceAuditService:
         for path, method in fastapi_routes:
             route_counts[(path, method)] = route_counts.get((path, method), 0) + 1
 
-        duplicates = [f"{method} {path}" for (path, method), count in route_counts.items() if count > 1]
+        duplicates = [
+            f"{method} {path}" for (path, method), count in route_counts.items() if count > 1
+        ]
         fastapi_set = set(fastapi_routes)
         yaml_map = {(endpoint, method): status for endpoint, method, status in yaml_endpoints}
         yaml_set = {(endpoint, method) for endpoint, method, _ in yaml_endpoints}
@@ -119,7 +121,7 @@ class SurfaceAuditService:
             "deprecated_apis": yaml_deprecated,
         }
 
-    def audit_ui_pages(self) -> Dict[str, Any]:
+    def audit_ui_pages(self) -> dict[str, Any]:
         app_tsx_path = self.base_dir / "frontend/admin/src/App.tsx"
         if not app_tsx_path.exists():
             return {"all_pages": [], "orphaned_pages": []}
@@ -137,7 +139,7 @@ class SurfaceAuditService:
             "orphaned_pages": missing_pages,
         }
 
-    def audit_services(self) -> Dict[str, Any]:
+    def audit_services(self) -> dict[str, Any]:
         services_dir = self.base_dir / "control_plane/app/services"
         all_service_files = sorted(
             str(path.relative_to(services_dir))
@@ -145,7 +147,7 @@ class SurfaceAuditService:
             if path.name != "__init__.py"
         )
 
-        capability_services: Set[str] = set()
+        capability_services: set[str] = set()
         for capability in self._load_supported_capabilities():
             for service in capability.get("associated_services", []) or []:
                 capability_services.add(str(service))
@@ -161,10 +163,12 @@ class SurfaceAuditService:
 
         return {
             "all_services": all_service_files,
-            "orphaned_services": sorted([rel_path for rel_path in all_service_files if rel_path not in declared_files]),
+            "orphaned_services": sorted(
+                [rel_path for rel_path in all_service_files if rel_path not in declared_files]
+            ),
         }
 
-    def audit_scripts(self) -> Dict[str, Any]:
+    def audit_scripts(self) -> dict[str, Any]:
         manifest = self._load_yaml(self.base_dir / "scripts/manifest.yaml", [])
         manifest_paths = sorted(
             entry["path"].replace("scripts/", "", 1)
@@ -174,9 +178,7 @@ class SurfaceAuditService:
 
         scripts_dir = self.base_dir / "scripts"
         missing_manifest_entries = [
-            path
-            for path in manifest_paths
-            if not (scripts_dir / path).exists()
+            path for path in manifest_paths if not (scripts_dir / path).exists()
         ]
 
         return {
@@ -184,16 +186,18 @@ class SurfaceAuditService:
             "orphaned_scripts": missing_manifest_entries,
         }
 
-    def audit_feature_flags(self) -> Dict[str, Any]:
+    def audit_feature_flags(self) -> dict[str, Any]:
         yaml_path = self.base_dir / "config/feature-flags.yaml"
         flags_data = self._load_yaml(yaml_path, [])
-        all_flags = [entry["name"] for entry in flags_data if isinstance(entry, dict) and "name" in entry]
+        all_flags = [
+            entry["name"] for entry in flags_data if isinstance(entry, dict) and "name" in entry
+        ]
         return {
             "all_flags": sorted(all_flags),
             "orphaned_flags": [],
         }
 
-    def audit_adapters(self) -> Dict[str, Any]:
+    def audit_adapters(self) -> dict[str, Any]:
         adapters_dir = self.base_dir / "control_plane/app/services/agents/tool_adapters"
         init_path = adapters_dir / "__init__.py"
 
@@ -216,21 +220,27 @@ class SurfaceAuditService:
             "unregistered_adapters": sorted(unregistered_adapters),
         }
 
-    def audit_dashboards(self) -> Dict[str, Any]:
+    def audit_dashboards(self) -> dict[str, Any]:
         dashboards_dir = self.base_dir / "dashboards"
         all_dashboards = []
         if dashboards_dir.exists():
-            all_dashboards = sorted(str(path.relative_to(dashboards_dir)) for path in dashboards_dir.rglob("*") if path.is_file())
+            all_dashboards = sorted(
+                str(path.relative_to(dashboards_dir))
+                for path in dashboards_dir.rglob("*")
+                if path.is_file()
+            )
         return {
             "all_dashboards": all_dashboards,
             "unprovisioned_dashboards": [],
         }
 
-    def audit_tests(self) -> Dict[str, Any]:
+    def audit_tests(self) -> dict[str, Any]:
         tests_dir = self.base_dir / "tests"
         test_files = []
         if tests_dir.exists():
-            test_files = sorted(str(path.relative_to(tests_dir)) for path in tests_dir.rglob("test_*.py"))
+            test_files = sorted(
+                str(path.relative_to(tests_dir)) for path in tests_dir.rglob("test_*.py")
+            )
         return {
             "all_test_files": test_files,
             "useless_test_files": [],

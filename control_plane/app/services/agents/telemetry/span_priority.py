@@ -9,29 +9,37 @@ class SpanPriority(IntEnum):
     DEBUG = 3
 
 
-CRITICAL_SPAN_TYPES = frozenset({
-    "error",
-    "policy_denial",
-    "approval",
-    "security",
-})
+CRITICAL_SPAN_TYPES = frozenset(
+    {
+        "error",
+        "policy_denial",
+        "approval",
+        "security",
+    }
+)
 
-HIGH_SPAN_TYPES = frozenset({
-    "run_start",
-    "run_end",
-    "tool_call",
-})
+HIGH_SPAN_TYPES = frozenset(
+    {
+        "run_start",
+        "run_end",
+        "tool_call",
+    }
+)
 
-NORMAL_SPAN_TYPES = frozenset({
-    "model_call",
-    "memory_call",
-})
+NORMAL_SPAN_TYPES = frozenset(
+    {
+        "model_call",
+        "memory_call",
+    }
+)
 
-DEBUG_SPAN_TYPES = frozenset({
-    "token_usage",
-    "debug",
-    "llm_trace_debug",
-})
+DEBUG_SPAN_TYPES = frozenset(
+    {
+        "token_usage",
+        "debug",
+        "llm_trace_debug",
+    }
+)
 
 
 def classify_span_priority(span_type: str) -> SpanPriority:

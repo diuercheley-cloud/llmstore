@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Dict, List
+from typing import Any
 
 from app.core.time import utc_now
 from app.models.operations.correlation import OperationalTrustLink, compute_deterministic_hash
@@ -18,12 +18,12 @@ class OperationalTrustGraphService:
         self.client_id = client_id
 
     async def create_trust_link(
-        self, 
-        source: str, 
-        target: str, 
-        relation: str, 
+        self,
+        source: str,
+        target: str,
+        relation: str,
         confidence: float = 0.5,
-        advisory_only: bool = True
+        advisory_only: bool = True,
     ) -> OperationalTrustLink:
         """
         Creates and persists a trust link between two nodes.
@@ -37,10 +37,12 @@ class OperationalTrustGraphService:
         }
         immutable_hash = compute_deterministic_hash(fields=hash_fields)
 
-        existing_stmt = select(OperationalTrustLink).where(OperationalTrustLink.immutable_hash == immutable_hash)
+        existing_stmt = select(OperationalTrustLink).where(
+            OperationalTrustLink.immutable_hash == immutable_hash
+        )
         existing = (await self.session.execute(existing_stmt)).scalar_one_or_none()
         if existing is not None:
-            setattr(existing, "_phase70_created_now", False)
+            existing._phase70_created_now = False
             return existing
 
         link = OperationalTrustLink(
@@ -50,19 +52,21 @@ class OperationalTrustGraphService:
             trust_relation=relation,
             confidence=confidence,
             advisory_only=advisory_only,
-            immutable_hash=immutable_hash
+            immutable_hash=immutable_hash,
         )
-        setattr(link, "_phase70_created_now", True)
+        link._phase70_created_now = True
         self.session.add(link)
         return link
 
-    async def build_graph(self, events: List[Dict[str, Any]], correlations: List[Dict[str, Any]]) -> List[OperationalTrustLink]:
+    async def build_graph(
+        self, events: list[dict[str, Any]], correlations: list[dict[str, Any]]
+    ) -> list[OperationalTrustLink]:
         """
         Builds graph links based on events and detected correlations.
         This is a deterministic process.
         """
         links = []
-        
+
         # Rule 1: Correlated domains gain a "correlated_with" relation
         for corr in correlations:
             domains = sorted(corr.get("involved_domains", []))
@@ -76,7 +80,7 @@ class OperationalTrustGraphService:
                             source=domains[i],
                             target=domains[j],
                             relation="cross_domain_correlation",
-                            confidence=score
+                            confidence=score,
                         )
                         links.append(link)
 
@@ -86,30 +90,30 @@ class OperationalTrustGraphService:
             d = e.get("source_domain")
             if d:
                 domain_counts[d] = domain_counts.get(d, 0) + 1
-        
+
         for domain, count in domain_counts.items():
             # A domain relates to the 'platform_core'
             link = await self.create_trust_link(
                 source=domain,
                 target="platform_core",
                 relation="operational_dependency",
-                confidence=min(1.0, count * 0.1)
+                confidence=min(1.0, count * 0.1),
             )
             links.append(link)
 
         return links
 
-    def calculate_trust_confidence(self, links: List[OperationalTrustLink]) -> float:
+    def calculate_trust_confidence(self, links: list[OperationalTrustLink]) -> float:
         """
         Calculates an aggregate trust confidence score for a set of links.
         """
         if not links:
             return 0.0
-        
+
         scores = [l.confidence for l in links]
         return sum(scores) / len(scores)
 
-    async def export_graph_summary(self) -> Dict[str, Any]:
+    async def export_graph_summary(self) -> dict[str, Any]:
         """
         Exports a serializable summary of the current trust graph for the client.
         """
@@ -119,17 +123,19 @@ class OperationalTrustGraphService:
 
         nodes = set()
         edges = []
-        
+
         for l in links:
             nodes.add(l.source_node)
             nodes.add(l.target_node)
-            edges.append({
-                "from": l.source_node,
-                "to": l.target_node,
-                "relation": l.trust_relation,
-                "confidence": l.confidence,
-                "advisory_only": l.advisory_only
-            })
+            edges.append(
+                {
+                    "from": l.source_node,
+                    "to": l.target_node,
+                    "relation": l.trust_relation,
+                    "confidence": l.confidence,
+                    "advisory_only": l.advisory_only,
+                }
+            )
 
         return {
             "client_id": str(self.client_id),
@@ -138,5 +144,5 @@ class OperationalTrustGraphService:
             "nodes": sorted(list(nodes)),
             "edges": edges,
             "aggregate_confidence": self.calculate_trust_confidence(links),
-            "exported_at": utc_now().isoformat()
+            "exported_at": utc_now().isoformat(),
         }

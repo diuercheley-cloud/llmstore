@@ -4,11 +4,12 @@ Revision ID: 4dae4ba9d504
 Revises: 20260515_0060
 Create Date: 2026-05-15 09:50:59.387726
 """
+
 import sqlalchemy as sa
 from alembic import op
 
-revision = '4dae4ba9d504'
-down_revision = '20260515_0060'
+revision = "4dae4ba9d504"
+down_revision = "20260515_0060"
 branch_labels = None
 depends_on = None
 
@@ -27,7 +28,7 @@ def upgrade() -> None:
         sa.Column("metadata_json", sa.JSON(), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
-        sa.PrimaryKeyConstraint("id")
+        sa.PrimaryKeyConstraint("id"),
     )
 
     # 2. Quorum Policies
@@ -42,7 +43,7 @@ def upgrade() -> None:
         sa.Column("require_external_witness", sa.Boolean(), server_default="false", nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
-        sa.PrimaryKeyConstraint("id")
+        sa.PrimaryKeyConstraint("id"),
     )
 
     # 3. Signatures
@@ -55,11 +56,13 @@ def upgrade() -> None:
         sa.Column("signature", sa.Text(), nullable=False),
         sa.Column("signature_algorithm", sa.String(length=50), nullable=False),
         sa.Column("signed_at", sa.DateTime(), nullable=False),
-        sa.Column("verification_status", sa.String(length=50), server_default="pending", nullable=False),
+        sa.Column(
+            "verification_status", sa.String(length=50), server_default="pending", nullable=False
+        ),
         sa.Column("metadata_json", sa.JSON(), nullable=True),
         sa.ForeignKeyConstraint(["timeline_id"], ["commercial_merkle_timelines.id"]),
         sa.ForeignKeyConstraint(["witness_id"], ["commercial_witnesses.id"]),
-        sa.PrimaryKeyConstraint("id")
+        sa.PrimaryKeyConstraint("id"),
     )
 
     # 4. Audit Events
@@ -72,7 +75,7 @@ def upgrade() -> None:
         sa.Column("summary", sa.Text(), nullable=False),
         sa.Column("immutable_hash", sa.String(length=255), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.PrimaryKeyConstraint("id")
+        sa.PrimaryKeyConstraint("id"),
     )
 
 
@@ -81,4 +84,3 @@ def downgrade() -> None:
     op.drop_table("commercial_witness_signatures")
     op.drop_table("commercial_witness_quorum_policies")
     op.drop_table("commercial_witnesses")
-

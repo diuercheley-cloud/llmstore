@@ -53,10 +53,16 @@ async def list_guardrail_checkpoints(
     admin: Any = Depends(get_current_admin),
 ) -> list[dict[str, Any]]:
     rows = (
-        await db.execute(
-            select(CommercialHumanApprovalCheckpoint).order_by(desc(CommercialHumanApprovalCheckpoint.created_at))
+        (
+            await db.execute(
+                select(CommercialHumanApprovalCheckpoint).order_by(
+                    desc(CommercialHumanApprovalCheckpoint.created_at)
+                )
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return [
         {
             "id": str(item.id),
@@ -91,10 +97,16 @@ async def get_blast_radius(
         )
         return preview
     rows = (
-        await db.execute(
-            select(CommercialExecutionBlastRadius).order_by(desc(CommercialExecutionBlastRadius.created_at)).limit(50)
+        (
+            await db.execute(
+                select(CommercialExecutionBlastRadius)
+                .order_by(desc(CommercialExecutionBlastRadius.created_at))
+                .limit(50)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {
         "items": [
             {
@@ -119,12 +131,16 @@ async def list_guardrail_violations(
     admin: Any = Depends(get_current_admin),
 ) -> list[dict[str, Any]]:
     rows = (
-        await db.execute(
-            select(CommercialExecutionGuardrailEvent)
-            .where(CommercialExecutionGuardrailEvent.decision == "blocked")
-            .order_by(desc(CommercialExecutionGuardrailEvent.created_at))
+        (
+            await db.execute(
+                select(CommercialExecutionGuardrailEvent)
+                .where(CommercialExecutionGuardrailEvent.decision == "blocked")
+                .order_by(desc(CommercialExecutionGuardrailEvent.created_at))
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return [
         {
             "id": str(item.id),
@@ -145,10 +161,16 @@ async def list_guardrail_receipts(
     admin: Any = Depends(get_current_admin),
 ) -> list[dict[str, Any]]:
     rows = (
-        await db.execute(
-            select(CommercialAutonomousExecutionReceipt).order_by(desc(CommercialAutonomousExecutionReceipt.created_at))
+        (
+            await db.execute(
+                select(CommercialAutonomousExecutionReceipt).order_by(
+                    desc(CommercialAutonomousExecutionReceipt.created_at)
+                )
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return [
         {
             "id": str(item.id),

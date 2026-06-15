@@ -9,7 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from app.models.commercial.commercial_cryptographic_receipts import CommercialInferenceReceipt
@@ -42,14 +42,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _sanitize_metadata(metadata: dict[str, Any]) -> dict[str, Any]:
     """Strip any prompt/response content from metadata."""
-    keys_to_remove = {"prompt", "response", "completion", "message", "messages", "choices", "content"}
+    keys_to_remove = {
+        "prompt",
+        "response",
+        "completion",
+        "message",
+        "messages",
+        "choices",
+        "content",
+    }
     return {k: v for k, v in metadata.items() if k not in keys_to_remove}
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _sha256_hex(data: str) -> str:
@@ -64,6 +73,7 @@ def _json_hash(data: dict[str, Any]) -> str:
 # Timeline builders
 # ---------------------------------------------------------------------------
 
+
 async def build_receipt_timeline(
     db: AsyncSession,
     period_start: datetime,
@@ -72,13 +82,17 @@ async def build_receipt_timeline(
 ) -> CommercialMerkleTimeline:
     """Build a Merkle timeline from inference receipts in the given window."""
     receipts = (
-        await db.execute(
-            select(CommercialInferenceReceipt).where(
-                CommercialInferenceReceipt.created_at >= period_start,
-                CommercialInferenceReceipt.created_at < period_end,
+        (
+            await db.execute(
+                select(CommercialInferenceReceipt).where(
+                    CommercialInferenceReceipt.created_at >= period_start,
+                    CommercialInferenceReceipt.created_at < period_end,
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     leaves: list[CommercialMerkleLeaf] = []
     leaf_hashes: list[str] = []
@@ -119,13 +133,15 @@ async def build_receipt_timeline(
         leaf_count=len(leaf_hashes),
         merkle_root=root,
         previous_timeline_root=previous_root,
-        timeline_hash=_json_hash({
-            "root": root,
-            "previous": previous_root or "",
-            "period_start": period_start.isoformat(),
-            "period_end": period_end.isoformat(),
-            "leaf_count": len(leaf_hashes),
-        }),
+        timeline_hash=_json_hash(
+            {
+                "root": root,
+                "previous": previous_root or "",
+                "period_start": period_start.isoformat(),
+                "period_end": period_end.isoformat(),
+                "leaf_count": len(leaf_hashes),
+            }
+        ),
         status="sealed" if previous_root else "building",
         sealed_at=_now() if previous_root else None,
     )
@@ -140,13 +156,17 @@ async def build_runtime_integrity_timeline(
 ) -> CommercialMerkleTimeline:
     """Build a Merkle timeline from runtime integrity snapshots."""
     snapshots = (
-        await db.execute(
-            select(CommercialInferenceRuntimeSnapshot).where(
-                CommercialInferenceRuntimeSnapshot.created_at >= period_start,
-                CommercialInferenceRuntimeSnapshot.created_at < period_end,
+        (
+            await db.execute(
+                select(CommercialInferenceRuntimeSnapshot).where(
+                    CommercialInferenceRuntimeSnapshot.created_at >= period_start,
+                    CommercialInferenceRuntimeSnapshot.created_at < period_end,
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     leaf_hashes: list[str] = []
     for idx, snap in enumerate(snapshots):
@@ -175,13 +195,15 @@ async def build_runtime_integrity_timeline(
         leaf_count=len(leaf_hashes),
         merkle_root=root,
         previous_timeline_root=previous_root,
-        timeline_hash=_json_hash({
-            "root": root,
-            "previous": previous_root or "",
-            "period_start": period_start.isoformat(),
-            "period_end": period_end.isoformat(),
-            "leaf_count": len(leaf_hashes),
-        }),
+        timeline_hash=_json_hash(
+            {
+                "root": root,
+                "previous": previous_root or "",
+                "period_start": period_start.isoformat(),
+                "period_end": period_end.isoformat(),
+                "leaf_count": len(leaf_hashes),
+            }
+        ),
         status="sealed" if previous_root else "building",
         sealed_at=_now() if previous_root else None,
     )
@@ -196,13 +218,17 @@ async def build_replay_timeline(
 ) -> CommercialMerkleTimeline:
     """Build a Merkle timeline from replay events."""
     events = (
-        await db.execute(
-            select(CommercialInferenceReplayEvent).where(
-                CommercialInferenceReplayEvent.created_at >= period_start,
-                CommercialInferenceReplayEvent.created_at < period_end,
+        (
+            await db.execute(
+                select(CommercialInferenceReplayEvent).where(
+                    CommercialInferenceReplayEvent.created_at >= period_start,
+                    CommercialInferenceReplayEvent.created_at < period_end,
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     leaf_hashes: list[str] = []
     for idx, event in enumerate(events):
@@ -230,13 +256,15 @@ async def build_replay_timeline(
         leaf_count=len(leaf_hashes),
         merkle_root=root,
         previous_timeline_root=previous_root,
-        timeline_hash=_json_hash({
-            "root": root,
-            "previous": previous_root or "",
-            "period_start": period_start.isoformat(),
-            "period_end": period_end.isoformat(),
-            "leaf_count": len(leaf_hashes),
-        }),
+        timeline_hash=_json_hash(
+            {
+                "root": root,
+                "previous": previous_root or "",
+                "period_start": period_start.isoformat(),
+                "period_end": period_end.isoformat(),
+                "leaf_count": len(leaf_hashes),
+            }
+        ),
         status="sealed" if previous_root else "building",
         sealed_at=_now() if previous_root else None,
     )
@@ -246,6 +274,7 @@ async def build_replay_timeline(
 # ---------------------------------------------------------------------------
 # Proof generation and verification
 # ---------------------------------------------------------------------------
+
 
 async def generate_execution_proof(
     db: AsyncSession,
@@ -297,29 +326,35 @@ async def generate_execution_proof(
     if quorum.get("quorum_status") != "error":
         # Fetch valid signatures details
         sigs_result = await db.execute(
-            select(CommercialWitnessSignature, CommercialWitness.witness_name, CommercialWitness.witness_type)
+            select(
+                CommercialWitnessSignature,
+                CommercialWitness.witness_name,
+                CommercialWitness.witness_type,
+            )
             .join(CommercialWitness)
             .where(
                 CommercialWitnessSignature.timeline_id == timeline.id,
-                CommercialWitnessSignature.verification_status == "valid"
+                CommercialWitnessSignature.verification_status == "valid",
             )
         )
         sig_list = []
         for s, name, w_type in sigs_result:
-            sig_list.append({
-                "witness_name": name,
-                "witness_type": w_type,
-                "signature": s.signature,
-                "signature_algorithm": s.signature_algorithm,
-                "signed_at": s.signed_at.isoformat()
-            })
-            
+            sig_list.append(
+                {
+                    "witness_name": name,
+                    "witness_type": w_type,
+                    "signature": s.signature,
+                    "signature_algorithm": s.signature_algorithm,
+                    "signed_at": s.signed_at.isoformat(),
+                }
+            )
+
         proof_json["witness_quorum_summary"] = {
             "quorum_status": "VALID" if quorum["quorum_status"] == "met" else "INVALID",
             "required_signatures": quorum["signatures_required"],
             "signatures_found": quorum["signatures_found"],
             "external_witness_present": quorum["external_witness_present"],
-            "signatures": sig_list
+            "signatures": sig_list,
         }
 
     proof_hash = _sha256_hex(json.dumps(proof_json, sort_keys=True, separators=(",", ":")))

@@ -128,6 +128,4 @@ def test_readme_no_psp_pix_promise():
 def test_readme_not_excessively_long():
     """README should be concise (< 600 lines)."""
     lines = README.read_text(encoding="utf-8").splitlines()
-    assert len(lines) < 600, (
-        f"README has {len(lines)} lines; move technical details to docs/"
-    )
+    assert len(lines) < 600, f"README has {len(lines)} lines; move technical details to docs/"

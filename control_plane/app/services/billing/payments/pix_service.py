@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.core.config import get_settings
 from app.services.billing.payments.asaas_provider import AsaasPaymentProvider
@@ -10,13 +10,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 settings = get_settings()
 
+
 class PixService:
     @staticmethod
     def get_provider():
         p = settings.payment_provider
-        if p == "stripe": return StripePaymentProvider()
-        if p == "mercadopago": return MercadoPagoPaymentProvider()
-        if p == "asaas": return AsaasPaymentProvider()
+        if p == "stripe":
+            return StripePaymentProvider()
+        if p == "mercadopago":
+            return MercadoPagoPaymentProvider()
+        if p == "asaas":
+            return AsaasPaymentProvider()
         return MockPaymentProvider()
 
     @classmethod
@@ -25,10 +29,10 @@ class PixService:
         db: AsyncSession,
         client_id: uuid.UUID,
         amount_cents: int,
-        idempotency_key: Optional[str] = None
-    ) -> Dict[str, Any]:
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
         if not settings.pix_payment_enabled:
             raise ValueError("PIX payments are disabled")
-        
+
         provider = cls.get_provider()
         return await provider.create_pix_payment(client_id, amount_cents, "brl", idempotency_key)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 from prometheus_client import REGISTRY
 
@@ -11,49 +11,49 @@ class PlatformSLOService:
         self.thresholds = {
             "availability": 0.999,
             "p95_latency": 2.0,  # seconds
-            "queue_wait_p95": 5.0, # seconds
+            "queue_wait_p95": 5.0,  # seconds
             "error_rate": 0.01,
             "fallback_rate": 0.05,
             "cache_hit_ratio": 0.2,
             "model_activation_success": 0.99,
         }
 
-    def get_slo_report(self) -> Dict[str, Any]:
+    def get_slo_report(self) -> dict[str, Any]:
         """
         Calculates a real-time SLO report based on in-memory Prometheus metrics.
         """
         report = {}
-        
+
         # 1. API Availability & Error Rate
         requests_total = self._get_counter_sum("llm_requests_total")
         errors_total = self._get_counter_sum("llm_request_errors_total")
-        
+
         availability = 1.0
         error_rate = 0.0
         if requests_total > 0:
             error_rate = errors_total / requests_total
             availability = 1.0 - error_rate
-            
+
         report["api_availability"] = {
             "value": availability,
             "target": self.thresholds["availability"],
-            "status": "ok" if availability >= self.thresholds["availability"] else "critical"
+            "status": "ok" if availability >= self.thresholds["availability"] else "critical",
         }
-        
+
         report["error_rate"] = {
             "value": error_rate,
             "target": self.thresholds["error_rate"],
-            "status": "ok" if error_rate <= self.thresholds["error_rate"] else "warning"
+            "status": "ok" if error_rate <= self.thresholds["error_rate"] else "warning",
         }
 
         # 2. Latency (p95 approx from histogram)
-        # Note: True p95 requires Prometheus quantile calculation. 
+        # Note: True p95 requires Prometheus quantile calculation.
         # Here we provide a simplified status based on observation counts.
         p95_latency = self._get_histogram_avg("llm_request_latency_seconds")
         report["p95_latency"] = {
             "value": p95_latency,
             "target": self.thresholds["p95_latency"],
-            "status": "ok" if p95_latency <= self.thresholds["p95_latency"] else "warning"
+            "status": "ok" if p95_latency <= self.thresholds["p95_latency"] else "warning",
         }
 
         # 3. Cache Hit Ratio
@@ -62,11 +62,11 @@ class PlatformSLOService:
         cache_hit_ratio = 0.0
         if (hits + misses) > 0:
             cache_hit_ratio = hits / (hits + misses)
-        
+
         report["cache_hit_ratio"] = {
             "value": cache_hit_ratio,
             "target": self.thresholds["cache_hit_ratio"],
-            "status": "ok" if cache_hit_ratio >= self.thresholds["cache_hit_ratio"] else "warning"
+            "status": "ok" if cache_hit_ratio >= self.thresholds["cache_hit_ratio"] else "warning",
         }
 
         # 4. Fallback Rate
@@ -75,27 +75,27 @@ class PlatformSLOService:
         fallback_rate = 0.0
         if decisions > 0:
             fallback_rate = fallbacks / decisions
-            
+
         report["provider_fallback_rate"] = {
             "value": fallback_rate,
             "target": self.thresholds["fallback_rate"],
-            "status": "ok" if fallback_rate <= self.thresholds["fallback_rate"] else "warning"
+            "status": "ok" if fallback_rate <= self.thresholds["fallback_rate"] else "warning",
         }
-        
+
         # 5. Billing Accuracy Mode (Placeholder for logic)
         report["billing_accuracy_mode"] = {
-            "mode": "estimated", # Should be dynamically determined
-            "status": "ok"
+            "mode": "estimated",  # Should be dynamically determined
+            "status": "ok",
         }
 
         return report
 
-    def get_platform_health(self) -> Dict[str, Any]:
+    def get_platform_health(self) -> dict[str, Any]:
         """
         Aggregated platform health status.
         """
         slo = self.get_slo_report()
-        
+
         # Check for critical failures
         rbac_denials = self._get_counter_sum("llm_rbac_denials_total")
         attestation_failures = self._get_counter_sum("llm_attestation_failures_total")
@@ -103,26 +103,28 @@ class PlatformSLOService:
         runtime_node_failures = self._get_counter_sum("llm_runtime_node_failures_total")
         runtime_failovers = self._get_counter_sum("llm_runtime_failovers_total")
         gpu_utilization_avg = self._get_gauge_avg("llm_gpu_utilization_ratio")
-        
+
         overall_status = "ok"
         critical_issues = []
-        
+
         if slo["api_availability"]["status"] == "critical":
             overall_status = "critical"
             critical_issues.append("Low API availability")
-            
+
         if attestation_failures > 0:
             overall_status = "warning"
             critical_issues.append(f"Attestation failures detected: {int(attestation_failures)}")
-            
+
         if hot_swap_failures > 0:
             overall_status = "warning"
             critical_issues.append(f"Model hot swap failures: {int(hot_swap_failures)}")
-            
+
         if runtime_node_failures > 0:
             overall_status = "warning"
-            critical_issues.append(f"Distributed runtime node failures: {int(runtime_node_failures)}")
-            
+            critical_issues.append(
+                f"Distributed runtime node failures: {int(runtime_node_failures)}"
+            )
+
         if gpu_utilization_avg > 0.95:
             overall_status = "warning"
             critical_issues.append(f"Extreme GPU utilization: {int(gpu_utilization_avg * 100)}%")
@@ -136,8 +138,8 @@ class PlatformSLOService:
                 "hot_swap_failures": int(hot_swap_failures),
                 "runtime_node_failures": int(runtime_node_failures),
                 "runtime_failovers": int(runtime_failovers),
-                "avg_gpu_utilization": float(gpu_utilization_avg)
-            }
+                "avg_gpu_utilization": float(gpu_utilization_avg),
+            },
         }
 
     def _get_counter_sum(self, name: str) -> float:

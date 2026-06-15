@@ -27,7 +27,15 @@ def _normalize_value(value: Any) -> Any:
     if isinstance(value, (list, tuple)):
         return [_normalize_value(item) for item in value]
     if isinstance(value, set):
-        return [_normalize_value(item) for item in sorted(value, key=lambda item: json.dumps(_normalize_value(item), sort_keys=True, ensure_ascii=False))]
+        return [
+            _normalize_value(item)
+            for item in sorted(
+                value,
+                key=lambda item: json.dumps(
+                    _normalize_value(item), sort_keys=True, ensure_ascii=False
+                ),
+            )
+        ]
     if isinstance(value, datetime):
         return value.replace(microsecond=0).isoformat()
     if isinstance(value, date):

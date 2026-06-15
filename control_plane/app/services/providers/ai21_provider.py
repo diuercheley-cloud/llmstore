@@ -33,11 +33,21 @@ class AI21Provider(ProviderAdapter):
         if not self.enabled:
             return {"provider_id": "ai21", "healthy": None, "latency_ms": 0, "error": "disabled"}
         if not self.configured:
-            return {"provider_id": "ai21", "healthy": None, "latency_ms": 0, "error": "not configured"}
+            return {
+                "provider_id": "ai21",
+                "healthy": None,
+                "latency_ms": 0,
+                "error": "not configured",
+            }
         try:
             async with await self._client() as client:
                 resp = await client.get("/model")
-                return {"provider_id": "ai21", "healthy": resp.is_success, "latency_ms": 0, "error": None}
+                return {
+                    "provider_id": "ai21",
+                    "healthy": resp.is_success,
+                    "latency_ms": 0,
+                    "error": None,
+                }
         except Exception as e:
             return {"provider_id": "ai21", "healthy": False, "latency_ms": 0, "error": str(e)}
 

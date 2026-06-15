@@ -14,9 +14,7 @@ class TestGitTools:
     @patch("scripts.llm_harness.tools.git.subprocess.run")
     def test_run_git_status(self, mock_run):
         with patch("scripts.llm_harness.tools.git.os.path.exists", return_value=True):
-            mock_run.return_value = MagicMock(
-                returncode=0, stdout="On branch main", stderr=""
-            )
+            mock_run.return_value = MagicMock(returncode=0, stdout="On branch main", stderr="")
             result = self.git.run_git(["status"])
             assert "On branch main" in result
             mock_run.assert_called_once()

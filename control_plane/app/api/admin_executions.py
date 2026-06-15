@@ -1,12 +1,11 @@
 import uuid
-from typing import Any, Dict, List, Optional
 
 from app.api.deps import get_db_session
+from app.models.core.deterministic_execution import ExecutionStep
 from app.services.deterministic_execution.service import DeterministicExecutionService
-from app.models.core.deterministic_execution import ExecutionRun, ExecutionStep
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/admin/executions", tags=["admin-executions"])
@@ -14,8 +13,7 @@ router = APIRouter(prefix="/admin/executions", tags=["admin-executions"])
 
 @router.get("/{run_id}/manifest")
 async def get_execution_manifest(
-    run_id: uuid.UUID, 
-    session: AsyncSession = Depends(get_db_session)
+    run_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)
 ):
     service = DeterministicExecutionService(session)
     manifest = await service.generate_manifest(run_id)
@@ -25,19 +23,13 @@ async def get_execution_manifest(
 
 
 @router.post("/{run_id}/replay/dry-run")
-async def replay_dry_run(
-    run_id: uuid.UUID, 
-    session: AsyncSession = Depends(get_db_session)
-):
+async def replay_dry_run(run_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
     service = DeterministicExecutionService(session)
     return await service.replay_dry_run(run_id)
 
 
 @router.get("/{run_id}/steps")
-async def get_execution_steps(
-    run_id: uuid.UUID, 
-    session: AsyncSession = Depends(get_db_session)
-):
+async def get_execution_steps(run_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
     stmt = (
         select(ExecutionStep)
         .where(ExecutionStep.run_id == run_id)
@@ -46,7 +38,7 @@ async def get_execution_steps(
     )
     result = await session.execute(stmt)
     steps = result.scalars().all()
-    
+
     return [
         {
             "step_number": s.step_number,
@@ -60,10 +52,10 @@ async def get_execution_steps(
                     "tool": tc.tool_name,
                     "input": tc.tool_input,
                     "output": tc.tool_output if not tc.is_redacted else "[REDACTED]",
-                    "is_redacted": tc.is_redacted
+                    "is_redacted": tc.is_redacted,
                 }
                 for tc in s.tool_calls
-            ]
+            ],
         }
         for s in steps
     ]

@@ -11,11 +11,7 @@ from sqlalchemy import select
 
 @pytest_asyncio.fixture
 async def sample_client(session):
-    client = Client(
-        id=uuid.uuid4(),
-        name="Test Dispute Client",
-        billing_status="active"
-    )
+    client = Client(id=uuid.uuid4(), name="Test Dispute Client", billing_status="active")
     session.add(client)
     wallet = AiWallet(client_id=client.id, balance_brl=Decimal("100.0000"))
     session.add(wallet)
@@ -30,7 +26,7 @@ async def test_open_dispute(session, sample_client):
         client_id=sample_client.id,
         dispute_type="qos_usage",
         claimed_amount_brl=Decimal("5.00"),
-        disputed_reason="Overcharged for usage"
+        disputed_reason="Overcharged for usage",
     )
     assert dispute.id is not None
     assert dispute.status == "open"
@@ -44,20 +40,20 @@ async def test_resolve_dispute_with_credit(session, sample_client):
         client_id=sample_client.id,
         dispute_type="qos_usage",
         claimed_amount_brl=Decimal("10.00"),
-        disputed_reason="Faulty usage detection"
+        disputed_reason="Faulty usage detection",
     )
-    
+
     success = await DisputeManagementService.resolve_dispute(
         session,
         dispute_id=dispute.id,
         resolution_notes="Agreed with client, issuing credit",
-        credit_amount_brl=Decimal("10.00")
+        credit_amount_brl=Decimal("10.00"),
     )
-    
+
     assert success is True
     assert dispute.status == "credited"
     assert dispute.credit_transaction_id is not None
-    
+
     # Check wallet balance increased
     stmt = select(AiWallet).where(AiWallet.client_id == sample_client.id)
     wallet = (await session.execute(stmt)).scalar_one()
@@ -71,15 +67,13 @@ async def test_reject_dispute(session, sample_client):
         client_id=sample_client.id,
         dispute_type="qos_usage",
         claimed_amount_brl=Decimal("10.00"),
-        disputed_reason="Invalid claim"
+        disputed_reason="Invalid claim",
     )
-    
+
     success = await DisputeManagementService.reject_dispute(
-        session,
-        dispute_id=dispute.id,
-        resolution_notes="Usage was correct based on logs"
+        session, dispute_id=dispute.id, resolution_notes="Usage was correct based on logs"
     )
-    
+
     assert success is True
     assert dispute.status == "rejected"
     assert dispute.resolved_at is not None
@@ -88,32 +82,32 @@ async def test_reject_dispute(session, sample_client):
 @pytest.mark.asyncio
 async def test_manual_credit_disabled(session, sample_client, settings):
     settings.commercial_financial_manual_credit_enabled = False
-    
+
     with pytest.raises(ValueError, match="Manual credit is disabled"):
         await DisputeManagementService.create_manual_credit(
             session,
             client_id=sample_client.id,
             amount_brl=Decimal("50.00"),
             reason="Apology credit",
-            admin_id="admin_1"
+            admin_id="admin_1",
         )
 
 
 @pytest.mark.asyncio
 async def test_manual_credit_enabled(session, sample_client, settings):
     settings.commercial_financial_manual_credit_enabled = True
-    
+
     tx = await DisputeManagementService.create_manual_credit(
         session,
         client_id=sample_client.id,
         amount_brl=Decimal("50.00"),
         reason="Apology credit",
-        admin_id="admin_1"
+        admin_id="admin_1",
     )
-    
+
     assert tx.id is not None
     assert tx.amount_brl == Decimal("50.00")
-    
+
     # Check wallet balance
     stmt = select(AiWallet).where(AiWallet.client_id == sample_client.id)
     wallet = (await session.execute(stmt)).scalar_one()

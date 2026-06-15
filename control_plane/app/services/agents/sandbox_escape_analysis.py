@@ -2,9 +2,10 @@
 Owner: security-ops
 Status: implementation
 """
+
 import logging
 import re
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 from app.core.config import get_settings
 
@@ -53,14 +54,18 @@ BLOCKED_CODE_PATTERNS = [
     r"os\.(system|spawn|popen|exec|fork)",
 ]
 
+
 class SandboxEscapeAnalyzer:
     """
     Service for analyzing tool inputs and code for potential sandbox escape attempts.
     """
+
     def __init__(self):
         self.settings = get_settings()
 
-    def analyze_parameters(self, tool_name: str, parameters: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
+    def analyze_parameters(
+        self, tool_name: str, parameters: dict[str, Any]
+    ) -> tuple[bool, str | None]:
         """
         Analyzes tool parameters for sensitive paths, IPs, or path traversal.
         Returns (is_safe, reason).
@@ -81,7 +86,12 @@ class SandboxEscapeAnalyzer:
 
         # 3. Code Injection (for shell or code interpreter tools)
         if tool_name in ("python_interpreter", "shell_command", "bash"):
-            code = parameters.get("code") or parameters.get("command") or parameters.get("script") or ""
+            code = (
+                parameters.get("code")
+                or parameters.get("command")
+                or parameters.get("script")
+                or ""
+            )
             if code:
                 is_safe, reason = self.analyze_code(str(code))
                 if not is_safe:
@@ -89,17 +99,19 @@ class SandboxEscapeAnalyzer:
 
         return True, None
 
-    def analyze_code(self, code: str) -> Tuple[bool, Optional[str]]:
+    def analyze_code(self, code: str) -> tuple[bool, str | None]:
         """
         Analyzes code snippets for dangerous imports or operations.
         """
         for pattern in BLOCKED_CODE_PATTERNS:
             if re.search(pattern, code):
                 return False, f"Dangerous code pattern detected: {pattern}"
-        
+
         return True, None
 
-    def validate_resource_limits(self, parameters: Dict[str, Any], limits: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
+    def validate_resource_limits(
+        self, parameters: dict[str, Any], limits: dict[str, Any]
+    ) -> tuple[bool, str | None]:
         """
         Validates if tool requested parameters exceed safety resource limits.
         """
@@ -109,8 +121,11 @@ class SandboxEscapeAnalyzer:
                 requested_timeout = float(parameters["timeout"])
                 max_timeout = limits.get("max_timeout", 60)
                 if requested_timeout > max_timeout:
-                    return False, f"Requested timeout {requested_timeout} exceeds limit {max_timeout}"
+                    return (
+                        False,
+                        f"Requested timeout {requested_timeout} exceeds limit {max_timeout}",
+                    )
             except (ValueError, TypeError):
                 pass
-        
+
         return True, None

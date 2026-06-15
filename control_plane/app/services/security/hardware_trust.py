@@ -1,13 +1,13 @@
 import abc
 import hashlib
-from typing import Any, Dict
+from typing import Any
 
 from app.core.config import get_settings
 
 
 class HardwareTrustProvider(abc.ABC):
     @abc.abstractmethod
-    def get_measurements(self) -> Dict[str, Any]:
+    def get_measurements(self) -> dict[str, Any]:
         pass
 
     @abc.abstractmethod
@@ -20,10 +20,10 @@ class HardwareTrustProvider(abc.ABC):
 
 
 class MockHardwareTrustProvider(HardwareTrustProvider):
-    def get_measurements(self) -> Dict[str, Any]:
+    def get_measurements(self) -> dict[str, Any]:
         return {
             "pcr0": "0000000000000000000000000000000000000000000000000000000000000000",
-            "status": "mock_trusted"
+            "status": "mock_trusted",
         }
 
     def sign_quote(self, nonce: bytes) -> bytes:
@@ -35,11 +35,8 @@ class MockHardwareTrustProvider(HardwareTrustProvider):
 
 
 class FileBasedHardwareTrustProvider(HardwareTrustProvider):
-    def get_measurements(self) -> Dict[str, Any]:
-        return {
-            "pcr0": "file_based_trusted",
-            "status": "file_trusted"
-        }
+    def get_measurements(self) -> dict[str, Any]:
+        return {"pcr0": "file_based_trusted", "status": "file_trusted"}
 
     def sign_quote(self, nonce: bytes) -> bytes:
         return hashlib.sha256(b"file_quote" + nonce).digest()
@@ -52,9 +49,9 @@ def get_hardware_trust_provider() -> HardwareTrustProvider:
     settings = get_settings()
     if not settings.hardware_trust_enabled:
         return MockHardwareTrustProvider()
-        
+
     if settings.hardware_trust_provider == "file":
         return FileBasedHardwareTrustProvider()
-    
+
     # Default to mock
     return MockHardwareTrustProvider()

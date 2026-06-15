@@ -19,15 +19,23 @@ def week_start(today: date) -> date:
     return today - timedelta(days=today.weekday())
 
 
-async def ensure_quota(session: AsyncSession, client_id, daily_limit: int, weekly_limit: int, monthly_limit: int, incoming_tokens: int, requests_per_day_limit: int = 0) -> None:
+async def ensure_quota(
+    session: AsyncSession,
+    client_id,
+    daily_limit: int,
+    weekly_limit: int,
+    monthly_limit: int,
+    incoming_tokens: int,
+    requests_per_day_limit: int = 0,
+) -> None:
     today = date.today()
     daily = await _get_or_create_counter(session, client_id, today, "daily")
     weekly = await _get_or_create_counter(session, client_id, week_start(today), "weekly")
     monthly = await _get_or_create_counter(session, client_id, month_start(today), "monthly")
-    
+
     if requests_per_day_limit > 0 and daily.used_requests + 1 > requests_per_day_limit:
         raise QuotaExceeded("daily request quota exceeded")
-        
+
     if daily_limit > 0 and daily.used_tokens + incoming_tokens > daily_limit:
         raise QuotaExceeded("daily token quota exceeded")
     if weekly_limit > 0 and weekly.used_tokens + incoming_tokens > weekly_limit:
@@ -36,31 +44,46 @@ async def ensure_quota(session: AsyncSession, client_id, daily_limit: int, weekl
         raise QuotaExceeded("monthly token quota exceeded")
 
 
-async def ensure_embeddings_quota(session: AsyncSession, client_id, monthly_requests_limit: int, monthly_tokens_limit: int, incoming_tokens: int) -> None:
+async def ensure_embeddings_quota(
+    session: AsyncSession,
+    client_id,
+    monthly_requests_limit: int,
+    monthly_tokens_limit: int,
+    incoming_tokens: int,
+) -> None:
     today = date.today()
     monthly = await _get_or_create_counter(session, client_id, month_start(today), "monthly")
-    
+
     if monthly_requests_limit > 0 and monthly.used_embeddings_requests + 1 > monthly_requests_limit:
         raise QuotaExceeded("monthly embeddings requests quota exceeded")
-    if monthly_tokens_limit > 0 and monthly.used_embeddings_tokens + incoming_tokens > monthly_tokens_limit:
+    if (
+        monthly_tokens_limit > 0
+        and monthly.used_embeddings_tokens + incoming_tokens > monthly_tokens_limit
+    ):
         raise QuotaExceeded("monthly embeddings tokens quota exceeded")
 
 
 async def record_usage(
-    session: AsyncSession, 
-    client_id, 
-    prompt_tokens: int, 
+    session: AsyncSession,
+    client_id,
+    prompt_tokens: int,
     completion_tokens: int,
     token_count_method: str | None = None,
-    tokens_estimated: bool = True
+    tokens_estimated: bool = True,
 ) -> None:
     total = prompt_tokens + completion_tokens
     today = date.today()
-    for period_start, period_type in ((today, "daily"), (week_start(today), "weekly"), (month_start(today), "monthly")):
+    for period_start, period_type in (
+        (today, "daily"),
+        (week_start(today), "weekly"),
+        (month_start(today), "monthly"),
+    ):
         counter = await _get_or_create_counter(session, client_id, period_start, period_type)
         counter.used_tokens += total
         counter.used_requests += 1
-        usage_record = await _get_or_create_usage_record(session, client_id, period_start, period_type)
+        usage_record = await _get_or_create_usage_record(
+            session, client_id, period_start, period_type
+        )
         usage_record.request_count += 1
         usage_record.prompt_tokens += prompt_tokens
         usage_record.completion_tokens += completion_tokens
@@ -69,19 +92,25 @@ async def record_usage(
 
 
 async def record_embedding_usage(
-    session: AsyncSession, 
-    client_id, 
-    input_count: int, 
+    session: AsyncSession,
+    client_id,
+    input_count: int,
     tokens: int,
     token_count_method: str | None = None,
-    tokens_estimated: bool = True
+    tokens_estimated: bool = True,
 ) -> None:
     today = date.today()
-    for period_start, period_type in ((today, "daily"), (week_start(today), "weekly"), (month_start(today), "monthly")):
+    for period_start, period_type in (
+        (today, "daily"),
+        (week_start(today), "weekly"),
+        (month_start(today), "monthly"),
+    ):
         counter = await _get_or_create_counter(session, client_id, period_start, period_type)
         counter.used_embeddings_requests += 1
         counter.used_embeddings_tokens += tokens
-        usage_record = await _get_or_create_usage_record(session, client_id, period_start, period_type)
+        usage_record = await _get_or_create_usage_record(
+            session, client_id, period_start, period_type
+        )
         usage_record.embeddings_requests += 1
         usage_record.embeddings_tokens += tokens
         usage_record.token_count_method = token_count_method
@@ -102,19 +131,26 @@ async def update_usage_with_real_tokens(
     total_diff = prompt_diff + completion_diff
 
     today = date.today()
-    for period_start, period_type in ((today, "daily"), (week_start(today), "weekly"), (month_start(today), "monthly")):
+    for period_start, period_type in (
+        (today, "daily"),
+        (week_start(today), "weekly"),
+        (month_start(today), "monthly"),
+    ):
         counter = await _get_or_create_counter(session, client_id, period_start, period_type)
         counter.used_tokens += total_diff
 
-        usage_record = await _get_or_create_usage_record(session, client_id, period_start, period_type)
+        usage_record = await _get_or_create_usage_record(
+            session, client_id, period_start, period_type
+        )
         usage_record.prompt_tokens += prompt_diff
         usage_record.completion_tokens += completion_diff
         usage_record.token_count_method = token_count_method
         usage_record.tokens_estimated = False
 
 
-
-async def _get_or_create_counter(session: AsyncSession, client_id, period_start: date, period_type: str) -> QuotaCounter:
+async def _get_or_create_counter(
+    session: AsyncSession, client_id, period_start: date, period_type: str
+) -> QuotaCounter:
     result = await session.execute(
         select(QuotaCounter).where(
             QuotaCounter.client_id == client_id,
@@ -131,7 +167,9 @@ async def _get_or_create_counter(session: AsyncSession, client_id, period_start:
     return counter
 
 
-async def _get_or_create_usage_record(session: AsyncSession, client_id, period_start: date, period_type: str) -> UsageRecord:
+async def _get_or_create_usage_record(
+    session: AsyncSession, client_id, period_start: date, period_type: str
+) -> UsageRecord:
     result = await session.execute(
         select(UsageRecord).where(
             UsageRecord.client_id == client_id,

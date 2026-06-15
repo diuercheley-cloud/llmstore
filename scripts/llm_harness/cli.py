@@ -23,6 +23,7 @@ from .cli_args import (
 )
 from .cli_commands import (
     _resolve_code_agent,  # noqa: F401
+    run_agents_command,
     run_autonomous_command,
     run_benchmark_command,
     run_chat_command,
@@ -42,7 +43,6 @@ from .cli_commands import (
     run_security_command,
     run_server_command,
     run_teams_command,
-    run_agents_command,
     run_terminal_command,
 )
 from .config import HarnessConfig, HarnessConfigError
@@ -93,9 +93,7 @@ def main():
     run_benchmark_parser = benchmark_subparsers.add_parser(
         "run", help="Run standard benchmark suite"
     )
-    run_benchmark_parser.add_argument(
-        "--suite", required=True, help="Path to benchmark JSON suite"
-    )
+    run_benchmark_parser.add_argument("--suite", required=True, help="Path to benchmark JSON suite")
     run_benchmark_parser.add_argument(
         "--suite-type",
         choices=["coding", "gsm8k", "swebench"],
@@ -107,10 +105,8 @@ def main():
         default="benchmark_result.json",
         help="Path to save result summary JSON",
     )
-    add_provider_args(
-        run_benchmark_parser, default_code_agent="stub", default_allow_stub=True
-    )
-    
+    add_provider_args(run_benchmark_parser, default_code_agent="stub", default_allow_stub=True)
+
     compare_benchmark_parser = benchmark_subparsers.add_parser(
         "compare", help="Compare benchmark run with baseline"
     )
@@ -172,12 +168,8 @@ def main():
 
     # Eval command
     eval_parser = subparsers.add_parser("eval", help="Run evaluation suite")
-    eval_parser.add_argument(
-        "--suite", required=True, help="Path to eval_suite.json"
-    )
-    eval_parser.add_argument(
-        "--concurrency", type=int, default=1, help="Max parallel cases"
-    )
+    eval_parser.add_argument("--suite", required=True, help="Path to eval_suite.json")
+    eval_parser.add_argument("--concurrency", type=int, default=1, help="Max parallel cases")
     add_provider_args(eval_parser, default_code_agent="stub", default_allow_stub=True)
     add_sandbox_args(eval_parser)
     add_policy_args(eval_parser, default_self_heal=True)
@@ -217,8 +209,7 @@ def main():
     )
     edit_inline_parser.add_argument("--workspace", help="Custom workspace path")
     edit_inline_parser.add_argument(
-        "--dry-run", action="store_true",
-        help="Generate and validate diff without writing to file"
+        "--dry-run", action="store_true", help="Generate and validate diff without writing to file"
     )
     add_provider_args(edit_inline_parser)
     add_sandbox_args(edit_inline_parser)
@@ -228,9 +219,7 @@ def main():
     # Index command
     index_parser = subparsers.add_parser("index", help="Repository indexing and querying")
     index_parser.add_argument("--workspace", help="Custom workspace path")
-    index_subparsers = index_parser.add_subparsers(
-        dest="index_command", help="Index commands"
-    )
+    index_subparsers = index_parser.add_subparsers(dest="index_command", help="Index commands")
     index_subparsers.add_parser("build", help="Build repository index")
     query_parser = index_subparsers.add_parser("query", help="Query repository index")
     query_parser.add_argument("query", help="Search query string")
@@ -239,23 +228,17 @@ def main():
     docs_parser = subparsers.add_parser("docs", help="External documentation helper")
     docs_parser.add_argument("--workspace", help="Custom workspace path")
     add_policy_args(docs_parser)
-    docs_subparsers = docs_parser.add_subparsers(
-        dest="docs_command", help="Docs commands"
-    )
+    docs_subparsers = docs_parser.add_subparsers(dest="docs_command", help="Docs commands")
     doc_add_parser = docs_subparsers.add_parser(
         "add", help="Add external documentation configuration"
     )
     doc_add_parser.add_argument("--name", required=True, help="Doc name")
     doc_add_parser.add_argument("--url", required=True, help="Doc URL")
-    doc_add_parser.add_argument(
-        "--allowlist-domain", help="Allowed domain pattern (optional)"
-    )
+    doc_add_parser.add_argument("--allowlist-domain", help="Allowed domain pattern (optional)")
     docs_subparsers.add_parser("refresh", help="Refresh external documentation cache")
 
     # Fix Error command
-    fix_error_parser = subparsers.add_parser(
-        "fix-error", help="Run automated error correction"
-    )
+    fix_error_parser = subparsers.add_parser("fix-error", help="Run automated error correction")
     fix_error_parser.add_argument("--from-file", help="Path to error log file")
     fix_error_parser.add_argument(
         "--command", dest="run_command", help="Command to run that produces errors"
@@ -289,9 +272,7 @@ def main():
     )
     diagnose_group = diagnose_parser.add_mutually_exclusive_group(required=True)
     diagnose_group.add_argument("--last-command", help="Last executed command")
-    diagnose_group.add_argument(
-        "--stderr-file", help="Path to a stderr log file to diagnose"
-    )
+    diagnose_group.add_argument("--stderr-file", help="Path to a stderr log file to diagnose")
 
     suggest_parser = terminal_subparsers.add_parser(
         "suggest", help="Suggest fix for command error from stderr log"
@@ -309,13 +290,9 @@ def main():
     inspect_parser.add_argument("image_path", help="Path to the image file")
     inspect_parser.add_argument("--workspace", help="Custom workspace path")
 
-    complete_parser = subparsers.add_parser(
-        "complete", help="Retrieve code completion suggestions"
-    )
+    complete_parser = subparsers.add_parser("complete", help="Retrieve code completion suggestions")
     complete_parser.add_argument("file_path", help="Path to the file to complete")
-    complete_parser.add_argument(
-        "--line", type=int, required=True, help="Cursor line (1-indexed)"
-    )
+    complete_parser.add_argument("--line", type=int, required=True, help="Cursor line (1-indexed)")
     complete_parser.add_argument(
         "--column", type=int, required=True, help="Cursor column (0-indexed)"
     )
@@ -325,38 +302,30 @@ def main():
     # IDE command
     ide_parser = subparsers.add_parser("ide", help="IDE integration and compatibility helper")
     ide_parser.add_argument("--workspace", help="Custom workspace path")
-    ide_subparsers = ide_parser.add_subparsers(
-        dest="ide_command", help="IDE commands"
-    )
+    ide_subparsers = ide_parser.add_subparsers(dest="ide_command", help="IDE commands")
     import_parser = ide_subparsers.add_parser(
         "import-vscode", help="Import VS Code / Cursor configurations"
     )
     import_parser.add_argument(
         "--path", required=True, help="Path to VS Code config folder or file"
     )
-    ide_subparsers.add_parser(
-        "show-config", help="Show the imported configuration context"
-    )
+    ide_subparsers.add_parser("show-config", help="Show the imported configuration context")
 
     # Models command
     models_parser = subparsers.add_parser("models", help="Model routing and profiles helper")
-    models_subparsers = models_parser.add_subparsers(
-        dest="models_command", help="Models commands"
-    )
+    models_subparsers = models_parser.add_subparsers(dest="models_command", help="Models commands")
     models_subparsers.add_parser("list", help="List all configured model profiles")
     test_profile_parser = models_subparsers.add_parser("test", help="Test a model profile")
     test_profile_parser.add_argument("profile", help="Name of the model profile to test")
 
     # Teams command
     teams_parser = subparsers.add_parser("teams", help="Manage and inspect agent teams")
-    teams_subparsers = teams_parser.add_subparsers(
-        dest="teams_command", help="Teams commands"
-    )
+    teams_subparsers = teams_parser.add_subparsers(dest="teams_command", help="Teams commands")
     teams_subparsers.add_parser("list", help="List all defined teams")
     inspect_team_parser = teams_subparsers.add_parser("inspect", help="Inspect a specific team")
     inspect_team_parser.add_argument("team_name", help="Name of the team to inspect")
     teams_subparsers.add_parser("validate", help="Validate agent registry and teams")
-    
+
     run_team_parser = teams_subparsers.add_parser("run", help="Run a specific team task")
     run_team_parser.add_argument("team_name", help="Name of the team to run")
     run_team_parser.add_argument("--task", required=True, help="Task description")
@@ -376,7 +345,7 @@ def main():
     auto_subparsers = auto_parser.add_subparsers(
         dest="autonomous_command", help="Autonomous commands"
     )
-    
+
     run_auto_parser = auto_subparsers.add_parser("run", help="Start an autonomous run")
     run_auto_parser.add_argument("--goal", required=True, help="Autonomous goal")
     run_auto_parser.add_argument("--budget", type=float, help="Cost budget for the run")
@@ -386,15 +355,15 @@ def main():
     add_sandbox_args(run_auto_parser)
 
     auto_subparsers.add_parser("list", help="List all autonomous runs")
-    
+
     inspect_auto_parser = auto_subparsers.add_parser(
         "inspect", help="Inspect a specific autonomous run"
     )
     inspect_auto_parser.add_argument("run_id", help="ID of the run to inspect")
-    
+
     resume_auto_parser = auto_subparsers.add_parser("resume", help="Resume a paused autonomous run")
     resume_auto_parser.add_argument("run_id", help="ID of the run to resume")
-    
+
     pause_auto_parser = auto_subparsers.add_parser("pause", help="Pause an active autonomous run")
     pause_auto_parser.add_argument("run_id", help="ID of the run to pause")
     stop_auto_parser = auto_subparsers.add_parser("stop", help="Stop an active autonomous run")
@@ -408,6 +377,7 @@ def main():
 
     # Load dynamic plugins after argument parsing
     from .plugins import plugin_registry
+
     plugin_registry.load_all_plugins(enable_plugins=getattr(args, "enable_plugins", False))
 
     should_validate_config = not (
@@ -422,6 +392,7 @@ def main():
             print(f"Configuration Error: {exc}", file=sys.stderr)
             if getattr(args, "debug", False):
                 import traceback
+
                 traceback.print_exc()
             sys.exit(1)
 
@@ -474,11 +445,13 @@ def main():
         print(f"Configuration Error: {exc}", file=sys.stderr)
         if getattr(args, "debug", False):
             import traceback
+
             traceback.print_exc()
         sys.exit(1)
     except ValueError as exc:
         print(f"ERROR: {Sanitizer.sanitize_text(str(exc))}")
         raise SystemExit(1) from exc
+
 
 if __name__ == "__main__":
     main()

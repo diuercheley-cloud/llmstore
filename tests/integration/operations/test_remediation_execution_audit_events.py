@@ -17,8 +17,10 @@ class TestRemediationExecutionAuditEvents:
         exec_id = uuid.uuid4()
         await log_remediation_execution_started(session, client_id, exec_id)
         await session.commit()
-        
-        stmt = select(AdminActionLog).where(AdminActionLog.action == "ops_remediation_exec:remediation_execution_started")
+
+        stmt = select(AdminActionLog).where(
+            AdminActionLog.action == "ops_remediation_exec:remediation_execution_started"
+        )
         result = await session.execute(stmt)
         entry = result.scalars().one()
         assert entry.payload_json["execution_id"] == str(exec_id)
@@ -27,8 +29,10 @@ class TestRemediationExecutionAuditEvents:
         client_id = uuid.uuid4()
         await log_remediation_kill_switch_updated(session, client_id, True, "Security breach")
         await session.commit()
-        
-        stmt = select(AdminActionLog).where(AdminActionLog.action == "ops_remediation_exec:remediation_kill_switch_updated")
+
+        stmt = select(AdminActionLog).where(
+            AdminActionLog.action == "ops_remediation_exec:remediation_kill_switch_updated"
+        )
         result = await session.execute(stmt)
         entry = result.scalars().one()
         assert entry.payload_json["enabled"] is True

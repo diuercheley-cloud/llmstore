@@ -5,13 +5,13 @@ Extends the existing OAuth2 flow (Google/GitHub) in auth.py.
 
 import secrets
 import uuid
-from datetime import datetime, timedelta, timezone, UTC
-from typing import Any, Dict
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import httpx
 from app.core.config import get_settings
-from app.services.runtime_dependencies import get_db_session
 from app.models.core.auth import OAuthState, UserSession
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
@@ -64,9 +64,11 @@ class EnterpriseSSOService:
     def __init__(self):
         self.settings = get_settings()
 
-    def get_provider_config(self, provider: str) -> Dict[str, Any]:
+    def get_provider_config(self, provider: str) -> dict[str, Any]:
         if provider not in PROVIDER_CONFIGS:
-            raise HTTPException(status_code=400, detail=f"Unsupported enterprise SSO provider: {provider}")
+            raise HTTPException(
+                status_code=400, detail=f"Unsupported enterprise SSO provider: {provider}"
+            )
 
         base = PROVIDER_CONFIGS[provider]
         tenant_id = self.settings.enterprise_sso_tenant_id or "common"
@@ -91,6 +93,7 @@ class EnterpriseSSOService:
 
         if provider == "saml":
             import base64
+
             saml_request = self._build_saml_request(config["entity_id"], config["sso_url"])
             encoded = base64.b64encode(saml_request.encode()).decode()
             return f"{config['sso_url']}?SAMLRequest={encoded}&RelayState={state}"
@@ -109,7 +112,7 @@ class EnterpriseSSOService:
             f"&response_mode=query"
         )
 
-    async def exchange_code(self, provider: str, code: str, redirect_uri: str) -> Dict[str, Any]:
+    async def exchange_code(self, provider: str, code: str, redirect_uri: str) -> dict[str, Any]:
         config = self.get_provider_config(provider)
 
         if provider == "saml":
@@ -164,10 +167,10 @@ class EnterpriseSSOService:
             f'AssertionConsumerServiceURL="{acs_url}">'
             f'<saml2:Issuer xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion">{entity_id}</saml2:Issuer>'
             f'<saml2p:NameIDPolicy Format="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"/>'
-            f'</saml2p:AuthnRequest>'
+            f"</saml2p:AuthnRequest>"
         )
 
-    async def _handle_saml_response(self, saml_response: str) -> Dict[str, Any]:
+    async def _handle_saml_response(self, saml_response: str) -> dict[str, Any]:
         import base64
         from xml.etree import ElementTree
 
@@ -219,7 +222,9 @@ class EnterpriseSSOService:
 
 
 @router.get("/enterprise/login/{provider}", response_model=AuthURLResponse)
-async def enterprise_login(provider: str, request: Request, session: AsyncSession = Depends(get_db_session)):
+async def enterprise_login(
+    provider: str, request: Request, session: AsyncSession = Depends(get_db_session)
+):
     settings = get_settings()
     if not settings.enterprise_sso_enabled:
         raise HTTPException(status_code=501, detail="Enterprise SSO is disabled")
@@ -235,7 +240,7 @@ async def enterprise_login(provider: str, request: Request, session: AsyncSessio
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to build login URL: {e}")
 
-    expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
+    expires_at = datetime.now(UTC) + timedelta(minutes=10)
     db_state = OAuthState(
         provider=provider,
         state=state_value,
@@ -249,7 +254,9 @@ async def enterprise_login(provider: str, request: Request, session: AsyncSessio
 
 
 @router.get("/enterprise/callback/{provider}")
-async def enterprise_callback(provider: str, request: Request, session: AsyncSession = Depends(get_db_session)):
+async def enterprise_callback(
+    provider: str, request: Request, session: AsyncSession = Depends(get_db_session)
+):
     settings = get_settings()
     if not settings.enterprise_sso_enabled:
         raise HTTPException(status_code=501, detail="Enterprise SSO is disabled")
@@ -264,7 +271,7 @@ async def enterprise_callback(provider: str, request: Request, session: AsyncSes
         select(OAuthState).where(OAuthState.state == state, OAuthState.provider == provider)
     )
     db_state = result.scalar_one_or_none()
-    if not db_state or db_state.expires_at < datetime.now(timezone.utc):
+    if not db_state or db_state.expires_at < datetime.now(UTC):
         raise HTTPException(status_code=400, detail="Invalid or expired state")
     if db_state.used:
         raise HTTPException(status_code=400, detail="State already used")
@@ -297,14 +304,14 @@ async def enterprise_callback(provider: str, request: Request, session: AsyncSes
     existing_user = existing.scalar_one_or_none()
     if existing_user:
         existing_user.session_token = token
-        existing_user.expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
+        existing_user.expires_at = datetime.now(UTC) + timedelta(hours=24)
     else:
         db_session = UserSession(
             provider_user_id=user_info.get("provider_user_id", email),
             email=email,
             name=user_info.get("name"),
             session_token=token,
-            expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
+            expires_at=datetime.now(UTC) + timedelta(hours=24),
         )
         session.add(db_session)
 

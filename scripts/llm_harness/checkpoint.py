@@ -5,6 +5,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+
 class CheckpointManager:
     def __init__(self, checkpoint_dir: str = ".llm_harness_checkpoints"):
         self.checkpoint_dir = checkpoint_dir

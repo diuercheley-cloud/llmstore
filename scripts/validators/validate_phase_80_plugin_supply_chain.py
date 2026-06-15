@@ -90,7 +90,7 @@ REQUIRED_PATTERNS = {
     ],
     "control_plane/app/main.py": [
         "operations_plugin_supply_chain_admin_router",
-        "app.include_router(operations_plugin_supply_chain_admin_router, tags=[\"operations-plugin-supply-chain\"])",
+        'app.include_router(operations_plugin_supply_chain_admin_router, tags=["operations-plugin-supply-chain"])',
     ],
     "control_plane/app/static/admin/index.html": [
         "Plugin Supply-Chain Provenance &amp; SBOM Placeholder Framework",

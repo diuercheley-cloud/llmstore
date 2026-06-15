@@ -27,11 +27,17 @@ async def test_immutable_governance_ledger_validates(session: AsyncSession):
     definition = await orchestrator.create_definition(
         session,
         name="ledger-workflow",
-        dag_or_steps=[{"stage_key": "stage-a", "policy": {"bundle_ref": str(bundle.id)}, "config": {"x": 1}}],
+        dag_or_steps=[
+            {"stage_key": "stage-a", "policy": {"bundle_ref": str(bundle.id)}, "config": {"x": 1}}
+        ],
     )
-    execution = await orchestrator.start_execution(session, definition_id=definition.id, session_id="ledger-session", tenant_id="tenant-a")
+    execution = await orchestrator.start_execution(
+        session, definition_id=definition.id, session_id="ledger-session", tenant_id="tenant-a"
+    )
 
-    validation = await WorkflowGovernanceLedgerService().validate_ledger(session, execution_id=execution.id)
+    validation = await WorkflowGovernanceLedgerService().validate_ledger(
+        session, execution_id=execution.id
+    )
 
     assert validation["valid"] is True
     assert validation["count"] >= 2
@@ -55,9 +61,13 @@ async def test_immutable_governance_ledger_detects_tampering(session: AsyncSessi
     definition = await orchestrator.create_definition(
         session,
         name="ledger-workflow-2",
-        dag_or_steps=[{"stage_key": "stage-a", "policy": {"bundle_ref": str(bundle.id)}, "config": {"x": 1}}],
+        dag_or_steps=[
+            {"stage_key": "stage-a", "policy": {"bundle_ref": str(bundle.id)}, "config": {"x": 1}}
+        ],
     )
-    execution = await orchestrator.start_execution(session, definition_id=definition.id, session_id="ledger-session-2", tenant_id="tenant-a")
+    execution = await orchestrator.start_execution(
+        session, definition_id=definition.id, session_id="ledger-session-2", tenant_id="tenant-a"
+    )
     row = (
         await session.execute(
             select(CommercialWorkflowGovernanceEvent)
@@ -67,7 +77,9 @@ async def test_immutable_governance_ledger_detects_tampering(session: AsyncSessi
     ).scalar_one()
     row.ledger_hash = "tampered"
 
-    validation = await WorkflowGovernanceLedgerService().validate_ledger(session, execution_id=execution.id)
+    validation = await WorkflowGovernanceLedgerService().validate_ledger(
+        session, execution_id=execution.id
+    )
 
     assert validation["valid"] is False
     assert any("ledger_hash_invalid" in issue for issue in validation["issues"])

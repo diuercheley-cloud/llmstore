@@ -2,6 +2,7 @@
 Owner: agent-platform
 Status: beta
 """
+
 import asyncio
 import logging
 
@@ -11,12 +12,14 @@ from app.services.agents.events.cron_triggers import check_and_fire_schedules
 
 logger = logging.getLogger(__name__)
 
+
 class AgentScheduler:
     """
     Secure and Durable Scheduler for Agent Runs.
     Manages cron triggers and scheduled tasks for agents.
     Ensures single-instance execution using row-level locking on triggers.
     """
+
     def __init__(self, poll_interval: int = 30):
         self.poll_interval = poll_interval
         self.settings = get_settings()
@@ -54,7 +57,7 @@ class AgentScheduler:
                 break
             except Exception:
                 logger.exception("Error in Agent Scheduler loop")
-            
+
             await asyncio.sleep(self.poll_interval)
 
     async def run_once(self):

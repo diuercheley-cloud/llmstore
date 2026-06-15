@@ -29,74 +29,96 @@ from scripts.llm_harness.workspace import Workspace
 RESPONSES = [
     # 1. Plan
     {
-        "choices": [{
-            "message": {
-                "role": "assistant",
-                "content": json.dumps({
-                    "type": "plan",
-                    "reason": "Identify and fix addition bug",
-                    "payload": {"message": "I will read app.py and fix the bug"}
-                })
+        "choices": [
+            {
+                "message": {
+                    "role": "assistant",
+                    "content": json.dumps(
+                        {
+                            "type": "plan",
+                            "reason": "Identify and fix addition bug",
+                            "payload": {"message": "I will read app.py and fix the bug"},
+                        }
+                    ),
+                }
             }
-        }],
-        "usage": {"total_tokens": 100}
+        ],
+        "usage": {"total_tokens": 100},
     },
     # 2. Read File
     {
-        "choices": [{
-            "message": {
-                "role": "assistant",
-                "content": json.dumps({
-                    "type": "read_file",
-                    "reason": "Need to see the code",
-                    "payload": {"path": "app.py"}
-                })
+        "choices": [
+            {
+                "message": {
+                    "role": "assistant",
+                    "content": json.dumps(
+                        {
+                            "type": "read_file",
+                            "reason": "Need to see the code",
+                            "payload": {"path": "app.py"},
+                        }
+                    ),
+                }
             }
-        }],
-        "usage": {"total_tokens": 100}
+        ],
+        "usage": {"total_tokens": 100},
     },
     # 3. Apply Patch
     {
-        "choices": [{
-            "message": {
-                "role": "assistant",
-                "content": json.dumps({
-                    "type": "apply_patch",
-                    "reason": "Correcting subtraction to addition",
-                    "payload": {"diff": "--- app.py\n+++ app.py\n@@ -1,2 +1,2 @@\n def add(a, b):\n-    return a - b\n+    return a + b\n"}
-                })
+        "choices": [
+            {
+                "message": {
+                    "role": "assistant",
+                    "content": json.dumps(
+                        {
+                            "type": "apply_patch",
+                            "reason": "Correcting subtraction to addition",
+                            "payload": {
+                                "diff": "--- app.py\n+++ app.py\n@@ -1,2 +1,2 @@\n def add(a, b):\n-    return a - b\n+    return a + b\n"
+                            },
+                        }
+                    ),
+                }
             }
-        }],
-        "usage": {"total_tokens": 100}
+        ],
+        "usage": {"total_tokens": 100},
     },
     # 4. Run Tests
     {
-        "choices": [{
-            "message": {
-                "role": "assistant",
-                "content": json.dumps({
-                    "type": "run_tests",
-                    "reason": "Verify the fix",
-                    "payload": {"test_path": "tests/test_app.py"}
-                })
+        "choices": [
+            {
+                "message": {
+                    "role": "assistant",
+                    "content": json.dumps(
+                        {
+                            "type": "run_tests",
+                            "reason": "Verify the fix",
+                            "payload": {"test_path": "tests/test_app.py"},
+                        }
+                    ),
+                }
             }
-        }],
-        "usage": {"total_tokens": 100}
+        ],
+        "usage": {"total_tokens": 100},
     },
     # 5. Final
     {
-        "choices": [{
-            "message": {
-                "role": "assistant",
-                "content": json.dumps({
-                    "type": "final",
-                    "reason": "Verified and fixed",
-                    "payload": {"message": "Bug fixed successfully"}
-                })
+        "choices": [
+            {
+                "message": {
+                    "role": "assistant",
+                    "content": json.dumps(
+                        {
+                            "type": "final",
+                            "reason": "Verified and fixed",
+                            "payload": {"message": "Bug fixed successfully"},
+                        }
+                    ),
+                }
             }
-        }],
-        "usage": {"total_tokens": 100}
-    }
+        ],
+        "usage": {"total_tokens": 100},
+    },
 ]
 
 
@@ -111,11 +133,11 @@ class MockTransport(httpx.AsyncBaseTransport):
         else:
             resp_data = self.responses[self.count]
             self.count += 1
-        
+
         return httpx.Response(
-            200, 
+            200,
             content=json.dumps(resp_data).encode(),
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
 
@@ -135,29 +157,27 @@ async def run_iteration(index: int) -> dict[str, Any]:
         transport = MockTransport(RESPONSES)
         os.environ["MOCK_API_KEY"] = "sk-test-key"
         os.environ["PYTHONPATH"] = f".:{os.environ.get('PYTHONPATH', '')}"
-        
+
         agent_client = AgentClient(
             agent_id=f"benchmark-agent-{index}",
             provider="openai-compatible",
             base_url="http://mock-llm",
             model="gpt-4",
-            api_key_env="MOCK_API_KEY"
+            api_key_env="MOCK_API_KEY",
         )
 
         async with Workspace(base_path=tmp_dir) as ws:
             from httpx import AsyncClient as RealAsyncClient
+
             def mock_client_factory(**kwargs):
                 kwargs.pop("transport", None)
                 return RealAsyncClient(transport=transport, **kwargs)
 
             with patch("httpx.AsyncClient", side_effect=mock_client_factory):
                 loop = CodingLoop(
-                    agent_client=agent_client,
-                    workspace=ws,
-                    max_steps=10,
-                    test_command="pytest"
+                    agent_client=agent_client, workspace=ws, max_steps=10, test_command="pytest"
                 )
-                
+
                 # Start measuring total loop time
                 start_loop = time.time()
                 result = await loop.run(task="Fix the bug in app.py")
@@ -177,7 +197,9 @@ async def run_iteration(index: int) -> dict[str, Any]:
                         elif e.get("action_type") == "run_tests":
                             run_tests_time_ms = duration
 
-                avg_time_per_step_ms = sum(step_durations) / len(step_durations) if step_durations else 0.0
+                avg_time_per_step_ms = (
+                    sum(step_durations) / len(step_durations) if step_durations else 0.0
+                )
 
                 # Measure reporter overhead
                 reporter = Reporter(output_dir=tmp_dir)
@@ -210,17 +232,31 @@ async def run_iteration(index: int) -> dict[str, Any]:
 
 async def main():
     parser = argparse.ArgumentParser(description="Run LLM Harness performance benchmark")
-    parser.add_argument("--iterations", type=int, default=3, help="Number of benchmark iterations to run")
-    parser.add_argument("--output-dir", type=str, default="artifacts/benchmarks/llm-harness", help="Directory where benchmarks results are saved")
-    parser.add_argument("--compare-baseline", action="store_true", help="Compare current results against baseline")
-    parser.add_argument("--max-regression-percent", type=float, default=10.0, help="Maximum allowed regression percentage")
+    parser.add_argument(
+        "--iterations", type=int, default=3, help="Number of benchmark iterations to run"
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default="artifacts/benchmarks/llm-harness",
+        help="Directory where benchmarks results are saved",
+    )
+    parser.add_argument(
+        "--compare-baseline", action="store_true", help="Compare current results against baseline"
+    )
+    parser.add_argument(
+        "--max-regression-percent",
+        type=float,
+        default=10.0,
+        help="Maximum allowed regression percentage",
+    )
     args = parser.parse_args()
 
     print(f"Starting benchmark of LLM Harness with {args.iterations} iterations...")
-    
+
     results = []
     for i in range(args.iterations):
-        print(f"Running iteration {i+1}/{args.iterations}...")
+        print(f"Running iteration {i + 1}/{args.iterations}...")
         res = await run_iteration(i + 1)
         results.append(res)
 
@@ -245,7 +281,7 @@ async def main():
             "run_tests_time_ms": {"mean": run_tests_mean},
             "reporter_overhead_ms": {"mean": reporter_overhead_mean},
         },
-        "iterations": results
+        "iterations": results,
     }
 
     # Ensure output directory exists
@@ -276,7 +312,7 @@ async def main():
         f"| **Reporter overhead** | {reporter_overhead_mean:.2f} ms |",
         "",
         "## Iterations breakdown",
-        ""
+        "",
     ]
 
     header_line = "| Iteration | Total Time (ms) | Avg Step Time (ms) | apply_patch Time (ms) | run_tests Time (ms) | Reporter Overhead (ms) |"
@@ -292,7 +328,7 @@ async def main():
     md_str = "\n".join(md_lines)
     # Double check and redact secrets
     md_str = md_str.replace("sk-test-key", "REDACTED")
-    
+
     md_path = os.path.join(args.output_dir, "latest.md")
     with open(md_path, "w") as f:
         f.write(md_str)
@@ -311,7 +347,7 @@ async def main():
         baseline_path = os.path.join(args.output_dir, "baseline.json")
         if os.path.exists(baseline_path):
             try:
-                with open(baseline_path, "r") as f:
+                with open(baseline_path) as f:
                     baseline_data = json.load(f)
                 baseline_time = baseline_data["summary"]["total_time_ms"]["mean"]
                 regression = ((total_time_mean - baseline_time) / baseline_time) * 100
@@ -319,7 +355,10 @@ async def main():
                 print(f"Current total_time_ms: {total_time_mean:.2f} ms")
                 print(f"Performance Change: {regression:.2f}%")
                 if regression > args.max_regression_percent:
-                    print(f"ERROR: Regression threshold of {args.max_regression_percent}% exceeded!", file=sys.stderr)
+                    print(
+                        f"ERROR: Regression threshold of {args.max_regression_percent}% exceeded!",
+                        file=sys.stderr,
+                    )
                     sys.exit(1)
                 else:
                     print("SUCCESS: Performance is within acceptable regression threshold.")

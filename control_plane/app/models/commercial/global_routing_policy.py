@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from app.db.base import Base
 from sqlalchemy import Column, DateTime, Integer, String, Text
@@ -13,7 +13,7 @@ class GlobalRoutingPolicyVersion(Base):
     version = Column(Integer, nullable=False)
     policy_json = Column(Text, nullable=False)
     created_by = Column(String(100), nullable=True)
-    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
     status = Column(String(32), nullable=False, default="draft")  # draft, active, rolled_back
     previous_version_id = Column(UUID(as_uuid=True), nullable=True)
 

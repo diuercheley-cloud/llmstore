@@ -1,0 +1,1 @@
+../archive/legacy/validate-v1.7-release-checklist.sh

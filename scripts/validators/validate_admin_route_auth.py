@@ -77,12 +77,16 @@ def main() -> int:
     for path in sorted(API_DIR.glob("*.py")):
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         routers = router_prefixes(tree)
-        discovered_routes: list[tuple[ast.FunctionDef | ast.AsyncFunctionDef, ast.Call, str, bool]] = []
+        discovered_routes: list[
+            tuple[ast.FunctionDef | ast.AsyncFunctionDef, ast.Call, str, bool]
+        ] = []
         for node in ast.walk(tree):
             if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 continue
             for decorator in node.decorator_list:
-                if not isinstance(decorator, ast.Call) or not isinstance(decorator.func, ast.Attribute):
+                if not isinstance(decorator, ast.Call) or not isinstance(
+                    decorator.func, ast.Attribute
+                ):
                     continue
                 router_name = call_name(decorator.func.value)
                 if router_name not in routers:
@@ -98,7 +102,9 @@ def main() -> int:
         # app.bootstrap.routers._secure_include_router. Mixed routers must protect
         # each administrative route explicitly.
         all_paths = [route[2] for route in discovered_routes]
-        if all_paths and all(path.startswith(("/admin", "/api/admin", "/api/v1/admin")) for path in all_paths):
+        if all_paths and all(
+            path.startswith(("/admin", "/api/admin", "/api/v1/admin")) for path in all_paths
+        ):
             continue
         for node, decorator, full_path, router_has_auth in discovered_routes:
             if full_path.startswith(PUBLIC_ADMIN_UI_PREFIXES):

@@ -4,8 +4,10 @@ from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/admin/platform", tags=["Platform GA Readiness"])
 
+
 def get_ga_readiness_service():
     return GAReadinessService()
+
 
 @router.get("/ga-readiness")
 def get_ga_readiness(service: GAReadinessService = Depends(get_ga_readiness_service)):
@@ -19,6 +21,7 @@ def get_ga_readiness(service: GAReadinessService = Depends(get_ga_readiness_serv
         "current_state": current_state,
     }
 
+
 @router.get("/maturity-report")
 def get_maturity_report(service: GAReadinessService = Depends(get_ga_readiness_service)):
     """
@@ -28,5 +31,5 @@ def get_maturity_report(service: GAReadinessService = Depends(get_ga_readiness_s
     result = service.generate_report(current_state)
     return {
         "message": "Report generated successfully at artifacts/platform/ga-readiness.md",
-        "report_summary": result
+        "report_summary": result,
     }

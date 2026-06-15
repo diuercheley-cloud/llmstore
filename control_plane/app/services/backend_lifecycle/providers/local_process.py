@@ -28,7 +28,9 @@ class LocalProcessProvider(BaseLifecycleProvider):
             provider_type="local_process",
         )
 
-    async def get_observed_state(self, backend_id: UUID, desired: BackendDesiredState) -> BackendObservedState:
+    async def get_observed_state(
+        self, backend_id: UUID, desired: BackendDesiredState
+    ) -> BackendObservedState:
         proc = self._processes.get(backend_id)
         if proc is None or proc.poll() is not None:
             return BackendObservedState(
@@ -48,7 +50,9 @@ class LocalProcessProvider(BaseLifecycleProvider):
             url=desired.backend_url,
         )
 
-    async def start_backend(self, backend_id: UUID, desired: BackendDesiredState) -> LifecycleActionResult:
+    async def start_backend(
+        self, backend_id: UUID, desired: BackendDesiredState
+    ) -> LifecycleActionResult:
         if backend_id in self._processes:
             proc = self._processes[backend_id]
             if proc.poll() is None:
@@ -84,7 +88,9 @@ class LocalProcessProvider(BaseLifecycleProvider):
                 error=str(exc),
             )
 
-    async def stop_backend(self, backend_id: UUID, desired: BackendDesiredState) -> LifecycleActionResult:
+    async def stop_backend(
+        self, backend_id: UUID, desired: BackendDesiredState
+    ) -> LifecycleActionResult:
         proc = self._processes.pop(backend_id, None)
         if proc is None or proc.poll() is not None:
             return LifecycleActionResult(
@@ -117,7 +123,9 @@ class LocalProcessProvider(BaseLifecycleProvider):
                 error=str(exc),
             )
 
-    async def restart_backend(self, backend_id: UUID, desired: BackendDesiredState) -> LifecycleActionResult:
+    async def restart_backend(
+        self, backend_id: UUID, desired: BackendDesiredState
+    ) -> LifecycleActionResult:
         stop_result = await self.stop_backend(backend_id, desired)
         if not stop_result.success:
             return stop_result
@@ -125,7 +133,15 @@ class LocalProcessProvider(BaseLifecycleProvider):
 
     def _build_command(self, desired: BackendDesiredState) -> list[str]:
         if desired.provider == "llama.cpp":
-            return ["llama-server", "-m", "/models/model.gguf", "--host", "0.0.0.0", "--port", "8080"]
+            return [
+                "llama-server",
+                "-m",
+                "/models/model.gguf",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "8080",
+            ]
         return ["python3", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
 
     async def _check_health(self, url: str) -> bool:

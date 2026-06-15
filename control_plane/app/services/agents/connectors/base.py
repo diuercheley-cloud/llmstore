@@ -4,7 +4,7 @@ import json
 import logging
 import os
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
 
 logger = logging.getLogger("connector_base")
 
@@ -21,11 +21,13 @@ class ConnectorCapability(str, Enum):
     CREATE = "create"
     UPDATE = "update"
 
+
 class RiskLevel(str, Enum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
+
 
 class SideEffectLevel(str, Enum):
     NONE = "none"
@@ -33,6 +35,7 @@ class SideEffectLevel(str, Enum):
     WRITE = "write"
     DESTRUCTIVE = "destructive"
     EXTERNAL = "external"
+
 
 class ConnectorAdapter(abc.ABC):
     """
@@ -56,22 +59,22 @@ class ConnectorAdapter(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def capabilities(self) -> List[ConnectorCapability]:
+    def capabilities(self) -> list[ConnectorCapability]:
         pass
 
     @property
     @abc.abstractmethod
-    def input_schema(self) -> Dict[str, Any]:
+    def input_schema(self) -> dict[str, Any]:
         pass
 
     @property
     @abc.abstractmethod
-    def output_schema(self) -> Dict[str, Any]:
+    def output_schema(self) -> dict[str, Any]:
         pass
 
     @property
     @abc.abstractmethod
-    def required_scopes(self) -> List[str]:
+    def required_scopes(self) -> list[str]:
         pass
 
     @property
@@ -94,7 +97,7 @@ class ConnectorAdapter(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def rate_limit_policy(self) -> Dict[str, Any]:
+    def rate_limit_policy(self) -> dict[str, Any]:
         pass
 
     @abc.abstractmethod
@@ -102,19 +105,25 @@ class ConnectorAdapter(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def dry_run(self, tenant_id: str, credentials: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+    async def dry_run(
+        self, tenant_id: str, credentials: dict[str, Any], **kwargs
+    ) -> dict[str, Any]:
         pass
 
     @abc.abstractmethod
-    async def execute(self, tenant_id: str, credentials: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+    async def execute(
+        self, tenant_id: str, credentials: dict[str, Any], **kwargs
+    ) -> dict[str, Any]:
         pass
 
-    async def rollback(self, tenant_id: str, credentials: Dict[str, Any], invocation_id: str, **kwargs) -> Dict[str, Any]:
+    async def rollback(
+        self, tenant_id: str, credentials: dict[str, Any], invocation_id: str, **kwargs
+    ) -> dict[str, Any]:
         if not self.rollback_supported:
             return {"status": "error", "message": "Rollback not supported for this connector"}
         raise NotImplementedError("Rollback must be implemented if rollback_supported is True")
 
-    def _with_execution_metadata(self, result: Dict[str, Any], *, mode: str) -> Dict[str, Any]:
+    def _with_execution_metadata(self, result: dict[str, Any], *, mode: str) -> dict[str, Any]:
         payload = dict(result)
         payload["connector"] = self.connector_name
         payload["mode"] = mode
@@ -122,18 +131,16 @@ class ConnectorAdapter(abc.ABC):
             payload["mock"] = True
         return payload
 
-    def _unsupported_action(self, action: str, *, mode: str, supported_actions: List[str]) -> UnsupportedConnectorActionError:
+    def _unsupported_action(
+        self, action: str, *, mode: str, supported_actions: list[str]
+    ) -> UnsupportedConnectorActionError:
         return UnsupportedConnectorActionError(
             f"Action '{action}' is not supported by connector '{self.connector_name}' in {mode} mode. "
             f"Supported actions: {sorted(supported_actions)}"
         )
 
     async def audit_connector_call(
-        self,
-        tenant_id: str,
-        credentials: Dict[str, Any],
-        action: str,
-        details: Dict[str, Any]
+        self, tenant_id: str, credentials: dict[str, Any], action: str, details: dict[str, Any]
     ):
         """
         Logs a connector execution event to the IAM audit trail.
@@ -157,11 +164,7 @@ class ConnectorAdapter(abc.ABC):
                 tenant_id=tenant_id,
                 event_type=f"connector_{self.connector_name}_{action}",
                 agent_id=agent_id,
-                details={
-                    "connector": self.connector_name,
-                    "action": action,
-                    **details
-                }
+                details={"connector": self.connector_name, "action": action, **details},
             )
             await db.commit()
 
@@ -170,6 +173,7 @@ class ConnectorAdapter(abc.ABC):
         Blocks high-risk operations until human operator approval is obtained.
         """
         from app.core.config import get_settings
+
         settings = get_settings()
 
         if risk_level in [RiskLevel.HIGH, RiskLevel.CRITICAL]:
@@ -178,18 +182,20 @@ class ConnectorAdapter(abc.ABC):
                     f"Action '{action}' on connector '{self.connector_name}' has {risk_level.value} risk "
                     f"and requires human approval, but AGENT_HUMAN_APPROVAL_ENABLED is false."
                 )
-            
+
             approval_id = kwargs.get("approval_id")
             if not approval_id:
                 raise PermissionError(
                     f"Action '{action}' on connector '{self.connector_name}' requires human approval. "
                     f"No 'approval_id' found in execution context."
                 )
-            
-            # In a real system, we would verify the approval_id against ApprovalService
-            logger.info(f"Human approval verified for {self.connector_name}:{action} (ID: {approval_id})")
 
-    async def _register_receipt(self, tenant_id: str, result: Dict[str, Any], invocation_id: str):
+            # In a real system, we would verify the approval_id against ApprovalService
+            logger.info(
+                f"Human approval verified for {self.connector_name}:{action} (ID: {approval_id})"
+            )
+
+    async def _register_receipt(self, tenant_id: str, result: dict[str, Any], invocation_id: str):
         """
         Registers a permanent receipt of a connector write operation.
         """
@@ -198,14 +204,14 @@ class ConnectorAdapter(abc.ABC):
 
         from app.db.session import SessionLocal
         from app.services.agents.connectors.audit import ConnectorAuditService
-        
+
         async with SessionLocal() as db:
             audit = ConnectorAuditService(db)
             await audit.register_write_receipt(
                 tenant_id=tenant_id,
                 connector_name=self.connector_name,
                 invocation_id=invocation_id,
-                result_hash=str(hash(json.dumps(result, sort_keys=True)))
+                result_hash=str(hash(json.dumps(result, sort_keys=True))),
             )
             await db.commit()
 
@@ -214,31 +220,46 @@ class ConnectorAdapter(abc.ABC):
         Enforces governance via feature flags.
         """
         from app.core.config import get_settings
+
         settings = get_settings()
 
         # Global enabled check
         if not settings.agent_saas_connectors_enabled:
-            raise PermissionError("SaaS Connectors are globally disabled (AGENT_SAAS_CONNECTORS_ENABLED=false)")
+            raise PermissionError(
+                "SaaS Connectors are globally disabled (AGENT_SAAS_CONNECTORS_ENABLED=false)"
+            )
 
         # External network check
         if not settings.agent_connector_external_network_enabled:
-            raise PermissionError("External network access for connectors is disabled (AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED=false)")
+            raise PermissionError(
+                "External network access for connectors is disabled (AGENT_CONNECTOR_EXTERNAL_NETWORK_ENABLED=false)"
+            )
 
         # Write check
-        write_capabilities = [ConnectorCapability.WRITE, ConnectorCapability.CREATE, ConnectorCapability.UPDATE, ConnectorCapability.COMMENT]
+        write_capabilities = [
+            ConnectorCapability.WRITE,
+            ConnectorCapability.CREATE,
+            ConnectorCapability.UPDATE,
+            ConnectorCapability.COMMENT,
+        ]
         if capability in write_capabilities:
             if not settings.agent_connector_write_enabled:
-                raise PermissionError(f"Write capability '{capability.value}' is disabled (AGENT_CONNECTOR_WRITE_ENABLED=false)")
-            
+                raise PermissionError(
+                    f"Write capability '{capability.value}' is disabled (AGENT_CONNECTOR_WRITE_ENABLED=false)"
+                )
+
             # Additional production check: no anonymous writes in production
             if settings.app_env == "production" and not settings.agent_iam_enabled:
-                raise PermissionError("Connector write access in production requires AGENT_IAM_ENABLED=true")
+                raise PermissionError(
+                    "Connector write access in production requires AGENT_IAM_ENABLED=true"
+                )
 
-    async def check_iam(self, tenant_id: str, credentials: Dict[str, Any], action: str):
+    async def check_iam(self, tenant_id: str, credentials: dict[str, Any], action: str):
         """
         Enforces Agent IAM logic using CredentialBroker.
         """
         from app.core.config import get_settings
+
         settings = get_settings()
         if not settings.agent_iam_enabled:
             return
@@ -278,5 +299,5 @@ class ConnectorAdapter(abc.ABC):
                 agent_id=agent_id,
                 connector_name=self.connector_name,
                 action=action,
-                token_string=token_string
+                token_string=token_string,
             )

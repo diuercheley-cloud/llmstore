@@ -42,14 +42,22 @@ async def test_compatibility_api_flow(session):
         assert listed.status_code == 200
         assert len(listed.json()) == 1
 
-        detail = await ac.get(f"/admin/operations/compatibility/contracts/{contract_id}?client_id={client.id}")
-        blocked_detail = await ac.get(f"/admin/operations/compatibility/contracts/{contract_id}?client_id={other.id}")
+        detail = await ac.get(
+            f"/admin/operations/compatibility/contracts/{contract_id}?client_id={client.id}"
+        )
+        blocked_detail = await ac.get(
+            f"/admin/operations/compatibility/contracts/{contract_id}?client_id={other.id}"
+        )
         assert detail.status_code == 200
         assert blocked_detail.status_code == 404
 
         matrix = await ac.post(
             "/admin/operations/compatibility/matrix",
-            json={"client_id": str(client.id), "source_version": "1.2.0", "target_version": "1.3.0"},
+            json={
+                "client_id": str(client.id),
+                "source_version": "1.2.0",
+                "target_version": "1.3.0",
+            },
         )
         assert matrix.status_code == 200
         assert matrix.json()["matrix"]["compatibility_type"] == "backward"
@@ -101,7 +109,9 @@ async def test_compatibility_api_flow(session):
         assert deprecated.status_code == 200
         assert deprecated.json()["contract"]["compatibility_status"] == "blocked"
 
-        deprecations = await ac.get(f"/admin/operations/compatibility/deprecations?client_id={client.id}")
+        deprecations = await ac.get(
+            f"/admin/operations/compatibility/deprecations?client_id={client.id}"
+        )
         assert deprecations.status_code == 200
         assert len(deprecations.json()) == 1
 
@@ -123,7 +133,10 @@ async def test_compatibility_api_flow(session):
             json={"client_id": str(client.id), "receipt_type": "verification_receipt"},
         )
         assert receipt.status_code == 200
-        assert isinstance(receipt.json()["receipt"]["signature"], str) and len(receipt.json()["receipt"]["signature"]) > 0
+        assert (
+            isinstance(receipt.json()["receipt"]["signature"], str)
+            and len(receipt.json()["receipt"]["signature"]) > 0
+        )
 
         cross_tenant = await ac.post(
             f"/admin/operations/compatibility/contracts/{contract_id}/verify",

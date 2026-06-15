@@ -137,8 +137,7 @@ def test_release_manifest_version_matches_tag():
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         manifest_version = manifest.get("version")
         assert manifest_version == tag, (
-            f"{tag}: release-manifest.json version '{manifest_version}' "
-            f"does not match tag '{tag}'"
+            f"{tag}: release-manifest.json version '{manifest_version}' does not match tag '{tag}'"
         )
 
 
@@ -159,8 +158,7 @@ def test_stable_branch_at_tag_commit():
             if tag in known_divergent:
                 continue
             assert False, (
-                f"{tag}: stable branch at {stable_commit[:12]} "
-                f"but tag at {tag_commit[:12]}"
+                f"{tag}: stable branch at {stable_commit[:12]} but tag at {tag_commit[:12]}"
             )
 
 
@@ -176,9 +174,7 @@ def test_bundle_manifest_secrets_scan():
 
         manifest = json.loads(bundle_path.read_text(encoding="utf-8"))
         if "secrets_scan_passed" in manifest:
-            assert manifest["secrets_scan_passed"] is True, (
-                f"{tag}: bundle secrets scan failed"
-            )
+            assert manifest["secrets_scan_passed"] is True, f"{tag}: bundle secrets scan failed"
 
 
 def test_version_file_consistency():

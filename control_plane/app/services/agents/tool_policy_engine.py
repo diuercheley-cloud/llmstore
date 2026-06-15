@@ -44,7 +44,10 @@ class ToolPolicyEngine:
             select(CommercialToolRegistry)
             .where(
                 CommercialToolRegistry.tool_name == tool_name,
-                or_(CommercialToolRegistry.tenant_id == tenant_id, CommercialToolRegistry.tenant_id.is_(None)),
+                or_(
+                    CommercialToolRegistry.tenant_id == tenant_id,
+                    CommercialToolRegistry.tenant_id.is_(None),
+                ),
                 CommercialToolRegistry.enabled.is_(True),
             )
             .order_by(CommercialToolRegistry.tenant_id.desc())
@@ -81,24 +84,50 @@ class ToolPolicyEngine:
                 decision="denied",
                 reason="tool_not_trusted",
                 tool=registration,
-                sanitized_payload=redact_confidential_payload(payload, mode=registration.confidential_payload_mode),
+                sanitized_payload=redact_confidential_payload(
+                    payload, mode=registration.confidential_payload_mode
+                ),
                 payload_hash=payload_hash,
             )
 
         tenant_id = execution.tenant_id or ""
         if registration.tenant_id and registration.tenant_id != tenant_id:
-            return PolicyDecision(False, "denied", "tenant_scope_mismatch", tool=registration, payload_hash=payload_hash)
+            return PolicyDecision(
+                False,
+                "denied",
+                "tenant_scope_mismatch",
+                tool=registration,
+                payload_hash=payload_hash,
+            )
 
         if profile.client_id and tenant_id and profile.client_id != tenant_id:
-            return PolicyDecision(False, "denied", "agent_profile_tenant_mismatch", tool=registration, payload_hash=payload_hash)
+            return PolicyDecision(
+                False,
+                "denied",
+                "agent_profile_tenant_mismatch",
+                tool=registration,
+                payload_hash=payload_hash,
+            )
 
         allowed_tenants = profile.allowed_tenants_json or []
         if allowed_tenants and tenant_id not in allowed_tenants:
-            return PolicyDecision(False, "denied", "tenant_not_permitted", tool=registration, payload_hash=payload_hash)
+            return PolicyDecision(
+                False,
+                "denied",
+                "tenant_not_permitted",
+                tool=registration,
+                payload_hash=payload_hash,
+            )
 
         allowed_tools = profile.allowed_tools or []
         if tool_name not in allowed_tools and "*" not in allowed_tools:
-            return PolicyDecision(False, "denied", "tool_not_in_agent_allowlist", tool=registration, payload_hash=payload_hash)
+            return PolicyDecision(
+                False,
+                "denied",
+                "tool_not_in_agent_allowlist",
+                tool=registration,
+                payload_hash=payload_hash,
+            )
 
         quota_ok, quota_reason = await self._check_quota_limits(
             db,
@@ -107,16 +136,33 @@ class ToolPolicyEngine:
             tool=registration,
         )
         if not quota_ok:
-            return PolicyDecision(False, "denied", quota_reason, tool=registration, payload_hash=payload_hash)
+            return PolicyDecision(
+                False, "denied", quota_reason, tool=registration, payload_hash=payload_hash
+            )
 
-        sanitized_payload = redact_confidential_payload(payload, mode=registration.confidential_payload_mode)
+        sanitized_payload = redact_confidential_payload(
+            payload, mode=registration.confidential_payload_mode
+        )
 
         if dry_run and not registration.allow_dry_run:
-            return PolicyDecision(False, "denied", "dry_run_not_permitted", tool=registration, sanitized_payload=sanitized_payload, payload_hash=payload_hash)
+            return PolicyDecision(
+                False,
+                "denied",
+                "dry_run_not_permitted",
+                tool=registration,
+                sanitized_payload=sanitized_payload,
+                payload_hash=payload_hash,
+            )
 
-        requires_approval = bool(profile.requires_approval_for_tools or registration.requires_approval)
+        requires_approval = bool(
+            profile.requires_approval_for_tools or registration.requires_approval
+        )
         decision = "pending_approval" if requires_approval and not dry_run else "allowed"
-        reason = "approval_required" if requires_approval and not dry_run else ("dry_run" if dry_run else "policy_allow")
+        reason = (
+            "approval_required"
+            if requires_approval and not dry_run
+            else ("dry_run" if dry_run else "policy_allow")
+        )
         return PolicyDecision(
             allowed=True,
             decision=decision,
@@ -183,7 +229,9 @@ class ToolPolicyEngine:
             )
         )
 
-        if minute_total and minute_total >= min(profile.max_actions_per_minute, tool.rate_limit_per_minute):
+        if minute_total and minute_total >= min(
+            profile.max_actions_per_minute, tool.rate_limit_per_minute
+        ):
             return False, "rate_limit_exceeded"
         if day_total and day_total >= min(profile.max_actions_per_day, tool.quota_limit_per_day):
             return False, "quota_exceeded"

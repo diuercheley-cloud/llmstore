@@ -1,12 +1,10 @@
-import pytest
-import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import timedelta
 
+import pytest
 from app.core.time import utc_now
-from app.models.core.model_registry import ModelRegistry
 from app.models.core.inference_backend import InferenceBackend
 from app.models.core.model_backend_route import ModelBackendRoute
-from app.models.core.model_health import ModelHealthStatus
+from app.models.core.model_registry import ModelRegistry
 from app.services.model_health import ModelHealthService
 from sqlalchemy.ext.asyncio import AsyncSession
 

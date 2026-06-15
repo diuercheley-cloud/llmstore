@@ -5,7 +5,9 @@ from app.services.operations.plugin_runtime.hash_utils import sha256_hex
 
 
 class PluginLifecycleService:
-    def _event(self, contract: Any, event_type: str, lifecycle_status: str, reason: str = "") -> PluginLifecycleEvent:
+    def _event(
+        self, contract: Any, event_type: str, lifecycle_status: str, reason: str = ""
+    ) -> PluginLifecycleEvent:
         if event_type in {"revoked", "blocked"} and not reason.strip():
             raise ValueError("reason is required")
         logical_payload = {
@@ -38,7 +40,9 @@ class PluginLifecycleService:
         return self._event(contract, "sandbox_validated", "accepted")
 
     def mark_placeholder_certified(self, contract: Any) -> PluginLifecycleEvent:
-        return self._event(contract, "placeholder_certified", "warning", "placeholder certification only")
+        return self._event(
+            contract, "placeholder_certified", "warning", "placeholder certification only"
+        )
 
     def deprecate_plugin(self, contract: Any, reason: str) -> PluginLifecycleEvent:
         contract.contract_status = "deprecated"

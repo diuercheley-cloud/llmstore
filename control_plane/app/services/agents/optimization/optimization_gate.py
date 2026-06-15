@@ -5,8 +5,11 @@ from app.models.agents.agent_optimization import AgentOptimizationCandidate, Age
 
 logger = logging.getLogger(__name__)
 
+
 class OptimizationGate:
-    def can_promote(self, candidate: AgentOptimizationCandidate, result: AgentOptimizationResult) -> bool:
+    def can_promote(
+        self, candidate: AgentOptimizationCandidate, result: AgentOptimizationResult
+    ) -> bool:
         """
         Enforces promotion gate policies.
         Blocks promotion if:
@@ -26,9 +29,7 @@ class OptimizationGate:
             return False
 
         if candidate.safety_regression:
-            logger.warning(
-                f"Candidate {candidate.id} blocked: Safety regression flag is active."
-            )
+            logger.warning(f"Candidate {candidate.id} blocked: Safety regression flag is active.")
             return False
 
         # 2. Mandatory approval check

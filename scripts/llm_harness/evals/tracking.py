@@ -45,21 +45,23 @@ class ExperimentConfig:
         self.extra = extra or {}
 
     def to_dict(self) -> dict[str, Any]:
-        return Sanitizer.sanitize_data({
-            "model": self.model,
-            "provider": self.provider,
-            "prompt_version": self.prompt_version,
-            "prompt_hash": self.prompt_hash,
-            "policy_preset": self.policy_preset,
-            "sandbox": self.sandbox,
-            "judge_provider": self.judge_provider,
-            "judge_model": self.judge_model,
-            "judge_threshold": self.judge_threshold,
-            "max_steps": self.max_steps,
-            "suite_name": self.suite_name,
-            "suite_path": self.suite_path,
-            **self.extra,
-        })
+        return Sanitizer.sanitize_data(
+            {
+                "model": self.model,
+                "provider": self.provider,
+                "prompt_version": self.prompt_version,
+                "prompt_hash": self.prompt_hash,
+                "policy_preset": self.policy_preset,
+                "sandbox": self.sandbox,
+                "judge_provider": self.judge_provider,
+                "judge_model": self.judge_model,
+                "judge_threshold": self.judge_threshold,
+                "max_steps": self.max_steps,
+                "suite_name": self.suite_name,
+                "suite_path": self.suite_path,
+                **self.extra,
+            }
+        )
 
 
 class RunMetrics:

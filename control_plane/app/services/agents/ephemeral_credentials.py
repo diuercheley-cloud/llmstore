@@ -2,10 +2,10 @@
 Owner: agent-platform
 Status: beta
 """
+
 import logging
 import uuid
 from datetime import timedelta
-from typing import Optional
 
 from app.core.time import utc_now
 from app.models.agents.agents import AgentEphemeralCredential
@@ -14,17 +14,13 @@ from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
+
 class EphemeralCredentialService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
     async def issue_credential(
-        self,
-        run_id: uuid.UUID,
-        scope: str,
-        credential_type: str,
-        value: str,
-        ttl_minutes: int = 5
+        self, run_id: uuid.UUID, scope: str, credential_type: str, value: str, ttl_minutes: int = 5
     ) -> AgentEphemeralCredential:
         cred = AgentEphemeralCredential(
             run_id=run_id,
@@ -32,14 +28,14 @@ class EphemeralCredentialService:
             credential_type=credential_type,
             credential_value=value,
             expires_at=utc_now() + timedelta(minutes=ttl_minutes),
-            created_at=utc_now()
+            created_at=utc_now(),
         )
         self.db.add(cred)
         await self.db.commit()
         await self.db.refresh(cred)
         return cred
 
-    async def get_valid_credential(self, run_id: uuid.UUID, scope: str) -> Optional[str]:
+    async def get_valid_credential(self, run_id: uuid.UUID, scope: str) -> str | None:
         res = await self.db.execute(
             select(AgentEphemeralCredential)
             .where(AgentEphemeralCredential.run_id == run_id)
@@ -52,6 +48,7 @@ class EphemeralCredentialService:
 
     async def revoke_run_credentials(self, run_id: uuid.UUID):
         from sqlalchemy import update
+
         await self.db.execute(
             update(AgentEphemeralCredential)
             .where(AgentEphemeralCredential.run_id == run_id)

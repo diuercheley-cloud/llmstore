@@ -7,7 +7,9 @@ from app.services.operations.compatibility_contracts.semantic_versioning import 
 SEMVER = SemanticVersioningService()
 
 
-def validate_schema_compatibility(source_schema_version: str, target_schema_version: str) -> dict[str, Any]:
+def validate_schema_compatibility(
+    source_schema_version: str, target_schema_version: str
+) -> dict[str, Any]:
     comparison = SEMVER.compare_versions(source_schema_version, target_schema_version)
     compatible = comparison["same_major"]
     if not compatible:

@@ -1,0 +1,1 @@
+../validators/validate-export-client-local.sh

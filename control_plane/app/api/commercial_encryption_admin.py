@@ -1,6 +1,5 @@
 # Owner: commercial-ops
 import uuid
-from typing import List, Optional
 
 from app.api import deps
 from app.core.config import get_settings
@@ -29,21 +28,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 router = APIRouter(prefix="/admin/security/encryption", tags=["commercial_encryption"])
 settings = get_settings()
 
+
 def get_encryption_service():
     return TenantEncryptionService(settings)
 
-@router.get("/keys", response_model=List[EncryptionKeyResponse])
+
+@router.get("/keys", response_model=list[EncryptionKeyResponse])
 async def list_encryption_keys(
     db: AsyncSession = Depends(deps.get_db),
     _role: AdminRole = Depends(deps.require_admin_role(AdminRole.READ)),
-    client_id: Optional[uuid.UUID] = None,
+    client_id: uuid.UUID | None = None,
 ):
     stmt = select(CommercialTenantEncryptionKey)
     if client_id:
         stmt = stmt.where(CommercialTenantEncryptionKey.client_id == client_id)
-    
+
     result = await db.execute(stmt)
     return result.scalars().all()
+
 
 @router.post("/keys", response_model=EncryptionKeyResponse)
 async def create_encryption_key(
@@ -54,6 +56,7 @@ async def create_encryption_key(
 ):
     return await service.create_tenant_key(db, request.client_id, request.purpose)
 
+
 @router.post("/keys/{key_id}/rotate", response_model=EncryptionKeyResponse)
 async def rotate_encryption_key(
     key_id: uuid.UUID,
@@ -62,6 +65,7 @@ async def rotate_encryption_key(
     service: TenantEncryptionService = Depends(get_encryption_service),
 ):
     return await service.rotate_tenant_key(db, key_id)
+
 
 @router.post("/keys/{key_id}/revoke")
 async def revoke_encryption_key(
@@ -72,6 +76,7 @@ async def revoke_encryption_key(
 ):
     await service.revoke_tenant_key(db, key_id)
     return {"status": "revoked"}
+
 
 @router.post("/encrypt", response_model=EncryptedArtifactResponse)
 async def encrypt_payload(
@@ -90,6 +95,7 @@ async def encrypt_payload(
         request.key_purpose,
     )
 
+
 @router.post("/decrypt", response_model=DecryptResponse)
 async def decrypt_payload(
     request: DecryptRequest,
@@ -100,26 +106,28 @@ async def decrypt_payload(
     artifact = await db.get(CommercialEncryptedArtifact, request.artifact_id)
     if not artifact:
         raise HTTPException(status_code=404, detail="Artifact not found")
-    
+
     try:
         payload = await service.decrypt_payload(db, artifact)
         return DecryptResponse(payload=payload)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/audit", response_model=List[AuditEventResponse])
+
+@router.get("/audit", response_model=list[AuditEventResponse])
 async def list_encryption_audit(
     db: AsyncSession = Depends(deps.get_db),
     _role: AdminRole = Depends(deps.require_admin_role(AdminRole.READ)),
-    client_id: Optional[uuid.UUID] = None,
+    client_id: uuid.UUID | None = None,
 ):
     stmt = select(CommercialEncryptionAuditEvent)
     if client_id:
         stmt = stmt.where(CommercialEncryptionAuditEvent.client_id == client_id)
     stmt = stmt.order_by(CommercialEncryptionAuditEvent.created_at.desc()).limit(100)
-    
+
     result = await db.execute(stmt)
     return result.scalars().all()
+
 
 @router.post("/classification", response_model=ClassificationResponse)
 async def classify_payload(

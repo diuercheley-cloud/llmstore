@@ -10,25 +10,18 @@ REPORT_SCRIPT_PATH = ROOT / "scripts" / "validate-hybrid-platform-report.sh"
 
 
 class TestHybridPlatformE2EScript:
-
     def test_script_exists(self):
         assert SCRIPT_PATH.exists(), f"Script not found: {SCRIPT_PATH}"
 
     def test_script_is_executable(self):
-        assert os.access(str(SCRIPT_PATH), os.X_OK), (
-            f"Script not executable: {SCRIPT_PATH}"
-        )
+        assert os.access(str(SCRIPT_PATH), os.X_OK), f"Script not executable: {SCRIPT_PATH}"
 
     def test_script_is_shell_script(self):
         content = SCRIPT_PATH.read_text()
-        assert content.startswith("#!/usr/bin/env bash"), (
-            "Script must be a bash script"
-        )
+        assert content.startswith("#!/usr/bin/env bash"), "Script must be a bash script"
 
     def test_report_script_exists(self):
-        assert REPORT_SCRIPT_PATH.exists(), (
-            f"Report script not found: {REPORT_SCRIPT_PATH}"
-        )
+        assert REPORT_SCRIPT_PATH.exists(), f"Report script not found: {REPORT_SCRIPT_PATH}"
 
     def test_report_script_is_executable(self):
         assert os.access(str(REPORT_SCRIPT_PATH), os.X_OK), (
@@ -56,8 +49,14 @@ class TestHybridPlatformE2EScript:
         assert result.returncode == 0
         assert "Usage:" in result.stdout
         # Verify all flags are documented
-        for flag in ["--base-url", "--skip-rag", "--skip-cache-semantic",
-                     "--skip-tts", "--allow-warnings", "--output-dir"]:
+        for flag in [
+            "--base-url",
+            "--skip-rag",
+            "--skip-cache-semantic",
+            "--skip-tts",
+            "--allow-warnings",
+            "--output-dir",
+        ]:
             assert flag in result.stdout, f"Flag {flag} missing from --help"
 
     def test_script_creates_output_dir(self, tmp_path: Path):
@@ -65,6 +64,7 @@ class TestHybridPlatformE2EScript:
         # Remove any previous test output
         if output_dir.exists():
             import shutil
+
             shutil.rmtree(output_dir)
         try:
             result = subprocess.run(
@@ -87,12 +87,8 @@ class TestHybridPlatformE2EScript:
                 latest = dirs[-1]
                 report_json = latest / "hybrid-e2e.json"
                 report_md = latest / "hybrid-e2e.md"
-                assert report_json.exists(), (
-                    f"hybrid-e2e.json not found in {latest}"
-                )
-                assert report_md.exists(), (
-                    f"hybrid-e2e.md not found in {latest}"
-                )
+                assert report_json.exists(), f"hybrid-e2e.json not found in {latest}"
+                assert report_md.exists(), f"hybrid-e2e.md not found in {latest}"
         except subprocess.TimeoutExpired:
             # The script may take longer than 180s when external validators
             # are not responsive. This is acceptable for CI environments.
@@ -112,9 +108,7 @@ class TestHybridPlatformE2EScript:
 
     def test_script_contains_provider_registry(self):
         content = SCRIPT_PATH.read_text()
-        assert "provider" in content.lower(), (
-            "Script should test provider registry"
-        )
+        assert "provider" in content.lower(), "Script should test provider registry"
 
     def test_script_contains_smart_routing(self):
         content = SCRIPT_PATH.read_text()
@@ -130,27 +124,19 @@ class TestHybridPlatformE2EScript:
 
     def test_script_contains_wallet(self):
         content = SCRIPT_PATH.read_text()
-        assert "wallet" in content.lower(), (
-            "Script should test prepaid wallet"
-        )
+        assert "wallet" in content.lower(), "Script should test prepaid wallet"
 
     def test_script_contains_cache(self):
         content = SCRIPT_PATH.read_text()
-        assert "cache" in content.lower(), (
-            "Script should test intelligent cache"
-        )
+        assert "cache" in content.lower(), "Script should test intelligent cache"
 
     def test_script_contains_rag(self):
         content = SCRIPT_PATH.read_text()
-        assert "rag" in content.lower(), (
-            "Script should test Enterprise RAG"
-        )
+        assert "rag" in content.lower(), "Script should test Enterprise RAG"
 
     def test_script_contains_abuse_detection(self):
         content = SCRIPT_PATH.read_text()
-        assert "abuse" in content.lower(), (
-            "Script should test abuse detection"
-        )
+        assert "abuse" in content.lower(), "Script should test abuse detection"
 
     def test_script_contains_admin_hybrid(self):
         content = SCRIPT_PATH.read_text()
@@ -166,21 +152,15 @@ class TestHybridPlatformE2EScript:
 
     def test_script_contains_check_secrets(self):
         content = SCRIPT_PATH.read_text()
-        assert "check-secrets" in content, (
-            "Script should run check-secrets"
-        )
+        assert "check-secrets" in content, "Script should run check-secrets"
 
     def test_script_contains_security_report(self):
         content = SCRIPT_PATH.read_text()
-        assert "security-report" in content, (
-            "Script should run security report"
-        )
+        assert "security-report" in content, "Script should run security report"
 
     def test_script_contains_production_readiness(self):
         content = SCRIPT_PATH.read_text()
-        assert "production-readiness" in content, (
-            "Script should run production readiness"
-        )
+        assert "production-readiness" in content, "Script should run production readiness"
 
     def test_script_contains_local_production_full(self):
         content = SCRIPT_PATH.read_text()
@@ -190,27 +170,19 @@ class TestHybridPlatformE2EScript:
 
     def test_script_generates_json_report(self):
         content = SCRIPT_PATH.read_text()
-        assert "hybrid-e2e.json" in content, (
-            "Script should generate hybrid-e2e.json"
-        )
+        assert "hybrid-e2e.json" in content, "Script should generate hybrid-e2e.json"
 
     def test_script_generates_md_report(self):
         content = SCRIPT_PATH.read_text()
-        assert "hybrid-e2e.md" in content, (
-            "Script should generate hybrid-e2e.md"
-        )
+        assert "hybrid-e2e.md" in content, "Script should generate hybrid-e2e.md"
 
     def test_script_has_valid_status_values(self):
         content = SCRIPT_PATH.read_text()
-        assert "HYBRID_READY" in content, (
-            "Script should define HYBRID_READY status"
-        )
+        assert "HYBRID_READY" in content, "Script should define HYBRID_READY status"
         assert "HYBRID_READY_WITH_WARNINGS" in content, (
             "Script should define HYBRID_READY_WITH_WARNINGS status"
         )
-        assert "HYBRID_FAILED" in content, (
-            "Script should define HYBRID_FAILED status"
-        )
+        assert "HYBRID_FAILED" in content, "Script should define HYBRID_FAILED status"
 
     @pytest.mark.skipif(
         not (ROOT / ".venv" / "bin" / "python").exists(),
@@ -245,6 +217,4 @@ class TestHybridPlatformE2EScript:
                 cwd=str(ROOT),
                 env={**os.environ, "PYTHONPATH": str(ROOT / "control_plane")},
             )
-            assert result.returncode == 0, (
-                f"Failed to import {import_name}: {result.stderr[:200]}"
-            )
+            assert result.returncode == 0, f"Failed to import {import_name}: {result.stderr[:200]}"

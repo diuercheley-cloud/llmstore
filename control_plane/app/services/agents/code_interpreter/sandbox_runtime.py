@@ -86,7 +86,9 @@ class SandboxRuntime:
         for field_name in ("kernel_isolation_level", "network_mode", "filesystem_mode"):
             value = result.get(field_name)
             if not value:
-                raise RuntimeError(f"Sandbox provider {provider.name} did not report {field_name} for attestation")
+                raise RuntimeError(
+                    f"Sandbox provider {provider.name} did not report {field_name} for attestation"
+                )
             setattr(profile, field_name, value)
         attestation = self.attestation_service.create_attestation(
             profile=profile,
@@ -99,7 +101,9 @@ class SandboxRuntime:
         if not self.attestation_service.verify_attestation(result["attestation"]):
             raise RuntimeError(f"Sandbox provider {provider.name} failed attestation verification")
         if self.settings.app_env == "production" and not result.get("attestation"):
-            raise RuntimeError(f"Sandbox provider {provider.name} failed to provide attestation in production")
+            raise RuntimeError(
+                f"Sandbox provider {provider.name} failed to provide attestation in production"
+            )
         return result
 
     async def persist_run(
@@ -128,11 +132,15 @@ class SandboxRuntime:
         run.__dict__["attestation"] = result.get("attestation")
         return run
 
-    async def ensure_session(self, session_id: uuid.UUID | None, agent_id: uuid.UUID | None = None) -> AgentSandboxSession:
+    async def ensure_session(
+        self, session_id: uuid.UUID | None, agent_id: uuid.UUID | None = None
+    ) -> AgentSandboxSession:
         if session_id is not None:
             session = await self.db.get(AgentSandboxSession, session_id)
             if session is None:
-                raise SandboxPolicyViolation("Sandbox session not found", {"session_id": str(session_id)})
+                raise SandboxPolicyViolation(
+                    "Sandbox session not found", {"session_id": str(session_id)}
+                )
             return session
         session = AgentSandboxSession(agent_id=agent_id, status="active")
         self.db.add(session)

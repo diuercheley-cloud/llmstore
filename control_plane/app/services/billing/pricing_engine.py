@@ -13,8 +13,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
-_PROVIDER_PRICING_PATH = Path(__file__).resolve().parents[4] / "config" / "provider-pricing.example.json"
-_CUSTOMER_PRICING_PATH = Path(__file__).resolve().parents[4] / "config" / "customer-pricing.example.json"
+_PROVIDER_PRICING_PATH = (
+    Path(__file__).resolve().parents[4] / "config" / "provider-pricing.example.json"
+)
+_CUSTOMER_PRICING_PATH = (
+    Path(__file__).resolve().parents[4] / "config" / "customer-pricing.example.json"
+)
 
 
 @dataclass
@@ -235,7 +239,9 @@ def calculate_financials(
     plan_code: str | None = None,
 ) -> dict[str, Any]:
     prov_cost = estimate_provider_cost(provider, prompt_tokens, completion_tokens)
-    cust_price = calculate_customer_price(plan_code, prompt_tokens, completion_tokens, cache_hit=cache_hit)
+    cust_price = calculate_customer_price(
+        plan_code, prompt_tokens, completion_tokens, cache_hit=cache_hit
+    )
     margin = calculate_margin(prov_cost.cost_brl, cust_price.price_brl)
 
     return {
@@ -281,7 +287,9 @@ async def record_request_financials(
     client_id = str(client_id)
     total_tokens = prompt_tokens + completion_tokens
     prov_cost = estimate_provider_cost(provider, prompt_tokens, completion_tokens)
-    cust_price = calculate_customer_price(plan_code, prompt_tokens, completion_tokens, cache_hit=cache_hit)
+    cust_price = calculate_customer_price(
+        plan_code, prompt_tokens, completion_tokens, cache_hit=cache_hit
+    )
     margin = calculate_margin(prov_cost.cost_brl, cust_price.price_brl)
 
     record = RequestFinancial(

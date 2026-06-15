@@ -1,16 +1,18 @@
 import uuid
-from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
+
+from pydantic import BaseModel
+
 
 class AgentRunStartRequest(BaseModel):
     agent_id: uuid.UUID
     tenant_id: str
     input_text: str
-    user_id: Optional[str] = None
-    correlation_id: Optional[str] = None
-    session_id: Optional[uuid.UUID] = None
+    user_id: str | None = None
+    correlation_id: str | None = None
+    session_id: uuid.UUID | None = None
     is_simulation: bool = False
-    idempotency_key: Optional[str] = None
+    idempotency_key: str | None = None
+
 
 class AgentRunResponse(BaseModel):
     id: uuid.UUID
@@ -18,6 +20,7 @@ class AgentRunResponse(BaseModel):
     tenant_id: str
     status: str
     created_at: str
+
 
 class AgentRunActionResponse(BaseModel):
     id: uuid.UUID

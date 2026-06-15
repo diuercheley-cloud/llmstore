@@ -1,16 +1,21 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import Any, Dict
+from typing import Any
 
-from app.models.agents.agent_studio import AgentFlowDebugEvent, AgentFlowDebugSession, AgentFlowVersion
+from app.models.agents.agent_studio import (
+    AgentFlowDebugEvent,
+    AgentFlowDebugSession,
+    AgentFlowVersion,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .dry_run_runner import AgentGraphDryRunRunner
 from .flow_compiler import FlowCompiler
 from .flow_validator import FlowValidator
-from .dry_run_runner import AgentGraphDryRunRunner
 
 logger = logging.getLogger(__name__)
+
 
 class FlowRuntimeAdapter:
     def __init__(self, db: AsyncSession):
@@ -18,19 +23,23 @@ class FlowRuntimeAdapter:
         self.compiler = FlowCompiler()
         self.validator = FlowValidator()
 
-    async def deploy_real(self, version_id: uuid.UUID, input_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def deploy_real(
+        self, version_id: uuid.UUID, input_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Deploys and executes a flow in the real environment, producing signed artifacts and real side-effects.
         """
         return await self._execute(version_id, input_data, is_dry_run=False)
 
-    async def dry_run(self, version_id: uuid.UUID, input_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def dry_run(self, version_id: uuid.UUID, input_data: dict[str, Any]) -> dict[str, Any]:
         """
         Executes a flow simulation without producing signed artifacts or real side-effects.
         """
         return await self._execute(version_id, input_data, is_dry_run=True)
 
-    async def _execute(self, version_id: uuid.UUID, input_data: Dict[str, Any], is_dry_run: bool = False) -> Dict[str, Any]:
+    async def _execute(
+        self, version_id: uuid.UUID, input_data: dict[str, Any], is_dry_run: bool = False
+    ) -> dict[str, Any]:
         version = await self.db.get(AgentFlowVersion, version_id)
         if not version:
             raise ValueError("Flow version not found")
@@ -47,12 +56,12 @@ class FlowRuntimeAdapter:
 
         # 2. Compile (for Real Deployment only)
         plan = self.compiler.compile(version)
-        
+
         # 3. Create Session
         session = AgentFlowDebugSession(
             flow_version_id=version_id,
             tenant_id="simulation-tenant" if is_dry_run else "production-tenant",
-            status="active"
+            status="active",
         )
         self.db.add(session)
         await self.db.flush()
@@ -62,6 +71,7 @@ class FlowRuntimeAdapter:
             import json
 
             from app.utils.crypto_signer import sign_payload
+
             # Sign the execution plan
             signature = sign_payload(json.dumps(plan))
 
@@ -70,7 +80,7 @@ class FlowRuntimeAdapter:
         for task in plan["tasks"]:
             details = {
                 "task_type": task["task_type"],
-                "runtime_output": f"Success: {task['task_type']} executed {'(Simulated)' if is_dry_run else '(Real)'}."
+                "runtime_output": f"Success: {task['task_type']} executed {'(Simulated)' if is_dry_run else '(Real)'}.",
             }
             if signature:
                 details["signature"] = signature
@@ -79,14 +89,16 @@ class FlowRuntimeAdapter:
                 session_id=session.id,
                 event_type="node_execution",
                 node_id=task["node_id"],
-                details=details
+                details=details,
             )
             self.db.add(event)
-            events.append({
-                "node_id": task["node_id"],
-                "status": "success",
-                "message": f"Executed {task['task_type']} {'(Simulated)' if is_dry_run else '(Signed)'}"
-            })
+            events.append(
+                {
+                    "node_id": task["node_id"],
+                    "status": "success",
+                    "message": f"Executed {task['task_type']} {'(Simulated)' if is_dry_run else '(Signed)'}",
+                }
+            )
 
         session.status = "completed"
         await self.db.commit()

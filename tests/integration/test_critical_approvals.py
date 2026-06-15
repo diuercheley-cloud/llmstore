@@ -1,21 +1,18 @@
-import uuid
 import sys
-import asyncio
+import uuid
 from datetime import timedelta
-from unittest.mock import patch, MagicMock
-import pytest
-from fastapi import WebSocketDisconnect
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from httpx import AsyncClient
-import httpx
+from unittest.mock import MagicMock, patch
 
-from app.services.config_service import ConfigService
+import httpx
+import pytest
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.governance.human_governance import CriticalApproval
 from app.models.core.admin_rbac import AdminAuditEvent
+from app.models.governance.human_governance import CriticalApproval
 from app.services.approval_service import ApprovalService, approvals_ws_manager
+from httpx import AsyncClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def reset_all_config_services():
@@ -91,7 +88,9 @@ async def test_create_and_process_approval(admin_client: AsyncClient, session: A
         assert len(external_calls) == 2
 
         # Verify audit event is recorded
-        stmt_audit = select(AdminAuditEvent).where(AdminAuditEvent.event_type == "critical_approval.created")
+        stmt_audit = select(AdminAuditEvent).where(
+            AdminAuditEvent.event_type == "critical_approval.created"
+        )
         audit_res = await session.execute(stmt_audit)
         created_audit = audit_res.scalar_one_or_none()
         assert created_audit is not None
@@ -126,7 +125,9 @@ async def test_create_and_process_approval(admin_client: AsyncClient, session: A
         assert req_db.decided_by == "admin"
 
         # Verify approve audit log
-        stmt_audit_app = select(AdminAuditEvent).where(AdminAuditEvent.event_type == "critical_approval.approved")
+        stmt_audit_app = select(AdminAuditEvent).where(
+            AdminAuditEvent.event_type == "critical_approval.approved"
+        )
         audit_app_res = await session.execute(stmt_audit_app)
         approved_audit = audit_app_res.scalar_one_or_none()
         assert approved_audit is not None
@@ -172,7 +173,9 @@ async def test_reject_approval_request(admin_client: AsyncClient, session: Async
         assert req_db.status == "rejected"
 
         # Verify reject audit log
-        stmt_audit_rej = select(AdminAuditEvent).where(AdminAuditEvent.event_type == "critical_approval.rejected")
+        stmt_audit_rej = select(AdminAuditEvent).where(
+            AdminAuditEvent.event_type == "critical_approval.rejected"
+        )
         audit_rej_res = await session.execute(stmt_audit_rej)
         rejected_audit = audit_rej_res.scalar_one_or_none()
         assert rejected_audit is not None
@@ -210,7 +213,9 @@ async def test_expired_approval_request(admin_client: AsyncClient, session: Asyn
         assert req.status == "expired"
 
         # Verify expired audit log
-        stmt_audit_exp = select(AdminAuditEvent).where(AdminAuditEvent.event_type == "critical_approval.expired")
+        stmt_audit_exp = select(AdminAuditEvent).where(
+            AdminAuditEvent.event_type == "critical_approval.expired"
+        )
         audit_exp_res = await session.execute(stmt_audit_exp)
         expired_audit = audit_exp_res.scalar_one_or_none()
         assert expired_audit is not None

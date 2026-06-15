@@ -19,13 +19,12 @@ def parse_rule_file(content: str, file_path: str | None = None) -> str | None:
                     glob_val = glob_val.strip("'\"")
                     # Split by comma
                     globs = [g.strip() for g in glob_val.split(",") if g.strip()]
-            
+
             if file_path and globs:
                 matched = False
                 for pattern in globs:
-                    if (
-                        fnmatch.fnmatch(file_path, pattern) or
-                        fnmatch.fnmatch(os.path.basename(file_path), pattern)
+                    if fnmatch.fnmatch(file_path, pattern) or fnmatch.fnmatch(
+                        os.path.basename(file_path), pattern
                     ):
                         matched = True
                         break
@@ -34,14 +33,15 @@ def parse_rule_file(content: str, file_path: str | None = None) -> str | None:
             return rule_body
     return content_stripped
 
+
 def load_rules_for_path(file_path: str | None = None, workspace_root: str = ".") -> str:
     rules = []
-    
+
     # 1. Global rules.md
     global_rules_path = os.path.join(workspace_root, ".harness", "rules.md")
     if os.path.exists(global_rules_path) and os.path.isfile(global_rules_path):
         try:
-            with open(global_rules_path, "r", errors="ignore") as f:
+            with open(global_rules_path, errors="ignore") as f:
                 content = f.read()
             parsed = parse_rule_file(content, file_path)
             if parsed:
@@ -54,7 +54,7 @@ def load_rules_for_path(file_path: str | None = None, workspace_root: str = ".")
     if os.path.exists(harness_rules_dir) and os.path.isdir(harness_rules_dir):
         for path in glob.glob(os.path.join(harness_rules_dir, "*.md")):
             try:
-                with open(path, "r", errors="ignore") as f:
+                with open(path, errors="ignore") as f:
                     content = f.read()
                 parsed = parse_rule_file(content, file_path)
                 if parsed:
@@ -67,7 +67,7 @@ def load_rules_for_path(file_path: str | None = None, workspace_root: str = ".")
     if os.path.exists(cursor_rules_dir) and os.path.isdir(cursor_rules_dir):
         for path in glob.glob(os.path.join(cursor_rules_dir, "*.md")):
             try:
-                with open(path, "r", errors="ignore") as f:
+                with open(path, errors="ignore") as f:
                     content = f.read()
                 parsed = parse_rule_file(content, file_path)
                 if parsed:

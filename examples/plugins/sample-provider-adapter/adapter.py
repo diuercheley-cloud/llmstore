@@ -4,18 +4,14 @@ This plugin implements the PluginContract interface to adapt
 a hypothetical external inference provider.
 """
 
-from typing import Optional
-
 
 class SampleProviderAdapter:
     """Adapter for the SampleProvider API."""
 
-    def __init__(self, config: Optional[dict] = None):
+    def __init__(self, config: dict | None = None):
         self.config = config or {}
         self.api_key = self.config.get("api_key", "")
-        self.base_url = self.config.get(
-            "base_url", "https://api.sample-provider.example.com/v1"
-        )
+        self.base_url = self.config.get("base_url", "https://api.sample-provider.example.com/v1")
 
     async def chat_completion(self, messages: list[dict], **kwargs) -> dict:
         """Send a chat completion request to the provider."""
@@ -54,6 +50,6 @@ class SampleProviderAdapter:
         return {"status": "ok", "provider": "sample"}
 
 
-def create_plugin(config: Optional[dict] = None) -> SampleProviderAdapter:
+def create_plugin(config: dict | None = None) -> SampleProviderAdapter:
     """Factory function called by the plugin loader."""
     return SampleProviderAdapter(config)

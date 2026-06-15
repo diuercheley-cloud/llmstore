@@ -124,7 +124,7 @@ spec:
       containers:
       - name: worker
         image: control-plane:latest # Same image
-        command: ["bash", "-lc", "cd control_plane && alembic upgrade head && cd .. && python -m app.workers.generation_worker"]
+        command: ["bash", "-lc", "cd control_plane && alembic upgrade heads && cd .. && python -m app.workers.generation_worker"]
         envFrom:
         - configMapRef:
             name: llm-stack-config

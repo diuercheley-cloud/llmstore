@@ -1,6 +1,6 @@
 import abc
 import uuid
-from typing import Any, Dict, List
+from typing import Any
 
 
 class VectorStore(abc.ABC):
@@ -10,8 +10,8 @@ class VectorStore(abc.ABC):
         tenant_id: str,
         agent_id: uuid.UUID,
         memory_id: uuid.UUID,
-        embedding: List[float],
-        metadata: Dict[str, Any],
+        embedding: list[float],
+        metadata: dict[str, Any],
     ) -> None:
         pass
 
@@ -20,10 +20,10 @@ class VectorStore(abc.ABC):
         self,
         tenant_id: str,
         agent_id: uuid.UUID,
-        query_embedding: List[float],
+        query_embedding: list[float],
         top_k: int = 5,
         score_threshold: float = 0.0,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         pass
 
     @abc.abstractmethod

@@ -1,18 +1,38 @@
 name: 'Run Security Checks'
-description: 'Runs secrets scanning and dependency audits'
+description: 'Runs secrets scanning, dependency audits, Bandit and Semgrep scans'
 runs:
   using: "composite"
   steps:
     - name: Scan for Secrets
       shell: bash
       run: bash scripts/check-secrets.sh --all
+
     - name: Audit Python Dependencies
       shell: bash
       run: |
         pip install safety
         safety check -r control_plane/requirements.txt
+
     - name: Audit Node Dependencies
       shell: bash
       run: |
         cd frontend/admin
         npm audit
+
+    - name: Install Security Scanners
+      shell: bash
+      run: pip install bandit semgrep
+
+    - name: Run Bandit + Semgrep via Validator
+      shell: bash
+      run: python3 scripts/validators/validate_security_scan.py
+
+    - name: Upload Security Reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-reports-scheduled
+        path: |
+          artifacts/reports/bandit-results.json
+          artifacts/reports/semgrep-results.json
+        retention-days: 30

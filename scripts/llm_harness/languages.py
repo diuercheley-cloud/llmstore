@@ -1,18 +1,18 @@
 import os
 from dataclasses import dataclass
-from typing import Dict, List, Optional
 
 
 @dataclass
 class LanguageProfile:
     name: str
-    extensions: List[str]
+    extensions: list[str]
     test_command: str
     lint_command: str
     comment_style: str
     parser: str
 
-LANGUAGES: Dict[str, LanguageProfile] = {
+
+LANGUAGES: dict[str, LanguageProfile] = {
     "python": LanguageProfile(
         name="Python",
         extensions=[".py"],
@@ -55,7 +55,8 @@ LANGUAGES: Dict[str, LanguageProfile] = {
     ),
 }
 
-def detect_language_by_filename(filename: str) -> Optional[LanguageProfile]:
+
+def detect_language_by_filename(filename: str) -> LanguageProfile | None:
     if not filename:
         return None
     basename = os.path.basename(filename)
@@ -67,7 +68,8 @@ def detect_language_by_filename(filename: str) -> Optional[LanguageProfile]:
             return profile
     return None
 
-def detect_primary_language_in_workspace(workspace_root: str) -> Optional[LanguageProfile]:
+
+def detect_primary_language_in_workspace(workspace_root: str) -> LanguageProfile | None:
     if not workspace_root or not os.path.exists(workspace_root):
         return LANGUAGES["python"]
 
@@ -84,9 +86,8 @@ def detect_primary_language_in_workspace(workspace_root: str) -> Optional[Langua
     ):
         return LANGUAGES["python"]
 
-    if (
-        os.path.exists(os.path.join(workspace_root, "pom.xml"))
-        or os.path.exists(os.path.join(workspace_root, "build.gradle"))
+    if os.path.exists(os.path.join(workspace_root, "pom.xml")) or os.path.exists(
+        os.path.join(workspace_root, "build.gradle")
     ):
         return LANGUAGES["java"]
 
@@ -99,12 +100,13 @@ def detect_primary_language_in_workspace(workspace_root: str) -> Optional[Langua
         pass
 
     # Scan file extensions in workspace directory
-    ext_counts: Dict[str, int] = {}
+    ext_counts: dict[str, int] = {}
     try:
         for root, dirs, files in os.walk(workspace_root):
             # Ignore common cache / build / env dirs
             dirs[:] = [
-                d for d in dirs
+                d
+                for d in dirs
                 if not d.startswith(".")
                 and d not in ("node_modules", "venv", ".venv", "build", "dist")
             ]

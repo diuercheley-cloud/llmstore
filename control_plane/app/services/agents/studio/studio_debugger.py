@@ -1,6 +1,6 @@
 import logging
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.models.agents.agents import AgentRun, AgentRunStep
 from sqlalchemy import select
@@ -16,10 +16,10 @@ class StudioDebugger:
     and sanitized chain-of-thought inspection.
     """
 
-    def __init__(self, db: Optional[AsyncSession] = None):
+    def __init__(self, db: AsyncSession | None = None):
         self.db = db
 
-    async def build_view(self, run_id: str) -> Dict[str, Any]:
+    async def build_view(self, run_id: str) -> dict[str, Any]:
         if not self.db:
             return {
                 "run_id": run_id,
@@ -36,9 +36,11 @@ class StudioDebugger:
         if not run:
             return {"run_id": run_id, "error": "Run not found"}
 
-        stmt = select(AgentRunStep).where(
-            AgentRunStep.run_id == run_uuid
-        ).order_by(AgentRunStep.step_number)
+        stmt = (
+            select(AgentRunStep)
+            .where(AgentRunStep.run_id == run_uuid)
+            .order_by(AgentRunStep.step_number)
+        )
         res = await self.db.execute(stmt)
         steps = list(res.scalars().all())
 
@@ -51,8 +53,10 @@ class StudioDebugger:
             }
             if s.step_type in ("llm_call", "reasoning", "thought"):
                 summary["content_preview"] = (
-                    s.output[:200] + "..." if s.output and len(s.output) > 200 else s.output
-                ) if s.output else None
+                    (s.output[:200] + "..." if s.output and len(s.output) > 200 else s.output)
+                    if s.output
+                    else None
+                )
             if s.step_type in ("tool_call", "tool_result"):
                 meta = s.step_metadata or {}
                 summary["tool_name"] = meta.get("tool_name", meta.get("tool", "unknown"))
@@ -70,7 +74,7 @@ class StudioDebugger:
             "raw_chain_of_thought_exposed": False,
         }
 
-    def _summarize_reasoning(self, steps: List[AgentRunStep]) -> str:
+    def _summarize_reasoning(self, steps: list[AgentRunStep]) -> str:
         if not steps:
             return "No reasoning steps recorded"
 

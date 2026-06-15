@@ -8,14 +8,18 @@ from decimal import Decimal
 from pathlib import Path
 
 import yaml
-from app.models.agents.agent_workflows import AgentWorkflowDefinition, AgentWorkflowEdge, AgentWorkflowNode
+from app.models.agents.agent_workflows import (
+    AgentWorkflowDefinition,
+    AgentWorkflowEdge,
+    AgentWorkflowNode,
+)
 from app.models.agents.agents import AgentDefinition, AgentMemoryIndex, AgentMemoryItem
 from app.models.agents.immutable_audit import ImmutableAuditLog
 from app.models.billing.billing_invoice import BillingInvoice
 from app.models.billing.billing_plan import BillingPlan
+from app.models.core.admin_rbac import AdminAuditEvent
 from app.models.core.auth import OAuthState, UserSession
 from app.models.core.client import Client
-from app.models.core.admin_rbac import AdminAuditEvent
 from app.models.governance.policy_engine import DeterministicPolicy, PolicyEvaluationResult
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -295,7 +299,9 @@ async def seed_recovery_state(
     )
 
 
-async def collect_recovery_state(session: AsyncSession, repo_root: Path, ids: RecoveryIds) -> dict[str, object]:
+async def collect_recovery_state(
+    session: AsyncSession, repo_root: Path, ids: RecoveryIds
+) -> dict[str, object]:
     agent = await session.get(AgentDefinition, ids.agent_id)
     workflow = await session.get(AgentWorkflowDefinition, ids.workflow_id)
     memory_index = await session.get(AgentMemoryIndex, ids.memory_index_id)
@@ -309,12 +315,16 @@ async def collect_recovery_state(session: AsyncSession, repo_root: Path, ids: Re
 
     immutable_audit = (
         await session.execute(
-            select(ImmutableAuditLog).where(ImmutableAuditLog.tenant_id == "tenant-dr-primary").limit(1)
+            select(ImmutableAuditLog)
+            .where(ImmutableAuditLog.tenant_id == "tenant-dr-primary")
+            .limit(1)
         )
     ).scalar_one()
     admin_audit = (
         await session.execute(
-            select(AdminAuditEvent).where(AdminAuditEvent.event_type == "backup.restore.requested").limit(1)
+            select(AdminAuditEvent)
+            .where(AdminAuditEvent.event_type == "backup.restore.requested")
+            .limit(1)
         )
     ).scalar_one()
 
@@ -345,8 +355,12 @@ async def collect_recovery_state(session: AsyncSession, repo_root: Path, ids: Re
             "policy_decision": policy_eval.decision,
         },
         "persisted_config": {
-            "app_yaml": yaml.safe_load((repo_root / "config" / "app.yaml").read_text(encoding="utf-8")),
-            "feature_flags": yaml.safe_load((repo_root / "config" / "feature-flags.yaml").read_text(encoding="utf-8")),
+            "app_yaml": yaml.safe_load(
+                (repo_root / "config" / "app.yaml").read_text(encoding="utf-8")
+            ),
+            "feature_flags": yaml.safe_load(
+                (repo_root / "config" / "feature-flags.yaml").read_text(encoding="utf-8")
+            ),
             "version": (repo_root / "VERSION").read_text(encoding="utf-8").strip(),
         },
     }
@@ -376,5 +390,7 @@ async def mutate_recovery_state(session: AsyncSession, repo_root: Path, ids: Rec
     await session.commit()
 
     (repo_root / "config" / "app.yaml").write_text("tenant_mode: broken\n", encoding="utf-8")
-    (repo_root / "config" / "feature-flags.yaml").write_text("flags:\n  restore_guard: false\n", encoding="utf-8")
+    (repo_root / "config" / "feature-flags.yaml").write_text(
+        "flags:\n  restore_guard: false\n", encoding="utf-8"
+    )
     (repo_root / "VERSION").write_text("mutated-version\n", encoding="utf-8")

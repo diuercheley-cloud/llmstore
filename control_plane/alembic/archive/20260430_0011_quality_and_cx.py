@@ -12,13 +12,16 @@ depends_on = None
 def upgrade() -> None:
     # Add system_prompt to clients
     op.add_column("clients", sa.Column("system_prompt", sa.Text(), nullable=True))
-    
+
     # Add prompt_template to model_registry
     op.add_column("model_registry", sa.Column("prompt_template", sa.Text(), nullable=True))
-    
+
     # Add safety_profile to ChatCompletionRequest and CompletionRequest is handled at schema level,
     # but we might want to store it in request_logs for auditing.
-    op.add_column("request_logs", sa.Column("safety_profile", sa.String(length=32), nullable=True, server_default="default"))
+    op.add_column(
+        "request_logs",
+        sa.Column("safety_profile", sa.String(length=32), nullable=True, server_default="default"),
+    )
 
 
 def downgrade() -> None:

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 from urllib.parse import urlsplit, urlunsplit
 
 SENSITIVE_KEY_PATTERNS = (
@@ -79,7 +79,9 @@ def sanitize_env_snapshot(env: dict[str, str]) -> list[str]:
     return lines
 
 
-def host_path_for_data_dir(root_dir: os.PathLike[str] | str, storage_dir: str | None) -> Path | None:
+def host_path_for_data_dir(
+    root_dir: os.PathLike[str] | str, storage_dir: str | None
+) -> Path | None:
     if not storage_dir:
         return None
     root = Path(root_dir)
@@ -95,7 +97,9 @@ def host_path_for_data_dir(root_dir: os.PathLike[str] | str, storage_dir: str | 
     return root / storage_dir
 
 
-def host_path_for_models_dir(root_dir: os.PathLike[str] | str, models_dir: str | None) -> Path | None:
+def host_path_for_models_dir(
+    root_dir: os.PathLike[str] | str, models_dir: str | None
+) -> Path | None:
     if not models_dir:
         return None
     root = Path(root_dir)
@@ -209,7 +213,9 @@ def iter_asset_paths(manifest: dict[str, object]) -> Iterable[Path]:
     return paths
 
 
-def restore_targets(manifest: dict[str, object], root_dir: os.PathLike[str] | str) -> list[tuple[Path, Path]]:
+def restore_targets(
+    manifest: dict[str, object], root_dir: os.PathLike[str] | str
+) -> list[tuple[Path, Path]]:
     root = Path(root_dir)
     targets: list[tuple[Path, Path]] = []
     for asset in manifest.get("assets", []):
@@ -221,7 +227,11 @@ def restore_targets(manifest: dict[str, object], root_dir: os.PathLike[str] | st
             continue
         src = Path(str(src_path))
         if label == "rag_files":
-            targets.append((src, host_path_for_data_dir(root, str(asset.get("storage_dir", ""))) or src))
+            targets.append(
+                (src, host_path_for_data_dir(root, str(asset.get("storage_dir", ""))) or src)
+            )
         elif label == "model_files":
-            targets.append((src, host_path_for_models_dir(root, str(asset.get("models_dir", ""))) or src))
+            targets.append(
+                (src, host_path_for_models_dir(root, str(asset.get("models_dir", ""))) or src)
+            )
     return targets

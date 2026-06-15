@@ -1,12 +1,13 @@
-import os
 import fcntl
 import logging
 from pathlib import Path
+
+from app.core.config import get_settings
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
+
 
 class MaintenanceMode:
     _active = False
@@ -37,12 +38,15 @@ class RestoreLockService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.settings = get_settings()
-        self.lock_file_path = Path(self.settings.disaster_recovery_backup_dir or "/tmp") / "restore.lock"
+        self.lock_file_path = (
+            Path(self.settings.disaster_recovery_backup_dir or "/tmp") / "restore.lock"
+        )
         self._file_handle = None
         self._pg_locked = False
 
     async def acquire_lock(self) -> bool:
         from app.core.metrics import RESTORE_LOCK_CONTENTION_TOTAL
+
         url = self.settings.database_url
         if url.startswith("postgresql") or url.startswith("postgres"):
             try:
@@ -55,7 +59,10 @@ class RestoreLockService:
                 RESTORE_LOCK_CONTENTION_TOTAL.inc()
                 return False
             except Exception as e:
-                logger.error(f"Failed to acquire PG advisory lock: {e}", extra={"correlation_id": "", "extra_data": {"error": str(e)}})
+                logger.error(
+                    f"Failed to acquire PG advisory lock: {e}",
+                    extra={"correlation_id": "", "extra_data": {"error": str(e)}},
+                )
                 RESTORE_LOCK_CONTENTION_TOTAL.inc()
                 return False
         else:
@@ -65,8 +72,11 @@ class RestoreLockService:
                 fcntl.flock(self._file_handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 MaintenanceMode.set_active(True)
                 return True
-            except (IOError, OSError) as e:
-                logger.warning(f"Failed to acquire local file lock: {e}", extra={"correlation_id": "", "extra_data": {"error": str(e)}})
+            except OSError as e:
+                logger.warning(
+                    f"Failed to acquire local file lock: {e}",
+                    extra={"correlation_id": "", "extra_data": {"error": str(e)}},
+                )
                 RESTORE_LOCK_CONTENTION_TOTAL.inc()
                 if self._file_handle:
                     try:
@@ -89,7 +99,10 @@ class RestoreLockService:
                     await self.db.execute(text("SELECT pg_advisory_unlock(18273918273)"))
                     await self.db.commit()
                 except Exception as e:
-                    logger.error(f"Failed to release PG advisory lock: {e}", extra={"correlation_id": "", "extra_data": {"error": str(e)}})
+                    logger.error(
+                        f"Failed to release PG advisory lock: {e}",
+                        extra={"correlation_id": "", "extra_data": {"error": str(e)}},
+                    )
                 finally:
                     self._pg_locked = False
         else:
@@ -98,6 +111,9 @@ class RestoreLockService:
                     fcntl.flock(self._file_handle, fcntl.LOCK_UN)
                     self._file_handle.close()
                 except Exception as e:
-                    logger.error(f"Failed to release file lock: {e}", extra={"correlation_id": "", "extra_data": {"error": str(e)}})
+                    logger.error(
+                        f"Failed to release file lock: {e}",
+                        extra={"correlation_id": "", "extra_data": {"error": str(e)}},
+                    )
                 finally:
                     self._file_handle = None

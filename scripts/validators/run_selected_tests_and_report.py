@@ -1,18 +1,17 @@
 import datetime
 import errno
-import re
 import os
 import pty
+import re
 import select
+import shutil
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
-import shutil
 from textwrap import dedent
 
 from docx import Document
-
 
 SELECTED_TESTS = [
     "tests/e2e/test_rag_flow.py::test_rag_flow",
@@ -107,10 +106,11 @@ ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 def sanitize_report_text(text: str) -> str:
     text = ANSI_ESCAPE_RE.sub("", text)
     return "".join(
-        ch for ch in text 
-        if ch in ("\n", "\r", "\t") 
-        or (32 <= ord(ch) <= 0xD7FF) 
-        or (0xE000 <= ord(ch) <= 0xFFFD) 
+        ch
+        for ch in text
+        if ch in ("\n", "\r", "\t")
+        or (32 <= ord(ch) <= 0xD7FF)
+        or (0xE000 <= ord(ch) <= 0xFFFD)
         or (0x10000 <= ord(ch) <= 0x10FFFF)
     )
 
@@ -185,7 +185,7 @@ def generate_report(test_exit_code, stdout, stderr):
     doc = Document()
     doc.add_heading("Relatório de Execução de Testes", 0)
 
-    doc.add_paragraph(f'Data da execução: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
+    doc.add_paragraph(f"Data da execução: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
     status = "SUCESSO" if test_exit_code == 0 else "FALHA"
     paragraph = doc.add_paragraph("Status Final: ")

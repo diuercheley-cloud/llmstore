@@ -28,7 +28,12 @@ def test_backup_manifest_redacts_secrets_and_keeps_non_secret_settings(tmp_path:
     assert "ADMIN_TOKEN=__redacted__" in lines
     assert "HOST_PORT=18080" in lines
     assert "MODEL_FILE=gemma-4-E4B-it-Q4_0.gguf" in lines
-    assert any(line.startswith("DATABASE_URL=postgresql+asyncpg://user:__redacted__@postgres:5432/llm_gateway") for line in lines)
+    assert any(
+        line.startswith(
+            "DATABASE_URL=postgresql+asyncpg://user:__redacted__@postgres:5432/llm_gateway"
+        )
+        for line in lines
+    )
     assert any(line.startswith("REDIS_URL=redis://redis:6379/0") for line in lines)
 
     dump_file = tmp_path / "db" / "postgres.dump"
@@ -70,4 +75,3 @@ def test_host_path_for_rag_storage_dir_maps_container_mount_to_repo_root(tmp_pat
     resolved = host_path_for_data_dir(tmp_path, "/data/rag_uploads/dr-test-1")
 
     assert resolved == tmp_path / "data" / "rag_uploads" / "dr-test-1"
-

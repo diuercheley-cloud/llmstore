@@ -26,37 +26,46 @@ async def test_provider_settings_page_disabled_in_public_exposure(admin_client: 
 
         static_response = await admin_client.get("/static/provider-settings/index.html")
         assert static_response.status_code == 404
-        assert static_response.json()["detail"] == "provider settings disabled in public exposure mode"
+        assert (
+            static_response.json()["detail"] == "provider settings disabled in public exposure mode"
+        )
     finally:
         settings.public_exposure = previous
 
 
 @pytest.mark.asyncio
-async def test_provider_settings_round_trip(admin_client: AsyncClient, admin_token_headers: dict[str, str], tmp_path, monkeypatch: pytest.MonkeyPatch):
+async def test_provider_settings_round_trip(
+    admin_client: AsyncClient,
+    admin_token_headers: dict[str, str],
+    tmp_path,
+    monkeypatch: pytest.MonkeyPatch,
+):
     env_file = tmp_path / ".env.local"
     env_file.write_text(
-        "\n".join([
-            "CLOUD_PROVIDERS_ENABLED=false",
-            "REAL_PROVIDER_VALIDATION_ENABLED=false",
-            "REAL_PROVIDER_MAX_COST_BRL=2.00",
-            "REAL_PROVIDER_TIMEOUT_SECONDS=30",
-            "OPENAI_PROVIDER_ENABLED=false",
-            "OPENAI_API_KEY=",
-            "OPENAI_BASE_URL=https://api.openai.com/v1",
-            "OPENAI_CHAT_MODEL=",
-            "OPENAI_EMBEDDINGS_MODEL=",
-            "DEEPSEEK_PROVIDER_ENABLED=false",
-            "DEEPSEEK_API_KEY=",
-            "DEEPSEEK_BASE_URL=https://api.deepseek.com",
-            "DEEPSEEK_CHAT_MODEL=",
-            "ANTHROPIC_PROVIDER_ENABLED=false",
-            "ANTHROPIC_API_KEY=",
-            "ANTHROPIC_BASE_URL=https://api.anthropic.com",
-            "ANTHROPIC_MODEL=",
-            "OPENROUTER_API_KEY=",
-            "OPENROUTER_BASE_URL=https://openrouter.ai/api/v1",
-            "",
-        ]),
+        "\n".join(
+            [
+                "CLOUD_PROVIDERS_ENABLED=false",
+                "REAL_PROVIDER_VALIDATION_ENABLED=false",
+                "REAL_PROVIDER_MAX_COST_BRL=2.00",
+                "REAL_PROVIDER_TIMEOUT_SECONDS=30",
+                "OPENAI_PROVIDER_ENABLED=false",
+                "OPENAI_API_KEY=",
+                "OPENAI_BASE_URL=https://api.openai.com/v1",
+                "OPENAI_CHAT_MODEL=",
+                "OPENAI_EMBEDDINGS_MODEL=",
+                "DEEPSEEK_PROVIDER_ENABLED=false",
+                "DEEPSEEK_API_KEY=",
+                "DEEPSEEK_BASE_URL=https://api.deepseek.com",
+                "DEEPSEEK_CHAT_MODEL=",
+                "ANTHROPIC_PROVIDER_ENABLED=false",
+                "ANTHROPIC_API_KEY=",
+                "ANTHROPIC_BASE_URL=https://api.anthropic.com",
+                "ANTHROPIC_MODEL=",
+                "OPENROUTER_API_KEY=",
+                "OPENROUTER_BASE_URL=https://openrouter.ai/api/v1",
+                "",
+            ]
+        ),
         encoding="utf-8",
     )
     monkeypatch.setenv("PROVIDER_SETTINGS_ENV_FILE", str(env_file))
@@ -79,27 +88,29 @@ async def test_provider_settings_round_trip(admin_client: AsyncClient, admin_tok
     monkeypatch.setenv("ANTHROPIC_MODEL", "")
     monkeypatch.setenv("OPENROUTER_API_KEY", "")
     monkeypatch.setenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
-    apply_runtime_updates({
-        "CLOUD_PROVIDERS_ENABLED": "false",
-        "REAL_PROVIDER_VALIDATION_ENABLED": "false",
-        "REAL_PROVIDER_MAX_COST_BRL": "2.00",
-        "REAL_PROVIDER_TIMEOUT_SECONDS": "30",
-        "OPENAI_PROVIDER_ENABLED": "false",
-        "OPENAI_API_KEY": "",
-        "OPENAI_BASE_URL": "https://api.openai.com/v1",
-        "OPENAI_CHAT_MODEL": "",
-        "OPENAI_EMBEDDINGS_MODEL": "",
-        "DEEPSEEK_PROVIDER_ENABLED": "false",
-        "DEEPSEEK_API_KEY": "",
-        "DEEPSEEK_BASE_URL": "https://api.deepseek.com",
-        "DEEPSEEK_CHAT_MODEL": "",
-        "ANTHROPIC_PROVIDER_ENABLED": "false",
-        "ANTHROPIC_API_KEY": "",
-        "ANTHROPIC_BASE_URL": "https://api.anthropic.com",
-        "ANTHROPIC_MODEL": "",
-        "OPENROUTER_API_KEY": "",
-        "OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
-    })
+    apply_runtime_updates(
+        {
+            "CLOUD_PROVIDERS_ENABLED": "false",
+            "REAL_PROVIDER_VALIDATION_ENABLED": "false",
+            "REAL_PROVIDER_MAX_COST_BRL": "2.00",
+            "REAL_PROVIDER_TIMEOUT_SECONDS": "30",
+            "OPENAI_PROVIDER_ENABLED": "false",
+            "OPENAI_API_KEY": "",
+            "OPENAI_BASE_URL": "https://api.openai.com/v1",
+            "OPENAI_CHAT_MODEL": "",
+            "OPENAI_EMBEDDINGS_MODEL": "",
+            "DEEPSEEK_PROVIDER_ENABLED": "false",
+            "DEEPSEEK_API_KEY": "",
+            "DEEPSEEK_BASE_URL": "https://api.deepseek.com",
+            "DEEPSEEK_CHAT_MODEL": "",
+            "ANTHROPIC_PROVIDER_ENABLED": "false",
+            "ANTHROPIC_API_KEY": "",
+            "ANTHROPIC_BASE_URL": "https://api.anthropic.com",
+            "ANTHROPIC_MODEL": "",
+            "OPENROUTER_API_KEY": "",
+            "OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
+        }
+    )
 
     initial = await admin_client.get("/admin/providers/configuration", headers=admin_token_headers)
     assert initial.status_code == 200
@@ -143,7 +154,9 @@ async def test_provider_settings_round_trip(admin_client: AsyncClient, admin_tok
         },
     }
 
-    response = await admin_client.put("/admin/providers/configuration", headers=admin_token_headers, json=payload)
+    response = await admin_client.put(
+        "/admin/providers/configuration", headers=admin_token_headers, json=payload
+    )
     assert response.status_code == 200
     body = response.json()
     assert body["message"] == "provider configuration updated"
@@ -206,34 +219,38 @@ async def test_provider_settings_ignores_dummy_placeholder_keys(
 ):
     env_file = tmp_path / ".env.local"
     env_file.write_text(
-        "\n".join([
-            "CLOUD_PROVIDERS_ENABLED=true",
-            "REAL_PROVIDER_VALIDATION_ENABLED=false",
-            "OPENAI_PROVIDER_ENABLED=true",
-            "OPENAI_API_KEY=placeholder-use-real-key",
-            "DEEPSEEK_PROVIDER_ENABLED=true",
-            "DEEPSEEK_API_KEY=replace-with-real-key",
-            "ANTHROPIC_PROVIDER_ENABLED=true",
-            "ANTHROPIC_API_KEY=changeme",
-            "OPENROUTER_API_KEY=sk-example-openrouter-key",
-            "OPENROUTER_BASE_URL=https://openrouter.ai/api/v1",
-            "",
-        ]),
+        "\n".join(
+            [
+                "CLOUD_PROVIDERS_ENABLED=true",
+                "REAL_PROVIDER_VALIDATION_ENABLED=false",
+                "OPENAI_PROVIDER_ENABLED=true",
+                "OPENAI_API_KEY=placeholder-use-real-key",
+                "DEEPSEEK_PROVIDER_ENABLED=true",
+                "DEEPSEEK_API_KEY=replace-with-real-key",
+                "ANTHROPIC_PROVIDER_ENABLED=true",
+                "ANTHROPIC_API_KEY=changeme",
+                "OPENROUTER_API_KEY=sk-example-openrouter-key",
+                "OPENROUTER_BASE_URL=https://openrouter.ai/api/v1",
+                "",
+            ]
+        ),
         encoding="utf-8",
     )
     monkeypatch.setenv("PROVIDER_SETTINGS_ENV_FILE", str(env_file))
-    apply_runtime_updates({
-        "CLOUD_PROVIDERS_ENABLED": "true",
-        "REAL_PROVIDER_VALIDATION_ENABLED": "false",
-        "OPENAI_PROVIDER_ENABLED": "true",
-        "OPENAI_API_KEY": "placeholder-use-real-key",
-        "DEEPSEEK_PROVIDER_ENABLED": "true",
-        "DEEPSEEK_API_KEY": "replace-with-real-key",
-        "ANTHROPIC_PROVIDER_ENABLED": "true",
-        "ANTHROPIC_API_KEY": "changeme",
-        "OPENROUTER_API_KEY": "sk-example-openrouter-key",
-        "OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
-    })
+    apply_runtime_updates(
+        {
+            "CLOUD_PROVIDERS_ENABLED": "true",
+            "REAL_PROVIDER_VALIDATION_ENABLED": "false",
+            "OPENAI_PROVIDER_ENABLED": "true",
+            "OPENAI_API_KEY": "placeholder-use-real-key",
+            "DEEPSEEK_PROVIDER_ENABLED": "true",
+            "DEEPSEEK_API_KEY": "replace-with-real-key",
+            "ANTHROPIC_PROVIDER_ENABLED": "true",
+            "ANTHROPIC_API_KEY": "changeme",
+            "OPENROUTER_API_KEY": "sk-example-openrouter-key",
+            "OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
+        }
+    )
 
     response = await admin_client.get("/admin/providers/configuration", headers=admin_token_headers)
     assert response.status_code == 200

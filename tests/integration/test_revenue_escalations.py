@@ -13,7 +13,9 @@ from app.core.config import get_settings
 from app.core.time import utc_now
 from app.db.session import get_db_session
 from app.models.commercial.commercial_revenue_alert_delivery import CommercialRevenueAlertDelivery
-from app.models.commercial.commercial_revenue_escalation_policy import CommercialRevenueEscalationPolicy
+from app.models.commercial.commercial_revenue_escalation_policy import (
+    CommercialRevenueEscalationPolicy,
+)
 from app.services.notifications.revenue_escalations import (
     apply_retry_backoff,
     deliver_webhook,
@@ -52,7 +54,14 @@ def _policy(**overrides) -> CommercialRevenueEscalationPolicy:
         "name": "critical alerts",
         "enabled": True,
         "severity_threshold": "high",
-        "trigger_types_json": ["manual_test", "critical_anomaly", "repeated_mismatches", "mass_disputes", "repeated_safe_mode_activations", "failed_revenue_protection_action"],
+        "trigger_types_json": [
+            "manual_test",
+            "critical_anomaly",
+            "repeated_mismatches",
+            "mass_disputes",
+            "repeated_safe_mode_activations",
+            "failed_revenue_protection_action",
+        ],
         "allowed_delivery_types_json": ["webhook"],
         "cooldown_minutes": 30,
         "max_retries": 2,
@@ -134,7 +143,9 @@ async def test_slack_disabled_is_suppressed(session):
 
 @pytest.mark.asyncio
 async def test_pagerduty_disabled_is_suppressed(session):
-    session.add(_policy(allowed_delivery_types_json=["pagerduty"], escalation_order_json=["pagerduty"]))
+    session.add(
+        _policy(allowed_delivery_types_json=["pagerduty"], escalation_order_json=["pagerduty"])
+    )
     await session.commit()
 
     result = await evaluate_escalation_policies(
@@ -190,7 +201,17 @@ async def test_dedupe(session, monkeypatch: pytest.MonkeyPatch):
             trigger_type="manual_test",
         )
 
-    rows = (await session.execute(select(CommercialRevenueAlertDelivery).order_by(CommercialRevenueAlertDelivery.created_at.asc()))).scalars().all()
+    rows = (
+        (
+            await session.execute(
+                select(CommercialRevenueAlertDelivery).order_by(
+                    CommercialRevenueAlertDelivery.created_at.asc()
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
     assert rows[0].status == "dry_run"
     assert rows[1].status == "deduplicated"
 
@@ -221,7 +242,17 @@ async def test_cooldown_suppression(session, monkeypatch: pytest.MonkeyPatch):
         trigger_type="manual_test",
     )
 
-    rows = (await session.execute(select(CommercialRevenueAlertDelivery).order_by(CommercialRevenueAlertDelivery.created_at.asc()))).scalars().all()
+    rows = (
+        (
+            await session.execute(
+                select(CommercialRevenueAlertDelivery).order_by(
+                    CommercialRevenueAlertDelivery.created_at.asc()
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
     assert rows[0].status == "dry_run"
     assert rows[1].status == "suppressed"
 
@@ -236,18 +267,31 @@ def test_retry_backoff():
 async def test_hmac_signing(monkeypatch: pytest.MonkeyPatch):
     _CapturingAsyncClient.calls = []
     _CapturingAsyncClient.raise_error = False
-    monkeypatch.setattr("app.services.notifications.revenue_escalations.httpx.AsyncClient", _CapturingAsyncClient)
+    monkeypatch.setattr(
+        "app.services.notifications.revenue_escalations.httpx.AsyncClient", _CapturingAsyncClient
+    )
     monkeypatch.setenv("COMMERCIAL_REVENUE_WEBHOOK_URL", "https://hooks.example.com/revenue")
     monkeypatch.setenv("COMMERCIAL_REVENUE_WEBHOOK_SIGNING_SECRET", "signing-secret")
     get_settings.cache_clear()
-    payload = {"source_type": "policy_action", "source_id": "abc", "trigger_type": "manual_test", "severity": "critical", "summary": "x", "recommendation": "y", "timestamp": utc_now().isoformat(), "metadata": {}}
+    payload = {
+        "source_type": "policy_action",
+        "source_id": "abc",
+        "trigger_type": "manual_test",
+        "severity": "critical",
+        "summary": "x",
+        "recommendation": "y",
+        "timestamp": utc_now().isoformat(),
+        "metadata": {},
+    }
 
     await deliver_webhook(payload, max_retries=0)
 
     headers = _CapturingAsyncClient.calls[0]["headers"]
     timestamp = headers["X-Commercial-Revenue-Timestamp"]
     body = json.dumps(payload, sort_keys=True, ensure_ascii=True)
-    expected = hmac.new(b"signing-secret", f"{timestamp}.{body}".encode("utf-8"), hashlib.sha256).hexdigest()
+    expected = hmac.new(
+        b"signing-secret", f"{timestamp}.{body}".encode(), hashlib.sha256
+    ).hexdigest()
     assert headers["X-Commercial-Revenue-Signature"] == f"v1={expected}"
 
 
@@ -278,10 +322,16 @@ async def test_endpoints_require_admin_auth(session, app_client_factory):
     client = await app_client_factory(app)
     try:
         random_id = str(uuid.uuid4())
-        assert (await client.get("/admin/billing/revenue-escalations/deliveries")).status_code == 401
+        assert (
+            await client.get("/admin/billing/revenue-escalations/deliveries")
+        ).status_code == 401
         assert (await client.get("/admin/billing/revenue-escalations/policies")).status_code == 401
-        assert (await client.post("/admin/billing/revenue-escalations/test", json={})).status_code == 401
-        assert (await client.post(f"/admin/billing/revenue-escalations/retry/{random_id}")).status_code == 401
+        assert (
+            await client.post("/admin/billing/revenue-escalations/test", json={})
+        ).status_code == 401
+        assert (
+            await client.post(f"/admin/billing/revenue-escalations/retry/{random_id}")
+        ).status_code == 401
         assert (await client.get("/admin/billing/revenue-escalations/status")).status_code == 401
     finally:
         await client.aclose()
@@ -299,7 +349,9 @@ async def test_failed_delivery_and_retry_success(session, monkeypatch: pytest.Mo
 
     _CapturingAsyncClient.calls = []
     _CapturingAsyncClient.raise_error = True
-    monkeypatch.setattr("app.services.notifications.revenue_escalations.httpx.AsyncClient", _CapturingAsyncClient)
+    monkeypatch.setattr(
+        "app.services.notifications.revenue_escalations.httpx.AsyncClient", _CapturingAsyncClient
+    )
 
     await evaluate_escalation_policies(
         session,
@@ -320,4 +372,3 @@ async def test_failed_delivery_and_retry_success(session, monkeypatch: pytest.Mo
     retried = await retry_alert_delivery(session, delivery.id)
     assert retried.status == "sent"
     assert retried.retry_count == 1
-

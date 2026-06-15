@@ -10,7 +10,7 @@ def _makefile_script_refs():
     if not MAKEFILE.exists():
         return
     content = MAKEFILE.read_text()
-    for m in re.finditer(r'\./scripts/([a-zA-Z0-9_.-]+\.sh)', content):
+    for m in re.finditer(r"\./scripts/([a-zA-Z0-9_.-]+\.sh)", content):
         yield m.group(1)
 
 

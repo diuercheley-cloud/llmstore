@@ -16,9 +16,9 @@ if str(SCRIPT_LIB) not in sys.path:
     sys.path.insert(0, str(SCRIPT_LIB))
 from openai_real_validator import mask_key, sanitize_log
 
-OPENAI_MASK_KEY = "sk-" "proj-abcdefghijklmnopqrstuvwxyz123456"
-OPENAI_REALISTIC_KEY = "sk-" "test-real-key-1234567890abcdef"
-OPENAI_REPORT_KEY = "sk-" "proj-real-key-12345678901234567890"
+OPENAI_MASK_KEY = "sk-proj-abcdefghijklmnopqrstuvwxyz123456"
+OPENAI_REALISTIC_KEY = "sk-test-real-key-1234567890abcdef"
+OPENAI_REPORT_KEY = "sk-proj-real-key-12345678901234567890"
 OPENAI_REPORT_ENV_KEY = "test-openai-key"
 
 
@@ -61,6 +61,7 @@ async def test_health_check_disabled_or_not_configured_returns_sanitized():
     os.environ["OPENAI_PROVIDER_ENABLED"] = "true"
     os.environ["REAL_PROVIDER_VALIDATION_ENABLED"] = "true"
     from app.core.config import get_settings
+
     get_settings.cache_clear()
     provider = OpenAIProvider()
     result = await provider.health_check()
@@ -83,6 +84,7 @@ async def test_no_key_in_health_check_output():
     os.environ["OPENAI_PROVIDER_ENABLED"] = "true"
     os.environ["REAL_PROVIDER_VALIDATION_ENABLED"] = "true"
     from app.core.config import get_settings
+
     get_settings.cache_clear()
     provider = OpenAIProvider()
     result = await provider.health_check()
@@ -141,8 +143,19 @@ def test_mask_key_keeps_prefix_suffix():
 
 def test_no_full_prompt_in_report_by_default(tmp_path):
     from openai_real_validator import OpenAIRealValidator
-    args = type("Args", (), {"dry_run": True, "real": True, "max_cost_brl": 2.0, "model": "gpt-4o-mini",
-                             "embeddings_model": "text-embedding-3-small", "output_dir": str(tmp_path)})
+
+    args = type(
+        "Args",
+        (),
+        {
+            "dry_run": True,
+            "real": True,
+            "max_cost_brl": 2.0,
+            "model": "gpt-4o-mini",
+            "embeddings_model": "text-embedding-3-small",
+            "output_dir": str(tmp_path),
+        },
+    )
     env = {
         "REAL_PROVIDER_VALIDATION_ENABLED": "true",
         "OPENAI_PROVIDER_ENABLED": "true",

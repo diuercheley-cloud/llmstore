@@ -1,12 +1,15 @@
 # Owner: platform-operations
 import asyncio
-from typing import Any, Dict, List, Callable, Optional
+from collections.abc import Callable
+from typing import Any
+
 
 class StateGraph:
     """
     Compatibility Adapter for LangGraph StateGraph.
     Allows developers to define LangGraph nodes and edges, compiling into a runnable.
     """
+
     def __init__(self, state_schema: Any):
         self.state_schema = state_schema
         self.nodes = {}
@@ -29,25 +32,26 @@ class StateGraph:
     def compile(self) -> "CompiledStateGraph":
         return CompiledStateGraph(self)
 
+
 class CompiledStateGraph:
     def __init__(self, graph: StateGraph):
         self.graph = graph
 
-    async def invoke(self, state: Dict[str, Any]) -> Dict[str, Any]:
+    async def invoke(self, state: dict[str, Any]) -> dict[str, Any]:
         """
         Executes the nodes sequentially or according to edges.
         """
         current_node = self.graph.entry_point
         current_state = dict(state)
-        
+
         visited = set()
-        
+
         while current_node and current_node != self.graph.finish_point:
             if current_node in visited:
                 # Avoid infinite loops in simple mock execution
                 break
             visited.add(current_node)
-            
+
             # Execute node callable
             node_fn = self.graph.nodes.get(current_node)
             if node_fn:
@@ -57,14 +61,14 @@ class CompiledStateGraph:
                     res = node_fn(current_state)
                 if isinstance(res, dict):
                     current_state.update(res)
-            
+
             # Find next node
             next_node = None
             for from_n, to_n in self.graph.edges:
                 if from_n == current_node:
                     next_node = to_n
                     break
-            
+
             current_node = next_node
-            
+
         return current_state

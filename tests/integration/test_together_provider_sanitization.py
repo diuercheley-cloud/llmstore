@@ -56,6 +56,7 @@ async def test_no_key_in_health_check_output(monkeypatch):
     monkeypatch.setenv("CLOUD_PROVIDERS_ENABLED", "true")
     monkeypatch.setenv("TOGETHER_PROVIDER_ENABLED", "true")
     from app.core.config import get_settings
+
     get_settings.cache_clear()
     provider = TogetherProvider()
     result = await provider.health_check()

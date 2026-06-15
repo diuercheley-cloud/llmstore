@@ -1,6 +1,6 @@
 # Owner: agent-platform
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 from app.core.config import get_settings
 from app.services.agents.agent_llm_provider import AgentLLMProvider
@@ -10,10 +10,12 @@ from app.services.agents.reasoning.semantic_model_fallback import SemanticModelF
 
 logger = logging.getLogger(__name__)
 
+
 class ReasoningLoop:
     """
     Orchestrator for different reasoning strategies.
     """
+
     def __init__(self, llm_provider: AgentLLMProvider):
         self.llm_provider = llm_provider
         self.settings = get_settings()
@@ -21,7 +23,9 @@ class ReasoningLoop:
         self.plan_solve = PlanAndSolveLoop(llm_provider)
         self.fallback = SemanticModelFallback()
 
-    async def execute(self, agent_def: Any, run: Any, allowed_tools: List[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def execute(
+        self, agent_def: Any, run: Any, allowed_tools: list[dict[str, Any]] = None
+    ) -> dict[str, Any]:
         if not self.settings.agent_reasoning_loop_enabled:
             return await self.llm_provider.generate(agent_def, run, allowed_tools or [])
 
@@ -33,21 +37,21 @@ class ReasoningLoop:
                 decision = await self.react.run(agent_def, run, allowed_tools or [])
             else:
                 decision = await self.llm_provider.generate(agent_def, run, allowed_tools or [])
-            
+
             # Sanitization of CoT for privacy
             if "thought_summary" in decision:
                 logger.info(f"Reasoning summary: {decision['thought_summary']}")
                 # We can store this in observability or receipts
-            
+
             return decision
         except Exception as e:
             logger.warning(f"Reasoning loop failure: {str(e)}")
-            
+
             # Semantic Fallback
             fallback_model = await self.fallback.get_fallback_model(agent_def.model_id, str(e))
             if fallback_model:
                 logger.info(f"Retrying with fallback model: {fallback_model}")
                 agent_def.model_id = fallback_model
                 return await self.execute(agent_def, run, allowed_tools)
-            
+
             raise

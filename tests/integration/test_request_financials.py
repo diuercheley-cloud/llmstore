@@ -50,14 +50,26 @@ async def test_record_request_financials(session):
 @pytest.mark.asyncio
 async def test_record_financials_with_cache(session):
     no_cache = await record_request_financials(
-        session, client_id="c1", endpoint_type="chat", provider="local",
-        model="m", prompt_tokens=100, completion_tokens=50,
-        cache_hit=False, plan_code="basic",
+        session,
+        client_id="c1",
+        endpoint_type="chat",
+        provider="local",
+        model="m",
+        prompt_tokens=100,
+        completion_tokens=50,
+        cache_hit=False,
+        plan_code="basic",
     )
     cached = await record_request_financials(
-        session, client_id="c1", endpoint_type="chat", provider="local",
-        model="m", prompt_tokens=100, completion_tokens=50,
-        cache_hit=True, plan_code="basic",
+        session,
+        client_id="c1",
+        endpoint_type="chat",
+        provider="local",
+        model="m",
+        prompt_tokens=100,
+        completion_tokens=50,
+        cache_hit=True,
+        plan_code="basic",
     )
     assert cached.customer_price_brl <= no_cache.customer_price_brl
 
@@ -65,8 +77,13 @@ async def test_record_financials_with_cache(session):
 @pytest.mark.asyncio
 async def test_record_financials_calculates_margin(session):
     record = await record_request_financials(
-        session, client_id="c1", endpoint_type="chat", provider="local",
-        model="m", prompt_tokens=1000, completion_tokens=500,
+        session,
+        client_id="c1",
+        endpoint_type="chat",
+        provider="local",
+        model="m",
+        prompt_tokens=1000,
+        completion_tokens=500,
         plan_code="basic",
     )
     assert record.gross_profit_brl is not None
@@ -76,8 +93,13 @@ async def test_record_financials_calculates_margin(session):
 @pytest.mark.asyncio
 async def test_record_financials_no_secrets(session):
     record = await record_request_financials(
-        session, client_id="c1", endpoint_type="chat", provider="local",
-        model="m", prompt_tokens=10, completion_tokens=5,
+        session,
+        client_id="c1",
+        endpoint_type="chat",
+        provider="local",
+        model="m",
+        prompt_tokens=10,
+        completion_tokens=5,
     )
     dump = str(record.__dict__)
     assert "api_key" not in dump.lower() or "api_key_prefix" in dump
@@ -88,10 +110,16 @@ async def test_record_financials_no_secrets(session):
 async def test_multiple_records(session):
     for i in range(5):
         await record_request_financials(
-            session, client_id=f"c{i}", endpoint_type="chat",
-            provider="local", model="m", prompt_tokens=100, completion_tokens=50,
+            session,
+            client_id=f"c{i}",
+            endpoint_type="chat",
+            provider="local",
+            model="m",
+            prompt_tokens=100,
+            completion_tokens=50,
         )
     import sqlalchemy as sa
+
     result = await session.execute(sa.select(sa.func.count()).select_from(RequestFinancial))
     count = result.scalar()
     assert count == 5

@@ -18,7 +18,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _canonical_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+    )
 
 
 def _safe_runtime_path(model: ModelRegistry, settings: Settings | None = None) -> str | None:
@@ -42,7 +44,9 @@ def _build_runtime_manifest(
     runtime_path = _safe_runtime_path(model, settings=settings)
     return {
         "model_name": entry.model_name if entry else model.model_id,
-        "model_alias": model.model_alias if model.model_alias is not None else (entry.model_alias if entry else None),
+        "model_alias": model.model_alias
+        if model.model_alias is not None
+        else (entry.model_alias if entry else None),
         "model_version": entry.model_version if entry else None,
         "provider": entry.provider if entry else model.provider,
         "model_file_path": runtime_path or (entry.model_file_path if entry else None),
@@ -70,7 +74,8 @@ async def compare_runtime_vs_registry(
     runtime_manifest = _build_runtime_manifest(
         model,
         entry=entry,
-        observed_checksum=observed_checksum or (entry.checksum_sha256 if entry and entry.checksum_sha256 == "manifest-only" else None),
+        observed_checksum=observed_checksum
+        or (entry.checksum_sha256 if entry and entry.checksum_sha256 == "manifest-only" else None),
         settings=settings,
     )
 
@@ -85,11 +90,21 @@ async def compare_runtime_vs_registry(
         drift_reasons.append("alias_changed")
     if entry and entry.provider and model.provider and entry.provider != model.provider:
         drift_reasons.append("backend_provider_changed")
-    if entry and entry.model_file_path and runtime_path and Path(entry.model_file_path).resolve() != Path(runtime_path).resolve():
+    if (
+        entry
+        and entry.model_file_path
+        and runtime_path
+        and Path(entry.model_file_path).resolve() != Path(runtime_path).resolve()
+    ):
         drift_reasons.append("runtime_path_changed")
     if expected_manifest_hash and expected_manifest_hash != observed_manifest_hash:
         drift_reasons.append("manifest_mismatch")
-    if expected_checksum and expected_checksum != "manifest-only" and observed_checksum and expected_checksum != observed_checksum:
+    if (
+        expected_checksum
+        and expected_checksum != "manifest-only"
+        and observed_checksum
+        and expected_checksum != observed_checksum
+    ):
         drift_reasons.append("checksum_mismatch")
     if runtime_path and not Path(runtime_path).exists():
         drift_reasons.append("missing_runtime_file")
@@ -112,10 +127,18 @@ async def validate_runtime_attestation(
     if attestation.expected_manifest_hash and attestation.observed_manifest_hash:
         if attestation.expected_manifest_hash != attestation.observed_manifest_hash:
             reasons.append("manifest_mismatch")
-    if attestation.expected_checksum and attestation.expected_checksum != "manifest-only" and attestation.observed_checksum:
+    if (
+        attestation.expected_checksum
+        and attestation.expected_checksum != "manifest-only"
+        and attestation.observed_checksum
+    ):
         if attestation.expected_checksum != attestation.observed_checksum:
             reasons.append("checksum_mismatch")
-    if attestation.observed_checksum is None and attestation.expected_checksum and attestation.expected_checksum != "manifest-only":
+    if (
+        attestation.observed_checksum is None
+        and attestation.expected_checksum
+        and attestation.expected_checksum != "manifest-only"
+    ):
         reasons.append("missing_runtime_file")
 
     if attestation.attestation_status == "quarantined":
@@ -144,7 +167,8 @@ async def collect_runtime_attestation(
     attestation = CommercialRuntimeModelAttestation(
         registry_entry_id=entry.id if entry else None,
         model_name=model.model_id,
-        backend_name=backend_name or (model.inference_backend.name if model.inference_backend else None),
+        backend_name=backend_name
+        or (model.inference_backend.name if model.inference_backend else None),
         model_alias=model.model_alias,
         expected_manifest_hash=comparison["expected_manifest_hash"],
         observed_manifest_hash=comparison["observed_manifest_hash"],
@@ -197,7 +221,9 @@ def serialize_runtime_attestation(
     return sanitize_report_payload(
         {
             "id": str(attestation.id),
-            "registry_entry_id": str(attestation.registry_entry_id) if attestation.registry_entry_id else None,
+            "registry_entry_id": str(attestation.registry_entry_id)
+            if attestation.registry_entry_id
+            else None,
             "model_name": attestation.model_name,
             "backend_name": attestation.backend_name,
             "model_alias": attestation.model_alias,

@@ -21,15 +21,17 @@ def test_go_no_go_summary_no_secrets():
     for pat, name in secret_patterns:
         if pat in content:
             for allow in [
-                "__redacted__", "sk-demo", "sk-local-example", "redacted",
-                "sk-***", "***masked***",
+                "__redacted__",
+                "sk-demo",
+                "sk-local-example",
+                "redacted",
+                "sk-***",
+                "***masked***",
             ]:
                 if allow in content:
                     break
             else:
-                assert False, (
-                    f"Secret pattern '{pat}' ({name}) found in Go/No-Go summary"
-                )
+                assert False, f"Secret pattern '{pat}' ({name}) found in Go/No-Go summary"
 
 
 def test_go_no_go_summary_no_hardcoded_credentials():
@@ -74,17 +76,23 @@ def test_checklist_doc_no_cloud_requirement():
     """Checklist must not require cloud."""
     content = CHECKLIST_DOC.read_text(encoding="utf-8")
     # Should mention cloud is not required
-    assert "nao.*cloud" in content or "cloud.*nao" in content or "offline" in content.lower() or "local" in content.lower(), (
-        "Checklist should document that cloud is not required"
-    )
+    assert (
+        "nao.*cloud" in content
+        or "cloud.*nao" in content
+        or "offline" in content.lower()
+        or "local" in content.lower()
+    ), "Checklist should document that cloud is not required"
 
 
 def test_checklist_doc_no_internet_requirement():
     """Checklist must not require internet."""
     content = CHECKLIST_DOC.read_text(encoding="utf-8")
-    assert "nao.*internet" in content or "internet.*nao" in content or "offline" in content.lower() or "sem internet" in content.lower(), (
-        "Checklist should document that internet is not required"
-    )
+    assert (
+        "nao.*internet" in content
+        or "internet.*nao" in content
+        or "offline" in content.lower()
+        or "sem internet" in content.lower()
+    ), "Checklist should document that internet is not required"
 
 
 def test_go_no_go_summary_no_real_tokens():
@@ -92,7 +100,8 @@ def test_go_no_go_summary_no_real_tokens():
     content = GO_NO_GO_DOC.read_text(encoding="utf-8")
     # Check for real-looking tokens
     import re
-    real_sk = re.findall(r'sk-[a-zA-Z0-9]{20,}', content)
+
+    real_sk = re.findall(r"sk-[a-zA-Z0-9]{20,}", content)
     for token in real_sk:
         if not any(demo in token for demo in ["demo", "example", "test", "xxxx"]):
             assert False, f"Real-looking API key found in summary: {token[:10]}..."
@@ -106,6 +115,7 @@ def test_check_secrets_script_exists():
 def test_check_secrets_script_executable():
     """check-secrets.sh must be executable."""
     import os
+
     assert os.access(CHECK_SECRETS_SCRIPT, os.X_OK), "check-secrets.sh not executable"
 
 

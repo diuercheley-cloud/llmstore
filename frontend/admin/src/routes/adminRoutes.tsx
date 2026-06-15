@@ -46,6 +46,7 @@ const componentMap: Record<string, React.LazyExoticComponent<React.ComponentType
   '/enterprise/onboarding': lazy(() => import('../pages/enterprise/EnterpriseOnboardingDashboard')),
   '/enterprise/checklist': lazy(() => import('../pages/enterprise/OnboardingChecklist')),
   '/enterprise/checklist/:id': lazy(() => import('../pages/enterprise/OnboardingChecklist')),
+  '/enterprise/sales': lazy(() => import('../pages/enterprise/SalesLeads')),
 
   '/agents': lazy(() => import('../pages/agents/AgentsOverview')),
   '/agents/protocols': lazy(() => import('../pages/agents/AgentProtocols')),

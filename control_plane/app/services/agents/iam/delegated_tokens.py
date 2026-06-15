@@ -3,7 +3,6 @@ import logging
 import secrets
 import uuid
 from datetime import timedelta
-from typing import List, Optional, Tuple
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -14,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class DelegatedTokenService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -23,19 +23,19 @@ class DelegatedTokenService:
         self,
         tenant_id: str,
         agent_id: uuid.UUID,
-        scopes: List[dict],
+        scopes: list[dict],
         expires_in_seconds: int = 3600,
         token_type: str = "connector",
-        actor_id: Optional[str] = None,
-        actor_type: Optional[str] = None,
-    ) -> Tuple[AgentDelegatedToken, str]:
+        actor_id: str | None = None,
+        actor_type: str | None = None,
+    ) -> tuple[AgentDelegatedToken, str]:
         """
         Generates a secure agent token.
         Stores the SHA-256 hash in the database and returns the raw token string once.
         """
         settings = get_settings()
         if not settings.agent_delegated_tokens_enabled and not settings.agent_iam_enabled:
-             raise PermissionError("Agent Delegated Tokens are disabled by feature flag.")
+            raise PermissionError("Agent Delegated Tokens are disabled by feature flag.")
 
         raw_token = f"agt_{secrets.token_urlsafe(32)}"
         token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
@@ -69,7 +69,7 @@ class DelegatedTokenService:
         )
         return token, raw_token
 
-    async def verify_token(self, token_string: str) -> Optional[AgentDelegatedToken]:
+    async def verify_token(self, token_string: str) -> AgentDelegatedToken | None:
         """
         Verifies a raw token string. Returns the model if active, valid, and not expired.
         Supports manual tokens for dev/test environments.
@@ -85,7 +85,6 @@ class DelegatedTokenService:
                 agent_id = uuid.uuid4()
             connector = parts[5] if len(parts) > 5 else "github"
             action = "_".join(parts[6:]) if len(parts) > 6 else "read"
-
 
             # Create an in-memory mock token model
             mock_token = AgentDelegatedToken(
@@ -128,8 +127,8 @@ class DelegatedTokenService:
         self,
         token_id: uuid.UUID,
         tenant_id: str,
-        actor_id: Optional[str] = None,
-        actor_type: Optional[str] = None,
+        actor_id: str | None = None,
+        actor_type: str | None = None,
     ) -> bool:
         """
         Revokes a delegated token immediately.
@@ -161,8 +160,8 @@ class DelegatedTokenService:
         self,
         tenant_id: str,
         agent_id: uuid.UUID,
-        actor_id: Optional[str] = None,
-        actor_type: Optional[str] = None,
+        actor_id: str | None = None,
+        actor_type: str | None = None,
     ) -> int:
         """
         Revokes all tokens for a given agent immediately.

@@ -22,7 +22,7 @@ from scripts.llm_harness.prompt_builder import PromptBuilder
 def temp_indexing_repo():
     """Sets up a temporary repo with files and directories for testing indexer."""
     temp_dir = tempfile.mkdtemp()
-    
+
     # Python code
     app_py_content = '''"""This is app.py docstring."""
 import math
@@ -46,7 +46,7 @@ def helper_func():
         f.write(app_py_content)
 
     # JS Code
-    js_content = '''
+    js_content = """
 // import statement
 import { helper } from "./utils.js";
 const config = require("config-lib");
@@ -58,7 +58,7 @@ class Parser {
 function processData(data) {
   return data;
 }
-'''
+"""
     with open(os.path.join(temp_dir, "script.js"), "w", encoding="utf-8") as f:
         f.write(js_content)
 
@@ -72,12 +72,12 @@ def leak_secret():
         f.write(secret_content)
 
     # Gitignore
-    gitignore_content = '''
+    gitignore_content = """
 # ignore logs
 *.log
 # ignore specific folder
 ignored_dir/
-'''
+"""
     with open(os.path.join(temp_dir, ".gitignore"), "w", encoding="utf-8") as f:
         f.write(gitignore_content)
 
@@ -130,13 +130,13 @@ def get_active_users(limit: int):
     assert cls["name"] == "User"
     assert cls["docstring"] == "User representation."
     assert cls["start_line"] > 0
-    
+
     # Methods
     assert len(cls["methods"]) == 2
     method_names = {m["name"] for m in cls["methods"]}
     assert "__init__" in method_names
     assert "get_name" in method_names
-    
+
     get_name_method = next(m for m in cls["methods"] if m["name"] == "get_name")
     assert get_name_method["docstring"] == "Gets name."
 
@@ -150,7 +150,7 @@ def get_active_users(limit: int):
 
 def test_regex_fallback_parser():
     parser = RegexFallbackParser()
-    content = '''
+    content = """
     import { Component } from "@angular/core";
     const fs = require("fs");
 
@@ -169,7 +169,7 @@ def test_regex_fallback_parser():
     customFunc() {
         console.log("no keyword function match sample");
     }
-    '''
+    """
     result = parser.parse(content)
 
     # Imports
@@ -204,7 +204,7 @@ def test_repository_indexer_and_ignore_rules(temp_indexing_repo):
     index_file_path = os.path.join(temp_indexing_repo, ".llm_harness_index", "repo_index.json")
     assert os.path.exists(index_file_path)
 
-    with open(index_file_path, "r", encoding="utf-8") as f:
+    with open(index_file_path, encoding="utf-8") as f:
         data = json.load(f)
 
     # Check secret redaction
@@ -247,7 +247,9 @@ def test_get_retrieved_context_and_prompt_builder(temp_indexing_repo):
     indexer = RepositoryIndexer(workspace_root=temp_indexing_repo)
     indexer.build_index()
 
-    context = get_retrieved_context("Calculator", workspace_root=temp_indexing_repo, max_tokens=1000)
+    context = get_retrieved_context(
+        "Calculator", workspace_root=temp_indexing_repo, max_tokens=1000
+    )
     assert "=== Retrieved Context ===" in context
     assert "app.py" in context
     assert "class Calculator" in context
@@ -255,7 +257,7 @@ def test_get_retrieved_context_and_prompt_builder(temp_indexing_repo):
     # Test integration with PromptBuilder
     pb = PromptBuilder(retrieved_context=context)
     task_prompt = pb.build_task_prompt("Show me how to use the calculator")
-    
+
     assert "### Context" in task_prompt
     assert "=== Retrieved Context ===" in task_prompt
     assert "class Calculator" in task_prompt
@@ -264,12 +266,12 @@ def test_get_retrieved_context_and_prompt_builder(temp_indexing_repo):
 
 def test_docs_manager_crud(temp_indexing_repo):
     docs_mgr = DocsManager(workspace_root=temp_indexing_repo)
-    
+
     # Add external doc configuration
     docs_mgr.add_doc(
         name="FastAPI",
         url="https://fastapi.tiangolo.com/tutorial/",
-        allowlist_domain="fastapi.tiangolo.com"
+        allowlist_domain="fastapi.tiangolo.com",
     )
 
     configs = docs_mgr.load_config()
@@ -282,7 +284,7 @@ def test_docs_manager_crud(temp_indexing_repo):
     docs_mgr.add_doc(
         name="FastAPI",
         url="https://fastapi.tiangolo.com/index.html",
-        allowlist_domain="fastapi.tiangolo.com"
+        allowlist_domain="fastapi.tiangolo.com",
     )
     configs = docs_mgr.load_config()
     assert len(configs) == 1
@@ -297,7 +299,7 @@ def test_docs_manager_policy_checks(temp_indexing_repo):
     docs_mgr.add_doc(
         name="FastAPI",
         url="https://fastapi.tiangolo.com/index.html",
-        allowlist_domain="fastapi.tiangolo.com"
+        allowlist_domain="fastapi.tiangolo.com",
     )
 
     # Attempt fetch without network policy -> raises PermissionError
@@ -307,13 +309,13 @@ def test_docs_manager_policy_checks(temp_indexing_repo):
     # Domain mismatch check
     policy_allowed = PolicyEngine(config={"allow_network": True})
     docs_mgr_allowed = DocsManager(workspace_root=temp_indexing_repo, policy_engine=policy_allowed)
-    
+
     docs_mgr_allowed.add_doc(
         name="FastAPI-Bad",
         url="https://attacker.com/fake-docs",
-        allowlist_domain="fastapi.tiangolo.com"
+        allowlist_domain="fastapi.tiangolo.com",
     )
-    
+
     with pytest.raises(PermissionError, match="does not match allowed domain"):
         docs_mgr_allowed.fetch_doc("FastAPI-Bad")
 
@@ -326,7 +328,7 @@ def test_docs_manager_fetching_and_cache(mock_get, temp_indexing_repo):
     docs_mgr.add_doc(
         name="FastAPI",
         url="https://fastapi.tiangolo.com/index.html",
-        allowlist_domain="fastapi.tiangolo.com"
+        allowlist_domain="fastapi.tiangolo.com",
     )
 
     # Mock response HTML with a script tag to test stripping
@@ -359,7 +361,7 @@ def test_docs_manager_fetching_and_cache(mock_get, temp_indexing_repo):
     assert "This is the official docs page." in content
     # Secret should be redacted
     assert "bearer-test-token" not in content
-    assert "[REDACTED]" in content or "[REDACTED_IMAGE_BASE64]" not in content # sanitizer check
+    assert "[REDACTED]" in content or "[REDACTED_IMAGE_BASE64]" not in content  # sanitizer check
 
     # Verify cache
     cached = docs_mgr.get_cached_doc("FastAPI")
@@ -369,7 +371,7 @@ def test_docs_manager_fetching_and_cache(mock_get, temp_indexing_repo):
     # Change mock content to ensure it executes httpx.get again
     mock_response.text = "<html><body>Updated FastAPI doc</body></html>"
     docs_mgr.refresh_docs()
-    
+
     updated_cached = docs_mgr.get_cached_doc("FastAPI")
     assert updated_cached == "Updated FastAPI doc"
 
@@ -391,12 +393,8 @@ def test_cli_index_build_and_query(temp_indexing_repo):
         f.write("def my_special_function():\n    pass\n")
 
     # Test CLI index build
-    args_build = Namespace(
-        command="index",
-        index_command="build",
-        workspace=temp_indexing_repo
-    )
-    
+    args_build = Namespace(command="index", index_command="build", workspace=temp_indexing_repo)
+
     with patch("builtins.print") as mock_print:
         run_index_command(args_build)
         # Verify success output
@@ -408,13 +406,15 @@ def test_cli_index_build_and_query(temp_indexing_repo):
         command="index",
         index_command="query",
         query="my_special_function",
-        workspace=temp_indexing_repo
+        workspace=temp_indexing_repo,
     )
 
     with patch("builtins.print") as mock_print:
         run_index_command(args_query)
         # Verify matches output
-        any_match = any("Found" in call[0][0] and "matches" in call[0][0] for call in mock_print.call_args_list)
+        any_match = any(
+            "Found" in call[0][0] and "matches" in call[0][0] for call in mock_print.call_args_list
+        )
         assert any_match
 
 
@@ -473,7 +473,9 @@ def test_cli_docs_add_and_refresh(temp_indexing_repo):
 
     with patch("builtins.print") as mock_print:
         run_docs_command(args_add)
-        any_success = any("SUCCESS: Config updated." in call[0][0] for call in mock_print.call_args_list)
+        any_success = any(
+            "SUCCESS: Config updated." in call[0][0] for call in mock_print.call_args_list
+        )
         assert any_success
 
     # Verify YAML is present
@@ -534,5 +536,7 @@ def test_cli_docs_add_and_refresh(temp_indexing_repo):
         with patch("builtins.print") as mock_print:
             run_docs_command(args_refresh)
             mock_fetch.assert_called_once_with("FastAPI")
-            any_success = any("SUCCESS: Refresh completed." in call[0][0] for call in mock_print.call_args_list)
+            any_success = any(
+                "SUCCESS: Refresh completed." in call[0][0] for call in mock_print.call_args_list
+            )
             assert any_success

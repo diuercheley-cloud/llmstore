@@ -2,7 +2,7 @@
 import logging
 import uuid
 from datetime import timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -22,14 +22,18 @@ from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
+
 class MemoryDisabledError(RuntimeError):
     pass
+
 
 class SecretFoundError(ValueError):
     pass
 
+
 class ConsentRequiredError(ValueError):
     pass
+
 
 class AgentMemoryService:
     def __init__(self, db: AsyncSession):
@@ -46,8 +50,14 @@ class AgentMemoryService:
         if not self.settings.agent_memory_enabled:
             raise MemoryDisabledError("Agent memory is disabled globally.")
 
-    async def _check_quarantine(self, agent_id: Optional[uuid.UUID], collection_id: Optional[uuid.UUID] = None, memory_id: Optional[uuid.UUID] = None):
+    async def _check_quarantine(
+        self,
+        agent_id: uuid.UUID | None,
+        collection_id: uuid.UUID | None = None,
+        memory_id: uuid.UUID | None = None,
+    ):
         from app.models.agents.agents import AgentMemoryQuarantine
+
         targets = []
         if agent_id:
             targets.append(str(agent_id))
@@ -63,7 +73,9 @@ class AgentMemoryService:
         result = await self.db.execute(stmt)
         quarantine = result.scalars().first()
         if quarantine:
-            raise ValueError(f"Access denied: memory target {quarantine.target_id} is quarantined (reason: {quarantine.reason})")
+            raise ValueError(
+                f"Access denied: memory target {quarantine.target_id} is quarantined (reason: {quarantine.reason})"
+            )
 
     def _contains_secrets(self, text: str) -> bool:
         patterns = ["sk-", "api_", "key_", "passwd", "password", "secret"]
@@ -72,13 +84,20 @@ class AgentMemoryService:
                 return True
         return False
 
-    async def _log_access(self, tenant_id: str, agent_id: uuid.UUID, item_id: uuid.UUID, operation: str, run_id: Optional[uuid.UUID] = None):
+    async def _log_access(
+        self,
+        tenant_id: str,
+        agent_id: uuid.UUID,
+        item_id: uuid.UUID,
+        operation: str,
+        run_id: uuid.UUID | None = None,
+    ):
         event = AgentMemoryAccessEvent(
             tenant_id=tenant_id,
             agent_id=agent_id,
             run_id=run_id,
             memory_item_id=item_id,
-            operation=operation
+            operation=operation,
         )
         self.db.add(event)
 
@@ -88,23 +107,24 @@ class AgentMemoryService:
         agent_id: uuid.UUID,
         memory_type: str,
         content: str,
-        user_id: Optional[str] = None,
-        summary: Optional[str] = None,
-        run_id: Optional[uuid.UUID] = None,
-        collection_id: Optional[uuid.UUID] = None
+        user_id: str | None = None,
+        summary: str | None = None,
+        run_id: uuid.UUID | None = None,
+        collection_id: uuid.UUID | None = None,
     ) -> AgentMemoryItem:
         self._check_enabled()
         await self._check_quarantine(agent_id=agent_id, collection_id=collection_id)
-        
+
         # 0. Policy Engine Check (v2)
         from app.services.agents.agent_policy_engine import AgentPolicyEngine, PolicyRequest
+
         policy_req = PolicyRequest(
             action_type="memory_write",
             subject=memory_type,
             tenant_id=tenant_id,
             agent_id=agent_id,
             run_id=run_id,
-            context={"content_length": len(content)}
+            context={"content_length": len(content)},
         )
         policy_engine = AgentPolicyEngine(self.db)
         decision = await policy_engine.evaluate_action_v2(policy_req)
@@ -120,16 +140,24 @@ class AgentMemoryService:
         if self.settings.agent_memory_consent_required and memory_type == "long_term":
             if not user_id:
                 raise ConsentRequiredError("user_id must be provided when consent is required.")
-            consent = await self.consent_service.get_consent(tenant_id, user_id, memory_type, agent_id)
+            consent = await self.consent_service.get_consent(
+                tenant_id, user_id, memory_type, agent_id
+            )
             if not consent:
-                raise ConsentRequiredError(f"No active consent found for user {user_id} and memory type {memory_type}.")
+                raise ConsentRequiredError(
+                    f"No active consent found for user {user_id} and memory type {memory_type}."
+                )
 
         if self._contains_secrets(content):
-            raise SecretFoundError("Potential secret detected in memory content. Blocking persistence.")
+            raise SecretFoundError(
+                "Potential secret detected in memory content. Blocking persistence."
+            )
 
         policy = await self.policy_service.get_policy(tenant_id, agent_id, memory_type)
         if not policy:
-            raise ValueError(f"No retention policy found for memory type '{memory_type}' and tenant '{tenant_id}'.")
+            raise ValueError(
+                f"No retention policy found for memory type '{memory_type}' and tenant '{tenant_id}'."
+            )
 
         redaction_status = "none"
         final_content = content
@@ -150,9 +178,13 @@ class AgentMemoryService:
             raw_content=final_content,
             summary=summary,
             source_run_id=run_id,
-            provenance={"created_at": utc_now().isoformat(), "source": "agent_run", "run_id": str(run_id) if run_id else None},
+            provenance={
+                "created_at": utc_now().isoformat(),
+                "source": "agent_run",
+                "run_id": str(run_id) if run_id else None,
+            },
             retention_until=retention_until,
-            redaction_status=redaction_status
+            redaction_status=redaction_status,
         )
 
         self.db.add(item)
@@ -173,18 +205,18 @@ class AgentMemoryService:
         self,
         tenant_id: str,
         agent_id: uuid.UUID,
-        memory_type: Optional[str] = None,
-        collection_id: Optional[uuid.UUID] = None,
+        memory_type: str | None = None,
+        collection_id: uuid.UUID | None = None,
         limit: int = 10,
-        run_id: Optional[uuid.UUID] = None
-    ) -> List[AgentMemoryItem]:
+        run_id: uuid.UUID | None = None,
+    ) -> list[AgentMemoryItem]:
         self._check_enabled()
         await self._check_quarantine(agent_id=agent_id, collection_id=collection_id)
 
         stmt = select(AgentMemoryItem).where(
             AgentMemoryItem.tenant_id == tenant_id,
             AgentMemoryItem.agent_id == agent_id,
-            AgentMemoryItem.retention_until > utc_now()
+            AgentMemoryItem.retention_until > utc_now(),
         )
 
         if memory_type:
@@ -206,8 +238,7 @@ class AgentMemoryService:
 
     async def delete_memory_item(self, tenant_id: str, item_id: uuid.UUID):
         stmt = select(AgentMemoryItem).where(
-            AgentMemoryItem.id == item_id,
-            AgentMemoryItem.tenant_id == tenant_id
+            AgentMemoryItem.id == item_id, AgentMemoryItem.tenant_id == tenant_id
         )
         res = await self.db.execute(stmt)
         item = res.scalar_one_or_none()
@@ -219,13 +250,14 @@ class AgentMemoryService:
         await self.db.delete(item)
         await self.db.commit()
 
-    async def export_memory(self, tenant_id: str, agent_id: Optional[uuid.UUID] = None, memory_type: Optional[str] = None) -> List[dict]:
+    async def export_memory(
+        self, tenant_id: str, agent_id: uuid.UUID | None = None, memory_type: str | None = None
+    ) -> list[dict]:
         if not self.settings.agent_memory_export_enabled:
             raise MemoryDisabledError("Memory export is disabled.")
 
         stmt = select(AgentMemoryItem).where(
-            AgentMemoryItem.tenant_id == tenant_id,
-            AgentMemoryItem.retention_until > utc_now()
+            AgentMemoryItem.tenant_id == tenant_id, AgentMemoryItem.retention_until > utc_now()
         )
         if agent_id:
             stmt = stmt.where(AgentMemoryItem.agent_id == agent_id)
@@ -241,26 +273,32 @@ class AgentMemoryService:
                 continue
 
             await self._log_access(tenant_id, item.agent_id, item.id, "export")
-            export_data.append({
-                "id": str(item.id),
-                "agent_id": str(item.agent_id),
-                "type": item.memory_type,
-                "content": item.raw_content,
-                "summary": item.summary,
-                "created_at": item.created_at.isoformat()
-            })
+            export_data.append(
+                {
+                    "id": str(item.id),
+                    "agent_id": str(item.agent_id),
+                    "type": item.memory_type,
+                    "content": item.raw_content,
+                    "summary": item.summary,
+                    "created_at": item.created_at.isoformat(),
+                }
+            )
 
         await self.db.commit()
         return export_data
 
-    async def search_memory(self, tenant_id: str, agent_id: uuid.UUID, query: str, limit: int = 10) -> List[AgentMemoryItem]:
+    async def search_memory(
+        self, tenant_id: str, agent_id: uuid.UUID, query: str, limit: int = 10
+    ) -> list[AgentMemoryItem]:
         self._check_enabled()
         await self._check_quarantine(agent_id=agent_id)
         if not self.settings.agent_memory_search_enabled:
             raise MemoryDisabledError("Memory search is disabled.")
 
         semantic = self.settings.agent_memory_semantic_search_enabled
-        return await self.indexing_service.search(tenant_id, agent_id, query, limit, semantic=semantic)
+        return await self.indexing_service.search(
+            tenant_id, agent_id, query, limit, semantic=semantic
+        )
 
     async def semantic_search_memory(
         self,
@@ -268,10 +306,10 @@ class AgentMemoryService:
         agent_id: uuid.UUID,
         query: str,
         memory_type: str = "long_term",
-        user_id: Optional[str] = None,
+        user_id: str | None = None,
         top_k: int = 5,
         score_threshold: float = 0.0,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         self._check_enabled()
         await self._check_quarantine(agent_id=agent_id)
         results = await self.retriever.retrieve(
@@ -290,12 +328,12 @@ class AgentMemoryService:
         tenant_id: str,
         agent_id: uuid.UUID,
         query: str,
-        user_id: Optional[str] = None,
+        user_id: str | None = None,
         memory_type: str = "long_term",
         max_tokens: int = 2048,
         top_k: int = 5,
         score_threshold: float = 0.0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         self._check_enabled()
         await self._check_quarantine(agent_id=agent_id)
         return await self.context_builder.build_context(
@@ -309,7 +347,7 @@ class AgentMemoryService:
             score_threshold=score_threshold,
         )
 
-    async def get_chat_history(self, run_id: uuid.UUID) -> List[Dict[str, str]]:
+    async def get_chat_history(self, run_id: uuid.UUID) -> list[dict[str, str]]:
         from app.models.agents.agents import AgentRun
 
         stmt = select(AgentRun).where(AgentRun.id == run_id)
@@ -323,10 +361,13 @@ class AgentMemoryService:
         if run.input_text:
             history.append({"role": "user", "content": run.input_text})
 
-        stmt_mem = select(AgentMemoryItem).where(
-            AgentMemoryItem.source_run_id == run_id,
-            AgentMemoryItem.memory_type == "short_term"
-        ).order_by(AgentMemoryItem.created_at.asc())
+        stmt_mem = (
+            select(AgentMemoryItem)
+            .where(
+                AgentMemoryItem.source_run_id == run_id, AgentMemoryItem.memory_type == "short_term"
+            )
+            .order_by(AgentMemoryItem.created_at.asc())
+        )
 
         res_mem = await self.db.execute(stmt_mem)
         items = res_mem.scalars().all()

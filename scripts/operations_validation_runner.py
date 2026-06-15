@@ -4,7 +4,7 @@
 Operations Validation Runner — Unified interface for technical phase validation.
 
 This script consolidates all phase-specific validators into a single declarative runner.
-It handles file existence, content patterns, forbidden patterns (hardening), 
+It handles file existence, content patterns, forbidden patterns (hardening),
 and dashboard markers.
 
 To add a new validation:
@@ -21,15 +21,13 @@ To add a new validation:
 
 from __future__ import annotations
 
-import json
-import os
 import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+
 
 @dataclass
 class ValidationTask:
@@ -41,11 +39,13 @@ class ValidationTask:
     is_obsolete: bool = False
     is_skipped: bool = False
 
+
 @dataclass
 class ValidationResult:
     task_name: str
     status: str  # passed, failed, skipped, obsolete
     failures: list[dict[str, str]] = field(default_factory=list)
+
 
 class OperationsValidationRunner:
     def __init__(self):
@@ -54,120 +54,178 @@ class OperationsValidationRunner:
 
     def _load_tasks(self):
         """Register validations for all phases."""
-        
+
         # Phase 73: Controlled Adapter Sandbox
-        self.tasks.append(ValidationTask(
-            name="Controlled Adapter Sandbox",
-            phase=73,
-            required_files=[
-                "control_plane/app/models/operations/adapter_sandbox.py",
-                "control_plane/app/services/operations/adapter_sandbox/contracts.py",
-                "control_plane/app/api/operations_adapter_sandbox_admin.py",
-            ],
-            required_patterns={
-                "control_plane/app/api/operations_adapter_sandbox_admin.py": ["router = APIRouter", "/manifests", "/runs/simulate"],
-                "control_plane/app/static/admin/index.html": ["Controlled Adapter Sandbox", "sandbox simulation only"],
-                "control_plane/app/static/portal/index.html": ["Controlled Adapter Sandbox", "sandbox simulation only"],
-            },
-            forbidden_patterns={
-                "control_plane/app/services/operations/adapter_sandbox/simulation_runner.py": {
-                    "external network": "requests\\.|httpx\\.|urllib|socket\\.",
-                    "subprocess": "subprocess\\.|os\\.system",
-                }
-            }
-        ))
+        self.tasks.append(
+            ValidationTask(
+                name="Controlled Adapter Sandbox",
+                phase=73,
+                required_files=[
+                    "control_plane/app/models/operations/adapter_sandbox.py",
+                    "control_plane/app/services/operations/adapter_sandbox/contracts.py",
+                    "control_plane/app/api/operations_adapter_sandbox_admin.py",
+                ],
+                required_patterns={
+                    "control_plane/app/api/operations_adapter_sandbox_admin.py": [
+                        "router = APIRouter",
+                        "/manifests",
+                        "/runs/simulate",
+                    ],
+                    "control_plane/app/static/admin/index.html": [
+                        "Controlled Adapter Sandbox",
+                        "sandbox simulation only",
+                    ],
+                    "control_plane/app/static/portal/index.html": [
+                        "Controlled Adapter Sandbox",
+                        "sandbox simulation only",
+                    ],
+                },
+                forbidden_patterns={
+                    "control_plane/app/services/operations/adapter_sandbox/simulation_runner.py": {
+                        "external network": "requests\\.|httpx\\.|urllib|socket\\.",
+                        "subprocess": "subprocess\\.|os\\.system",
+                    }
+                },
+            )
+        )
 
         # Phase 74: Signed Adapter Registry
-        self.tasks.append(ValidationTask(
-            name="Signed Adapter Registry",
-            phase=74,
-            required_files=[
-                "control_plane/app/models/operations/adapter_registry.py",
-                "control_plane/app/api/operations_adapter_registry_admin.py",
-            ],
-            required_patterns={
-                "control_plane/app/models/operations/adapter_registry.py": ["SignedAdapterRegistryEntry", "signature_placeholder", "manifest_hash"],
-                "control_plane/app/static/admin/index.html": ["Signed Adapter Registry", "adapterRegistryCount", "adapterRegistryApprovedCount"],
-            }
-        ))
+        self.tasks.append(
+            ValidationTask(
+                name="Signed Adapter Registry",
+                phase=74,
+                required_files=[
+                    "control_plane/app/models/operations/adapter_registry.py",
+                    "control_plane/app/api/operations_adapter_registry_admin.py",
+                ],
+                required_patterns={
+                    "control_plane/app/models/operations/adapter_registry.py": [
+                        "SignedAdapterRegistryEntry",
+                        "signature_placeholder",
+                        "manifest_hash",
+                    ],
+                    "control_plane/app/static/admin/index.html": [
+                        "Signed Adapter Registry",
+                        "adapterRegistryCount",
+                        "adapterRegistryApprovedCount",
+                    ],
+                },
+            )
+        )
 
         # Phase 76: Attestation Framework
-        self.tasks.append(ValidationTask(
-            name="Attestation Framework",
-            phase=76,
-            required_files=[
-                "control_plane/app/models/operations/attestation_framework.py",
-                "control_plane/app/api/operations_attestation_admin.py",
-            ],
-            required_patterns={
-                "control_plane/app/models/operations/attestation_framework.py": ["SovereignExecutionAttestation", "signature_placeholder"],
-                "control_plane/app/static/admin/index.html": ["Sovereign Execution Attestation Framework", "chain integrity status"],
-            }
-        ))
+        self.tasks.append(
+            ValidationTask(
+                name="Attestation Framework",
+                phase=76,
+                required_files=[
+                    "control_plane/app/models/operations/attestation_framework.py",
+                    "control_plane/app/api/operations_attestation_admin.py",
+                ],
+                required_patterns={
+                    "control_plane/app/models/operations/attestation_framework.py": [
+                        "SovereignExecutionAttestation",
+                        "signature_placeholder",
+                    ],
+                    "control_plane/app/static/admin/index.html": [
+                        "Sovereign Execution Attestation Framework",
+                        "chain integrity status",
+                    ],
+                },
+            )
+        )
 
         # Phase 77: Federation Sync
-        self.tasks.append(ValidationTask(
-            name="Federation Sync",
-            phase=77,
-            required_files=[
-                "control_plane/app/models/operations/federation_sync.py",
-                "control_plane/app/api/operations_federation_sync_admin.py",
-            ],
-            required_patterns={
-                "control_plane/app/models/operations/federation_sync.py": ["SovereignFederationEnvironment", "signature_placeholder"],
-                "control_plane/app/static/admin/index.html": ["Sovereign Federation Synchronization Protocol", "federationLineageVerificationStatus"],
-            }
-        ))
+        self.tasks.append(
+            ValidationTask(
+                name="Federation Sync",
+                phase=77,
+                required_files=[
+                    "control_plane/app/models/operations/federation_sync.py",
+                    "control_plane/app/api/operations_federation_sync_admin.py",
+                ],
+                required_patterns={
+                    "control_plane/app/models/operations/federation_sync.py": [
+                        "SovereignFederationEnvironment",
+                        "signature_placeholder",
+                    ],
+                    "control_plane/app/static/admin/index.html": [
+                        "Sovereign Federation Synchronization Protocol",
+                        "federationLineageVerificationStatus",
+                    ],
+                },
+            )
+        )
 
         # Phase 78: Compatibility Contracts
-        self.tasks.append(ValidationTask(
-            name="Compatibility Contracts",
-            phase=78,
-            required_files=[
-                "control_plane/app/models/operations/compatibility_contracts.py",
-                "control_plane/app/api/operations_compatibility_admin.py",
-            ],
-            required_patterns={
-                "control_plane/app/models/operations/compatibility_contracts.py": ["CompatibilityContract", "signature_placeholder"],
-                "control_plane/app/static/admin/index.html": ["Compatibility Contracts & Version Negotiation"],
-            }
-        ))
+        self.tasks.append(
+            ValidationTask(
+                name="Compatibility Contracts",
+                phase=78,
+                required_files=[
+                    "control_plane/app/models/operations/compatibility_contracts.py",
+                    "control_plane/app/api/operations_compatibility_admin.py",
+                ],
+                required_patterns={
+                    "control_plane/app/models/operations/compatibility_contracts.py": [
+                        "CompatibilityContract",
+                        "signature_placeholder",
+                    ],
+                    "control_plane/app/static/admin/index.html": [
+                        "Compatibility Contracts & Version Negotiation"
+                    ],
+                },
+            )
+        )
 
         # Phase 79: Plugin Runtime
-        self.tasks.append(ValidationTask(
-            name="Plugin Runtime",
-            phase=79,
-            required_files=[
-                "control_plane/app/models/operations/plugin_runtime.py",
-                "control_plane/app/api/operations_plugin_runtime_admin.py",
-            ],
-            required_patterns={
-                "control_plane/app/models/operations/plugin_runtime.py": ["PluginABIContract", "signature_placeholder"],
-                "control_plane/app/static/admin/index.html": ["Formal Plugin ABI &amp; Extension Runtime"],
-            }
-        ))
+        self.tasks.append(
+            ValidationTask(
+                name="Plugin Runtime",
+                phase=79,
+                required_files=[
+                    "control_plane/app/models/operations/plugin_runtime.py",
+                    "control_plane/app/api/operations_plugin_runtime_admin.py",
+                ],
+                required_patterns={
+                    "control_plane/app/models/operations/plugin_runtime.py": [
+                        "PluginABIContract",
+                        "signature_placeholder",
+                    ],
+                    "control_plane/app/static/admin/index.html": [
+                        "Formal Plugin ABI &amp; Extension Runtime"
+                    ],
+                },
+            )
+        )
 
         # Phase 81: Reproducible Builds
-        self.tasks.append(ValidationTask(
-            name="Reproducible Builds",
-            phase=81,
-            required_files=[
-                "control_plane/app/models/operations/reproducible_builds.py",
-                "control_plane/app/services/operations/reproducible_builds/receipts.py",
-            ],
-            required_patterns={
-                "control_plane/app/models/operations/reproducible_builds.py": ["ReproducibleBuildManifest"],
-                "control_plane/app/services/operations/reproducible_builds/receipts.py": ["signature_placeholder"],
-                "control_plane/app/static/admin/index.html": ["Reproducible Build &amp; Artifact Verification Framework"],
-            }
-        ))
+        self.tasks.append(
+            ValidationTask(
+                name="Reproducible Builds",
+                phase=81,
+                required_files=[
+                    "control_plane/app/models/operations/reproducible_builds.py",
+                    "control_plane/app/services/operations/reproducible_builds/receipts.py",
+                ],
+                required_patterns={
+                    "control_plane/app/models/operations/reproducible_builds.py": [
+                        "ReproducibleBuildManifest"
+                    ],
+                    "control_plane/app/services/operations/reproducible_builds/receipts.py": [
+                        "signature_placeholder"
+                    ],
+                    "control_plane/app/static/admin/index.html": [
+                        "Reproducible Build &amp; Artifact Verification Framework"
+                    ],
+                },
+            )
+        )
 
         # Example of obsolete validation
-        self.tasks.append(ValidationTask(
-            name="Legacy Readiness (Phase 66)",
-            phase=66,
-            is_obsolete=True
-        ))
+        self.tasks.append(
+            ValidationTask(name="Legacy Readiness (Phase 66)", phase=66, is_obsolete=True)
+        )
 
     def run_all(self) -> list[ValidationResult]:
         results = []
@@ -207,7 +265,9 @@ class OperationsValidationRunner:
             content = full_path.read_text(encoding="utf-8")
             for label, p in patterns.items():
                 if re.search(p, content):
-                    failures.append({"path": rel_path, "issue": f"FORBIDDEN pattern found: {label} ({p})"})
+                    failures.append(
+                        {"path": rel_path, "issue": f"FORBIDDEN pattern found: {label} ({p})"}
+                    )
 
         status = "failed" if failures else "passed"
         return ValidationResult(task.name, status, failures)
@@ -216,22 +276,28 @@ class OperationsValidationRunner:
         print("\n=== Operations Validation Report ===\n")
         exit_code = 0
         for r in results:
-            icon = {"passed": "✅", "failed": "❌", "skipped": "🟡", "obsolete": "⚪"}.get(r.status, "❓")
+            icon = {"passed": "✅", "failed": "❌", "skipped": "🟡", "obsolete": "⚪"}.get(
+                r.status, "❓"
+            )
             print(f"{icon} {r.task_name: <35} [{r.status.upper()}]")
             if r.status == "failed":
                 exit_code = 1
                 for f in r.failures:
                     print(f"   - {f['path']}: {f['issue']}")
-        
-        print(f"\nSummary: {len([r for r in results if r.status == 'passed'])} passed, "
-              f"{len([r for r in results if r.status == 'failed'])} failed, "
-              f"{len([r for r in results if r.status == 'obsolete'])} obsolete.")
+
+        print(
+            f"\nSummary: {len([r for r in results if r.status == 'passed'])} passed, "
+            f"{len([r for r in results if r.status == 'failed'])} failed, "
+            f"{len([r for r in results if r.status == 'obsolete'])} obsolete."
+        )
         return exit_code
+
 
 def main():
     runner = OperationsValidationRunner()
     results = runner.run_all()
     sys.exit(runner.report(results))
+
 
 if __name__ == "__main__":
     main()

@@ -9,9 +9,11 @@ async def test_quote_preview_endpoint(admin_client: AsyncClient, admin_token_hea
         "plan": "Pro",
         "rag": True,
         "support_hours": 2,
-        "discount_percent": 5
+        "discount_percent": 5,
     }
-    response = await admin_client.post("/admin/sales/quote-preview", json=payload, headers=admin_token_headers)
+    response = await admin_client.post(
+        "/admin/sales/quote-preview", json=payload, headers=admin_token_headers
+    )
     if response.status_code != 200:
         print(f"DEBUG Response: {response.text}")
     assert response.status_code == 200
@@ -23,6 +25,7 @@ async def test_quote_preview_endpoint(admin_client: AsyncClient, admin_token_hea
     assert data["totals"]["recurring"] == 2500
     # Total: 10000, 5% discount -> 9500
     assert data["totals"]["first_month_final"] == 9500
+
 
 @pytest.mark.asyncio
 async def test_quote_preview_unauthorized(admin_client: AsyncClient):

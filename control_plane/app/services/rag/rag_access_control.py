@@ -5,7 +5,9 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from app.core.config import get_settings
-from app.models.commercial.commercial_confidential_runtime import CommercialConfidentialRuntimeProfile
+from app.models.commercial.commercial_confidential_runtime import (
+    CommercialConfidentialRuntimeProfile,
+)
 from app.models.commercial.commercial_model_supply_chain import CommercialSignedModelRegistryEntry
 from app.models.commercial.commercial_rag_vault import (
     CommercialRAGAccessPolicy,
@@ -53,7 +55,11 @@ async def evaluate_retrieval_access(
         policy=policy,
         policy_mode=policy_mode,
         allowed=True,
-        max_context_chunks=(policy.max_context_chunks if policy else settings.commercial_rag_vault_max_context_chunks),
+        max_context_chunks=(
+            policy.max_context_chunks
+            if policy
+            else settings.commercial_rag_vault_max_context_chunks
+        ),
     )
 
     def add_violation(reason: str) -> None:
@@ -73,7 +79,9 @@ async def evaluate_retrieval_access(
         if not attrs.get("purpose"):
             add_violation("abac_missing_purpose")
 
-    if getattr(settings, "commercial_rag_vault_require_confidential_runtime", False) or (policy and policy.require_confidential_runtime):
+    if getattr(settings, "commercial_rag_vault_require_confidential_runtime", False) or (
+        policy and policy.require_confidential_runtime
+    ):
         stmt = select(CommercialConfidentialRuntimeProfile).where(
             CommercialConfidentialRuntimeProfile.client_id == str(request_client_id),
             CommercialConfidentialRuntimeProfile.enabled == True,
@@ -106,7 +114,10 @@ async def validate_document_access(
     policy: CommercialRAGAccessPolicy | None,
 ) -> list[str]:
     violations: list[str] = []
-    if (getattr(settings, "commercial_rag_vault_require_signed_documents", False) or (policy and policy.require_signed_document)) and not document.signed_manifest_hash:
+    if (
+        getattr(settings, "commercial_rag_vault_require_signed_documents", False)
+        or (policy and policy.require_signed_document)
+    ) and not document.signed_manifest_hash:
         violations.append("unsigned_document")
 
     if document.legal_hold:
@@ -138,7 +149,11 @@ def evaluate_chunk_acl(
     violations: list[str] = []
 
     allowed_clients = acl.get("allowed_client_ids") or []
-    if allowed_clients and request_client_id and str(request_client_id) not in {str(v) for v in allowed_clients}:
+    if (
+        allowed_clients
+        and request_client_id
+        and str(request_client_id) not in {str(v) for v in allowed_clients}
+    ):
         violations.append("acl_client_mismatch")
 
     allowed_users = acl.get("allowed_user_hashes") or []

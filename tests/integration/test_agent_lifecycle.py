@@ -23,9 +23,10 @@ def enable_agent_runtime(settings):
     settings.agent_runtime_enabled = True
 
 
-
 @pytest.mark.asyncio
-async def test_agent_registry_destructive_tool_default_approval(admin_client: AsyncClient, admin_token_headers):
+async def test_agent_registry_destructive_tool_default_approval(
+    admin_client: AsyncClient, admin_token_headers
+):
     # 1. Create agent with a destructive tool (e.g. "delete")
     payload = {
         "name": "Destructive File Agent",
@@ -35,18 +36,24 @@ async def test_agent_registry_destructive_tool_default_approval(admin_client: As
         "supported_surface_status": "internal",
         "risk_level": "medium",
         "allowed_tools": ["read_file", "delete"],
-        "eval_baseline": "Validated on dummy dataset"
+        "eval_baseline": "Validated on dummy dataset",
     }
 
-    resp = await admin_client.post("/admin/agent-registry", json=payload, headers=admin_token_headers)
+    resp = await admin_client.post(
+        "/admin/agent-registry", json=payload, headers=admin_token_headers
+    )
     assert resp.status_code == 201
     data = resp.json()
     assert data["name"] == "Destructive File Agent"
-    assert data["human_approval_required"] is True  # Destructive tool triggers default human approval
+    assert (
+        data["human_approval_required"] is True
+    )  # Destructive tool triggers default human approval
     entry_id = data["id"]
 
     # 2. Verify version records exist
-    resp_versions = await admin_client.get(f"/admin/agent-registry/{entry_id}/versions", headers=admin_token_headers)
+    resp_versions = await admin_client.get(
+        f"/admin/agent-registry/{entry_id}/versions", headers=admin_token_headers
+    )
     assert resp_versions.status_code == 200
     versions = resp_versions.json()
     assert len(versions) == 1
@@ -54,31 +61,37 @@ async def test_agent_registry_destructive_tool_default_approval(admin_client: As
 
 
 @pytest.mark.asyncio
-async def test_agent_registry_instructions_change_bumps_version(admin_client: AsyncClient, admin_token_headers):
+async def test_agent_registry_instructions_change_bumps_version(
+    admin_client: AsyncClient, admin_token_headers
+):
     # 1. Create a normal agent
     payload = {
         "name": "Version Test Agent",
         "semantic_version": "1.0.0",
         "owner": "qa-team",
         "instructions": "Be helpful.",
-        "eval_baseline": "Initial pass"
+        "eval_baseline": "Initial pass",
     }
-    resp = await admin_client.post("/admin/agent-registry", json=payload, headers=admin_token_headers)
+    resp = await admin_client.post(
+        "/admin/agent-registry", json=payload, headers=admin_token_headers
+    )
     assert resp.status_code == 201
     entry_id = resp.json()["id"]
 
     # 2. Update instructions -> Bumps patch version automatically
-    patch_payload = {
-        "instructions": "Be extremely helpful and polite."
-    }
-    resp = await admin_client.patch(f"/admin/agent-registry/{entry_id}", json=patch_payload, headers=admin_token_headers)
+    patch_payload = {"instructions": "Be extremely helpful and polite."}
+    resp = await admin_client.patch(
+        f"/admin/agent-registry/{entry_id}", json=patch_payload, headers=admin_token_headers
+    )
     assert resp.status_code == 200
     data = resp.json()
     assert data["semantic_version"] == "1.0.1"  # Automatically bumped from 1.0.0 -> 1.0.1
     assert data["instructions"] == "Be extremely helpful and polite."
 
     # Verify we have two versions now
-    resp_versions = await admin_client.get(f"/admin/agent-registry/{entry_id}/versions", headers=admin_token_headers)
+    resp_versions = await admin_client.get(
+        f"/admin/agent-registry/{entry_id}/versions", headers=admin_token_headers
+    )
     assert resp_versions.status_code == 200
     versions = resp_versions.json()
     assert len(versions) == 2
@@ -94,50 +107,63 @@ async def test_experimental_cannot_turn_supported(admin_client: AsyncClient, adm
         "semantic_version": "0.1.0",
         "supported_surface_status": "experimental",
     }
-    resp = await admin_client.post("/admin/agent-registry", json=payload, headers=admin_token_headers)
+    resp = await admin_client.post(
+        "/admin/agent-registry", json=payload, headers=admin_token_headers
+    )
     assert resp.status_code == 201
     entry_id = resp.json()["id"]
 
     # 2. Try to change surface status to supported -> fails with exception
-    patch_payload = {
-        "supported_surface_status": "supported"
-    }
-    resp = await admin_client.patch(f"/admin/agent-registry/{entry_id}", json=patch_payload, headers=admin_token_headers)
+    patch_payload = {"supported_surface_status": "supported"}
+    resp = await admin_client.patch(
+        f"/admin/agent-registry/{entry_id}", json=patch_payload, headers=admin_token_headers
+    )
     assert resp.status_code == 400
     assert "Experimental agents cannot be promoted to supported" in resp.json()["detail"]
 
 
 @pytest.mark.asyncio
-async def test_high_risk_requires_approval_gate(admin_client: AsyncClient, admin_token_headers, session: AsyncSession):
+async def test_high_risk_requires_approval_gate(
+    admin_client: AsyncClient, admin_token_headers, session: AsyncSession
+):
     # 1. Create a high-risk agent in draft
     payload = {
         "name": "High Risk Registry Agent",
         "semantic_version": "1.0.0",
         "owner": "sec-team",
         "risk_level": "high",
-        "eval_baseline": "SecOps test baseline"
+        "eval_baseline": "SecOps test baseline",
     }
-    resp = await admin_client.post("/admin/agent-registry", json=payload, headers=admin_token_headers)
+    resp = await admin_client.post(
+        "/admin/agent-registry", json=payload, headers=admin_token_headers
+    )
     assert resp.status_code == 201
     entry_id = resp.json()["id"]
 
     # 2. Submit for review (draft -> review)
-    resp = await admin_client.post(f"/admin/agent-registry/{entry_id}/submit-review", headers=admin_token_headers)
+    resp = await admin_client.post(
+        f"/admin/agent-registry/{entry_id}/submit-review", headers=admin_token_headers
+    )
     assert resp.status_code == 200
     assert resp.json()["status"] == "review"
 
     # 3. Approve without approved_by -> fails
-    approval_payload = {
-        "approved_by": "",
-        "metadata": {"test": True}
-    }
-    resp = await admin_client.post(f"/admin/agent-registry/{entry_id}/approve", json=approval_payload, headers=admin_token_headers)
+    approval_payload = {"approved_by": "", "metadata": {"test": True}}
+    resp = await admin_client.post(
+        f"/admin/agent-registry/{entry_id}/approve",
+        json=approval_payload,
+        headers=admin_token_headers,
+    )
     assert resp.status_code == 400
     assert "Approval signature" in resp.json()["detail"]
 
     # 4. Approve with approved_by -> succeeds
     approval_payload["approved_by"] = "Chief Risk Officer"
-    resp = await admin_client.post(f"/admin/agent-registry/{entry_id}/approve", json=approval_payload, headers=admin_token_headers)
+    resp = await admin_client.post(
+        f"/admin/agent-registry/{entry_id}/approve",
+        json=approval_payload,
+        headers=admin_token_headers,
+    )
     assert resp.status_code == 200
     assert resp.json()["status"] == "approved"
 
@@ -151,30 +177,38 @@ async def test_high_risk_requires_approval_gate(admin_client: AsyncClient, admin
 
 
 @pytest.mark.asyncio
-async def test_activation_owner_and_baseline_gates(admin_client: AsyncClient, admin_token_headers, session: AsyncSession, settings):
+async def test_activation_owner_and_baseline_gates(
+    admin_client: AsyncClient, admin_token_headers, session: AsyncSession, settings
+):
     # 1. Create agent without owner & baseline
     payload = {
         "name": "Gated Agent",
         "semantic_version": "0.1.0",
     }
-    resp = await admin_client.post("/admin/agent-registry", json=payload, headers=admin_token_headers)
+    resp = await admin_client.post(
+        "/admin/agent-registry", json=payload, headers=admin_token_headers
+    )
     assert resp.status_code == 201
     entry_id = resp.json()["id"]
 
     # Submit for review
-    await admin_client.post(f"/admin/agent-registry/{entry_id}/submit-review", headers=admin_token_headers)
+    await admin_client.post(
+        f"/admin/agent-registry/{entry_id}/submit-review", headers=admin_token_headers
+    )
     # Approve (low risk level does not strictly require signature but CRO signs off anyway)
     await admin_client.post(
         f"/admin/agent-registry/{entry_id}/approve",
         json={"approved_by": "Compliance Lead"},
-        headers=admin_token_headers
+        headers=admin_token_headers,
     )
 
     # Re-enable baseline check for activation testing
     settings.agent_production_requires_eval_baseline = True
 
     # 2. Try to activate -> fails because Owner is missing
-    resp = await admin_client.post(f"/admin/agent-registry/{entry_id}/activate", headers=admin_token_headers)
+    resp = await admin_client.post(
+        f"/admin/agent-registry/{entry_id}/activate", headers=admin_token_headers
+    )
     assert resp.status_code == 400
     assert "Owner is missing" in resp.json()["detail"]
 
@@ -182,11 +216,13 @@ async def test_activation_owner_and_baseline_gates(admin_client: AsyncClient, ad
     await admin_client.patch(
         f"/admin/agent-registry/{entry_id}",
         json={"owner": "platform-ops"},
-        headers=admin_token_headers
+        headers=admin_token_headers,
     )
 
     # Try to activate -> fails because eval baseline is missing
-    resp = await admin_client.post(f"/admin/agent-registry/{entry_id}/activate", headers=admin_token_headers)
+    resp = await admin_client.post(
+        f"/admin/agent-registry/{entry_id}/activate", headers=admin_token_headers
+    )
     assert resp.status_code == 400
     assert "Evaluation baseline is missing" in resp.json()["detail"]
 
@@ -194,43 +230,57 @@ async def test_activation_owner_and_baseline_gates(admin_client: AsyncClient, ad
     await admin_client.patch(
         f"/admin/agent-registry/{entry_id}",
         json={"eval_baseline": "Validated on production traffic shadow dataset"},
-        headers=admin_token_headers
+        headers=admin_token_headers,
     )
 
     # Now activate -> succeeds!
-    resp = await admin_client.post(f"/admin/agent-registry/{entry_id}/activate", headers=admin_token_headers)
+    resp = await admin_client.post(
+        f"/admin/agent-registry/{entry_id}/activate", headers=admin_token_headers
+    )
     assert resp.status_code == 200
     assert resp.json()["status"] == "active"
 
 
 @pytest.mark.asyncio
-async def test_governance_lifecycle_events_logged(admin_client: AsyncClient, admin_token_headers, session: AsyncSession):
+async def test_governance_lifecycle_events_logged(
+    admin_client: AsyncClient, admin_token_headers, session: AsyncSession
+):
     # 1. Create draft
     payload = {
         "name": "Audit Trail Agent",
         "owner": "audit-team",
         "eval_baseline": "Complies with ISO 27001",
-        "risk_level": "medium"
+        "risk_level": "medium",
     }
-    resp = await admin_client.post("/admin/agent-registry", json=payload, headers=admin_token_headers)
+    resp = await admin_client.post(
+        "/admin/agent-registry", json=payload, headers=admin_token_headers
+    )
     entry_id = resp.json()["id"]
 
     # 2. Transition draft -> review -> approved -> active -> paused -> active -> deprecated -> archived
-    await admin_client.post(f"/admin/agent-registry/{entry_id}/submit-review", headers=admin_token_headers)
+    await admin_client.post(
+        f"/admin/agent-registry/{entry_id}/submit-review", headers=admin_token_headers
+    )
     await admin_client.post(
         f"/admin/agent-registry/{entry_id}/approve",
         json={"approved_by": "Auditor General"},
-        headers=admin_token_headers
+        headers=admin_token_headers,
     )
-    await admin_client.post(f"/admin/agent-registry/{entry_id}/activate", headers=admin_token_headers)
+    await admin_client.post(
+        f"/admin/agent-registry/{entry_id}/activate", headers=admin_token_headers
+    )
     await admin_client.post(f"/admin/agent-registry/{entry_id}/pause", headers=admin_token_headers)
-    await admin_client.post(f"/admin/agent-registry/{entry_id}/activate", headers=admin_token_headers)
+    await admin_client.post(
+        f"/admin/agent-registry/{entry_id}/activate", headers=admin_token_headers
+    )
     await admin_client.post(
         f"/admin/agent-registry/{entry_id}/deprecate",
         json={"reason": "Replaced by newer version"},
-        headers=admin_token_headers
+        headers=admin_token_headers,
     )
-    await admin_client.post(f"/admin/agent-registry/{entry_id}/archive", headers=admin_token_headers)
+    await admin_client.post(
+        f"/admin/agent-registry/{entry_id}/archive", headers=admin_token_headers
+    )
 
     # 3. Retrieve all lifecycle events from DB and assert transition audit log correctness
     result = await session.execute(
@@ -250,7 +300,7 @@ async def test_governance_lifecycle_events_logged(admin_client: AsyncClient, adm
     # 7. deprecate
     # 8. archive
     assert len(events) == 8
-    
+
     assert events[0].event_type == "create_draft"
     assert events[0].to_status == "draft"
 

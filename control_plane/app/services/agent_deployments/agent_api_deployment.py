@@ -2,7 +2,6 @@
 import logging
 import secrets
 import uuid
-from typing import Optional
 
 from app.core.security import hash_secret
 from app.core.time import utc_now
@@ -38,13 +37,13 @@ class AgentApiDeploymentService:
         agent_id: uuid.UUID,
         slug: str,
         name: str,
-        description: Optional[str] = None,
+        description: str | None = None,
         timeout_seconds: int = 30,
         max_concurrency: int = 10,
         rate_limit_per_minute: int = 60,
         rate_limit_per_day: int = 10000,
         retry_max_attempts: int = 0,
-        callback_url: Optional[str] = None,
+        callback_url: str | None = None,
         billing_tier: str = "free",
     ) -> AgentApiDeployment:
         # Validate agent exists and is deployable
@@ -65,7 +64,8 @@ class AgentApiDeploymentService:
 
         # Validate slug format
         import re
-        if not re.match(r'^[a-z0-9][a-z0-9\-]{1,62}[a-z0-9]$', slug):
+
+        if not re.match(r"^[a-z0-9][a-z0-9\-]{1,62}[a-z0-9]$", slug):
             raise DeploymentValidationError(
                 "Slug must be 3-64 chars, lowercase alphanumeric and hyphens, "
                 "starting and ending with alphanumeric"
@@ -95,15 +95,15 @@ class AgentApiDeploymentService:
         logger.info(f"Deployment created: {slug} for agent {agent_id}")
         return deployment
 
-    async def get_deployment(self, deployment_id: uuid.UUID) -> Optional[AgentApiDeployment]:
+    async def get_deployment(self, deployment_id: uuid.UUID) -> AgentApiDeployment | None:
         return await self.db.get(AgentApiDeployment, deployment_id)
 
-    async def _get_deployment_by_slug(self, slug: str) -> Optional[AgentApiDeployment]:
+    async def _get_deployment_by_slug(self, slug: str) -> AgentApiDeployment | None:
         stmt = select(AgentApiDeployment).where(AgentApiDeployment.slug == slug)
         res = await self.db.execute(stmt)
         return res.scalar_one_or_none()
 
-    async def get_deployment_by_slug(self, slug: str, tenant_id: str) -> Optional[AgentApiDeployment]:
+    async def get_deployment_by_slug(self, slug: str, tenant_id: str) -> AgentApiDeployment | None:
         stmt = select(AgentApiDeployment).where(
             AgentApiDeployment.slug == slug,
             AgentApiDeployment.tenant_id == tenant_id,
@@ -111,7 +111,9 @@ class AgentApiDeploymentService:
         res = await self.db.execute(stmt)
         return res.scalar_one_or_none()
 
-    async def list_deployments(self, tenant_id: str, include_archived: bool = False) -> list[AgentApiDeployment]:
+    async def list_deployments(
+        self, tenant_id: str, include_archived: bool = False
+    ) -> list[AgentApiDeployment]:
         stmt = select(AgentApiDeployment).where(AgentApiDeployment.tenant_id == tenant_id)
         if not include_archived:
             stmt = stmt.where(AgentApiDeployment.status != "archived")
@@ -119,7 +121,9 @@ class AgentApiDeploymentService:
         res = await self.db.execute(stmt)
         return list(res.scalars().all())
 
-    async def pause_deployment(self, deployment_id: uuid.UUID, tenant_id: str) -> AgentApiDeployment:
+    async def pause_deployment(
+        self, deployment_id: uuid.UUID, tenant_id: str
+    ) -> AgentApiDeployment:
         deployment = await self.get_deployment(deployment_id)
         if not deployment or deployment.tenant_id != tenant_id:
             raise DeploymentNotFoundError("Deployment not found")
@@ -127,7 +131,9 @@ class AgentApiDeploymentService:
         await self.db.flush()
         return deployment
 
-    async def resume_deployment(self, deployment_id: uuid.UUID, tenant_id: str) -> AgentApiDeployment:
+    async def resume_deployment(
+        self, deployment_id: uuid.UUID, tenant_id: str
+    ) -> AgentApiDeployment:
         deployment = await self.get_deployment(deployment_id)
         if not deployment or deployment.tenant_id != tenant_id:
             raise DeploymentNotFoundError("Deployment not found")
@@ -135,18 +141,22 @@ class AgentApiDeploymentService:
         await self.db.flush()
         return deployment
 
-    async def promote_deployment(self, deployment_id: uuid.UUID, tenant_id: str) -> AgentApiDeployment:
+    async def promote_deployment(
+        self, deployment_id: uuid.UUID, tenant_id: str
+    ) -> AgentApiDeployment:
         deployment = await self.get_deployment(deployment_id)
         if not deployment or deployment.tenant_id != tenant_id:
             raise DeploymentNotFoundError("Deployment not found")
-        
+
         # In a real system, this would involve merging traffic or updating balancer rules.
         # Here we just mark it as active.
         deployment.status = "active"
         await self.db.flush()
         return deployment
 
-    async def archive_deployment(self, deployment_id: uuid.UUID, tenant_id: str) -> AgentApiDeployment:
+    async def archive_deployment(
+        self, deployment_id: uuid.UUID, tenant_id: str
+    ) -> AgentApiDeployment:
         deployment = await self.get_deployment(deployment_id)
         if not deployment or deployment.tenant_id != tenant_id:
             raise DeploymentNotFoundError("Deployment not found")
@@ -169,14 +179,16 @@ class AgentApiDeploymentService:
 
         # Update current deployment with target's configuration
         # We keep our OWN slug but point to the target's agent and SLA
-        deployment.previous_version_slug = deployment.slug # Not very useful if we don't change slug, but keeping for audit
+        deployment.previous_version_slug = (
+            deployment.slug
+        )  # Not very useful if we don't change slug, but keeping for audit
         deployment.agent_id = target.agent_id
         deployment.version = target.version
         deployment.timeout_seconds = target.timeout_seconds
         deployment.max_concurrency = target.max_concurrency
         deployment.rate_limit_per_minute = target.rate_limit_per_minute
         deployment.rate_limit_per_day = target.rate_limit_per_day
-        
+
         await self.db.flush()
         return deployment
 
@@ -204,7 +216,7 @@ class AgentApiDeploymentService:
 
     async def validate_endpoint_key(
         self, raw_key: str, deployment_slug: str
-    ) -> Optional[tuple[AgentApiDeployment, AgentApiEndpointKey]]:
+    ) -> tuple[AgentApiDeployment, AgentApiEndpointKey] | None:
         """Validate an endpoint key against a deployment slug. Returns (deployment, key) or None."""
         prefix = raw_key[:12]
 
@@ -220,6 +232,7 @@ class AgentApiDeploymentService:
 
         # Verify hash
         from app.core.security import verify_secret
+
         if not verify_secret(raw_key, key.key_hash):
             return None
 
@@ -251,9 +264,16 @@ class AgentApiDeploymentService:
             raise DeploymentNotFoundError("Deployment not found")
 
         allowed_fields = {
-            "name", "description", "timeout_seconds", "max_concurrency",
-            "rate_limit_per_minute", "rate_limit_per_day", "retry_max_attempts",
-            "retry_backoff_ms", "callback_url", "billing_tier",
+            "name",
+            "description",
+            "timeout_seconds",
+            "max_concurrency",
+            "rate_limit_per_minute",
+            "rate_limit_per_day",
+            "retry_max_attempts",
+            "retry_backoff_ms",
+            "callback_url",
+            "billing_tier",
         }
         for key, value in kwargs.items():
             if key in allowed_fields and value is not None:

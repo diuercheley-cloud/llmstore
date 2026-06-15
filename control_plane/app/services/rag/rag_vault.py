@@ -7,13 +7,13 @@ import uuid
 from typing import Any
 
 from app.core.config import get_settings
-from app.models.core.client import Client
 from app.models.commercial.commercial_rag_vault import (
     CommercialRAGAccessPolicy,
     CommercialRAGChunk,
     CommercialRAGDocument,
     CommercialRAGVault,
 )
+from app.models.core.client import Client
 from app.services.routing.commercial_report_export import sanitize_report_payload
 from app.services.security.tenant_encryption import TenantEncryptionService
 from sqlalchemy import desc, select
@@ -30,7 +30,9 @@ def hash_text(value: str) -> str:
 
 
 def canonical_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"), default=str)
+    return json.dumps(
+        payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"), default=str
+    )
 
 
 def sanitize_text(value: str, *, max_len: int = 255) -> str:
@@ -136,7 +138,8 @@ async def register_document(
         ingestion_status="indexed",
         source_type=sanitize_text(source_type, max_len=64),
         provenance_hash=provenance_hash,
-        signed_manifest_hash=signed_manifest_hash or build_signed_manifest_hash(
+        signed_manifest_hash=signed_manifest_hash
+        or build_signed_manifest_hash(
             document_hash=document_hash,
             provenance_hash=provenance_hash,
             source_type=source_type,
@@ -201,7 +204,11 @@ def should_store_plaintext(classification: str) -> bool:
 
 def sanitize_chunk_preview(plaintext: str) -> str:
     preview = sanitize_text(plaintext, max_len=96)
-    return f"[redacted-regulated-chunk:{hash_text(preview)[:16]}]" if preview else "[redacted-regulated-chunk]"
+    return (
+        f"[redacted-regulated-chunk:{hash_text(preview)[:16]}]"
+        if preview
+        else "[redacted-regulated-chunk]"
+    )
 
 
 async def tenant_client_lookup(

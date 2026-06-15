@@ -147,6 +147,7 @@ jobs:
       - name: Security CI
         if: matrix.target == 'security'
         run: |
+          make validate-release-readiness
           bash scripts/ci/security-ci.sh
 
       # --- Target: Docs ---
@@ -168,6 +169,22 @@ jobs:
             sdk/python/dist/
           retention-days: 7
 
+      - name: Upload Frontend Admin Artifacts
+        if: matrix.target == 'frontend-admin' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-admin-artifacts
+          path: control_plane/app/static/admin-v2/
+          retention-days: 7
+
+      - name: Upload Frontend Client Artifacts
+        if: matrix.target == 'frontend-client' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-client-artifacts
+          path: frontend/client/dist/
+          retention-days: 7
+
       - name: Upload Surface Governance Artifacts
         if: matrix.target == 'api' && always()
         uses: actions/upload-artifact@v4
@@ -177,6 +194,17 @@ jobs:
             generated/route_surface_manifest.json
             docs/generated/deprecated_surface_inventory.md
             artifacts/reports/api-release-gate.xml
+          retention-days: 30
+
+      - name: Upload Security Scan Reports
+        if: matrix.target == 'security' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-scan-reports
+          path: |
+            artifacts/reports/bandit-results.json
+            artifacts/reports/semgrep-results.json
+            trivy-results.sarif
           retention-days: 30
 
       - name: Upload Docs Artifacts

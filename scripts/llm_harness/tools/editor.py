@@ -2,6 +2,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class EditorTools:
     def __init__(self, workspace, policy_engine=None):
         self.workspace = workspace

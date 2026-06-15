@@ -98,6 +98,7 @@ class GSM8KAdapter:
         expected = self.extract_answer(answer_text)
 
         events: list[dict[str, Any]] = []
+
         def collect_events(event: dict[str, Any]):
             events.append(event)
 

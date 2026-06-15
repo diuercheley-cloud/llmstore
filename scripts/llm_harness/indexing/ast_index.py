@@ -29,41 +29,43 @@ class PythonASTParser(LanguageParser):
                 methods = []
                 class_start = node.lineno
                 class_end = getattr(node, "end_lineno", class_start)
-                
+
                 for subnode in node.body:
                     if isinstance(subnode, (ast.FunctionDef, ast.AsyncFunctionDef)):
                         method_doc = ast.get_docstring(subnode) or ""
                         method_start = subnode.lineno
                         method_end = getattr(subnode, "end_lineno", method_start)
                         args = [arg.arg for arg in subnode.args.args]
-                        methods.append({
-                            "name": subnode.name,
-                            "start_line": method_start,
-                            "end_line": method_end,
-                            "docstring": method_doc,
-                            "args": args
-                        })
-                classes.append({
-                    "name": node.name,
-                    "start_line": class_start,
-                    "end_line": class_end,
-                    "docstring": docstring,
-                    "methods": methods
-                })
+                        methods.append(
+                            {
+                                "name": subnode.name,
+                                "start_line": method_start,
+                                "end_line": method_end,
+                                "docstring": method_doc,
+                                "args": args,
+                            }
+                        )
+                classes.append(
+                    {
+                        "name": node.name,
+                        "start_line": class_start,
+                        "end_line": class_end,
+                        "docstring": docstring,
+                        "methods": methods,
+                    }
+                )
             elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 docstring = ast.get_docstring(node) or ""
                 func_start = node.lineno
                 func_end = getattr(node, "end_lineno", func_start)
                 args = [arg.arg for arg in node.args.args]
-                functions.append({
-                    "name": node.name,
-                    "start_line": func_start,
-                    "end_line": func_end,
-                    "docstring": docstring,
-                    "args": args
-                })
-        return {
-            "classes": classes,
-            "functions": functions,
-            "imports": list(set(imports))
-        }
+                functions.append(
+                    {
+                        "name": node.name,
+                        "start_line": func_start,
+                        "end_line": func_end,
+                        "docstring": docstring,
+                        "args": args,
+                    }
+                )
+        return {"classes": classes, "functions": functions, "imports": list(set(imports))}

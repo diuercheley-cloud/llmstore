@@ -55,9 +55,7 @@ def get_existing_release_dirs():
 def test_no_tar_gz_in_release_dirs():
     for rel_dir in get_existing_release_dirs():
         tarballs = list(rel_dir.glob("*.tar.gz"))
-        assert not tarballs, (
-            f".tar.gz found in {rel_dir.name}: {[f.name for f in tarballs]}"
-        )
+        assert not tarballs, f".tar.gz found in {rel_dir.name}: {[f.name for f in tarballs]}"
 
 
 def test_no_pem_key_in_release_dirs():
@@ -73,9 +71,7 @@ def test_no_pem_key_in_release_dirs():
 def test_no_env_files_in_release_dirs():
     for rel_dir in get_existing_release_dirs():
         env_files = list(rel_dir.glob(".env*"))
-        assert not env_files, (
-            f".env files found in {rel_dir.name}: {[f.name for f in env_files]}"
-        )
+        assert not env_files, f".env files found in {rel_dir.name}: {[f.name for f in env_files]}"
 
 
 def test_no_secrets_in_manifests():
@@ -114,10 +110,7 @@ def test_summary_json_has_no_test_tokens():
                     if allow in serialized:
                         break
                 else:
-                    assert False, (
-                        f"Token pattern '{pat}' found in "
-                        f"{rel_dir.name}/summary.json"
-                    )
+                    assert False, f"Token pattern '{pat}' found in {rel_dir.name}/summary.json"
 
 
 def test_release_manifest_no_sensitive_fields():
@@ -131,8 +124,7 @@ def test_release_manifest_no_sensitive_fields():
         serialized = json.dumps(data)
         for key in sensitive_keys:
             assert key not in serialized, (
-                f"Sensitive key pattern '{key}' found in "
-                f"{rel_dir.name}/release-manifest.json"
+                f"Sensitive key pattern '{key}' found in {rel_dir.name}/release-manifest.json"
             )
 
 
@@ -148,9 +140,7 @@ def test_gitignore_excludes_release_tarballs():
     gitignore = ROOT / ".gitignore"
     assert gitignore.exists(), ".gitignore missing"
     content = gitignore.read_text(encoding="utf-8")
-    assert "releases/**/*.tar.gz" in content, (
-        ".gitignore missing 'releases/**/*.tar.gz' rule"
-    )
+    assert "releases/**/*.tar.gz" in content, ".gitignore missing 'releases/**/*.tar.gz' rule"
 
 
 def test_check_secrets_script_passes_on_releases():

@@ -60,7 +60,7 @@ REQUIRED_PATTERNS = {
     ],
     "control_plane/app/main.py": [
         "operations_federation_sync_admin_router",
-        "operations_federation_sync_admin_router, tags=[\"operations-federation-sync\"]",
+        'operations_federation_sync_admin_router, tags=["operations-federation-sync"]',
     ],
     "control_plane/app/static/admin/index.html": [
         "Sovereign Federation Synchronization Protocol",

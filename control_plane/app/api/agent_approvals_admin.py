@@ -1,9 +1,8 @@
 # Owner: agent-platform
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.api.deps import require_admin
-from app.services.runtime_dependencies import get_db_session
 from app.services.admin_rbac import authenticate_admin_request, is_rbac_admin_enabled
 from app.services.agents.human_approval import (
     approve_approval_request,
@@ -13,6 +12,7 @@ from app.services.agents.human_approval import (
     request_changes_for_approval_request,
 )
 from app.services.auth import AdminRole, admin_key_scheme, get_admin_role, require_admin_role
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,7 +21,7 @@ router = APIRouter(prefix="/admin/agent-approvals", tags=["agent-approvals-admin
 
 
 class DecisionRequest(BaseModel):
-    decision_reason: Optional[str] = None
+    decision_reason: str | None = None
 
 
 class ApprovalRequestResponse(BaseModel):
@@ -29,18 +29,18 @@ class ApprovalRequestResponse(BaseModel):
 
     id: uuid.UUID
     agent_run_id: uuid.UUID
-    task_id: Optional[str] = None
-    tool_invocation_id: Optional[uuid.UUID] = None
+    task_id: str | None = None
+    tool_invocation_id: uuid.UUID | None = None
     risk_level: str
     reason: str
     requested_by: str
     reviewer_role: str
     status: str
     expires_at: str
-    sanitized_context: Optional[dict] = None
-    decision_reason: Optional[str] = None
-    decided_by: Optional[str] = None
-    decided_at: Optional[str] = None
+    sanitized_context: dict | None = None
+    decision_reason: str | None = None
+    decided_by: str | None = None
+    decided_at: str | None = None
     created_at: str
     updated_at: str
 
@@ -78,21 +78,25 @@ def get_actor_name(admin: Any) -> str:
 
 async def get_admin_actor(
     request: Request,
-    x_admin_token: Optional[str] = Depends(admin_key_scheme),
+    x_admin_token: str | None = Depends(admin_key_scheme),
     session: AsyncSession = Depends(get_db_session),
 ) -> str:
     if not is_rbac_admin_enabled():
         role = get_admin_role(x_admin_token or "")
         if not role:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid admin token")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid admin token"
+            )
         return "admin"
-    admin = await authenticate_admin_request(session=session, request=request, token=x_admin_token or "")
+    admin = await authenticate_admin_request(
+        session=session, request=request, token=x_admin_token or ""
+    )
     return get_actor_name(admin)
 
 
-@router.get("", response_model=List[ApprovalRequestResponse])
+@router.get("", response_model=list[ApprovalRequestResponse])
 async def list_approval_requests(
-    status: Optional[str] = None,
+    status: str | None = None,
     limit: int = 50,
     offset: int = 0,
     db: AsyncSession = Depends(get_db_session),
@@ -151,7 +155,7 @@ async def approve_request_endpoint(
             request_id=id,
             decided_by=actor,
             caller_role=caller_role,
-            reason=body.decision_reason
+            reason=body.decision_reason,
         )
         return to_approval_response(req)
     except ValueError as e:
@@ -159,7 +163,9 @@ async def approve_request_endpoint(
         if "not found" in err_msg:
             raise HTTPException(status_code=404, detail=err_msg)
         elif "insufficient_reviewer_role" in err_msg:
-            raise HTTPException(status_code=403, detail="Insufficient permissions for this risk level")
+            raise HTTPException(
+                status_code=403, detail="Insufficient permissions for this risk level"
+            )
         else:
             raise HTTPException(status_code=400, detail=err_msg)
 
@@ -179,7 +185,7 @@ async def reject_request_endpoint(
             request_id=id,
             decided_by=actor,
             caller_role=caller_role,
-            reason=body.decision_reason
+            reason=body.decision_reason,
         )
         return to_approval_response(req)
     except ValueError as e:
@@ -187,7 +193,9 @@ async def reject_request_endpoint(
         if "not found" in err_msg:
             raise HTTPException(status_code=404, detail=err_msg)
         elif "insufficient_reviewer_role" in err_msg:
-            raise HTTPException(status_code=403, detail="Insufficient permissions for this risk level")
+            raise HTTPException(
+                status_code=403, detail="Insufficient permissions for this risk level"
+            )
         else:
             raise HTTPException(status_code=400, detail=err_msg)
 
@@ -207,7 +215,7 @@ async def request_changes_endpoint(
             request_id=id,
             decided_by=actor,
             caller_role=caller_role,
-            reason=body.decision_reason
+            reason=body.decision_reason,
         )
         return to_approval_response(req)
     except ValueError as e:
@@ -215,14 +223,16 @@ async def request_changes_endpoint(
         if "not found" in err_msg:
             raise HTTPException(status_code=404, detail=err_msg)
         elif "insufficient_reviewer_role" in err_msg:
-            raise HTTPException(status_code=403, detail="Insufficient permissions for this risk level")
+            raise HTTPException(
+                status_code=403, detail="Insufficient permissions for this risk level"
+            )
         else:
             raise HTTPException(status_code=400, detail=err_msg)
 
+
 @router.get("/inbox")
 async def get_approvals_inbox(
-    db: AsyncSession = Depends(get_db_session),
-    admin: Any = Depends(require_admin)
-) -> List[Dict[str, Any]]:
+    db: AsyncSession = Depends(get_db_session), admin: Any = Depends(require_admin)
+) -> list[dict[str, Any]]:
     # Order by risk and expiration
     return []

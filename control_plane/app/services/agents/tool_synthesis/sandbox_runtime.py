@@ -26,8 +26,12 @@ class SandboxRuntime:
         self.policy.validate_code(code)
         started_at = time.time()
         result = self._run_mock(code, timeout_seconds=timeout_seconds)
-        stdout, _ = self.policy.truncate_output(result["stdout"], self.limits.get_defaults().max_output_size_bytes)
-        stderr, _ = self.policy.truncate_output(result["stderr"], self.limits.get_defaults().max_output_size_bytes)
+        stdout, _ = self.policy.truncate_output(
+            result["stdout"], self.limits.get_defaults().max_output_size_bytes
+        )
+        stderr, _ = self.policy.truncate_output(
+            result["stderr"], self.limits.get_defaults().max_output_size_bytes
+        )
         run = AgentCodeInterpreterRun(
             session_id=session_id,
             agent_id=agent_id,

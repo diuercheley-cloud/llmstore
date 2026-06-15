@@ -4,10 +4,9 @@ import html
 import io
 import json
 import uuid
-from datetime import datetime, UTC
-from typing import Any, Dict, List, Optional
+from datetime import UTC, datetime
+from typing import Any
 
-from app.services.runtime_dependencies import get_db_session
 from app.models.commercial.commercial_governance_federation import (
     CommercialGovernanceFederationPeer,
 )
@@ -15,6 +14,7 @@ from app.services.auth import require_admin
 from app.services.governance.federated_audit import FederatedAuditService
 from app.services.governance.governance_consistency import GovernanceConsistencyService
 from app.services.governance.policy_federation import PolicyFederationService
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
@@ -34,13 +34,13 @@ consistency_service = GovernanceConsistencyService()
 
 class RegisterPeerPayload(BaseModel):
     peer_cluster_id: str = Field(min_length=1, max_length=255)
-    region: Optional[str] = None
+    region: str | None = None
     environment: str = "local"
-    base_url: Optional[str] = None
+    base_url: str | None = None
     sync_mode: str = "manual"
     trust_level: str = "trusted"
     status: str = "active"
-    metadata_json: Optional[Dict[str, Any]] = None
+    metadata_json: dict[str, Any] | None = None
 
 
 class SyncPayload(BaseModel):
@@ -50,21 +50,23 @@ class SyncPayload(BaseModel):
 
 
 class IngestPolicyPayload(BaseModel):
-    payload: Dict[str, Any]
-    peer_token: Optional[str] = None
-    peer_signature: Optional[str] = None
+    payload: dict[str, Any]
+    peer_token: str | None = None
+    peer_signature: str | None = None
 
 
 class IngestAuditPayload(BaseModel):
-    events: List[Dict[str, Any]]
+    events: list[dict[str, Any]]
     source_cluster_id: str
-    peer_token: Optional[str] = None
+    peer_token: str | None = None
 
 
 @router.get("/peers")
 async def list_peers(db: AsyncSession = Depends(get_db_session)):
     result = await db.execute(
-        select(CommercialGovernanceFederationPeer).order_by(CommercialGovernanceFederationPeer.created_at.desc())
+        select(CommercialGovernanceFederationPeer).order_by(
+            CommercialGovernanceFederationPeer.created_at.desc()
+        )
     )
     peers = result.scalars().all()
     return peers
@@ -185,8 +187,11 @@ async def export_federation(
 
     if format == "json":
         content = json.dumps(report, indent=2, default=str).encode("utf-8")
-        return Response(content=content, media_type="application/json",
-                        headers={"Content-Disposition": "attachment; filename=governance-federation.json"})
+        return Response(
+            content=content,
+            media_type="application/json",
+            headers={"Content-Disposition": "attachment; filename=governance-federation.json"},
+        )
 
     if format == "csv":
         output = io.StringIO()
@@ -194,12 +199,18 @@ async def export_federation(
         writer.writerow(["section", "key", "value"])
         _flatten_to_csv(report, writer)
         content = output.getvalue().encode("utf-8")
-        return Response(content=content, media_type="text/csv",
-                        headers={"Content-Disposition": "attachment; filename=governance-federation.csv"})
+        return Response(
+            content=content,
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=governance-federation.csv"},
+        )
 
     html_content = _render_federation_html(report)
-    return Response(content=html_content.encode("utf-8"), media_type="text/html",
-                    headers={"Content-Disposition": "inline; filename=governance-federation.html"})
+    return Response(
+        content=html_content.encode("utf-8"),
+        media_type="text/html",
+        headers={"Content-Disposition": "inline; filename=governance-federation.html"},
+    )
 
 
 def _flatten_to_csv(data: Any, writer: csv.writer, prefix: str = ""):
@@ -211,10 +222,12 @@ def _flatten_to_csv(data: Any, writer: csv.writer, prefix: str = ""):
         for i, item in enumerate(data):
             _flatten_to_csv(item, writer, f"{prefix}[{i}]")
     else:
-        writer.writerow([prefix.split(".")[0] if "." not in prefix else prefix.split(".")[0], prefix, str(data)])
+        writer.writerow(
+            [prefix.split(".")[0] if "." not in prefix else prefix.split(".")[0], prefix, str(data)]
+        )
 
 
-def _render_federation_html(report: Dict[str, Any]) -> str:
+def _render_federation_html(report: dict[str, Any]) -> str:
     fed = report.get("federation", {})
     cons = report.get("consistency", {})
     audit = report.get("audit", {})
@@ -276,13 +289,13 @@ def _render_federation_html(report: Dict[str, Any]) -> str:
 <body>
 <div class="page">
   <h1>Governance Federation Report</h1>
-  <p>Generated at {html.escape(report.get('generated_at', ''))}</p>
+  <p>Generated at {html.escape(report.get("generated_at", ""))}</p>
 
   <div class="grid">
-    <div class="card"><div class="label">Peers</div><div class="value">{fed.get('total_peers', 0)}</div></div>
-    <div class="card"><div class="label">Online</div><div class="value">{fed.get('online_peers', 0)}</div></div>
-    <div class="card"><div class="label">Offline</div><div class="value">{fed.get('offline_peers', 0)}</div></div>
-    <div class="card"><div class="label">Mode</div><div class="value">{html.escape(fed.get('mode', ''))}</div></div>
+    <div class="card"><div class="label">Peers</div><div class="value">{fed.get("total_peers", 0)}</div></div>
+    <div class="card"><div class="label">Online</div><div class="value">{fed.get("online_peers", 0)}</div></div>
+    <div class="card"><div class="label">Offline</div><div class="value">{fed.get("offline_peers", 0)}</div></div>
+    <div class="card"><div class="label">Mode</div><div class="value">{html.escape(fed.get("mode", ""))}</div></div>
     <div class="card"><div class="label">Overall</div><div class="value"><span class="badge badge-{overall_badge}">{overall}</span></div></div>
   </div>
 

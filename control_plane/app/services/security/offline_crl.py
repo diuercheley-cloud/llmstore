@@ -11,7 +11,9 @@ from app.core.config import get_settings
 from app.core.time import utc_now
 from app.models.commercial.commercial_encryption import CommercialTenantEncryptionKey
 from app.models.commercial.commercial_governance import CommercialPolicyBundle
-from app.models.commercial.commercial_governance_federation import CommercialGovernanceFederationPeer
+from app.models.commercial.commercial_governance_federation import (
+    CommercialGovernanceFederationPeer,
+)
 from app.models.commercial.commercial_model_supply_chain import (
     CommercialModelProvenanceAttestation,
     CommercialSignedModelRegistryEntry,
@@ -26,7 +28,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _canonical_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+    )
 
 
 def _crl_signature(payload: dict[str, Any]) -> str:
@@ -36,7 +40,9 @@ def _crl_signature(payload: dict[str, Any]) -> str:
         or settings.commercial_tenant_encryption_master_key
         or settings.admin_token
     )
-    return hmac.new(secret.encode("utf-8"), _canonical_json(payload).encode("utf-8"), hashlib.sha256).hexdigest()
+    return hmac.new(
+        secret.encode("utf-8"), _canonical_json(payload).encode("utf-8"), hashlib.sha256
+    ).hexdigest()
 
 
 async def create_offline_crl(
@@ -93,6 +99,7 @@ async def verify_offline_crl(crl: CommercialOfflineRevocationList) -> bool:
 
 async def apply_offline_crl(db: AsyncSession, crl_id) -> dict[str, int]:
     from app.services.models.signed_model_registry import revoke_model
+
     crl = await db.get(CommercialOfflineRevocationList, crl_id)
     if not crl:
         raise ValueError("CRL not found")
@@ -102,7 +109,9 @@ async def apply_offline_crl(db: AsyncSession, crl_id) -> dict[str, int]:
     key_count = 0
     for fingerprint in crl.revoked_key_fingerprints_json or []:
         rows = await db.execute(
-            select(CommercialTenantEncryptionKey).where(CommercialTenantEncryptionKey.key_fingerprint == fingerprint)
+            select(CommercialTenantEncryptionKey).where(
+                CommercialTenantEncryptionKey.key_fingerprint == fingerprint
+            )
         )
         for key in rows.scalars().all():
             key.key_status = "revoked"
@@ -115,17 +124,23 @@ async def apply_offline_crl(db: AsyncSession, crl_id) -> dict[str, int]:
             CommercialSignedModelRegistryEntry.checksum_sha256 == bundle_hash,
         ]
         try:
-            registry_filters.append(CommercialSignedModelRegistryEntry.id == uuid.UUID(str(bundle_hash)))
+            registry_filters.append(
+                CommercialSignedModelRegistryEntry.id == uuid.UUID(str(bundle_hash))
+            )
         except (ValueError, TypeError, AttributeError):
             pass
         rows = await db.execute(
-            select(CommercialPolicyBundle).where(CommercialPolicyBundle.immutable_hash == bundle_hash)
+            select(CommercialPolicyBundle).where(
+                CommercialPolicyBundle.immutable_hash == bundle_hash
+            )
         )
         for bundle in rows.scalars().all():
             bundle.status = "deprecated"
             bundle_count += 1
         package_rows = await db.execute(
-            select(CommercialAirgapSyncPackage).where(CommercialAirgapSyncPackage.manifest_hash == bundle_hash)
+            select(CommercialAirgapSyncPackage).where(
+                CommercialAirgapSyncPackage.manifest_hash == bundle_hash
+            )
         )
         for package in package_rows.scalars().all():
             package.status = "rejected"
@@ -145,14 +160,20 @@ async def apply_offline_crl(db: AsyncSession, crl_id) -> dict[str, int]:
     peer_count = 0
     for peer_id in crl.revoked_peer_ids_json or []:
         rows = await db.execute(
-            select(CommercialGovernanceFederationPeer).where(CommercialGovernanceFederationPeer.peer_cluster_id == peer_id)
+            select(CommercialGovernanceFederationPeer).where(
+                CommercialGovernanceFederationPeer.peer_cluster_id == peer_id
+            )
         )
         for peer in rows.scalars().all():
             peer.status = "disabled"
             peer_count += 1
         model_rows = await db.execute(
             select(CommercialSignedModelRegistryEntry)
-            .join(CommercialModelProvenanceAttestation, CommercialSignedModelRegistryEntry.provenance_id == CommercialModelProvenanceAttestation.id)
+            .join(
+                CommercialModelProvenanceAttestation,
+                CommercialSignedModelRegistryEntry.provenance_id
+                == CommercialModelProvenanceAttestation.id,
+            )
             .where(CommercialModelProvenanceAttestation.source_cluster_id == peer_id)
         )
         for entry in model_rows.scalars().all():
@@ -169,11 +190,14 @@ async def apply_offline_crl(db: AsyncSession, crl_id) -> dict[str, int]:
 
 
 async def _active_crls(db: AsyncSession) -> list[CommercialOfflineRevocationList]:
-    rows = await db.execute(select(CommercialOfflineRevocationList).order_by(CommercialOfflineRevocationList.created_at.desc()))
+    rows = await db.execute(
+        select(CommercialOfflineRevocationList).order_by(
+            CommercialOfflineRevocationList.created_at.desc()
+        )
+    )
     now = utc_now()
     return [
-        item for item in rows.scalars().all()
-        if item.expires_at is None or item.expires_at >= now
+        item for item in rows.scalars().all() if item.expires_at is None or item.expires_at >= now
     ]
 
 

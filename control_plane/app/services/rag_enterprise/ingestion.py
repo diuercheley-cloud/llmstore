@@ -2,7 +2,6 @@ import logging
 import os
 import uuid
 from datetime import timedelta
-from typing import List, Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -53,14 +52,16 @@ async def ingest_document(
     original_filename: str,
     content_type: str,
     file_size_bytes: int,
-    collection_id: Optional[uuid.UUID] = None,
-    tags: Optional[List[str]] = None,
-    retention_days: Optional[int] = None,
+    collection_id: uuid.UUID | None = None,
+    tags: list[str] | None = None,
+    retention_days: int | None = None,
     chunk_size: int = 1000,
     chunk_overlap: int = 150,
     strategy: str = "fixed",
 ) -> RAGDocument:
-    client = (await session.execute(select(Client).where(Client.id == client_id))).scalar_one_or_none()
+    client = (
+        await session.execute(select(Client).where(Client.id == client_id))
+    ).scalar_one_or_none()
     if not client:
         raise ValueError(f"Client {client_id} not found")
 
@@ -91,7 +92,9 @@ async def ingest_document(
 
     parse_result = await parse_file(file_path, ext)
 
-    pages_ok, pages_msg = await check_quota_pages(session, client_id, policy, len(parse_result.pages))
+    pages_ok, pages_msg = await check_quota_pages(
+        session, client_id, policy, len(parse_result.pages)
+    )
     if not pages_ok:
         raise ValueError(pages_msg)
 
@@ -203,8 +206,12 @@ async def ingest_document(
     doc.status = "indexed"
     doc.processed_at = utc_now()
 
-    await record_rag_event(session, client_id, "document_uploaded", document_id=doc_id, storage_bytes=file_size_bytes)
-    await record_rag_event(session, client_id, "pages_processed", quantity=len(parse_result.pages), document_id=doc_id)
+    await record_rag_event(
+        session, client_id, "document_uploaded", document_id=doc_id, storage_bytes=file_size_bytes
+    )
+    await record_rag_event(
+        session, client_id, "pages_processed", quantity=len(parse_result.pages), document_id=doc_id
+    )
 
     await session.commit()
     await session.refresh(doc)
@@ -221,7 +228,9 @@ async def delete_enterprise_document(
     session: AsyncSession,
     document: RAGDocument,
 ):
-    await session.execute(sa_delete(RAGDocumentChunk).where(RAGDocumentChunk.document_id == document.id))
+    await session.execute(
+        sa_delete(RAGDocumentChunk).where(RAGDocumentChunk.document_id == document.id)
+    )
     if document.storage_path and os.path.exists(document.storage_path):
         try:
             os.remove(document.storage_path)

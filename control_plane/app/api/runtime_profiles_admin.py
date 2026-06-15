@@ -1,11 +1,11 @@
 # Owner: Architecture
 # Surface: admin
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from app.services.runtime_dependencies import get_db_session
 from app.services.admin_rbac import record_admin_audit_event
 from app.services.auth import require_admin
+from app.services.runtime_dependencies import get_db_session
 from app.services.runtime_profiles import RuntimeProfilesService
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
@@ -19,27 +19,32 @@ router = APIRouter(
 
 service = RuntimeProfilesService()
 
+
 class ValidateRequest(BaseModel):
     profile_id: str
 
+
 class ApplyRequest(BaseModel):
-    profile_id: Optional[str] = None
+    profile_id: str | None = None
     dry_run: bool = True
     rollback: bool = False
 
-@router.get("", response_model=List[Dict[str, Any]])
+
+@router.get("", response_model=list[dict[str, Any]])
 async def list_profiles():
     """
     List all available runtime profiles.
     """
     return service.get_all_profiles()
 
-@router.get("/current", response_model=Dict[str, Any])
+
+@router.get("/current", response_model=dict[str, Any])
 async def get_current_runtime_config():
     """
     Retrieve the current active runtime configurations.
     """
     return service.get_current_settings()
+
 
 @router.post("/validate")
 async def validate_profile(payload: ValidateRequest):
@@ -48,11 +53,9 @@ async def validate_profile(payload: ValidateRequest):
     """
     is_valid, errors = service.validate_profile(payload.profile_id)
     if not is_valid:
-        raise HTTPException(
-            status_code=400,
-            detail={"errors": errors}
-        )
+        raise HTTPException(status_code=400, detail={"errors": errors})
     return {"status": "valid", "profile_id": payload.profile_id}
+
 
 @router.post("/apply")
 async def apply_profile(
@@ -68,7 +71,7 @@ async def apply_profile(
     if payload.rollback:
         try:
             before, after, msg = service.rollback(dry_run=payload.dry_run)
-            
+
             # Record audit event on successful live rollback
             if not payload.dry_run:
                 # admin object could be a dict (legacy) or admin user model
@@ -82,17 +85,14 @@ async def apply_profile(
                     actor_identifier="admin_api",
                     target_type="runtime_profile",
                     target_id="rollback",
-                    metadata={"before": before, "after": after, "message": msg}
+                    metadata={"before": before, "after": after, "message": msg},
                 )
-            
+
             return {
                 "status": "success",
                 "dry_run": payload.dry_run,
                 "message": msg,
-                "diff": {
-                    "before": before,
-                    "after": after
-                }
+                "diff": {"before": before, "after": after},
             }
         except Exception as e:
             # Audit failed rollback
@@ -107,24 +107,22 @@ async def apply_profile(
                     actor_identifier="admin_api",
                     target_type="runtime_profile",
                     target_id="rollback",
-                    metadata={"error": str(e)}
+                    metadata={"error": str(e)},
                 )
-            
+
             raise HTTPException(
-                status_code=400 if isinstance(e, FileNotFoundError) else 403,
-                detail=str(e)
+                status_code=400 if isinstance(e, FileNotFoundError) else 403, detail=str(e)
             )
 
     # 2. Regular Apply logic
     if not payload.profile_id:
         raise HTTPException(
-            status_code=400,
-            detail="profile_id is required unless rollback is true."
+            status_code=400, detail="profile_id is required unless rollback is true."
         )
 
     try:
         before, after, msg = service.apply_profile(payload.profile_id, dry_run=payload.dry_run)
-        
+
         # Record audit event on successful live apply
         if not payload.dry_run:
             admin_user = admin if hasattr(admin, "user") else None
@@ -137,17 +135,14 @@ async def apply_profile(
                 actor_identifier="admin_api",
                 target_type="runtime_profile",
                 target_id=payload.profile_id,
-                metadata={"before": before, "after": after, "message": msg}
+                metadata={"before": before, "after": after, "message": msg},
             )
 
         return {
             "status": "success",
             "dry_run": payload.dry_run,
             "message": msg,
-            "diff": {
-                "before": before,
-                "after": after
-            }
+            "diff": {"before": before, "after": after},
         }
     except Exception as e:
         # Audit failed apply
@@ -162,10 +157,7 @@ async def apply_profile(
                 actor_identifier="admin_api",
                 target_type="runtime_profile",
                 target_id=payload.profile_id,
-                metadata={"error": str(e)}
+                metadata={"error": str(e)},
             )
-        
-        raise HTTPException(
-            status_code=400 if isinstance(e, ValueError) else 403,
-            detail=str(e)
-        )
+
+        raise HTTPException(status_code=400 if isinstance(e, ValueError) else 403, detail=str(e))

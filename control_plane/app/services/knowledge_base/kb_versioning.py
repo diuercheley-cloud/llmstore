@@ -6,10 +6,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class KBVersioningService:
     """
     Handles version management and rollback for KB documents.
     """
+
     def __init__(self, db: AsyncSession):
         self.db = db
 

@@ -49,7 +49,16 @@ def test_report_is_valid_json():
     report_json = report_dir / "clean-install-report.json"
     data = json.loads(report_json.read_text(encoding="utf-8"))
 
-    required_fields = ["tool", "timestamp", "version", "dry_run", "overall_status", "steps", "failures", "warnings"]
+    required_fields = [
+        "tool",
+        "timestamp",
+        "version",
+        "dry_run",
+        "overall_status",
+        "steps",
+        "failures",
+        "warnings",
+    ]
     for field in required_fields:
         assert field in data, f"Missing required field: {field}"
 

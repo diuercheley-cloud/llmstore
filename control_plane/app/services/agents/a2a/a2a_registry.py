@@ -1,6 +1,5 @@
 # Owner: agent-platform
 import uuid
-from typing import List, Optional
 
 from app.models.agents.agents import AgentA2ARegistration, AgentDefinition
 from app.services.agents.a2a.a2a_security import A2ASecurityService
@@ -16,10 +15,10 @@ class A2ARegistryService:
         tenant_id: str,
         agent_id: uuid.UUID,
         auth_token: str,
-        target_url: Optional[str] = None,
-        capabilities: Optional[dict] = None,
+        target_url: str | None = None,
+        capabilities: dict | None = None,
         is_external: bool = False,
-        agent_name: Optional[str] = None
+        agent_name: str | None = None,
     ) -> AgentA2ARegistration:
         A2ASecurityService.verify_a2a_enabled_or_raise()
         if is_external:
@@ -47,7 +46,9 @@ class A2ARegistryService:
                 db.add(agent_def)
                 await db.flush()
             else:
-                raise HTTPException(status_code=404, detail=f"Agent definition {agent_id} not found.")
+                raise HTTPException(
+                    status_code=404, detail=f"Agent definition {agent_id} not found."
+                )
         else:
             # Tenant check for internal agent
             if agent_def.tenant_id != tenant_id:
@@ -74,7 +75,7 @@ class A2ARegistryService:
                 target_url=target_url,
                 auth_token=auth_token,
                 capabilities=capabilities or {},
-                is_external=is_external
+                is_external=is_external,
             )
             db.add(reg)
 
@@ -83,18 +84,21 @@ class A2ARegistryService:
         return reg
 
     @staticmethod
-    async def list_registered_agents(db: AsyncSession, tenant_id: str) -> List[AgentA2ARegistration]:
+    async def list_registered_agents(
+        db: AsyncSession, tenant_id: str
+    ) -> list[AgentA2ARegistration]:
         A2ASecurityService.verify_a2a_enabled_or_raise()
         stmt = select(AgentA2ARegistration).where(AgentA2ARegistration.tenant_id == tenant_id)
         res = await db.execute(stmt)
         return list(res.scalars().all())
 
     @staticmethod
-    async def get_agent_registration(db: AsyncSession, agent_id: uuid.UUID, tenant_id: str) -> Optional[AgentA2ARegistration]:
+    async def get_agent_registration(
+        db: AsyncSession, agent_id: uuid.UUID, tenant_id: str
+    ) -> AgentA2ARegistration | None:
         A2ASecurityService.verify_a2a_enabled_or_raise()
         stmt = select(AgentA2ARegistration).where(
-            AgentA2ARegistration.agent_id == agent_id,
-            AgentA2ARegistration.tenant_id == tenant_id
+            AgentA2ARegistration.agent_id == agent_id, AgentA2ARegistration.tenant_id == tenant_id
         )
         res = await db.execute(stmt)
         return res.scalar_one_or_none()

@@ -51,9 +51,7 @@ def test_validate_script_runs_quick():
         timeout=300,
     )
     print(f"STDOUT:\n{result.stdout[-2000:]}")
-    assert result.returncode in (0,), (
-        f"Validate script failed with exit {result.returncode}"
-    )
+    assert result.returncode in (0,), f"Validate script failed with exit {result.returncode}"
 
 
 def test_report_json_exists():
@@ -81,16 +79,26 @@ def test_report_json_valid():
     fp = report_dir / "v1.7-final-validation.json"
     data = json.loads(fp.read_text(encoding="utf-8"))
 
-    required = ["report_type", "version", "final_status", "critical_fails",
-                 "blocking_warnings", "nonblocking_warnings", "generated_at"]
+    required = [
+        "report_type",
+        "version",
+        "final_status",
+        "critical_fails",
+        "blocking_warnings",
+        "nonblocking_warnings",
+        "generated_at",
+    ]
     for field in required:
         assert field in data, f"Missing field: {field}"
 
     assert data["report_type"] == "v1.7-final-validation"
-    valid_statuses = ["V1_7_READY", "V1_7_READY_WITH_WARNINGS", "V1_7_READY_WITH_ACCEPTED_WARNINGS", "V1_7_NOT_READY"]
-    assert data["final_status"] in valid_statuses, (
-        f"Invalid status: {data['final_status']}"
-    )
+    valid_statuses = [
+        "V1_7_READY",
+        "V1_7_READY_WITH_WARNINGS",
+        "V1_7_READY_WITH_ACCEPTED_WARNINGS",
+        "V1_7_NOT_READY",
+    ]
+    assert data["final_status"] in valid_statuses, f"Invalid status: {data['final_status']}"
 
 
 def test_report_consistent_status():
@@ -114,9 +122,7 @@ def test_report_consistent_status():
             f"Has {nw} non-blocking warns but status={status}"
         )
     else:
-        assert status == "V1_7_READY", (
-            f"No issues but status={status}"
-        )
+        assert status == "V1_7_READY", f"No issues but status={status}"
 
 
 def test_logs_exist():
@@ -164,9 +170,7 @@ def test_report_script_runs():
         timeout=30,
     )
     print(f"STDOUT:\n{result.stdout}")
-    assert result.returncode == 0, (
-        f"Report validation script failed:\n{result.stdout}"
-    )
+    assert result.returncode == 0, f"Report validation script failed:\n{result.stdout}"
 
 
 def test_release_dir_exists():
@@ -179,6 +183,4 @@ def test_release_has_5_files():
     if not RELEASE_DIR.exists():
         pytest.skip(f"releases/{VERSION} not found")
     files = [f for f in RELEASE_DIR.iterdir() if f.is_file()]
-    assert len(files) == 5, (
-        f"Expected 5 files, found {len(files)}: {[f.name for f in files]}"
-    )
+    assert len(files) == 5, f"Expected 5 files, found {len(files)}: {[f.name for f in files]}"

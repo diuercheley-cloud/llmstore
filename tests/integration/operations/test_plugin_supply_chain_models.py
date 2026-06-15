@@ -62,7 +62,10 @@ async def test_plugin_supply_chain_models_persist(session):
 
 
 def test_phase_80_migration_present():
-    content = open("control_plane/alembic/versions/phase80_plugin_supply_chain_provenance_sbom.py", "r", encoding="utf-8").read()
+    content = open(
+        "control_plane/alembic/versions/phase80_plugin_supply_chain_provenance_sbom.py",
+        encoding="utf-8",
+    ).read()
     assert "plugin_provenance_records" in content
     assert "plugin_supply_chain_receipts" in content
     assert "_uuid_type" in content

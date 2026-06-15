@@ -1,6 +1,6 @@
 # Owner: agent-platform
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.services.agents import agent_state
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,7 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 class PolicyDenialError(ValueError):
     """Raised when agent activation policy denies run initiation."""
+
     pass
+
 
 def sanitize_payload(payload: Any) -> Any:
     """
@@ -16,8 +18,15 @@ def sanitize_payload(payload: Any) -> Any:
     Redacts dict keys containing: prompt, secret, token, api_key, api-key, password, key, authorization, credential.
     """
     sensitive_keys = {
-        "prompt", "secret", "token", "api_key", "api-key", 
-        "password", "key", "authorization", "credential"
+        "prompt",
+        "secret",
+        "token",
+        "api_key",
+        "api-key",
+        "password",
+        "key",
+        "authorization",
+        "credential",
     }
     if isinstance(payload, dict):
         sanitized = {}
@@ -33,14 +42,15 @@ def sanitize_payload(payload: Any) -> Any:
     else:
         return payload
 
+
 async def validate_and_start_run(
     db: AsyncSession,
     agent_id: uuid.UUID,
     tenant_id: str,
     input_text: str,
-    user_id: Optional[str] = None,
-    correlation_id: Optional[str] = None,
-    session_id: Optional[uuid.UUID] = None,
+    user_id: str | None = None,
+    correlation_id: str | None = None,
+    session_id: uuid.UUID | None = None,
     is_admin: bool = False,
     is_simulation: bool = False,
 ) -> Any:
@@ -51,18 +61,19 @@ async def validate_and_start_run(
     agent = await agent_state.get_agent_definition(db, agent_id)
     if not agent:
         raise ValueError(f"Agent definition not found: {agent_id}")
-    
+
     if not is_admin:
         # Tenant isolation
         if agent.tenant_id != str(tenant_id):
             raise ValueError(f"Agent definition not found: {agent_id}")
-            
+
         # Agent status
         if agent.status not in ["active", "approved"]:
             raise ValueError(f"Agent is not active (current status: {agent.status})")
-            
+
         # Policy Check
         from app.services.agents.agent_policy_engine import AgentPolicyEngine, PolicyDecision
+
         policy_engine = AgentPolicyEngine(db)
         decision, reason = await policy_engine.evaluate_agent_activation(agent)
         if decision == PolicyDecision.DENY:
@@ -71,9 +82,10 @@ async def validate_and_start_run(
         if agent.status == "deprecated":
             raise ValueError("Cannot execute a deprecated agent definition.")
 
-    from app.services.agents.agent_runtime_client import get_agent_runtime_client
     from types import SimpleNamespace
-    
+
+    from app.services.agents.agent_runtime_client import get_agent_runtime_client
+
     client = get_agent_runtime_client()
     run = await client.start_run(
         db=db,
@@ -85,16 +97,17 @@ async def validate_and_start_run(
         session_id=session_id,
         is_simulation=is_simulation,
     )
-    
+
     # Simple wrapper for remote dict response to match expected object interface
     if isinstance(run, dict):
         return SimpleNamespace(**run)
     return run
 
+
 async def validate_and_cancel_run(
     db: AsyncSession,
     run_id: uuid.UUID,
-    tenant_id: Optional[str] = None,
+    tenant_id: str | None = None,
     is_admin: bool = False,
 ) -> Any:
     """
@@ -103,14 +116,15 @@ async def validate_and_cancel_run(
     run = await agent_state.get_agent_run(db, run_id)
     if not run:
         raise ValueError("Agent run not found")
-        
+
     if not is_admin:
         if run.tenant_id != str(tenant_id):
             raise ValueError("Agent run not found")
         if run.status in ["completed", "failed", "cancelled"]:
             return run
-            
+
     from app.services.agents.agent_runtime_client import get_agent_runtime_client
+
     client = get_agent_runtime_client()
     res = await client.cancel_run(db, run_id)
     if isinstance(res, dict):
@@ -119,10 +133,11 @@ async def validate_and_cancel_run(
         return run
     return res
 
+
 async def validate_and_pause_run(
     db: AsyncSession,
     run_id: uuid.UUID,
-    tenant_id: Optional[str] = None,
+    tenant_id: str | None = None,
     is_admin: bool = False,
 ) -> Any:
     """
@@ -131,11 +146,12 @@ async def validate_and_pause_run(
     run = await agent_state.get_agent_run(db, run_id)
     if not run:
         raise ValueError("Agent run not found")
-        
+
     if not is_admin and run.tenant_id != str(tenant_id):
         raise ValueError("Agent run not found")
-            
+
     from app.services.agents.agent_runtime_client import get_agent_runtime_client
+
     client = get_agent_runtime_client()
     res = await client.pause_run(db, run_id)
     if isinstance(res, dict):
@@ -143,10 +159,11 @@ async def validate_and_pause_run(
         return run
     return res
 
+
 async def validate_and_resume_run(
     db: AsyncSession,
     run_id: uuid.UUID,
-    tenant_id: Optional[str] = None,
+    tenant_id: str | None = None,
     is_admin: bool = False,
 ) -> Any:
     """
@@ -155,11 +172,12 @@ async def validate_and_resume_run(
     run = await agent_state.get_agent_run(db, run_id)
     if not run:
         raise ValueError("Agent run not found")
-        
+
     if not is_admin and run.tenant_id != str(tenant_id):
         raise ValueError("Agent run not found")
-            
+
     from app.services.agents.agent_runtime_client import get_agent_runtime_client
+
     client = get_agent_runtime_client()
     res = await client.resume_run(db, run_id)
     if isinstance(res, dict):
@@ -167,21 +185,23 @@ async def validate_and_resume_run(
         return run
     return res
 
+
 async def validate_and_replay_run(
     db: AsyncSession,
     run_id: uuid.UUID,
-    tenant_id: Optional[str] = None,
+    tenant_id: str | None = None,
     is_admin: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Validates run ownership and replays it.
     """
     run = await agent_state.get_agent_run(db, run_id)
     if not run:
         raise ValueError("Agent run not found")
-        
+
     if not is_admin and run.tenant_id != str(tenant_id):
         raise ValueError("Agent run not found")
-            
+
     from app.services.agents import agent_runtime
+
     return await agent_runtime.replay_run(db, run_id)

@@ -1,7 +1,7 @@
 # Owner: platform-ops
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.api.dependencies import get_current_admin, get_db
 from app.models.operations.adapter_promotion import (
@@ -35,6 +35,7 @@ STAGING_SERVICE = AdapterStagingSimulationService()
 
 # --- Schemas ---
 
+
 class WorkflowResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -49,11 +50,13 @@ class WorkflowResponse(BaseModel):
     immutable_hash: str
     created_at: datetime
 
+
 class WorkflowCreateRequest(BaseModel):
     client_id: uuid.UUID
     registry_entry_id: uuid.UUID
     target_stage: str
-    context: Optional[Dict[str, Any]] = {}
+    context: dict[str, Any] | None = {}
+
 
 class GateResultResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -61,9 +64,10 @@ class GateResultResponse(BaseModel):
     id: uuid.UUID
     gate_name: str
     gate_status: str
-    reason: Optional[str]
+    reason: str | None
     required: bool
     blocking: bool
+
 
 class TransitionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -72,7 +76,8 @@ class TransitionResponse(BaseModel):
     from_stage: str
     to_stage: str
     transition_status: str
-    reason: Optional[str]
+    reason: str | None
+
 
 class RollbackResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -83,23 +88,26 @@ class RollbackResponse(BaseModel):
     reason: str
     rollback_status: str
 
+
 class PromotionResultResponse(BaseModel):
     workflow: WorkflowResponse
-    gate_results: List[GateResultResponse]
-    receipt_id: Optional[str]
+    gate_results: list[GateResultResponse]
+    receipt_id: str | None
+
 
 # --- Endpoints ---
+
 
 @router.post("/workflows", response_model=PromotionResultResponse)
 async def create_promotion_workflow(
     request: WorkflowCreateRequest,
     db: AsyncSession = Depends(get_db),
-    admin: Any = Depends(get_current_admin)
+    admin: Any = Depends(get_current_admin),
 ):
     # Fetch registry entry
     stmt = select(SignedAdapterRegistryEntry).where(
         SignedAdapterRegistryEntry.id == request.registry_entry_id,
-        SignedAdapterRegistryEntry.client_id == request.client_id
+        SignedAdapterRegistryEntry.client_id == request.client_id,
     )
     result = await db.execute(stmt)
     entry = result.scalar_one_or_none()
@@ -113,43 +121,46 @@ async def create_promotion_workflow(
 
     workflow_service = AdapterPromotionWorkflowService(db)
     workflow = await workflow_service.create_workflow(entry, request.target_stage)
-    
+
     # Evaluate gates
-    gate_results_raw = GATE_SERVICE.evaluate_gates(entry, request.target_stage, manifest, request.context)
+    gate_results_raw = GATE_SERVICE.evaluate_gates(
+        entry, request.target_stage, manifest, request.context
+    )
     gate_results = await workflow_service.record_gate_results(workflow, gate_results_raw)
-    
+
     receipt = build_promotion_workflow_receipt(workflow)
     db.add(receipt)
-    
+
     await db.commit()
     await db.refresh(workflow)
-    
+
     return PromotionResultResponse(
         workflow=WorkflowResponse.model_validate(workflow),
         gate_results=[GateResultResponse.model_validate(gr) for gr in gate_results],
-        receipt_id=str(receipt.id)
+        receipt_id=str(receipt.id),
     )
 
-@router.get("/workflows", response_model=List[WorkflowResponse])
+
+@router.get("/workflows", response_model=list[WorkflowResponse])
 async def list_promotion_workflows(
     client_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    admin: Any = Depends(get_current_admin)
+    admin: Any = Depends(get_current_admin),
 ):
     stmt = select(AdapterPromotionWorkflow).where(AdapterPromotionWorkflow.client_id == client_id)
     result = await db.execute(stmt)
     return result.scalars().all()
+
 
 @router.get("/workflows/{workflow_id}", response_model=WorkflowResponse)
 async def get_promotion_workflow(
     workflow_id: uuid.UUID,
     client_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    admin: Any = Depends(get_current_admin)
+    admin: Any = Depends(get_current_admin),
 ):
     stmt = select(AdapterPromotionWorkflow).where(
-        AdapterPromotionWorkflow.id == workflow_id,
-        AdapterPromotionWorkflow.client_id == client_id
+        AdapterPromotionWorkflow.id == workflow_id, AdapterPromotionWorkflow.client_id == client_id
     )
     result = await db.execute(stmt)
     wf = result.scalar_one_or_none()
@@ -157,38 +168,43 @@ async def get_promotion_workflow(
         raise HTTPException(status_code=404, detail="Promotion workflow not found")
     return wf
 
+
 @router.post("/workflows/{workflow_id}/promote")
 async def promote_adapter(
     workflow_id: uuid.UUID,
     client_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    admin: Any = Depends(get_current_admin)
+    admin: Any = Depends(get_current_admin),
 ):
     stmt = select(AdapterPromotionWorkflow).where(
-        AdapterPromotionWorkflow.id == workflow_id,
-        AdapterPromotionWorkflow.client_id == client_id
+        AdapterPromotionWorkflow.id == workflow_id, AdapterPromotionWorkflow.client_id == client_id
     )
     result = await db.execute(stmt)
     wf = result.scalar_one_or_none()
     if not wf:
         raise HTTPException(status_code=404, detail="Promotion workflow not found")
-    
+
     if wf.promotion_status == "blocked":
         raise HTTPException(status_code=400, detail="Workflow is blocked by gates")
-    
+
     workflow_service = AdapterPromotionWorkflowService(db)
     transition = await workflow_service.propose_transition(wf, wf.target_stage)
-    
+
     try:
         await workflow_service.promote(wf, transition)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-        
+
     receipt = build_transition_receipt(transition)
     db.add(receipt)
-    
+
     await db.commit()
-    return {"transition": TransitionResponse.model_validate(transition), "workflow": WorkflowResponse.model_validate(wf), "receipt_id": str(receipt.id)}
+    return {
+        "transition": TransitionResponse.model_validate(transition),
+        "workflow": WorkflowResponse.model_validate(wf),
+        "receipt_id": str(receipt.id),
+    }
+
 
 @router.post("/workflows/{workflow_id}/rollback")
 async def rollback_promotion(
@@ -197,73 +213,78 @@ async def rollback_promotion(
     rollback_to_stage: str,
     reason: str = Query(..., min_length=5),
     db: AsyncSession = Depends(get_db),
-    admin: Any = Depends(get_current_admin)
+    admin: Any = Depends(get_current_admin),
 ):
     stmt = select(AdapterPromotionWorkflow).where(
-        AdapterPromotionWorkflow.id == workflow_id,
-        AdapterPromotionWorkflow.client_id == client_id
+        AdapterPromotionWorkflow.id == workflow_id, AdapterPromotionWorkflow.client_id == client_id
     )
     result = await db.execute(stmt)
     wf = result.scalar_one_or_none()
     if not wf:
         raise HTTPException(status_code=404, detail="Promotion workflow not found")
-    
+
     workflow_service = AdapterPromotionWorkflowService(db)
     try:
         rollback = await workflow_service.rollback(wf, rollback_to_stage, reason)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-        
+
     receipt = build_rollback_receipt(rollback)
     db.add(receipt)
-    
-    await db.commit()
-    return {"rollback": RollbackResponse.model_validate(rollback), "workflow": WorkflowResponse.model_validate(wf), "receipt_id": str(receipt.id)}
 
-@router.get("/workflows/{workflow_id}/gates", response_model=List[GateResultResponse])
+    await db.commit()
+    return {
+        "rollback": RollbackResponse.model_validate(rollback),
+        "workflow": WorkflowResponse.model_validate(wf),
+        "receipt_id": str(receipt.id),
+    }
+
+
+@router.get("/workflows/{workflow_id}/gates", response_model=list[GateResultResponse])
 async def list_gate_results(
     workflow_id: uuid.UUID,
     client_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    admin: Any = Depends(get_current_admin)
+    admin: Any = Depends(get_current_admin),
 ):
     stmt = select(AdapterPromotionGateResult).where(
         AdapterPromotionGateResult.workflow_id == workflow_id,
-        AdapterPromotionGateResult.client_id == client_id
+        AdapterPromotionGateResult.client_id == client_id,
     )
     result = await db.execute(stmt)
     return result.scalars().all()
 
-@router.get("/workflows/{workflow_id}/transitions", response_model=List[TransitionResponse])
+
+@router.get("/workflows/{workflow_id}/transitions", response_model=list[TransitionResponse])
 async def list_transitions(
     workflow_id: uuid.UUID,
     client_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    admin: Any = Depends(get_current_admin)
+    admin: Any = Depends(get_current_admin),
 ):
     stmt = select(AdapterPromotionStageTransition).where(
         AdapterPromotionStageTransition.workflow_id == workflow_id,
-        AdapterPromotionStageTransition.client_id == client_id
+        AdapterPromotionStageTransition.client_id == client_id,
     )
     result = await db.execute(stmt)
     return result.scalars().all()
+
 
 @router.post("/workflows/{workflow_id}/receipt")
 async def generate_promotion_receipt(
     workflow_id: uuid.UUID,
     client_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    admin: Any = Depends(get_current_admin)
+    admin: Any = Depends(get_current_admin),
 ):
     stmt = select(AdapterPromotionWorkflow).where(
-        AdapterPromotionWorkflow.id == workflow_id,
-        AdapterPromotionWorkflow.client_id == client_id
+        AdapterPromotionWorkflow.id == workflow_id, AdapterPromotionWorkflow.client_id == client_id
     )
     result = await db.execute(stmt)
     wf = result.scalar_one_or_none()
     if not wf:
         raise HTTPException(status_code=404, detail="Promotion workflow not found")
-    
+
     receipt = build_promotion_workflow_receipt(wf)
     db.add(receipt)
     await db.commit()

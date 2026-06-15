@@ -5,6 +5,7 @@ from app.models.agents.agent_iam import AgentDelegatedToken
 
 logger = logging.getLogger(__name__)
 
+
 class AgentScopeManager:
     @staticmethod
     def match_scope(

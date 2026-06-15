@@ -10,6 +10,7 @@ async def test_get_graph(admin_client: AsyncClient, admin_token_headers):
     assert "nodes" in data
     assert "edges" in data
 
+
 @pytest.mark.asyncio
 async def test_create_snapshot_api(admin_client: AsyncClient, admin_token_headers):
     response = await admin_client.post("/admin/ops-center/snapshot", headers=admin_token_headers)
@@ -17,11 +18,15 @@ async def test_create_snapshot_api(admin_client: AsyncClient, admin_token_header
     data = response.json()
     assert "immutable_hash" in data
 
+
 @pytest.mark.asyncio
 async def test_get_trust_violations_api(admin_client: AsyncClient, admin_token_headers):
-    response = await admin_client.get("/admin/ops-center/trust-violations", headers=admin_token_headers)
+    response = await admin_client.get(
+        "/admin/ops-center/trust-violations", headers=admin_token_headers
+    )
     assert response.status_code == 200
     assert isinstance(response.json(), list)
+
 
 @pytest.mark.asyncio
 async def test_get_integrity_api(admin_client: AsyncClient, admin_token_headers):
@@ -34,7 +39,9 @@ async def test_get_integrity_api(admin_client: AsyncClient, admin_token_headers)
 
 @pytest.mark.asyncio
 async def test_get_lineage_api(admin_client: AsyncClient, admin_token_headers):
-    response = await admin_client.get("/admin/ops-center/lineage?node_id=missing-node", headers=admin_token_headers)
+    response = await admin_client.get(
+        "/admin/ops-center/lineage?node_id=missing-node", headers=admin_token_headers
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["found"] is False
@@ -55,7 +62,9 @@ async def test_snapshot_export_bundle_api(admin_client: AsyncClient, admin_token
 
 @pytest.mark.asyncio
 async def test_get_federation_map_api(admin_client: AsyncClient, admin_token_headers):
-    response = await admin_client.get("/admin/ops-center/federation-map", headers=admin_token_headers)
+    response = await admin_client.get(
+        "/admin/ops-center/federation-map", headers=admin_token_headers
+    )
     assert response.status_code == 200
     data = response.json()
     assert "nodes" in data

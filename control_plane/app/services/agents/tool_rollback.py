@@ -2,9 +2,11 @@
 Owner: agent-platform
 Status: beta
 """
+
 import asyncio
 import logging
-from typing import Any, Callable, Dict, Optional
+from collections.abc import Callable
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -21,8 +23,8 @@ async def register_side_effect(
     invocation_id: Any,
     side_effect_level: str,
     description: str,
-    resource_id: Optional[str] = None,
-    change_payload: Optional[Dict[str, Any]] = None,
+    resource_id: str | None = None,
+    change_payload: dict[str, Any] | None = None,
 ) -> AgentToolSideEffect:
     """Registers a side effect produced by a tool invocation."""
     side_effect = AgentToolSideEffect(
@@ -43,7 +45,7 @@ async def register_rollback_action(
     tenant_id: str,
     side_effect_id: Any,
     compensation_action: str,
-    compensation_payload: Dict[str, Any],
+    compensation_payload: dict[str, Any],
 ) -> AgentToolRollbackAction:
     """Registers a compensation action to roll back/revert a side effect."""
     action = AgentToolRollbackAction(
@@ -62,12 +64,11 @@ async def execute_rollback_action(
     db: AsyncSession,
     tenant_id: str,
     action_id: Any,
-    rollback_callable: Optional[Callable[..., Any]] = None,
+    rollback_callable: Callable[..., Any] | None = None,
 ) -> bool:
     """Executes a registered rollback action to run its compensation logic."""
     stmt = select(AgentToolRollbackAction).where(
-        AgentToolRollbackAction.id == action_id,
-        AgentToolRollbackAction.tenant_id == tenant_id
+        AgentToolRollbackAction.id == action_id, AgentToolRollbackAction.tenant_id == tenant_id
     )
     res = await db.execute(stmt)
     action = res.scalar_one_or_none()
@@ -112,7 +113,7 @@ async def rollback_invocation_side_effects(
     db: AsyncSession,
     tenant_id: str,
     invocation_id: Any,
-    rollback_callable: Optional[Callable[..., Any]] = None,
+    rollback_callable: Callable[..., Any] | None = None,
 ) -> bool:
     """Automatically rolls back all side effects of an invocation in reverse chronological order."""
     settings = get_settings()
@@ -121,10 +122,14 @@ async def rollback_invocation_side_effects(
         return False
 
     # Get side effects for the invocation
-    stmt = select(AgentToolSideEffect).where(
-        AgentToolSideEffect.invocation_id == invocation_id,
-        AgentToolSideEffect.tenant_id == tenant_id
-    ).order_by(AgentToolSideEffect.created_at.desc()) # reverse order!
+    stmt = (
+        select(AgentToolSideEffect)
+        .where(
+            AgentToolSideEffect.invocation_id == invocation_id,
+            AgentToolSideEffect.tenant_id == tenant_id,
+        )
+        .order_by(AgentToolSideEffect.created_at.desc())
+    )  # reverse order!
 
     res = await db.execute(stmt)
     side_effects = res.scalars().all()
@@ -134,11 +139,11 @@ async def rollback_invocation_side_effects(
         # Fetch pending rollback actions for each side effect
         action_stmt = select(AgentToolRollbackAction).where(
             AgentToolRollbackAction.side_effect_id == effect.id,
-            AgentToolRollbackAction.status == "pending"
+            AgentToolRollbackAction.status == "pending",
         )
         action_res = await db.execute(action_stmt)
         actions = action_res.scalars().all()
-        
+
         for action in actions:
             success = await execute_rollback_action(db, tenant_id, action.id, rollback_callable)
             if not success:

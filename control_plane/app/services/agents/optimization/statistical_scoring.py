@@ -1,6 +1,5 @@
 # Owner: agent-platform
 import statistics
-from typing import Dict, List
 
 
 class StatisticalScoringService:
@@ -21,14 +20,19 @@ class StatisticalScoringService:
         "tool_misuse": -0.15,
     }
 
-    def compute_metric_summary(self, raw_metrics: List[Dict]) -> Dict[str, float]:
+    def compute_metric_summary(self, raw_metrics: list[dict]) -> dict[str, float]:
         if not raw_metrics:
             return {}
 
         summary = {}
         keys = [
-            "success_rate", "latency_p50", "latency_p95", "cost",
-            "tool_error_rate", "policy_denial_rate", "safety_failure_rate",
+            "success_rate",
+            "latency_p50",
+            "latency_p95",
+            "cost",
+            "tool_error_rate",
+            "policy_denial_rate",
+            "safety_failure_rate",
         ]
         for key in keys:
             values = [m.get(key, 0.0) for m in raw_metrics if key in m]
@@ -44,12 +48,17 @@ class StatisticalScoringService:
         return summary
 
     def compute_baseline_deltas(
-        self, candidate_metrics: Dict, baseline_metrics: Dict
-    ) -> Dict[str, float]:
+        self, candidate_metrics: dict, baseline_metrics: dict
+    ) -> dict[str, float]:
         deltas = {}
         for key in [
-            "success_rate", "latency_p50", "latency_p95", "cost",
-            "tool_error_rate", "policy_denial_rate", "safety_failure_rate",
+            "success_rate",
+            "latency_p50",
+            "latency_p95",
+            "cost",
+            "tool_error_rate",
+            "policy_denial_rate",
+            "safety_failure_rate",
         ]:
             base_val = baseline_metrics.get(key, 0.0)
             cand_val = candidate_metrics.get(key, 0.0)
@@ -59,7 +68,7 @@ class StatisticalScoringService:
                 deltas[key] = cand_val - base_val
         return deltas
 
-    def compute_penalties(self, deltas: Dict, raw_metrics: Dict) -> float:
+    def compute_penalties(self, deltas: dict, raw_metrics: dict) -> float:
         total_penalty = 0.0
 
         if (
@@ -82,7 +91,7 @@ class StatisticalScoringService:
 
         return total_penalty
 
-    def compute_confidence_score(self, all_scores: List[float], winner_score: float) -> float:
+    def compute_confidence_score(self, all_scores: list[float], winner_score: float) -> float:
         if len(all_scores) < 2:
             return 0.5
         sorted_scores = sorted(all_scores, reverse=True)

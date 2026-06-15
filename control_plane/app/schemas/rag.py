@@ -1,6 +1,5 @@
 import uuid
 from datetime import datetime
-from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -12,28 +11,31 @@ class RAGFileResponse(BaseModel):
     content_type: str
     file_size_bytes: int
     status: str
-    page_count: Optional[int] = None
-    chunk_count: Optional[int] = None
-    error_message: Optional[str] = None
+    page_count: int | None = None
+    chunk_count: int | None = None
+    error_message: str | None = None
     created_at: datetime
-    processed_at: Optional[datetime] = None
+    processed_at: datetime | None = None
+
 
 class RAGFileListResponse(BaseModel):
-    data: List[RAGFileResponse]
+    data: list[RAGFileResponse]
+
 
 class RAGQueryRequest(BaseModel):
     question: str = Field(..., min_length=1)
-    file_ids: Optional[List[uuid.UUID]] = None
-    collection_ids: Optional[List[uuid.UUID]] = None
-    document_ids: Optional[List[uuid.UUID]] = None
+    file_ids: list[uuid.UUID] | None = None
+    collection_ids: list[uuid.UUID] | None = None
+    document_ids: list[uuid.UUID] | None = None
     model: str = "default"
     top_k: int = 5
     max_tokens: int = 700
     temperature: float = 0.2
-    score_threshold: Optional[float] = 0.0
-    rerank: Optional[bool] = False
-    user_identity: Optional[str] = None
-    abac_attributes: Optional[dict] = None
+    score_threshold: float | None = 0.0
+    rerank: bool | None = False
+    user_identity: str | None = None
+    abac_attributes: dict | None = None
+
 
 class RAGSource(BaseModel):
     file_id: uuid.UUID
@@ -43,12 +45,14 @@ class RAGSource(BaseModel):
     text: str
     score: float
 
+
 class RAGUsage(BaseModel):
     prompt_tokens: int
     completion_tokens: int
     total_tokens: int
 
+
 class RAGQueryResponse(BaseModel):
     answer: str
-    sources: List[RAGSource]
+    sources: list[RAGSource]
     usage: RAGUsage

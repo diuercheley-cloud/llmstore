@@ -26,7 +26,12 @@ def _normalize_value(value: Any) -> Any:
         return [_normalize_value(item) for item in value]
     if isinstance(value, set):
         normalized = [_normalize_value(item) for item in value]
-        return sorted(normalized, key=lambda item: json.dumps(item, sort_keys=True, separators=(",", ":"), ensure_ascii=False, default=str))
+        return sorted(
+            normalized,
+            key=lambda item: json.dumps(
+                item, sort_keys=True, separators=(",", ":"), ensure_ascii=False, default=str
+            ),
+        )
     if isinstance(value, datetime):
         return value.replace(microsecond=0).isoformat()
     if isinstance(value, date):

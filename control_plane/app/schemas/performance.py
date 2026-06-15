@@ -1,5 +1,6 @@
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -21,17 +22,17 @@ class GPUResourceProfile(BaseModel):
     total_vram_gb: float
     used_vram_gb: float
     utilization_percent: float
-    capabilities: List[PerformanceCapability] = Field(default_factory=list)
+    capabilities: list[PerformanceCapability] = Field(default_factory=list)
 
 
 class BackendPerformanceProfile(BaseModel):
     backend_id: str
     backend_type: str  # vllm, llama_cpp, tgi, etc.
-    active_models: List[str]
+    active_models: list[str]
     max_batch_size: int
     throughput_tokens_sec: float
     latency_ms_p50: float
-    gpu_resources: List[GPUResourceProfile] = Field(default_factory=list)
+    gpu_resources: list[GPUResourceProfile] = Field(default_factory=list)
 
 
 class SchedulingDecision(BaseModel):
@@ -48,12 +49,12 @@ class OptimizationRecommendation(BaseModel):
     impact: str  # high, medium, low
     priority: str  # high, medium, low
     target_backend_id: str
-    suggested_config: Dict[str, Any]
+    suggested_config: dict[str, Any]
     action_required: bool = True
 
 
 class PerformanceSimulationRequest(BaseModel):
-    models: List[str]
+    models: list[str]
     concurrent_requests: int
     avg_prompt_tokens: int
     avg_completion_tokens: int
@@ -62,5 +63,5 @@ class PerformanceSimulationRequest(BaseModel):
 class PerformanceSimulationResponse(BaseModel):
     overall_throughput: float
     avg_latency_ms: float
-    bottlenecks: List[str]
-    recommendations: List[OptimizationRecommendation]
+    bottlenecks: list[str]
+    recommendations: list[OptimizationRecommendation]

@@ -36,9 +36,13 @@ class CommercialRetrievalProof(Base):
     retrieval_sent_hash: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     merkle_root: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     proof_json: Mapped[dict] = mapped_column(JSON, nullable=False)
-    verification_status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending", index=True)
+    verification_status: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="pending", index=True
+    )
     export_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
@@ -64,7 +68,9 @@ class CommercialContextLineage(Base):
     source_label: Mapped[str | None] = mapped_column(String(255), nullable=True)
     depth: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
 
 class CommercialRetrievalMerkleLeaf(Base):
@@ -82,7 +88,9 @@ class CommercialRetrievalMerkleLeaf(Base):
     leaf_hash: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     leaf_index: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
 
 
 class CommercialRetrievalReplayRecord(Base):
@@ -96,11 +104,17 @@ class CommercialRetrievalReplayRecord(Base):
         index=True,
     )
     replay_hash: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
-    replay_status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending", index=True)
-    drift_status: Mapped[str] = mapped_column(String(32), nullable=False, default="unknown", index=True)
+    replay_status: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="pending", index=True
+    )
+    drift_status: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="unknown", index=True
+    )
     drift_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     summary: Mapped[str] = mapped_column(Text, nullable=False)
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
     replayed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

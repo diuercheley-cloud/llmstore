@@ -20,7 +20,9 @@ def validate_receipt_has_immutable_hash(receipt: dict[str, Any] | None) -> Invar
     )
 
 
-def validate_repair_operation_emits_healing_receipt(operation: dict[str, Any] | None) -> InvariantResult:
+def validate_repair_operation_emits_healing_receipt(
+    operation: dict[str, Any] | None,
+) -> InvariantResult:
     """Repair flows must report an emitted healing receipt in advisory validation."""
 
     payload = _as_mapping(operation)

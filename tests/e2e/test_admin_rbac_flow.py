@@ -1,4 +1,3 @@
-
 import pytest
 
 
@@ -10,7 +9,7 @@ async def test_admin_rbac_flow(e2e_client, admin_headers):
         "display_name": "E2E Admin",
         "email": "e2e@example.com",
         "password": "strong-password-123",
-        "role_names": []
+        "role_names": [],
     }
     resp = await e2e_client.post("/admin/rbac/users", json=user_payload, headers=admin_headers)
     assert resp.status_code == 201
@@ -23,14 +22,16 @@ async def test_admin_rbac_flow(e2e_client, admin_headers):
     role_payload = {
         "name": "model-manager",
         "description": "Can manage models but not users",
-        "permission_codes": ["models:read", "models:write"]
+        "permission_codes": ["models:read", "models:write"],
     }
     resp = await e2e_client.post("/admin/rbac/roles", json=role_payload, headers=admin_headers)
     assert resp.status_code == 201
-    
+
     # Atribuir a role ao user
     update_payload = {"role_names": ["model-manager"]}
-    resp = await e2e_client.patch(f"/admin/rbac/users/{user_id}", json=update_payload, headers=admin_headers)
+    resp = await e2e_client.patch(
+        f"/admin/rbac/users/{user_id}", json=update_payload, headers=admin_headers
+    )
     assert resp.status_code == 200
 
     # Login com o novo usuário para obter um token

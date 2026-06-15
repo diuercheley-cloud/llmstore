@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import UTC, date, datetime, time, timedelta
 from typing import Any
 
 from app.core.config import get_settings
@@ -16,7 +16,9 @@ from app.models.commercial.commercial_compliance import (
     CommercialOperationalExceptionLink,
     CommercialOperationalReview,
 )
-from app.models.commercial.commercial_financial_reconciliation import CommercialFinancialReconciliation
+from app.models.commercial.commercial_financial_reconciliation import (
+    CommercialFinancialReconciliation,
+)
 from app.services.compliance.financial_controls import create_evidence_package, record_control_event
 from app.services.notifications.revenue_escalations import evaluate_escalation_policies
 from app.services.routing.commercial_report_export import sanitize_report_payload
@@ -49,7 +51,16 @@ VALID_CATEGORIES = {
 }
 VALID_REVIEW_FREQUENCIES = {"monthly", "quarterly", "semiannual", "annual"}
 VALID_EFFECTIVENESS_STATUSES = {"effective", "partially_effective", "ineffective", "unknown"}
-VALID_EVIDENCE_TYPES = {"screenshot", "report", "export", "audit_log", "approval_chain", "attestation", "reconciliation", "other"}
+VALID_EVIDENCE_TYPES = {
+    "screenshot",
+    "report",
+    "export",
+    "audit_log",
+    "approval_chain",
+    "attestation",
+    "reconciliation",
+    "other",
+}
 VALID_REVIEW_STATUSES = {"pending", "completed", "overdue", "exception"}
 VALID_EXCEPTION_REMEDIATION_STATUSES = {"planned", "in_progress", "completed"}
 VALID_FRESHNESS_STATUSES = {"fresh", "stale", "expired"}
@@ -76,7 +87,9 @@ def _sanitize_node(node: Any) -> Any:
 
 
 def _hash_payload(payload: dict[str, Any]) -> str:
-    body = json.dumps(sanitize_report_payload(payload), sort_keys=True, ensure_ascii=True, default=str)
+    body = json.dumps(
+        sanitize_report_payload(payload), sort_keys=True, ensure_ascii=True, default=str
+    )
     return hashlib.sha256(body.encode("utf-8")).hexdigest()
 
 
@@ -98,7 +111,7 @@ def _review_window(frequency: str, *, anchor: date | None = None) -> tuple[date,
 
 def _date_to_dt(value: date, *, end_of_day: bool = False) -> datetime:
     clock = time.max if end_of_day else time.min
-    return datetime.combine(value, clock, tzinfo=timezone.utc)
+    return datetime.combine(value, clock, tzinfo=UTC)
 
 
 def _status_from_score(score: int | None) -> str:
@@ -121,7 +134,13 @@ def refresh_evidence_status(
     if evidence.expires_at and evidence.expires_at <= reference:
         evidence.freshness_status = "expired"
         return evidence.freshness_status
-    sla_days = max(1, int((control.evidence_sla_days if control else None) or get_settings().commercial_operational_control_default_evidence_sla_days))
+    sla_days = max(
+        1,
+        int(
+            (control.evidence_sla_days if control else None)
+            or get_settings().commercial_operational_control_default_evidence_sla_days
+        ),
+    )
     age_days = max(0, (reference - evidence.collected_at).days)
     if age_days >= sla_days:
         evidence.freshness_status = "expired"
@@ -161,7 +180,13 @@ async def create_control(
         review_frequency=review_frequency,
         effectiveness_status="unknown",
         effectiveness_score=None,
-        evidence_sla_days=max(1, int(evidence_sla_days or get_settings().commercial_operational_control_default_evidence_sla_days)),
+        evidence_sla_days=max(
+            1,
+            int(
+                evidence_sla_days
+                or get_settings().commercial_operational_control_default_evidence_sla_days
+            ),
+        ),
         next_review_due_at=_date_to_dt(end, end_of_day=True),
         enabled=enabled,
         metadata_json=_sanitize_node(metadata_json or {}),
@@ -181,7 +206,9 @@ async def create_control(
     return item
 
 
-async def update_control(db: AsyncSession, control_id: uuid.UUID, **updates: Any) -> CommercialOperationalControl:
+async def update_control(
+    db: AsyncSession, control_id: uuid.UUID, **updates: Any
+) -> CommercialOperationalControl:
     item = await db.get(CommercialOperationalControl, control_id)
     if item is None:
         raise ValueError("operational_control_not_found")
@@ -223,7 +250,10 @@ async def update_control(db: AsyncSession, control_id: uuid.UUID, **updates: Any
         db,
         action="operational_control_updated",
         status="updated",
-        payload={"control_id": str(item.id), "fields": sorted(key for key in updates if key in allowed)},
+        payload={
+            "control_id": str(item.id),
+            "fields": sorted(key for key in updates if key in allowed),
+        },
         result={"control_code": item.control_code},
     )
     return item
@@ -349,10 +379,14 @@ async def complete_review(
     control = await db.get(CommercialOperationalControl, review.control_id)
     if control is not None:
         control.last_reviewed_at = review.completed_at
-        _, next_end = _review_window(control.review_frequency, anchor=review.review_period_end + timedelta(days=1))
+        _, next_end = _review_window(
+            control.review_frequency, anchor=review.review_period_end + timedelta(days=1)
+        )
         control.next_review_due_at = _date_to_dt(next_end, end_of_day=True)
         control.updated_at = utc_now()
-        await generate_pending_review(db, control_id=control.id, anchor=review.review_period_end + timedelta(days=1))
+        await generate_pending_review(
+            db, control_id=control.id, anchor=review.review_period_end + timedelta(days=1)
+        )
         await evaluate_control_effectiveness(db, control.id)
 
     if create_policy_attestation and control is not None:
@@ -421,7 +455,9 @@ async def detect_stale_evidence(
     control_id: uuid.UUID | None = None,
     as_of: datetime | None = None,
 ) -> list[CommercialOperationalEvidence]:
-    stmt = select(CommercialOperationalEvidence).order_by(desc(CommercialOperationalEvidence.created_at))
+    stmt = select(CommercialOperationalEvidence).order_by(
+        desc(CommercialOperationalEvidence.created_at)
+    )
     if control_id is not None:
         stmt = stmt.where(CommercialOperationalEvidence.control_id == control_id)
     evidences = list((await db.execute(stmt)).scalars().all())
@@ -442,7 +478,9 @@ async def detect_overdue_reviews(
     as_of: datetime | None = None,
 ) -> list[CommercialOperationalReview]:
     reference = (as_of or utc_now()).date()
-    stmt = select(CommercialOperationalReview).order_by(desc(CommercialOperationalReview.review_period_end))
+    stmt = select(CommercialOperationalReview).order_by(
+        desc(CommercialOperationalReview.review_period_end)
+    )
     if control_id is not None:
         stmt = stmt.where(CommercialOperationalReview.control_id == control_id)
     reviews = list((await db.execute(stmt)).scalars().all())
@@ -470,7 +508,10 @@ async def calculate_effectiveness_score(db: AsyncSession, control_id: uuid.UUID)
 
     link_stmt = (
         select(CommercialOperationalExceptionLink, CommercialControlException)
-        .join(CommercialControlException, CommercialOperationalExceptionLink.exception_id == CommercialControlException.id)
+        .join(
+            CommercialControlException,
+            CommercialOperationalExceptionLink.exception_id == CommercialControlException.id,
+        )
         .where(CommercialOperationalExceptionLink.control_id == control_id)
     )
     links = (await db.execute(link_stmt)).all()
@@ -496,7 +537,9 @@ async def calculate_effectiveness_score(db: AsyncSession, control_id: uuid.UUID)
     unresolved_mismatches = (
         await db.execute(
             select(func.count(CommercialFinancialReconciliation.id)).where(
-                CommercialFinancialReconciliation.status.in_(["mismatch", "investigating", "warning"])
+                CommercialFinancialReconciliation.status.in_(
+                    ["mismatch", "investigating", "warning"]
+                )
             )
         )
     ).scalar() or 0
@@ -504,7 +547,9 @@ async def calculate_effectiveness_score(db: AsyncSession, control_id: uuid.UUID)
     return max(0, min(100, int(score)))
 
 
-async def evaluate_control_effectiveness(db: AsyncSession, control_id: uuid.UUID) -> CommercialOperationalControl:
+async def evaluate_control_effectiveness(
+    db: AsyncSession, control_id: uuid.UUID
+) -> CommercialOperationalControl:
     control = await db.get(CommercialOperationalControl, control_id)
     if control is None:
         raise ValueError("operational_control_not_found")
@@ -521,23 +566,36 @@ async def _collect_control_status(
     control: CommercialOperationalControl,
 ) -> dict[str, Any]:
     evidences = (
-        await db.execute(
-            select(CommercialOperationalEvidence)
-            .where(CommercialOperationalEvidence.control_id == control.id)
-            .order_by(desc(CommercialOperationalEvidence.collected_at))
+        (
+            await db.execute(
+                select(CommercialOperationalEvidence)
+                .where(CommercialOperationalEvidence.control_id == control.id)
+                .order_by(desc(CommercialOperationalEvidence.collected_at))
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     for evidence in evidences:
         refresh_evidence_status(evidence, control=control)
 
     reviews = (
-        await db.execute(
-            select(CommercialOperationalReview)
-            .where(CommercialOperationalReview.control_id == control.id)
-            .order_by(desc(CommercialOperationalReview.review_period_end))
+        (
+            await db.execute(
+                select(CommercialOperationalReview)
+                .where(CommercialOperationalReview.control_id == control.id)
+                .order_by(desc(CommercialOperationalReview.review_period_end))
+            )
         )
-    ).scalars().all()
-    overdue_reviews = [review for review in reviews if review.status == "overdue" or (review.status == "pending" and review.review_period_end < utc_now().date())]
+        .scalars()
+        .all()
+    )
+    overdue_reviews = [
+        review
+        for review in reviews
+        if review.status == "overdue"
+        or (review.status == "pending" and review.review_period_end < utc_now().date())
+    ]
     for review in overdue_reviews:
         if review.status == "pending":
             review.status = "overdue"
@@ -545,7 +603,10 @@ async def _collect_control_status(
     link_rows = (
         await db.execute(
             select(CommercialOperationalExceptionLink, CommercialControlException)
-            .join(CommercialControlException, CommercialOperationalExceptionLink.exception_id == CommercialControlException.id)
+            .join(
+                CommercialControlException,
+                CommercialOperationalExceptionLink.exception_id == CommercialControlException.id,
+            )
             .where(CommercialOperationalExceptionLink.control_id == control.id)
         )
     ).all()
@@ -580,8 +641,16 @@ async def escalate_overdue_items(db: AsyncSession) -> list[dict[str, Any]]:
         return []
     results: list[dict[str, Any]] = []
     controls = (
-        await db.execute(select(CommercialOperationalControl).where(CommercialOperationalControl.enabled.is_(True)))
-    ).scalars().all()
+        (
+            await db.execute(
+                select(CommercialOperationalControl).where(
+                    CommercialOperationalControl.enabled.is_(True)
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
     for control in controls:
         control = await evaluate_control_effectiveness(db, control.id)
         status = await _collect_control_status(db, control)
@@ -600,7 +669,10 @@ async def escalate_overdue_items(db: AsyncSession) -> list[dict[str, Any]]:
             trigger = "ineffective_control"
             severity = "critical"
             summary = f"Operational control {control.control_code} is ineffective"
-        elif sum(1 for item in status["linked_exceptions"] if item["status"] in {"open", "accepted"}) >= 2:
+        elif (
+            sum(1 for item in status["linked_exceptions"] if item["status"] in {"open", "accepted"})
+            >= 2
+        ):
             trigger = "repeated_exceptions"
             severity = "high"
             summary = f"Operational control {control.control_code} has repeated linked exceptions"
@@ -646,8 +718,16 @@ async def escalate_overdue_items(db: AsyncSession) -> list[dict[str, Any]]:
 
 async def summarize_operational_controls(db: AsyncSession) -> dict[str, Any]:
     controls = (
-        await db.execute(select(CommercialOperationalControl).order_by(CommercialOperationalControl.control_code.asc()))
-    ).scalars().all()
+        (
+            await db.execute(
+                select(CommercialOperationalControl).order_by(
+                    CommercialOperationalControl.control_code.asc()
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
     stale_evidence = await detect_stale_evidence(db)
     overdue_reviews = await detect_overdue_reviews(db)
     ineffective_controls = 0
@@ -669,21 +749,36 @@ async def summarize_operational_controls(db: AsyncSession) -> dict[str, Any]:
                 "effectiveness_score": control.effectiveness_score,
                 "effectiveness_status": control.effectiveness_status,
                 "evidence_sla_days": control.evidence_sla_days,
-                "last_reviewed_at": control.last_reviewed_at.isoformat() if control.last_reviewed_at else None,
-                "next_review_due_at": control.next_review_due_at.isoformat() if control.next_review_due_at else None,
+                "last_reviewed_at": control.last_reviewed_at.isoformat()
+                if control.last_reviewed_at
+                else None,
+                "next_review_due_at": control.next_review_due_at.isoformat()
+                if control.next_review_due_at
+                else None,
                 "enabled": control.enabled,
                 "linked_exceptions": status["linked_exceptions"],
                 "freshness_counts": {
-                    "fresh": sum(1 for item in status["evidences"] if item.freshness_status == "fresh"),
-                    "stale": sum(1 for item in status["evidences"] if item.freshness_status == "stale"),
-                    "expired": sum(1 for item in status["evidences"] if item.freshness_status == "expired"),
+                    "fresh": sum(
+                        1 for item in status["evidences"] if item.freshness_status == "fresh"
+                    ),
+                    "stale": sum(
+                        1 for item in status["evidences"] if item.freshness_status == "stale"
+                    ),
+                    "expired": sum(
+                        1 for item in status["evidences"] if item.freshness_status == "expired"
+                    ),
                 },
                 "overdue_reviews": len(status["overdue_reviews"]),
                 "badges": [
                     "EFFECTIVE" if control.effectiveness_status == "effective" else None,
                     "PARTIAL" if control.effectiveness_status == "partially_effective" else None,
                     "INEFFECTIVE" if control.effectiveness_status == "ineffective" else None,
-                    "STALE" if any(item.freshness_status in {"stale", "expired"} for item in status["evidences"]) else None,
+                    "STALE"
+                    if any(
+                        item.freshness_status in {"stale", "expired"}
+                        for item in status["evidences"]
+                    )
+                    else None,
                     "OVERDUE" if status["overdue_reviews"] else None,
                     "EXCEPTION_LINKED" if status["linked_exceptions"] else None,
                 ],

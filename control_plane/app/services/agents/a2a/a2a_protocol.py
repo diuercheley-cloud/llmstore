@@ -8,7 +8,7 @@ import logging
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import httpx
 from app.core.config import get_settings
@@ -33,11 +33,11 @@ class A2ATaskState(str, Enum):
 
 @dataclass
 class A2APart:
-    text: Optional[str] = None
-    data: Optional[Dict[str, Any]] = None
-    artifact: Optional[Dict[str, Any]] = None
+    text: str | None = None
+    data: dict[str, Any] | None = None
+    artifact: dict[str, Any] | None = None
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         d = {}
         if self.text is not None:
             d["text"] = self.text
@@ -52,18 +52,18 @@ class A2APart:
         return cls(text=text)
 
     @classmethod
-    def from_data(cls, data: Dict) -> "A2APart":
+    def from_data(cls, data: dict) -> "A2APart":
         return cls(data=data)
 
 
 @dataclass
 class A2AMessage:
     role: A2AMessageRole
-    parts: List[A2APart] = field(default_factory=list)
-    agent_id: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    parts: list[A2APart] = field(default_factory=list)
+    agent_id: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "role": self.role.value,
             "parts": [p.to_dict() for p in self.parts],
@@ -72,7 +72,7 @@ class A2AMessage:
         }
 
     @classmethod
-    def from_dict(cls, d: Dict) -> "A2AMessage":
+    def from_dict(cls, d: dict) -> "A2AMessage":
         return cls(
             role=A2AMessageRole(d["role"]),
             parts=[A2APart(**p) for p in d.get("parts", [])],
@@ -86,11 +86,11 @@ class A2ATask:
     id: str
     session_id: str
     state: A2ATaskState
-    history: List[A2AMessage] = field(default_factory=list)
-    artifact: Optional[Dict[str, Any]] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    history: list[A2AMessage] = field(default_factory=list)
+    artifact: dict[str, Any] | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "id": self.id,
             "sessionId": self.session_id,
@@ -104,14 +104,15 @@ class A2ATask:
 @dataclass
 class A2ACard:
     """Agent capability card for discovery."""
+
     agent_id: str
     name: str
     description: str
     version: str = "1.0.0"
     url: str = ""
-    capabilities: List[str] = field(default_factory=list)
-    skills: List[Dict[str, Any]] = field(default_factory=list)
-    authentication: Optional[Dict[str, Any]] = None
+    capabilities: list[str] = field(default_factory=list)
+    skills: list[dict[str, Any]] = field(default_factory=list)
+    authentication: dict[str, Any] | None = None
 
 
 class A2AClient:
@@ -151,7 +152,7 @@ class A2AClient:
             metadata=task_data.get("metadata", {}),
         )
 
-    async def get_task(self, target_url: str, task_id: str) -> Optional[A2ATask]:
+    async def get_task(self, target_url: str, task_id: str) -> A2ATask | None:
         payload = {
             "jsonrpc": "2.0",
             "method": "tasks/get",
@@ -188,14 +189,18 @@ class A2AClient:
             "id": str(uuid.uuid4()),
         }
         try:
-            resp = await self._http.post(target_url, json=payload, headers={
-                "Content-Type": "application/json",
-            })
+            resp = await self._http.post(
+                target_url,
+                json=payload,
+                headers={
+                    "Content-Type": "application/json",
+                },
+            )
             return resp.is_success
         except Exception:
             return False
 
-    async def discover(self, target_url: str) -> Optional[A2ACard]:
+    async def discover(self, target_url: str) -> A2ACard | None:
         payload = {
             "jsonrpc": "2.0",
             "method": "agents/discover",
@@ -203,9 +208,13 @@ class A2AClient:
             "id": str(uuid.uuid4()),
         }
         try:
-            resp = await self._http.post(target_url, json=payload, headers={
-                "Content-Type": "application/json",
-            })
+            resp = await self._http.post(
+                target_url,
+                json=payload,
+                headers={
+                    "Content-Type": "application/json",
+                },
+            )
             resp.raise_for_status()
             body = resp.json()
             result = body.get("result", {})
@@ -238,8 +247,8 @@ class A2AServer:
         self.agent_id = agent_id
         self.agent_name = agent_name
         self.agent_description = agent_description
-        self._handlers: Dict[str, callable] = {}
-        self._tasks: Dict[str, A2ATask] = {}
+        self._handlers: dict[str, callable] = {}
+        self._tasks: dict[str, A2ATask] = {}
 
     def register_handler(self, skill: str, handler: callable):
         self._handlers[skill] = handler
@@ -255,21 +264,27 @@ class A2AServer:
             skills=[{"name": k} for k in self._handlers],
         )
 
-    async def handle_jsonrpc(self, body: Dict) -> Dict:
+    async def handle_jsonrpc(self, body: dict) -> dict:
         method = body.get("method", "")
         params = body.get("params", {})
         req_id = body.get("id")
 
         if method == "agents/discover":
             card = self.get_card()
-            return {"jsonrpc": "2.0", "result": {"card": {
-                "agentId": card.agent_id,
-                "name": card.name,
-                "description": card.description,
-                "version": card.version,
-                "capabilities": card.capabilities,
-                "skills": card.skills,
-            }}, "id": req_id}
+            return {
+                "jsonrpc": "2.0",
+                "result": {
+                    "card": {
+                        "agentId": card.agent_id,
+                        "name": card.name,
+                        "description": card.description,
+                        "version": card.version,
+                        "capabilities": card.capabilities,
+                        "skills": card.skills,
+                    }
+                },
+                "id": req_id,
+            }
 
         if method == "tasks/send":
             task_data = params.get("task", params)
@@ -288,7 +303,11 @@ class A2AServer:
             task_id = params.get("id")
             task = self._tasks.get(task_id)
             if not task:
-                return {"jsonrpc": "2.0", "error": {"code": -32000, "message": "Task not found"}, "id": req_id}
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {"code": -32000, "message": "Task not found"},
+                    "id": req_id,
+                }
             return {"jsonrpc": "2.0", "result": {"task": task.to_dict()}, "id": req_id}
 
         if method == "tasks/cancel":
@@ -298,7 +317,11 @@ class A2AServer:
                 task.state = A2ATaskState.CANCELED
             return {"jsonrpc": "2.0", "result": {"success": True}, "id": req_id}
 
-        return {"jsonrpc": "2.0", "error": {"code": -32601, "message": f"Method not found: {method}"}, "id": req_id}
+        return {
+            "jsonrpc": "2.0",
+            "error": {"code": -32601, "message": f"Method not found: {method}"},
+            "id": req_id,
+        }
 
     async def _execute_task(self, task: A2ATask):
         task.state = A2ATaskState.WORKING
@@ -314,24 +337,30 @@ class A2AServer:
             handler = self._handlers.get(skill_name)
             if handler:
                 result = await handler(task)
-                task.history.append(A2AMessage(
-                    role=A2AMessageRole.AGENT,
-                    parts=[A2APart.from_text(str(result))],
-                    agent_id=self.agent_id,
-                ))
+                task.history.append(
+                    A2AMessage(
+                        role=A2AMessageRole.AGENT,
+                        parts=[A2APart.from_text(str(result))],
+                        agent_id=self.agent_id,
+                    )
+                )
             else:
-                task.history.append(A2AMessage(
-                    role=A2AMessageRole.AGENT,
-                    parts=[A2APart.from_text(f"Received: {input_text[:200]}")],
-                    agent_id=self.agent_id,
-                ))
+                task.history.append(
+                    A2AMessage(
+                        role=A2AMessageRole.AGENT,
+                        parts=[A2APart.from_text(f"Received: {input_text[:200]}")],
+                        agent_id=self.agent_id,
+                    )
+                )
 
             task.state = A2ATaskState.COMPLETED
         except Exception as e:
             logger.exception("A2A task execution failed")
             task.state = A2ATaskState.FAILED
-            task.history.append(A2AMessage(
-                role=A2AMessageRole.AGENT,
-                parts=[A2APart.from_text(f"Error: {e}")],
-                agent_id=self.agent_id,
-            ))
+            task.history.append(
+                A2AMessage(
+                    role=A2AMessageRole.AGENT,
+                    parts=[A2APart.from_text(f"Error: {e}")],
+                    agent_id=self.agent_id,
+                )
+            )

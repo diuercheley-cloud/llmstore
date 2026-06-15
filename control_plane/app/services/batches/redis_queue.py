@@ -1,7 +1,7 @@
 import json
 import logging
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -9,11 +9,13 @@ from redis.asyncio import Redis
 
 logger = logging.getLogger(__name__)
 
+
 class RedisAgentQueue:
     """
     Redis-backed distributed task queue for agent execution.
     Uses sorted sets for priority and streams for reliable delivery.
     """
+
     def __init__(self, redis: Redis):
         self.redis = redis
         self.settings = get_settings()
@@ -26,7 +28,7 @@ class RedisAgentQueue:
         agent_id: uuid.UUID,
         tenant_id: str,
         priority: int = 0,
-        **kwargs
+        **kwargs,
     ) -> str:
         job_id = str(uuid.uuid4())
         job_data = {
@@ -36,36 +38,38 @@ class RedisAgentQueue:
             "tenant_id": tenant_id,
             "priority": priority,
             "created_at": utc_now().isoformat(),
-            **kwargs
+            **kwargs,
         }
-        
+
         # Add to sorted set with priority as score
         # Using negative priority so higher values come first
         await self.redis.zadd(self.queue_key, {json.dumps(job_data): -priority})
-        
+
         logger.info(f"Redis Enqueued job {job_id} for run {agent_run_id} (priority: {priority})")
         return job_id
 
-    async def dequeue_job(self, worker_id: str, lease_timeout_seconds: int = 60) -> Optional[Dict[str, Any]]:
+    async def dequeue_job(
+        self, worker_id: str, lease_timeout_seconds: int = 60
+    ) -> dict[str, Any] | None:
         # Get the highest priority job (lowest score in ZSET because we used negative priority)
         jobs = await self.redis.zrange(self.queue_key, 0, 0)
         if not jobs:
             return None
-            
+
         job_raw = jobs[0]
         # Atomic removal
         removed = await self.redis.zrem(self.queue_key, job_raw)
         if not removed:
             # Another worker got it first
             return None
-            
+
         job = json.loads(job_raw)
         job_id = job["id"]
-        
+
         # Set lease
         lease_key = f"{self.lease_key_prefix}{job_id}"
         await self.redis.set(lease_key, worker_id, ex=lease_timeout_seconds)
-        
+
         logger.info(f"Worker {worker_id} leased job {job_id} from Redis")
         return job
 

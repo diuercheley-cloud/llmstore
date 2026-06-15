@@ -1,7 +1,6 @@
-
 def generate_baseline():
     print("Generating coverage baseline (simulated)...")
-    
+
     baseline_content = """# Coverage Baseline
 
 Generated on: 2026-05-16
@@ -18,11 +17,12 @@ Generated on: 2026-05-16
 - Increase behavioral tests for Billing reconciliation.
 - Add edge-case testing for API input sanitization.
 """
-    
+
     with open("docs/quality/coverage_baseline.md", "w") as f:
         f.write(baseline_content)
-        
+
     print("Baseline saved to docs/quality/coverage_baseline.md")
+
 
 if __name__ == "__main__":
     generate_baseline()

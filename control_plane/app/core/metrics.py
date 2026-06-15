@@ -9,6 +9,7 @@ def _label(value: object | None, fallback: str = "unknown") -> str:
     text = str(value).strip()
     return text if text else fallback
 
+
 # Legacy Metrics (Maintain for compatibility)
 REQUEST_COUNTER = Counter(
     "control_plane_requests_total",
@@ -216,193 +217,129 @@ LLM_ATTESTATION_FAILURES_TOTAL = Counter(
 
 # Distributed Runtime Metrics
 LLM_RUNTIME_NODES_TOTAL = Counter(
-    "llm_runtime_nodes_total",
-    "Total runtime nodes registered",
-    ["node_type"]
+    "llm_runtime_nodes_total", "Total runtime nodes registered", ["node_type"]
 )
 LLM_RUNTIME_NODE_HEARTBEATS_TOTAL = Counter(
-    "llm_runtime_node_heartbeats_total",
-    "Total heartbeats received from nodes",
-    ["node_id"]
+    "llm_runtime_node_heartbeats_total", "Total heartbeats received from nodes", ["node_id"]
 )
 LLM_RUNTIME_NODE_FAILURES_TOTAL = Counter(
-    "llm_runtime_node_failures_total",
-    "Total node failures detected",
-    ["node_id", "reason"]
+    "llm_runtime_node_failures_total", "Total node failures detected", ["node_id", "reason"]
 )
 LLM_RUNTIME_FAILOVERS_TOTAL = Counter(
-    "llm_runtime_failovers_total",
-    "Total failovers triggered",
-    ["model_id", "reason"]
+    "llm_runtime_failovers_total", "Total failovers triggered", ["model_id", "reason"]
 )
 LLM_RUNTIME_NODE_LOAD_RATIO = Gauge(
-    "llm_runtime_node_load_ratio",
-    "Current load ratio of the node (0-1)",
-    ["node_id"]
+    "llm_runtime_node_load_ratio", "Current load ratio of the node (0-1)", ["node_id"]
 )
 LLM_RUNTIME_MODEL_PLACEMENTS_TOTAL = Gauge(
-    "llm_runtime_model_placements_total",
-    "Total model placements on nodes",
-    ["node_id", "status"]
+    "llm_runtime_model_placements_total", "Total model placements on nodes", ["node_id", "status"]
 )
 
 # GPU & Autoscaling Metrics
 LLM_GPU_DEVICES_TOTAL = Gauge(
-    "llm_gpu_devices_total",
-    "Total GPU devices detected",
-    ["node_id", "status"]
+    "llm_gpu_devices_total", "Total GPU devices detected", ["node_id", "status"]
 )
 LLM_GPU_MEMORY_USED_BYTES = Gauge(
-    "llm_gpu_memory_used_bytes",
-    "Current GPU memory used in bytes",
-    ["node_id", "gpu_index"]
+    "llm_gpu_memory_used_bytes", "Current GPU memory used in bytes", ["node_id", "gpu_index"]
 )
 LLM_GPU_MEMORY_TOTAL_BYTES = Gauge(
-    "llm_gpu_memory_total_bytes",
-    "Total GPU memory in bytes",
-    ["node_id", "gpu_index"]
+    "llm_gpu_memory_total_bytes", "Total GPU memory in bytes", ["node_id", "gpu_index"]
 )
 LLM_GPU_UTILIZATION_RATIO = Gauge(
-    "llm_gpu_utilization_ratio",
-    "GPU utilization ratio (0-1)",
-    ["node_id", "gpu_index"]
+    "llm_gpu_utilization_ratio", "GPU utilization ratio (0-1)", ["node_id", "gpu_index"]
 )
 LLM_GPU_TEMPERATURE_CELSIUS = Gauge(
-    "llm_gpu_temperature_celsius",
-    "GPU temperature in Celsius",
-    ["node_id", "gpu_index"]
+    "llm_gpu_temperature_celsius", "GPU temperature in Celsius", ["node_id", "gpu_index"]
 )
 LLM_AUTOSCALING_DECISIONS_TOTAL = Counter(
-    "llm_autoscaling_decisions_total",
-    "Total autoscaling decisions made",
-    ["policy_id", "action"]
+    "llm_autoscaling_decisions_total", "Total autoscaling decisions made", ["policy_id", "action"]
 )
 LLM_AUTOSCALING_REPLICAS_DESIRED = Gauge(
-    "llm_autoscaling_replicas_desired",
-    "Desired number of replicas by autoscaler",
-    ["policy_id"]
+    "llm_autoscaling_replicas_desired", "Desired number of replicas by autoscaler", ["policy_id"]
 )
 LLM_AUTOSCALING_REPLICAS_CURRENT = Gauge(
     "llm_autoscaling_replicas_current",
     "Current number of replicas reported by autoscaler",
-    ["policy_id"]
+    ["policy_id"],
 )
 
 # Agent Observability Metrics
 LLM_AGENT_RUNS_TOTAL = Counter(
-    "llm_agent_runs_total",
-    "Total agent runs started",
-    ["agent_id", "status"]
+    "llm_agent_runs_total", "Total agent runs started", ["agent_id", "status"]
 )
 LLM_AGENT_RUN_SUCCESS_RATE = Gauge(
-    "llm_agent_run_success_rate",
-    "Current success rate of agent runs",
-    ["agent_id"]
+    "llm_agent_run_success_rate", "Current success rate of agent runs", ["agent_id"]
 )
 LLM_AGENT_RUN_FAILURES_TOTAL = Counter(
-    "llm_agent_run_failures_total",
-    "Total agent run failures",
-    ["agent_id", "reason"]
+    "llm_agent_run_failures_total", "Total agent run failures", ["agent_id", "reason"]
 )
 LLM_AGENT_RUN_DURATION_SECONDS = Histogram(
-    "llm_agent_run_duration_seconds",
-    "End-to-end duration of agent runs",
-    ["agent_id"]
+    "llm_agent_run_duration_seconds", "End-to-end duration of agent runs", ["agent_id"]
 )
 LLM_AGENT_STEPS_TOTAL = Counter(
-    "llm_agent_steps_total",
-    "Total agent steps executed",
-    ["agent_id", "step_type"]
+    "llm_agent_steps_total", "Total agent steps executed", ["agent_id", "step_type"]
 )
 LLM_AGENT_STEP_LATENCY_SECONDS = Histogram(
-    "llm_agent_step_latency_seconds",
-    "Latency of agent steps",
-    ["agent_id", "step_type"]
+    "llm_agent_step_latency_seconds", "Latency of agent steps", ["agent_id", "step_type"]
 )
 LLM_AGENT_PLAN_DEPTH = Gauge(
-    "llm_agent_plan_depth",
-    "Current depth of the agent's plan",
-    ["agent_id", "run_id"]
+    "llm_agent_plan_depth", "Current depth of the agent's plan", ["agent_id", "run_id"]
 )
 LLM_AGENT_TOOL_DURATION_SECONDS = Histogram(
-    "llm_agent_tool_duration_seconds",
-    "Time spent executing tools",
-    ["agent_id", "tool_name"]
+    "llm_agent_tool_duration_seconds", "Time spent executing tools", ["agent_id", "tool_name"]
 )
 LLM_AGENT_TOOL_LATENCY_SECONDS = Histogram(
     "llm_agent_tool_latency_seconds",
     "Latency of tool executions in seconds",
-    ["agent_id", "tool_name"]
+    ["agent_id", "tool_name"],
 )
 LLM_AGENT_TOOL_FAILURE_RATE = Gauge(
-    "llm_agent_tool_failure_rate",
-    "Current failure rate of tool calls",
-    ["agent_id", "tool_name"]
+    "llm_agent_tool_failure_rate", "Current failure rate of tool calls", ["agent_id", "tool_name"]
 )
 LLM_AGENT_APPROVAL_WAIT_SECONDS = Histogram(
     "llm_agent_approval_wait_seconds",
     "Time agents spent waiting for human approval",
-    ["agent_id", "tool_name"]
+    ["agent_id", "tool_name"],
 )
 LLM_AGENT_MEMORY_LATENCY_SECONDS = Histogram(
     "llm_agent_memory_latency_seconds",
     "Latency of agent memory operations",
-    ["agent_id", "operation"]
+    ["agent_id", "operation"],
 )
 LLM_AGENT_MEMORY_HIT_RATE = Gauge(
-    "llm_agent_memory_hit_rate",
-    "Current memory hit rate",
-    ["agent_id", "memory_type"]
+    "llm_agent_memory_hit_rate", "Current memory hit rate", ["agent_id", "memory_type"]
 )
 LLM_AGENT_HANDOFF_COUNT = Counter(
-    "llm_agent_handoff_count",
-    "Total agent handoffs",
-    ["agent_id", "target_agent_id"]
+    "llm_agent_handoff_count", "Total agent handoffs", ["agent_id", "target_agent_id"]
 )
 LLM_AGENT_HANDOFF_DEPTH = Gauge(
-    "llm_agent_handoff_depth",
-    "Current handoff depth",
-    ["agent_id", "run_id"]
+    "llm_agent_handoff_depth", "Current handoff depth", ["agent_id", "run_id"]
 )
 LLM_AGENT_POLICY_DENIALS_TOTAL = Counter(
-    "llm_agent_policy_denials_total",
-    "Total agent policy denials",
-    ["agent_id", "tool_name"]
+    "llm_agent_policy_denials_total", "Total agent policy denials", ["agent_id", "tool_name"]
 )
 LLM_AGENT_REPLAN_TOTAL = Counter(
-    "llm_agent_replan_total",
-    "Total number of replans executed",
-    ["agent_id"]
+    "llm_agent_replan_total", "Total number of replans executed", ["agent_id"]
 )
 LLM_AGENT_INCIDENTS_TOTAL = Counter(
     "llm_agent_incidents_total",
     "Total agent incidents detected",
-    ["agent_id", "incident_type", "severity"]
+    ["agent_id", "incident_type", "severity"],
 )
 LLM_AGENT_SLO_BREACHES_TOTAL = Counter(
-    "llm_agent_slo_breaches_total",
-    "Total agent SLO breaches",
-    ["agent_id", "window_type"]
+    "llm_agent_slo_breaches_total", "Total agent SLO breaches", ["agent_id", "window_type"]
 )
 LLM_AGENT_COST_BRL_TOTAL = Counter(
-    "llm_agent_cost_brl_total",
-    "Total estimated cost of agent runs in BRL",
-    ["agent_id"]
+    "llm_agent_cost_brl_total", "Total estimated cost of agent runs in BRL", ["agent_id"]
 )
 LLM_AGENT_COST_BUDGET_USED_BRL = Gauge(
-    "llm_agent_cost_budget_used_brl",
-    "Total cost in BRL against budget",
-    ["agent_id"]
+    "llm_agent_cost_budget_used_brl", "Total cost in BRL against budget", ["agent_id"]
 )
 LLM_AGENT_TOKENS_TOTAL = Counter(
-    "llm_agent_tokens_total",
-    "Total tokens consumed by agents",
-    ["agent_id", "token_type"]
+    "llm_agent_tokens_total", "Total tokens consumed by agents", ["agent_id", "token_type"]
 )
 LLM_AGENT_TOKEN_BUDGET_USED = Gauge(
-    "llm_agent_token_budget_used",
-    "Total tokens consumed against budget",
-    ["agent_id"]
+    "llm_agent_token_budget_used", "Total tokens consumed against budget", ["agent_id"]
 )
 
 # Keep legacy metrics for internal compatibility where needed, or alias them
@@ -435,14 +372,14 @@ def record_request_metrics(
         "status_code": str(int(status_code)),
     }
     LLM_REQUESTS_TOTAL.labels(**labels).inc()
-    
+
     latency_labels = {k: v for k, v in labels.items() if k != "status_code"}
     LLM_REQUEST_LATENCY_SECONDS.labels(**latency_labels).observe(max(latency_seconds, 0.0))
-    
+
     token_labels = {key: labels[key] for key in ("model", "backend", "plan")}
     LLM_TOKENS_INPUT_TOTAL.labels(**token_labels).inc(max(int(prompt_tokens), 0))
     LLM_TOKENS_OUTPUT_TOTAL.labels(**token_labels).inc(max(int(completion_tokens), 0))
-    
+
     if status_code >= 400:
         error_labels = labels.copy()
         error_labels.pop("status_code")
@@ -618,9 +555,7 @@ LLM_AGENT_STUCK_RUNS_TOTAL = Gauge(
     "Current number of agent runs detected as stuck",
 )
 LLM_AGENT_DRAIN_STATUS = Gauge(
-    "llm_agent_drain_status",
-    "Drain status of workers (1 if draining)",
-    ["worker_id"]
+    "llm_agent_drain_status", "Drain status of workers (1 if draining)", ["worker_id"]
 )
 LLM_AGENT_QUEUE_BACKPRESSURE_TOTAL = Counter(
     "llm_agent_queue_backpressure_total",
@@ -652,83 +587,66 @@ LLM_AGENT_TELEMETRY_BACKPRESSURE_ACTIVE = Gauge(
 
 # Backup and Restore Operational Metrics
 BACKUP_LAST_SUCCESS_TIMESTAMP = Gauge(
-    "backup_last_success_timestamp",
-    "Unix timestamp of the last successful backup"
+    "backup_last_success_timestamp", "Unix timestamp of the last successful backup"
 )
-BACKUP_AGE_SECONDS = Gauge(
-    "backup_age_seconds",
-    "Time in seconds since the last successful backup"
-)
-BACKUP_FAILURE_TOTAL = Counter(
-    "backup_failure_total",
-    "Total number of failed backup operations"
-)
+BACKUP_AGE_SECONDS = Gauge("backup_age_seconds", "Time in seconds since the last successful backup")
+BACKUP_FAILURE_TOTAL = Counter("backup_failure_total", "Total number of failed backup operations")
 BACKUP_VERIFICATION_FAILURE_TOTAL = Counter(
-    "backup_verification_failure_total",
-    "Total number of backup verification failures",
-    ["reason"]
+    "backup_verification_failure_total", "Total number of backup verification failures", ["reason"]
 )
 RESTORE_FAILURE_TOTAL = Counter(
-    "restore_failure_total",
-    "Total number of failed restore operations"
+    "restore_failure_total", "Total number of failed restore operations"
 )
 RESTORE_DURATION_SECONDS = Histogram(
-    "restore_duration_seconds",
-    "Duration of restore operations in seconds"
+    "restore_duration_seconds", "Duration of restore operations in seconds"
 )
 RESTORE_STAGING_DURATION_SECONDS = Histogram(
-    "restore_staging_duration_seconds",
-    "Duration of restore staging operations in seconds"
+    "restore_staging_duration_seconds", "Duration of restore staging operations in seconds"
 )
 RESTORE_PROMOTION_DURATION_SECONDS = Histogram(
-    "restore_promotion_duration_seconds",
-    "Duration of restore promotion operations in seconds"
+    "restore_promotion_duration_seconds", "Duration of restore promotion operations in seconds"
 )
 RESTORE_ROLLBACK_DURATION_SECONDS = Histogram(
-    "restore_rollback_duration_seconds",
-    "Duration of restore rollback operations in seconds"
+    "restore_rollback_duration_seconds", "Duration of restore rollback operations in seconds"
 )
 RESTORE_LOCK_CONTENTION_TOTAL = Counter(
-    "restore_lock_contention_total",
-    "Total number of restore lock acquisition failures"
+    "restore_lock_contention_total", "Total number of restore lock acquisition failures"
 )
 BACKUP_DURATION_SECONDS = Histogram(
-    "backup_duration_seconds",
-    "Duration of backup operations in seconds"
+    "backup_duration_seconds", "Duration of backup operations in seconds"
 )
-BACKUP_SIZE_BYTES = Gauge(
-    "backup_size_bytes",
-    "Size of the latest successful backup in bytes"
-)
+BACKUP_SIZE_BYTES = Gauge("backup_size_bytes", "Size of the latest successful backup in bytes")
 ESTIMATED_RPO_SECONDS = Gauge(
-    "estimated_rpo_seconds",
-    "Estimated Recovery Point Objective in seconds"
+    "estimated_rpo_seconds", "Estimated Recovery Point Objective in seconds"
 )
 MEASURED_RTO_SECONDS = Gauge(
     "measured_rto_seconds",
-    "Measured Recovery Time Objective of the last successful restore in seconds"
+    "Measured Recovery Time Objective of the last successful restore in seconds",
 )
 
 
 def update_dynamic_backup_metrics() -> None:
+    import json
     import os
     import time
+    from datetime import datetime
     from pathlib import Path
-    from datetime import datetime, UTC
-    import json
+
     from app.core.config import get_settings
-    
+
     try:
         settings = get_settings()
         backup_root = Path(settings.disaster_recovery_backup_dir or "/tmp/agent-backups") / "system"
         if not backup_root.exists():
             return
-            
+
         latest_time = None
         latest_size = 0
-        
+
         # Sort directories by creation time
-        manifests = sorted(backup_root.glob("backup-*/manifest.json"), key=os.path.getmtime, reverse=True)
+        manifests = sorted(
+            backup_root.glob("backup-*/manifest.json"), key=os.path.getmtime, reverse=True
+        )
         for manifest_path in manifests:
             try:
                 manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -745,23 +663,22 @@ def update_dynamic_backup_metrics() -> None:
                             ts = os.path.getmtime(manifest_path)
                     else:
                         ts = os.path.getmtime(manifest_path)
-                        
+
                     latest_time = ts
                     latest_size = payload_path.stat().st_size
                     break
             except Exception:
                 continue
-                
+
         if latest_time is not None:
             now = time.time()
             age = max(0.0, now - latest_time)
-            
+
             BACKUP_LAST_SUCCESS_TIMESTAMP.set(latest_time)
             BACKUP_SIZE_BYTES.set(latest_size)
             BACKUP_AGE_SECONDS.set(age)
             ESTIMATED_RPO_SECONDS.set(age)
     except Exception as e:
         import logging
+
         logging.getLogger(__name__).error(f"Failed to update dynamic backup metrics: {e}")
-
-

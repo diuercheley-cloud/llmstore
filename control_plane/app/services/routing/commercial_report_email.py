@@ -17,7 +17,9 @@ EMAIL_RE = re.compile(r"^[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}$", re.IGNORECAS
 SUSPICIOUS_VALUE_PATTERNS = [
     re.compile(r"\bsk-[A-Za-z0-9_\-]{8,}\b", re.IGNORECASE),
     re.compile(r"\bBearer\s+[A-Za-z0-9._\-+/=]{8,}\b", re.IGNORECASE),
-    re.compile(r"\b(?:authorization|api[_-]?key|secret|token|password)\b\s*[:=]\s*[^\s,;]+", re.IGNORECASE),
+    re.compile(
+        r"\b(?:authorization|api[_-]?key|secret|token|password)\b\s*[:=]\s*[^\s,;]+", re.IGNORECASE
+    ),
     re.compile(r"\b(?:OPENAI|ANTHROPIC|DEEPSEEK|OPENROUTER)_[A-Z_]*KEY\b", re.IGNORECASE),
     re.compile(r"\b[A-Za-z0-9+/=_\-]{128,}\b"),
 ]
@@ -101,14 +103,19 @@ def _scan_scalar(key: str, value: Any) -> Any:
     if isinstance(value, str):
         for pattern in SUSPICIOUS_VALUE_PATTERNS:
             if pattern.search(value):
-                raise SecurityScanError(f"blocked_by_security: sensitive value detected in field '{key}'")
+                raise SecurityScanError(
+                    f"blocked_by_security: sensitive value detected in field '{key}'"
+                )
     return value
 
 
 def sanitize_email_payload(payload: Any) -> Any:
     def _walk(node: Any, parent_key: str = "value") -> Any:
         if isinstance(node, dict):
-            return {str(key): _walk(_scan_scalar(str(key), value), str(key)) for key, value in node.items()}
+            return {
+                str(key): _walk(_scan_scalar(str(key), value), str(key))
+                for key, value in node.items()
+            }
         if isinstance(node, list):
             return [_walk(item, parent_key) for item in node]
         return _scan_scalar(parent_key, node)
@@ -127,7 +134,9 @@ def validate_recipient_allowlist(
     settings: Settings | None = None,
 ) -> list[str]:
     cfg = _settings(settings)
-    normalized = [recipient.strip().lower() for recipient in recipients if recipient and recipient.strip()]
+    normalized = [
+        recipient.strip().lower() for recipient in recipients if recipient and recipient.strip()
+    ]
     if not normalized:
         raise AllowlistError("blocked_by_allowlist: at least one recipient is required")
     if len(normalized) > cfg.commercial_report_email_max_recipients:
@@ -152,7 +161,9 @@ def validate_basic_recipients(
     settings: Settings | None = None,
 ) -> list[str]:
     cfg = _settings(settings)
-    normalized = [recipient.strip().lower() for recipient in recipients if recipient and recipient.strip()]
+    normalized = [
+        recipient.strip().lower() for recipient in recipients if recipient and recipient.strip()
+    ]
     if not normalized:
         raise AllowlistError("blocked_by_allowlist: at least one recipient is required")
     if len(normalized) > cfg.commercial_report_email_max_recipients:
@@ -168,14 +179,20 @@ def validate_basic_recipients(
 def validate_attachment_safety(filename: str, content: bytes, mime_type: str) -> None:
     lowered = filename.lower()
     if not any(lowered.endswith(ext) for ext in ALLOWED_ATTACHMENT_EXTENSIONS):
-        raise SecurityScanError(f"blocked_by_security: attachment '{filename}' has unsupported extension")
+        raise SecurityScanError(
+            f"blocked_by_security: attachment '{filename}' has unsupported extension"
+        )
     if len(content) > MAX_ATTACHMENT_BYTES:
-        raise SecurityScanError(f"blocked_by_security: attachment '{filename}' exceeds safety size limit")
+        raise SecurityScanError(
+            f"blocked_by_security: attachment '{filename}' exceeds safety size limit"
+        )
     if mime_type.startswith("text/") or lowered.endswith((".json", ".csv", ".html")):
         try:
             sanitize_email_payload(content.decode("utf-8", errors="ignore"))
         except SecurityScanError as exc:
-            raise SecurityScanError(f"blocked_by_security: attachment '{filename}' failed scan") from exc
+            raise SecurityScanError(
+                f"blocked_by_security: attachment '{filename}' failed scan"
+            ) from exc
 
 
 def build_email_message(
@@ -228,7 +245,9 @@ def send_report_email(
     context = ssl.create_default_context()
     try:
         if cfg.commercial_report_smtp_use_tls and not cfg.commercial_report_smtp_use_starttls:
-            with smtplib.SMTP_SSL(host, cfg.commercial_report_smtp_port, timeout=timeout, context=context) as smtp:
+            with smtplib.SMTP_SSL(
+                host, cfg.commercial_report_smtp_port, timeout=timeout, context=context
+            ) as smtp:
                 if username:
                     smtp.login(username, password)
                 smtp.send_message(message, to_addrs=recipients)
@@ -248,7 +267,9 @@ def send_report_email(
     except smtplib.SMTPException as exc:
         raise CommercialReportEmailError(_sanitize_error_message(f"smtp_failure: {exc}")) from exc
     except OSError as exc:
-        raise CommercialReportEmailError(_sanitize_error_message(f"smtp_network_failure: {exc}")) from exc
+        raise CommercialReportEmailError(
+            _sanitize_error_message(f"smtp_network_failure: {exc}")
+        ) from exc
 
     logger.info(
         "commercial report email sent",

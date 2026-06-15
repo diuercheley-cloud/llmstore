@@ -1,8 +1,8 @@
 import uuid
 
 import pytest
-from app.models.core.client import Client
 from app.models.commercial.commercial_governance import CommercialPolicyBundle
+from app.models.core.client import Client
 from app.services.governance.airgap_sync import create_airgap_package, export_airgap_package
 from app.services.governance.policy_federation import PolicyFederationService
 from app.services.security.offline_crl import (
@@ -54,7 +54,9 @@ async def test_offline_crl_revokes_key_bundle_peer_and_export(
         payload={"bundle": "Bundle CRL"},
         source_cluster_id="cluster-a",
         package_version="37.0",
-        chain_of_custody_json={"events": [{"actor": "ops", "action": "sealed", "timestamp": "2026-05-15T00:00:00Z"}]},
+        chain_of_custody_json={
+            "events": [{"actor": "ops", "action": "sealed", "timestamp": "2026-05-15T00:00:00Z"}]
+        },
     )
     exported = await export_airgap_package(session, package.id, payload={"bundle": "Bundle CRL"})
 
@@ -62,7 +64,10 @@ async def test_offline_crl_revokes_key_bundle_peer_and_export(
         session,
         crl_version="37.0",
         revoked_key_fingerprints_json=[key.key_fingerprint],
-        revoked_bundle_hashes_json=[bundle.immutable_hash, exported["files"]["manifest.json"]["manifest_hash"]],
+        revoked_bundle_hashes_json=[
+            bundle.immutable_hash,
+            exported["files"]["manifest.json"]["manifest_hash"],
+        ],
         revoked_peer_ids_json=["peer-revoke"],
         reason="validation",
     )

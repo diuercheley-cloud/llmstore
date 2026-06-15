@@ -1,0 +1,1 @@
+../validators/validate-demo-client-portal.sh

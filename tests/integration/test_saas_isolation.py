@@ -20,6 +20,7 @@ def mock_route(provider: str, name: str):
     route.id = uuid4()
     return route
 
+
 @pytest.mark.asyncio
 async def test_plan_routing_order_respects_guardrail():
     model = MagicMock(spec=ModelRegistry)
@@ -28,9 +29,11 @@ async def test_plan_routing_order_respects_guardrail():
         mock_route("local", "llama-3"),
     ]
     model.inference_backend = None
-    
+
     # Without guardrail
-    with patch("app.services.model_policy.get_routing_candidates", return_value=model.backend_routes):
+    with patch(
+        "app.services.model_policy.get_routing_candidates", return_value=model.backend_routes
+    ):
         routes = plan_routing_order(model, cloud_blocked_by_guardrail=False)
         assert len(routes) == 2
         providers = {r.inference_backend.provider for r in routes}
@@ -38,10 +41,13 @@ async def test_plan_routing_order_respects_guardrail():
         assert "local" in providers
 
     # With guardrail
-    with patch("app.services.model_policy.get_routing_candidates", return_value=model.backend_routes):
+    with patch(
+        "app.services.model_policy.get_routing_candidates", return_value=model.backend_routes
+    ):
         routes = plan_routing_order(model, cloud_blocked_by_guardrail=True)
         assert len(routes) == 1
         assert routes[0].inference_backend.provider == "local"
+
 
 @pytest.mark.asyncio
 async def test_plan_routing_order_no_local_fallback():
@@ -51,8 +57,10 @@ async def test_plan_routing_order_no_local_fallback():
         mock_route("anthropic", "claude-3"),
     ]
     model.inference_backend = None
-    
+
     # With guardrail and ONLY cloud routes
-    with patch("app.services.model_policy.get_routing_candidates", return_value=model.backend_routes):
+    with patch(
+        "app.services.model_policy.get_routing_candidates", return_value=model.backend_routes
+    ):
         routes = plan_routing_order(model, cloud_blocked_by_guardrail=True)
         assert len(routes) == 0

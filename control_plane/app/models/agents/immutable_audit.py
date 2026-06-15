@@ -1,9 +1,10 @@
-import uuid
 from datetime import datetime
+
 from app.core.time import utc_now
 from app.db.base import Base
-from sqlalchemy import JSON, DateTime, Integer, String, Text
+from sqlalchemy import DateTime, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
+
 
 class ImmutableAuditLog(Base):
     __tablename__ = "immutable_audit_logs"
@@ -16,4 +17,6 @@ class ImmutableAuditLog(Base):
     previous_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     hash: Mapped[str] = mapped_column(String(64), nullable=False)
     signature: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )

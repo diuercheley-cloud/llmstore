@@ -1,5 +1,5 @@
 # Owner: platform-ops
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 from app.api.dependencies import get_current_admin, get_db
@@ -88,8 +88,8 @@ class VersionNegotiationRequest(BaseModel):
     target_environment: str
     source_version: str
     target_version: str
-    source_contract_id: Optional[str] = None
-    target_contract_id: Optional[str] = None
+    source_contract_id: str | None = None
+    target_contract_id: str | None = None
 
 
 class CapabilityNegotiationRequest(BaseModel):
@@ -107,7 +107,7 @@ class DeprecationRequest(BaseModel):
     client_id: UUID
     deprecation_reason: str
     migration_required: bool = False
-    replacement_contract: Optional[str] = None
+    replacement_contract: str | None = None
     announce: bool = False
     enforce: bool = False
 
@@ -201,7 +201,9 @@ def _serialize_verification(item: CompatibilityVerificationResult) -> dict[str, 
     }
 
 
-async def _get_contract(db: AsyncSession, contract_id: str, client_id: UUID) -> CompatibilityContract:
+async def _get_contract(
+    db: AsyncSession, contract_id: str, client_id: UUID
+) -> CompatibilityContract:
     contract = (
         await db.execute(
             select(CompatibilityContract).where(
@@ -215,7 +217,9 @@ async def _get_contract(db: AsyncSession, contract_id: str, client_id: UUID) -> 
     return contract
 
 
-async def _get_session(db: AsyncSession, session_id: str, client_id: UUID) -> VersionNegotiationSession:
+async def _get_session(
+    db: AsyncSession, session_id: str, client_id: UUID
+) -> VersionNegotiationSession:
     item = (
         await db.execute(
             select(VersionNegotiationSession).where(
@@ -239,7 +243,9 @@ async def create_contract(
         raise HTTPException(status_code=400, detail="Unsupported contract scope")
     if request.compatibility_status not in CONTRACT_STATUSES:
         raise HTTPException(status_code=400, detail="Unsupported compatibility status")
-    schema_validation = validate_schema_compatibility(request.schema_version, request.schema_version)
+    schema_validation = validate_schema_compatibility(
+        request.schema_version, request.schema_version
+    )
     contract_payload = {
         "client_id": str(request.client_id),
         "contract_name": request.contract_name,
@@ -262,7 +268,9 @@ async def create_contract(
         compatibility_status=request.compatibility_status,
         deterministic_version=request.deterministic_version,
         contract_hash=contract_hash,
-        immutable_hash=sha256_hex({"kind": "compatibility_contract_immutable", "contract_hash": contract_hash}),
+        immutable_hash=sha256_hex(
+            {"kind": "compatibility_contract_immutable", "contract_hash": contract_hash}
+        ),
     )
     db.add(contract)
     await db.commit()
@@ -284,12 +292,16 @@ async def list_contracts(
     _admin: Any = Depends(get_current_admin),
 ):
     rows = (
-        await db.execute(
-            select(CompatibilityContract)
-            .where(CompatibilityContract.client_id == client_id)
-            .order_by(CompatibilityContract.created_at.desc())
+        (
+            await db.execute(
+                select(CompatibilityContract)
+                .where(CompatibilityContract.client_id == client_id)
+                .order_by(CompatibilityContract.created_at.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return [_serialize_contract(item) for item in rows]
 
 
@@ -328,7 +340,13 @@ async def create_matrix(
         }
     )
     matrix = CompatibilityMatrix(
-        id=sha256_hex({"kind": "compatibility_matrix_id", "client_id": str(request.client_id), "immutable_hash": immutable_hash}),
+        id=sha256_hex(
+            {
+                "kind": "compatibility_matrix_id",
+                "client_id": str(request.client_id),
+                "immutable_hash": immutable_hash,
+            }
+        ),
         client_id=request.client_id,
         source_version=request.source_version,
         target_version=request.target_version,
@@ -347,7 +365,11 @@ async def create_matrix(
         "audit_event": build_compatibility_audit_event(
             "compatibility_matrix_created",
             str(matrix.client_id),
-            {"matrix_id": matrix.id, "source_version": matrix.source_version, "target_version": matrix.target_version},
+            {
+                "matrix_id": matrix.id,
+                "source_version": matrix.source_version,
+                "target_version": matrix.target_version,
+            },
         ),
     }
 
@@ -363,11 +385,15 @@ async def negotiate_versions(
     if request.source_contract_id:
         source_contract = await _get_contract(db, request.source_contract_id, request.client_id)
         if source_contract.compatibility_status == "blocked":
-            raise HTTPException(status_code=409, detail="Blocked source contract cannot be negotiated")
+            raise HTTPException(
+                status_code=409, detail="Blocked source contract cannot be negotiated"
+            )
     if request.target_contract_id:
         target_contract = await _get_contract(db, request.target_contract_id, request.client_id)
         if target_contract.compatibility_status == "blocked":
-            raise HTTPException(status_code=409, detail="Blocked target contract cannot be negotiated")
+            raise HTTPException(
+                status_code=409, detail="Blocked target contract cannot be negotiated"
+            )
     negotiation = NEGOTIATION_SERVICE.negotiate(request.source_version, request.target_version)
     if negotiation["negotiation_status"] not in NEGOTIATION_STATUSES:
         raise HTTPException(status_code=400, detail="Unsupported negotiation status")
@@ -403,12 +429,20 @@ async def negotiate_versions(
             build_compatibility_audit_event(
                 "version_negotiation_started",
                 str(session.client_id),
-                {"session_id": session.id, "source_environment": session.source_environment, "target_environment": session.target_environment},
+                {
+                    "session_id": session.id,
+                    "source_environment": session.source_environment,
+                    "target_environment": session.target_environment,
+                },
             ),
             build_compatibility_audit_event(
                 "version_negotiation_completed",
                 str(session.client_id),
-                {"session_id": session.id, "negotiated_version": session.negotiated_version, "status": session.negotiation_status},
+                {
+                    "session_id": session.id,
+                    "negotiated_version": session.negotiated_version,
+                    "status": session.negotiation_status,
+                },
             ),
         ],
     }
@@ -421,7 +455,9 @@ async def negotiate_capabilities(
     _admin: Any = Depends(get_current_admin),
 ):
     session = await _get_session(db, request.negotiation_session_id, request.client_id)
-    result = CAPABILITY_SERVICE.negotiate_capabilities(request.requested_capabilities, request.available_capabilities)
+    result = CAPABILITY_SERVICE.negotiate_capabilities(
+        request.requested_capabilities, request.available_capabilities
+    )
     if result["negotiation_status"] not in CAPABILITY_NEGOTIATION_STATUSES:
         raise HTTPException(status_code=400, detail="Unsupported capability negotiation status")
     item = CapabilityNegotiation(
@@ -440,7 +476,9 @@ async def negotiate_capabilities(
         approved_capabilities_json=result["approved_capabilities"],
         denied_capabilities_json=result["denied_capabilities"],
         negotiation_status=result["negotiation_status"],
-        immutable_hash=sha256_hex({"kind": "capability_negotiation_immutable", "session_id": session.id, **result}),
+        immutable_hash=sha256_hex(
+            {"kind": "capability_negotiation_immutable", "session_id": session.id, **result}
+        ),
     )
     db.add(item)
     await db.commit()
@@ -450,7 +488,10 @@ async def negotiate_capabilities(
         "audit_event": build_compatibility_audit_event(
             "capability_negotiation_completed",
             str(item.client_id),
-            {"negotiation_session_id": item.negotiation_session_id, "status": item.negotiation_status},
+            {
+                "negotiation_session_id": item.negotiation_session_id,
+                "status": item.negotiation_status,
+            },
         ),
     }
 
@@ -467,14 +508,18 @@ async def verify_contract(
     if result["verification_status"] not in VERIFICATION_STATUSES:
         raise HTTPException(status_code=400, detail="Unsupported verification status")
     record = CompatibilityVerificationResult(
-        id=sha256_hex({"kind": "compatibility_verification_id", "contract_id": contract.id, **result}),
+        id=sha256_hex(
+            {"kind": "compatibility_verification_id", "contract_id": contract.id, **result}
+        ),
         client_id=request.client_id,
         contract_id=contract.id,
         verification_type=result["verification_type"],
         verification_status=result["verification_status"],
         replay_safe=result["replay_safe"],
         compatibility_summary=result["compatibility_summary"],
-        immutable_hash=sha256_hex({"kind": "compatibility_verification_immutable", "contract_id": contract.id, **result}),
+        immutable_hash=sha256_hex(
+            {"kind": "compatibility_verification_immutable", "contract_id": contract.id, **result}
+        ),
     )
     db.add(record)
     await db.commit()
@@ -538,7 +583,10 @@ async def deprecate_contract(
             build_compatibility_audit_event(
                 "deprecation_announced",
                 str(request.client_id),
-                {"contract_id": contract.id, "deprecation_status": transition["deprecation_status"]},
+                {
+                    "contract_id": contract.id,
+                    "deprecation_status": transition["deprecation_status"],
+                },
             )
         )
     if request.enforce:
@@ -549,12 +597,19 @@ async def deprecate_contract(
             build_compatibility_audit_event(
                 "deprecation_enforced",
                 str(request.client_id),
-                {"contract_id": contract.id, "deprecation_status": transition["deprecation_status"]},
+                {
+                    "contract_id": contract.id,
+                    "deprecation_status": transition["deprecation_status"],
+                },
             )
         )
     db.add(lifecycle)
     await db.commit()
-    return {"deprecation": _serialize_deprecation(lifecycle), "contract": _serialize_contract(contract), "audit_events": events}
+    return {
+        "deprecation": _serialize_deprecation(lifecycle),
+        "contract": _serialize_contract(contract),
+        "audit_events": events,
+    }
 
 
 @router.get("/admin/operations/compatibility/deprecations")
@@ -564,12 +619,16 @@ async def list_deprecations(
     _admin: Any = Depends(get_current_admin),
 ):
     rows = (
-        await db.execute(
-            select(DeprecationLifecycle)
-            .where(DeprecationLifecycle.client_id == client_id)
-            .order_by(DeprecationLifecycle.created_at.desc())
+        (
+            await db.execute(
+                select(DeprecationLifecycle)
+                .where(DeprecationLifecycle.client_id == client_id)
+                .order_by(DeprecationLifecycle.created_at.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return [_serialize_deprecation(item) for item in rows]
 
 
@@ -584,45 +643,64 @@ async def create_receipt(
     receipt_payload = build_contract_receipt(contract)
     if request.receipt_type == "verification_receipt":
         verification = (
-            await db.execute(
-                select(CompatibilityVerificationResult)
-                .where(
-                    CompatibilityVerificationResult.contract_id == contract.id,
-                    CompatibilityVerificationResult.client_id == request.client_id,
+            (
+                await db.execute(
+                    select(CompatibilityVerificationResult)
+                    .where(
+                        CompatibilityVerificationResult.contract_id == contract.id,
+                        CompatibilityVerificationResult.client_id == request.client_id,
+                    )
+                    .order_by(CompatibilityVerificationResult.created_at.desc())
                 )
-                .order_by(CompatibilityVerificationResult.created_at.desc())
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         if not verification:
             raise HTTPException(status_code=404, detail="No verification result available")
         receipt_payload = build_verification_receipt(verification)
     elif request.receipt_type == "deprecation_receipt":
         lifecycle = (
-            await db.execute(
-                select(DeprecationLifecycle)
-                .where(
-                    DeprecationLifecycle.contract_id == contract.id,
-                    DeprecationLifecycle.client_id == request.client_id,
+            (
+                await db.execute(
+                    select(DeprecationLifecycle)
+                    .where(
+                        DeprecationLifecycle.contract_id == contract.id,
+                        DeprecationLifecycle.client_id == request.client_id,
+                    )
+                    .order_by(DeprecationLifecycle.created_at.desc())
                 )
-                .order_by(DeprecationLifecycle.created_at.desc())
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         if not lifecycle:
             raise HTTPException(status_code=404, detail="No deprecation lifecycle available")
         receipt_payload = build_deprecation_receipt(lifecycle)
     elif request.receipt_type == "negotiation_receipt":
         negotiation = (
-            await db.execute(
-                select(VersionNegotiationSession)
-                .where(VersionNegotiationSession.client_id == request.client_id)
-                .order_by(VersionNegotiationSession.created_at.desc())
+            (
+                await db.execute(
+                    select(VersionNegotiationSession)
+                    .where(VersionNegotiationSession.client_id == request.client_id)
+                    .order_by(VersionNegotiationSession.created_at.desc())
+                )
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         if not negotiation:
             raise HTTPException(status_code=404, detail="No version negotiation available")
         receipt_payload = build_negotiation_receipt(negotiation)
     receipt = CompatibilityReceipt(
-        id=sha256_hex({"kind": "compatibility_receipt_id", "contract_id": contract.id, "receipt_type": receipt_payload["receipt_type"], "payload_hash": receipt_payload["payload_hash"]}),
+        id=sha256_hex(
+            {
+                "kind": "compatibility_receipt_id",
+                "contract_id": contract.id,
+                "receipt_type": receipt_payload["receipt_type"],
+                "payload_hash": receipt_payload["payload_hash"],
+            }
+        ),
         client_id=request.client_id,
         contract_id=contract.id,
         receipt_type=receipt_payload["receipt_type"],

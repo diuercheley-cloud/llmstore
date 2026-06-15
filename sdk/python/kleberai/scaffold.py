@@ -51,11 +51,13 @@ def list_templates() -> list[dict]:
     for tid, meta in TEMPLATE_METADATA.items():
         template_dir = TEMPLATES_DIR / tid
         exists = template_dir.exists()
-        results.append({
-            "id": tid,
-            "description": meta["description"],
-            "exists": exists,
-        })
+        results.append(
+            {
+                "id": tid,
+                "description": meta["description"],
+                "exists": exists,
+            }
+        )
     return results
 
 
@@ -111,4 +113,5 @@ def _apply_template_vars(text: str, values: dict) -> str:
     def _replacer(m):
         key = m.group(1).strip()
         return str(values.get(key, m.group(0)))
+
     return re.sub(r"\{\{\s*(\w+)\s*\}\}", _replacer, text)

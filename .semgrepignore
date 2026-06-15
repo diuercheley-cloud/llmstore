@@ -1,0 +1,14 @@
+# Exclude paths from semgrep scans
+control_plane/app/static/
+docs/
+site/
+tests/
+venv/
+.venv/
+node_modules/
+releases/
+generated/
+*.json
+*.html
+*.yaml
+*.yml

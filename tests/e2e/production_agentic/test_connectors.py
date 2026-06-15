@@ -9,19 +9,21 @@ import requests
 class FakeHTTPServer(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
-        self.send_header('Content-type', 'application/json')
+        self.send_header("Content-type", "application/json")
         self.end_headers()
         self.wfile.write(b'{"status": "ok", "message": "real_mode_success"}')
 
+
 @pytest.fixture(scope="module")
 def local_fake_server():
-    server = http.server.HTTPServer(('localhost', 19090), FakeHTTPServer)
+    server = http.server.HTTPServer(("localhost", 19090), FakeHTTPServer)
     thread = threading.Thread(target=server.serve_forever)
     thread.daemon = True
     thread.start()
     yield "http://localhost:19090"
     server.shutdown()
     thread.join(timeout=5)
+
 
 @pytest.mark.asyncio
 async def test_connector_real_mode_contract(local_fake_server):

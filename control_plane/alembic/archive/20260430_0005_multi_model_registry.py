@@ -11,7 +11,10 @@ depends_on = None
 
 def upgrade() -> None:
     op.add_column("model_registry", sa.Column("model_alias", sa.String(length=128), nullable=True))
-    op.add_column("model_registry", sa.Column("is_default", sa.Boolean(), nullable=False, server_default=sa.text("false")))
+    op.add_column(
+        "model_registry",
+        sa.Column("is_default", sa.Boolean(), nullable=False, server_default=sa.text("false")),
+    )
     op.create_index("ix_model_registry_model_alias", "model_registry", ["model_alias"], unique=True)
 
     op.add_column("billing_plans", sa.Column("allowed_models_json", sa.Text(), nullable=True))

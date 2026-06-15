@@ -1,9 +1,8 @@
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from starlette.requests import Request
-
 from app.middleware import request_context_middleware
+from starlette.requests import Request
 
 
 def _request(content_length: str) -> Request:

@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 
-from app.core.config import Settings
 from app.bootstrap.routers import include_optional_routers
+from app.core.config import Settings
 from app.schemas.managed_control_plane import ApplianceHeartbeatPayload
 from fastapi import FastAPI
 

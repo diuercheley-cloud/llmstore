@@ -2,9 +2,10 @@ import asyncio
 import importlib.util
 import os
 import sys
-from typing import Any, Dict, List
+from typing import Any
 
 # Owner: platform-ops
+
 
 class EnvironmentPreflightService:
     """Hermetic validation of stack and dependencies."""
@@ -14,18 +15,16 @@ class EnvironmentPreflightService:
 
     async def check_port(self, host: str, port: int, timeout: float = 1.0) -> bool:
         try:
-            _, writer = await asyncio.wait_for(
-                asyncio.open_connection(host, port), timeout=timeout
-            )
+            _, writer = await asyncio.wait_for(asyncio.open_connection(host, port), timeout=timeout)
             writer.close()
             await writer.wait_closed()
             return True
         except OSError:
             return False
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return False
 
-    async def run_full_preflight(self) -> Dict[str, Any]:
+    async def run_full_preflight(self) -> dict[str, Any]:
         """Runs all environment checks."""
         ports = await self._check_required_ports()
         dependencies = await self._check_python_deps()
@@ -35,10 +34,10 @@ class EnvironmentPreflightService:
             "ports": ports,
             "dependencies": dependencies,
             "env_files": env_files,
-            "status": "PASS"
+            "status": "PASS",
         }
 
-        failed_sections: List[str] = []
+        failed_sections: list[str] = []
         if any(v == "FAIL" for v in ports.values()):
             failed_sections.append("ports")
         if any(v == "FAIL" for v in dependencies.values()):
@@ -52,12 +51,8 @@ class EnvironmentPreflightService:
 
         return self.results
 
-    async def _check_required_ports(self) -> Dict[str, str]:
-        ports = {
-            "postgres": 5432,
-            "redis": 6379,
-            "api": 8000
-        }
+    async def _check_required_ports(self) -> dict[str, str]:
+        ports = {"postgres": 5432, "redis": 6379, "api": 8000}
         res = {}
         for name, port in ports.items():
             # In CI or local dev, we check localhost
@@ -65,19 +60,20 @@ class EnvironmentPreflightService:
             res[name] = "PASS" if reachable else "FAIL"
         return res
 
-    async def _check_python_deps(self) -> Dict[str, str]:
+    async def _check_python_deps(self) -> dict[str, str]:
         required = ["fastapi", "sqlalchemy", "pydantic", "alembic"]
         res = {}
         for dep in required:
             res[dep] = "PASS" if importlib.util.find_spec(dep) else "FAIL"
         return res
 
-    def _check_env_files(self) -> Dict[str, str]:
+    def _check_env_files(self) -> dict[str, str]:
         files = [".env", ".env.example"]
         res = {}
         for f in files:
             res[f] = "PASS" if os.path.exists(f) else "FAIL"
         return res
+
 
 if __name__ == "__main__":
     service = EnvironmentPreflightService()

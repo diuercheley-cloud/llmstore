@@ -359,6 +359,22 @@
         color: var(--ink);
       }
 
+      .api-output {
+        display: none;
+        margin-top: 18px;
+        max-height: 420px;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        border-radius: 18px;
+        padding: 18px 20px;
+        background: #181512;
+        color: #f5f1e8;
+        font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      .api-output.visible { display: block; }
+
       footer {
         display: flex;
         justify-content: space-between;
@@ -492,6 +508,17 @@
       </section>
 
       <section class="section">
+        <div class="section-header">
+          <div>
+            <h2>Backend operacional</h2>
+            <p>Diagnósticos e contratos de leitura expostos pelo backend, visualizados diretamente no Hub.</p>
+          </div>
+        </div>
+        <div id="backend-grid" class="grid"></div>
+        <pre id="api-output" class="api-output" aria-live="polite"></pre>
+      </section>
+
+      <section class="section">
         <div class="notice">
           <strong>Observação:</strong> páginas como Admin, Admin Lab, Provider Settings, Monitoring,
           Portal do Cliente e Pocket TTS seguem com os mesmos mecanismos de autenticação e disponibilidade
@@ -531,7 +558,13 @@
           { title: "Portal Invoices", href: "/invoices.html", icon: "IV", access: "protected", route: "/invoices.html" },
           { title: "Portal Wallet", href: "/wallet.html", icon: "WL", access: "protected", route: "/wallet.html" },
           { title: "Portal RAG", href: "/rag.html", icon: "RG", access: "protected", route: "/rag.html" },
-          { title: "Portal Playground", href: "/playground.html", icon: "PG", access: "protected", route: "/playground.html" }
+          { title: "Portal Playground", href: "/playground.html", icon: "PG", access: "protected", route: "/playground.html" },
+          { title: "Portal Models", href: "/models.html", icon: "MD", access: "protected", route: "/models.html" },
+          { title: "Portal Plans", href: "/plans.html", icon: "PL", access: "protected", route: "/plans.html" },
+          { title: "Portal Trust", href: "/trust.html", icon: "TR", access: "protected", route: "/trust.html" },
+          { title: "Portal Audit", href: "/audit.html", icon: "AU", access: "protected", route: "/audit.html" },
+          { title: "Portal Disputes", href: "/disputes.html", icon: "DS", access: "protected", route: "/disputes.html" },
+          { title: "Portal Examples", href: "/examples.html", icon: "PX", access: "protected", route: "/examples.html" }
         ],
         ops: [
           { title: "Admin", href: "/admin-dashboard", icon: "AD", access: "protected", route: "/admin-dashboard" },
@@ -543,6 +576,16 @@
           { title: "Provider Settings", href: "/provider-settings", icon: "PS", access: "protected", route: "/provider-settings" },
           { title: "OpenRouter Test", href: "/static/openrouter-test/index.html", icon: "OR", access: "protected", route: "/static/openrouter-test/index.html" },
           { title: "Pocket TTS", href: "/pocket-tts", icon: "TT", access: "protected", route: "/pocket-tts" }
+        ],
+        backend: [
+          { title: "Health", href: "/health", icon: "HL", access: "public", route: "/health", api: true },
+          { title: "Readiness", href: "/ready", icon: "RD", access: "public", route: "/ready", api: true },
+          { title: "System Status", href: "/status", icon: "ST", access: "public", route: "/status", api: true },
+          { title: "System Profile", href: "/api/system/profile", icon: "SP", access: "public", route: "/api/system/profile", api: true },
+          { title: "Backend Capabilities", href: "/api/backends/capabilities", icon: "BC", access: "public", route: "/api/backends/capabilities", api: true },
+          { title: "Public Capabilities API", href: "/public/capabilities", icon: "PC", access: "public", route: "/public/capabilities", api: true },
+          { title: "OpenAPI", href: "/openapi.json", icon: "OA", access: "public", route: "/openapi.json", api: true },
+          { title: "Prometheus Metrics", href: "/metrics", icon: "PM", access: "public", route: "/metrics" }
         ]
       };
 
@@ -571,11 +614,25 @@
         "Portal Wallet": "Atalho direto para saldo, recarga e movimentações da wallet.",
         "Portal RAG": "Atalho direto para documentos e consultas de RAG no portal do cliente.",
         "Portal Playground": "Atalho direto para testes interativos de prompts e modelos no portal.",
+        "Portal Models": "Catálogo de modelos disponíveis para o tenant e seus metadados.",
+        "Portal Plans": "Planos comerciais e limites disponíveis no portal do cliente.",
+        "Portal Trust": "Postura de confiança, atestações e integridade dos serviços consumidos.",
+        "Portal Audit": "Eventos e trilha de auditoria visíveis para o tenant.",
+        "Portal Disputes": "Gestão de contestações financeiras e acompanhamento de resolução.",
+        "Portal Examples": "Exemplos de integração orientados ao contexto do portal do cliente.",
         "Tests Landing": "Landing operacional de testes e validações auxiliares servida pelo backend.",
         "Monitoring": "Observabilidade do sistema com métricas e indicadores de saúde.",
         "Provider Settings": "Gestão visual de providers, configuração e estado da camada de inferência.",
         "OpenRouter Test": "Página utilitária para testes específicos de integração com OpenRouter.",
-        "Pocket TTS": "Interface da camada local de síntese de voz integrada ao ambiente."
+        "Pocket TTS": "Interface da camada local de síntese de voz integrada ao ambiente.",
+        "Health": "Verificação básica de vida da API e dependências essenciais.",
+        "Readiness": "Indica se o backend está pronto para receber tráfego.",
+        "System Status": "Resumo operacional público dos componentes da plataforma.",
+        "System Profile": "Perfil ativo, modo de implantação e postura de capacidades.",
+        "Backend Capabilities": "Capacidades reais e saúde reportadas pelos backends de inferência.",
+        "Public Capabilities API": "Contrato público das funcionalidades suportadas pela instalação.",
+        "OpenAPI": "Especificação completa dos endpoints expostos pelo backend.",
+        "Prometheus Metrics": "Métricas brutas para observabilidade e integração com Prometheus."
       };
 
       function badgeLabel(access) {
@@ -586,6 +643,7 @@
         const card = document.createElement("a");
         card.className = "card";
         card.href = item.href;
+        if (item.api) card.addEventListener("click", showApiResponse);
         card.innerHTML = `
           <div class="card-top">
             <div class="card-icon">${item.icon}</div>
@@ -612,19 +670,38 @@
       mount("new", "new-grid");
       mount("portal", "portal-grid");
       mount("ops", "ops-grid");
+      mount("backend", "backend-grid");
       document.getElementById("year").textContent = new Date().getFullYear();
+
+      async function showApiResponse(event) {
+        event.preventDefault();
+        const output = document.getElementById("api-output");
+        output.classList.add("visible");
+        output.textContent = `Carregando ${event.currentTarget.href}...`;
+        output.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        try {
+          const response = await fetch(event.currentTarget.href, { cache: "no-cache" });
+          const contentType = response.headers.get("content-type") || "";
+          const payload = contentType.includes("json")
+            ? JSON.stringify(await response.json(), null, 2)
+            : await response.text();
+          output.textContent = `${response.status} ${response.statusText}\n\n${payload}`;
+        } catch (error) {
+          output.textContent = `Falha ao consultar o backend: ${error.message}`;
+        }
+      }
 
       async function probeRoute(item) {
         try {
           const response = await fetch(item.href, { method: "GET", cache: "no-cache" });
-          return response.ok;
+          return response.status < 500;
         } catch (_) {
           return false;
         }
       }
 
       async function hydrateHubSignals() {
-        const allItems = [...groups.public, ...groups.new, ...groups.portal, ...groups.ops];
+        const allItems = [...groups.public, ...groups.new, ...groups.portal, ...groups.ops, ...groups.backend];
         document.getElementById("hubRouteCount").textContent = `${allItems.length} áreas`;
 
         const [statusResp, plansResp, capabilitiesResp, harnessResp] = await Promise.allSettled([

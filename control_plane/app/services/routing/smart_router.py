@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -66,7 +66,15 @@ _last_decisions: list[dict[str, Any]] = []
 
 def _sanitize_reason(reason: str) -> str:
     sanitized = reason.replace("\n", " ").replace("\r", " ")
-    sensitive_keywords = ["api_key", "api-key", "apikey", "secret", "token", "password", "authorization"]
+    sensitive_keywords = [
+        "api_key",
+        "api-key",
+        "apikey",
+        "secret",
+        "token",
+        "password",
+        "authorization",
+    ]
     for kw in sensitive_keywords:
         sanitized = sanitized.replace(kw, "***")
     return sanitized[:500]
@@ -138,6 +146,7 @@ def _estimate_cost(provider_id: str, prompt_tokens: int, max_output_tokens: int)
 def _provider_health(provider_id: str) -> str:
     try:
         from app.services.providers.registry import get_provider
+
         prov = get_provider(provider_id)
         if prov is None:
             return "unregistered"
@@ -146,6 +155,7 @@ def _provider_health(provider_id: str) -> str:
         if not prov.configured:
             return "unconfigured"
         import asyncio
+
         try:
             loop = asyncio.get_running_loop()
             if loop.is_running():
@@ -167,9 +177,7 @@ class SmartRouter(RoutingContract):
 
     def capabilities(self) -> RoutingCapabilities:
         return RoutingCapabilities(
-            dynamic_strategies=True,
-            cost_aware_routing=True,
-            multi_region=False
+            dynamic_strategies=True, cost_aware_routing=True, multi_region=False
         )
 
     def validate_contract(self) -> bool:
@@ -179,7 +187,9 @@ class SmartRouter(RoutingContract):
     def default_strategy(self) -> str:
         return self.policy.get("default_strategy", "local_first")
 
-    def route(self, inp: SmartRouterInput, dynamic_configs: list[Any] | None = None) -> RoutingDecision:
+    def route(
+        self, inp: SmartRouterInput, dynamic_configs: list[Any] | None = None
+    ) -> RoutingDecision:
         warnings: list[str] = []
         strategies_considered: list[str] = [
             inp.strategy.value if isinstance(inp.strategy, RoutingStrategy) else str(inp.strategy)
@@ -201,14 +211,34 @@ class SmartRouter(RoutingContract):
             warnings.append("cloud_allowed=true but cloud providers globally disabled")
 
         strat_val = (
-            inp.strategy.value if isinstance(inp.strategy, RoutingStrategy)
-            else str(inp.strategy) if inp.strategy else "local_first"
+            inp.strategy.value
+            if isinstance(inp.strategy, RoutingStrategy)
+            else str(inp.strategy)
+            if inp.strategy
+            else "local_first"
         )
 
-        for pid in ["local", "vllm", "lmstudio", "openai", "anthropic", "deepseek", "openrouter", "mock"]:
+        for pid in [
+            "local",
+            "vllm",
+            "lmstudio",
+            "openai",
+            "anthropic",
+            "deepseek",
+            "openrouter",
+            "mock",
+        ]:
             provider_states[pid] = _provider_health(pid)
 
-        result = self._apply_strategy(inp, strategy, cloud_allowed, cloud_enabled, provider_states, warnings, dynamic_configs=dynamic_configs)
+        result = self._apply_strategy(
+            inp,
+            strategy,
+            cloud_allowed,
+            cloud_enabled,
+            provider_states,
+            warnings,
+            dynamic_configs=dynamic_configs,
+        )
 
         selected_provider = result["selected_provider"]
         selected_model = result["selected_model"]
@@ -218,7 +248,9 @@ class SmartRouter(RoutingContract):
         cloud_used = is_cloud_provider(selected_provider)
 
         if cloud_used and inp.cloud_allowed is False:
-            warnings.append("cloud provider selected despite cloud_allowed=false; check policy override")
+            warnings.append(
+                "cloud provider selected despite cloud_allowed=false; check policy override"
+            )
 
         cost = _estimate_cost(selected_provider, inp.prompt_estimated_tokens, inp.max_output_tokens)
         if cost > self.policy.get("max_provider_cost_per_request_brl", 0.50) and cloud_used:
@@ -277,15 +309,25 @@ class SmartRouter(RoutingContract):
         if strategy == RoutingStrategy.local_first:
             return self._strategy_local_first(inp, cloud_allowed, provider_states, warnings)
         elif strategy == RoutingStrategy.lowest_cost:
-            return self._strategy_lowest_cost(inp, cloud_allowed, cloud_enabled, provider_states, warnings)
+            return self._strategy_lowest_cost(
+                inp, cloud_allowed, cloud_enabled, provider_states, warnings
+            )
         elif strategy == RoutingStrategy.premium_quality:
-            return self._strategy_premium(inp, cloud_allowed, cloud_enabled, provider_states, warnings)
+            return self._strategy_premium(
+                inp, cloud_allowed, cloud_enabled, provider_states, warnings
+            )
         elif strategy == RoutingStrategy.coding:
-            return self._strategy_coding(inp, cloud_allowed, cloud_enabled, provider_states, warnings)
+            return self._strategy_coding(
+                inp, cloud_allowed, cloud_enabled, provider_states, warnings
+            )
         elif strategy == RoutingStrategy.commercial_profit:
-            return self._strategy_commercial_profit(inp, cloud_allowed, provider_states, warnings, dynamic_configs=dynamic_configs)
+            return self._strategy_commercial_profit(
+                inp, cloud_allowed, provider_states, warnings, dynamic_configs=dynamic_configs
+            )
         elif strategy == RoutingStrategy.embeddings_optimized:
-            return self._strategy_embeddings(inp, cloud_allowed, cloud_enabled, provider_states, warnings)
+            return self._strategy_embeddings(
+                inp, cloud_allowed, cloud_enabled, provider_states, warnings
+            )
         elif strategy == RoutingStrategy.rag_optimized:
             return self._strategy_rag(inp, cloud_allowed, cloud_enabled, provider_states, warnings)
         elif strategy == RoutingStrategy.fallback_only:
@@ -364,7 +406,10 @@ class SmartRouter(RoutingContract):
         fallback_chain: list[str] = []
         preferred = self.policy.get("premium_provider_preference", PREMIUM_PROVIDER_PREFERENCE)
         if cloud_allowed and cloud_enabled:
-            if provider_states.get(preferred) in ("healthy", "unknown_async") and _is_provider_available(preferred):
+            if provider_states.get(preferred) in (
+                "healthy",
+                "unknown_async",
+            ) and _is_provider_available(preferred):
                 fallback_chain.append(preferred)
                 return {
                     "selected_provider": preferred,
@@ -379,7 +424,10 @@ class SmartRouter(RoutingContract):
                     continue
                 if not cloud_allowed and pid in CLOUD_PROVIDERS:
                     continue
-                if provider_states.get(pid) in ("healthy", "unknown_async") and _is_provider_available(pid):
+                if provider_states.get(pid) in (
+                    "healthy",
+                    "unknown_async",
+                ) and _is_provider_available(pid):
                     fallback_chain.append(pid)
                     return {
                         "selected_provider": pid,
@@ -403,7 +451,10 @@ class SmartRouter(RoutingContract):
         fallback_chain: list[str] = []
         preferred = self.policy.get("coding_provider_preference", CODING_PROVIDER_PREFERENCE)
         if cloud_allowed and cloud_enabled:
-            if provider_states.get(preferred) in ("healthy", "unknown_async") and _is_provider_available(preferred):
+            if provider_states.get(preferred) in (
+                "healthy",
+                "unknown_async",
+            ) and _is_provider_available(preferred):
                 fallback_chain.append(preferred)
                 return {
                     "selected_provider": preferred,
@@ -426,11 +477,20 @@ class SmartRouter(RoutingContract):
     ) -> dict[str, Any]:
         from app.schemas.routing import TaskType
         from app.services.routing.commercial_ranker import rank_commercial_routes
-        
+
         candidates = []
-        for pid in ["local", "vllm", "lmstudio", "openai", "anthropic", "deepseek", "openrouter", "mock"]:
-             candidates.append({"provider": pid})
-             
+        for pid in [
+            "local",
+            "vllm",
+            "lmstudio",
+            "openai",
+            "anthropic",
+            "deepseek",
+            "openrouter",
+            "mock",
+        ]:
+            candidates.append({"provider": pid})
+
         ranked, rejected, guardrail_decisions = rank_commercial_routes(
             candidates=candidates,
             client_plan=inp.plan or "basic",
@@ -443,7 +503,7 @@ class SmartRouter(RoutingContract):
             correlation_id=inp.correlation_id,
             client_id=str(inp.client_id) if inp.client_id else None,
         )
-        
+
         if ranked:
             top = ranked[0]
             return {
@@ -463,8 +523,10 @@ class SmartRouter(RoutingContract):
                 "commercial_config_id": top.commercial_config_id,
                 "commercial_config_variant": top.commercial_config_variant,
             }
-            
-        warnings.append("commercial_profit: no profitable or permitted routes found; using local fallback")
+
+        warnings.append(
+            "commercial_profit: no profitable or permitted routes found; using local fallback"
+        )
         res = self._strategy_local_first(inp, cloud_allowed, provider_states, warnings)
         res["ranked_routes"] = ranked
         res["rejected_routes"] = rejected
@@ -483,7 +545,9 @@ class SmartRouter(RoutingContract):
         for pid in ["local", "vllm", "openai", "lmstudio", "mock"]:
             if not cloud_allowed and pid in CLOUD_PROVIDERS:
                 continue
-            if provider_states.get(pid) in ("healthy", "unknown_async") and _is_provider_available(pid):
+            if provider_states.get(pid) in ("healthy", "unknown_async") and _is_provider_available(
+                pid
+            ):
                 fallback_chain.append(pid)
                 return {
                     "selected_provider": pid,
@@ -514,7 +578,9 @@ class SmartRouter(RoutingContract):
         for pid in ["local", "vllm", "openai", "anthropic", "lmstudio", "mock"]:
             if not cloud_allowed and pid in CLOUD_PROVIDERS:
                 continue
-            if provider_states.get(pid) in ("healthy", "unknown_async") and _is_provider_available(pid):
+            if provider_states.get(pid) in ("healthy", "unknown_async") and _is_provider_available(
+                pid
+            ):
                 fallback_chain.append(pid)
                 return {
                     "selected_provider": pid,
@@ -570,7 +636,7 @@ class SmartRouter(RoutingContract):
     ) -> None:
         entry: dict[str, Any] = {
             "id": decision.id or str(uuid4()),
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "requested_model": inp.requested_model or "unspecified",
             "resolved_model": decision.selected_model,
             "selected_provider": decision.selected_provider,
@@ -580,7 +646,9 @@ class SmartRouter(RoutingContract):
             "cloud_used": decision.cloud_used,
             "estimated_cost_brl": decision.estimated_cost_brl,
             "sanitized_reason": _sanitize_reason(decision.reason),
-            "endpoint_type": inp.endpoint_type.value if isinstance(inp.endpoint_type, EndpointType) else str(inp.endpoint_type),
+            "endpoint_type": inp.endpoint_type.value
+            if isinstance(inp.endpoint_type, EndpointType)
+            else str(inp.endpoint_type),
             "strategies_considered": strategies_considered,
             "provider_states": dict(provider_states),
         }
@@ -588,9 +656,16 @@ class SmartRouter(RoutingContract):
         _last_decisions.append(entry)
         if len(_last_decisions) > 1000:
             _last_decisions.pop(0)
-        logger.debug("Routing decision: provider=%s model=%s strategy=%s", decision.selected_provider, decision.selected_model, decision.policy_applied)
+        logger.debug(
+            "Routing decision: provider=%s model=%s strategy=%s",
+            decision.selected_provider,
+            decision.selected_model,
+            decision.policy_applied,
+        )
 
-    def simulate(self, inp: SmartRouterInput, dynamic_configs: list[Any] | None = None) -> tuple[RoutingDecision, list[str], dict[str, str], dict[str, object]]:
+    def simulate(
+        self, inp: SmartRouterInput, dynamic_configs: list[Any] | None = None
+    ) -> tuple[RoutingDecision, list[str], dict[str, str], dict[str, object]]:
         strategies_to_try = [
             RoutingStrategy.local_first,
             RoutingStrategy.lowest_cost,
@@ -617,10 +692,28 @@ class SmartRouter(RoutingContract):
             "fallback_order": self.policy.get("fallback_order"),
         }
 
-        primary_strategy = inp.strategy if isinstance(inp.strategy, RoutingStrategy) else RoutingStrategy.local_first
-        primary_decision = next((d for s, d in all_results if s == primary_strategy.value), all_results[0][1])
+        primary_strategy = (
+            inp.strategy
+            if isinstance(inp.strategy, RoutingStrategy)
+            else RoutingStrategy.local_first
+        )
+        primary_decision = next(
+            (d for s, d in all_results if s == primary_strategy.value), all_results[0][1]
+        )
         strategies_considered = [s for s, _ in all_results]
-        provider_states = {pid: _provider_health(pid) for pid in ["local", "vllm", "lmstudio", "openai", "anthropic", "deepseek", "openrouter", "mock"]}
+        provider_states = {
+            pid: _provider_health(pid)
+            for pid in [
+                "local",
+                "vllm",
+                "lmstudio",
+                "openai",
+                "anthropic",
+                "deepseek",
+                "openrouter",
+                "mock",
+            ]
+        }
 
         return primary_decision, strategies_considered, provider_states, config_snapshot
 

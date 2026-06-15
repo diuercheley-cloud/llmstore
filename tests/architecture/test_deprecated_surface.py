@@ -1,6 +1,7 @@
 import subprocess
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 def test_deprecated_surface_validation():
@@ -19,19 +20,17 @@ def test_deprecated_surface_validation():
 
     if result.returncode != 0:
         print(result.stdout)
-        pytest.fail(
-            f"Deprecated surface validation failed:\n{result.stdout}"
-        )
+        pytest.fail(f"Deprecated surface validation failed:\n{result.stdout}")
 
 
 def test_deprecated_surface_inventory_exists():
     """
     Ensures the deprecated surface inventory file exists and has the AUTO-GENERATED header.
     """
-    inventory_path = Path(__file__).parent.parent.parent / "docs/generated/deprecated_surface_inventory.md"
-    assert inventory_path.exists(), (
-        "docs/generated/deprecated_surface_inventory.md not found"
+    inventory_path = (
+        Path(__file__).parent.parent.parent / "docs/generated/deprecated_surface_inventory.md"
     )
+    assert inventory_path.exists(), "docs/generated/deprecated_surface_inventory.md not found"
 
     content = inventory_path.read_text(encoding="utf-8")
     assert "AUTO-GENERATED" in content, (
@@ -62,7 +61,11 @@ def test_api_surface_deprecated_have_deadlines():
         method = entry.get("method", "unknown")
         ref = f"{method} {endpoint}"
 
-        if not entry.get("sunset_date") and not entry.get("removal_date") and not entry.get("removal_version"):
+        if (
+            not entry.get("sunset_date")
+            and not entry.get("removal_date")
+            and not entry.get("removal_version")
+        ):
             violations.append(f"{ref} missing removal deadline")
 
         if not entry.get("owner"):
@@ -71,8 +74,8 @@ def test_api_surface_deprecated_have_deadlines():
         if not entry.get("replacement") and not entry.get("justification"):
             violations.append(f"{ref} missing replacement or justification")
 
-    assert not violations, (
-        f"Deprecated endpoint violations:\n" + "\n".join(f"  - {v}" for v in violations)
+    assert not violations, "Deprecated endpoint violations:\n" + "\n".join(
+        f"  - {v}" for v in violations
     )
 
 
@@ -100,6 +103,6 @@ def test_feature_flags_deprecated_have_remove_after():
         if not entry.get("owner"):
             violations.append(f"Flag '{name}' missing owner")
 
-    assert not violations, (
-        "Deprecated feature flag violations:\n" + "\n".join(f"  - {v}" for v in violations)
+    assert not violations, "Deprecated feature flag violations:\n" + "\n".join(
+        f"  - {v}" for v in violations
     )

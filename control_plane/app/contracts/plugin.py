@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from app.contracts.base import BaseContract, ContractCapability
 from app.contracts.plugin_types import ALLOWED_PERMISSIONS, PLUGIN_TYPES
@@ -14,48 +14,55 @@ class ManifestV1(BaseModel):
     license: str = "Proprietary"
     entrypoint: str = Field(..., min_length=1)
     plugin_type: str = Field(...)
-    permissions: List[str] = []
-    checksums: Dict[str, str] = Field(default_factory=dict)
-    signature: Optional[str] = None
-    certificate_chain: Optional[str] = None
+    permissions: list[str] = []
+    checksums: dict[str, str] = Field(default_factory=dict)
+    signature: str | None = None
+    certificate_chain: str | None = None
     minimum_platform_version: str = "1.0.0"
-    compatibility: Dict[str, List[str]] = Field(default_factory=dict)
+    compatibility: dict[str, list[str]] = Field(default_factory=dict)
 
     @field_validator("plugin_type")
     @classmethod
     def validate_plugin_type(cls, v: str) -> str:
         if v not in PLUGIN_TYPES:
-            raise ValueError(f"Invalid plugin_type '{v}'. Must be one of: {', '.join(sorted(PLUGIN_TYPES))}")
+            raise ValueError(
+                f"Invalid plugin_type '{v}'. Must be one of: {', '.join(sorted(PLUGIN_TYPES))}"
+            )
         return v
 
     @field_validator("permissions")
     @classmethod
-    def validate_permissions(cls, v: List[str]) -> List[str]:
+    def validate_permissions(cls, v: list[str]) -> list[str]:
         invalid = set(v) - ALLOWED_PERMISSIONS
         if invalid:
-            raise ValueError(f"Invalid permissions: {invalid}. Allowed: {', '.join(sorted(ALLOWED_PERMISSIONS))}")
+            raise ValueError(
+                f"Invalid permissions: {invalid}. Allowed: {', '.join(sorted(ALLOWED_PERMISSIONS))}"
+            )
         return v
+
 
 class PluginManifest(BaseModel):
     name: str
     version: str
     entrypoint: str
-    permissions: List[str]
+    permissions: list[str]
     sha256: str
-    signature: Optional[str] = None
-    certificate_chain: Optional[str] = None
+    signature: str | None = None
+    certificate_chain: str | None = None
+
 
 class PluginCapabilities(ContractCapability):
     sandbox_execution: bool = False
     network_access: bool = False
     data_access: bool = False
 
+
 @runtime_checkable
 class PluginContract(BaseContract, Protocol):
     """
     Contract for Platform Plugins.
     """
-    
+
     async def load_plugin(self, manifest: PluginManifest, plugin_binary: bytes) -> Any:
         """Validates and registers a new plugin."""
         ...

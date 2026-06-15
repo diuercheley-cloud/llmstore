@@ -8,5 +8,7 @@ def verify_metric_replay(payload: dict, expected_hash: str) -> dict:
         payload["metric_scope"],
         payload["metric_value"],
     )
-    return {"verification_status": "passed" if actual_hash == expected_hash else "failed", "replay_safe": actual_hash == expected_hash}
-
+    return {
+        "verification_status": "passed" if actual_hash == expected_hash else "failed",
+        "replay_safe": actual_hash == expected_hash,
+    }

@@ -22,7 +22,7 @@ export const ApiKeys = () => {
   }, []);
 
   useEffect(() => {
-    loadKeys();
+    void Promise.resolve().then(() => loadKeys());
   }, [loadKeys]);
 
   const handleCreate = async () => {

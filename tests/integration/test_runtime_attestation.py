@@ -58,6 +58,7 @@ async def test_verify_expired_attestation(session: AsyncSession):
     from datetime import timedelta
 
     from app.core.time import utc_now
+
     record = await create_runtime_attestation(session, cluster_id="cluster-c")
     record.expires_at = utc_now() - timedelta(seconds=1)
     await session.flush()
@@ -169,6 +170,12 @@ async def test_enclave_placeholders():
 
 @pytest.mark.asyncio
 async def test_collect_enclave_evidence():
-    for enclave in ("tpm_placeholder", "sev_placeholder", "sgx_placeholder", "vbs_placeholder", "software_attested"):
+    for enclave in (
+        "tpm_placeholder",
+        "sev_placeholder",
+        "sgx_placeholder",
+        "vbs_placeholder",
+        "software_attested",
+    ):
         evidence = collect_enclave_evidence(enclave)
         assert evidence["enclave"] == enclave

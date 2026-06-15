@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class CanaryController:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -25,13 +26,21 @@ class CanaryController:
         if not experiment or experiment.status != "running":
             return
 
-        variants = (await self.db.execute(
-            select(ModelExperimentVariant).where(ModelExperimentVariant.experiment_id == experiment_id)
-        )).scalars().all()
-        
+        variants = (
+            (
+                await self.db.execute(
+                    select(ModelExperimentVariant).where(
+                        ModelExperimentVariant.experiment_id == experiment_id
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+
         canary_variant = next((v for v in variants if not v.is_control), None)
         control_variant = next((v for v in variants if v.is_control), None)
-        
+
         if canary_variant and control_variant:
             new_canary_weight = min(canary_variant.traffic_weight + increment, 100.0)
             canary_variant.traffic_weight = new_canary_weight

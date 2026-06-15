@@ -22,11 +22,7 @@ class PluginLoader(PluginContract):
         self.allowed_permissions = {"read_data", "write_data", "network_out", "execute_sandbox"}
 
     def capabilities(self) -> PluginCapabilities:
-        return PluginCapabilities(
-            sandbox_execution=True,
-            network_access=True,
-            data_access=True
-        )
+        return PluginCapabilities(sandbox_execution=True, network_access=True, data_access=True)
 
     def validate_contract(self) -> bool:
         return True
@@ -43,10 +39,7 @@ class PluginLoader(PluginContract):
 
     async def _log_security_event(self, event_type: str, title: str, detail: dict):
         event = SecurityEvent(
-            event_type=event_type,
-            title=title,
-            detail_json=json.dumps(detail),
-            severity="high"
+            event_type=event_type, title=title, detail_json=json.dumps(detail), severity="high"
         )
         self.db.add(event)
         await self.db.commit()
@@ -56,20 +49,28 @@ class PluginLoader(PluginContract):
         Loads a plugin by validating its manifest, checksum, and signature.
         """
         name = manifest.name
-        
+
         # Validate permissions
         permissions = set(manifest.permissions)
         invalid_perms = permissions - self.allowed_permissions
         if invalid_perms:
             error_msg = f"Invalid permissions requested: {invalid_perms}"
-            await self._log_security_event("plugin_load_error", f"Plugin {name} requested invalid permissions", {"invalid_perms": list(invalid_perms)})
+            await self._log_security_event(
+                "plugin_load_error",
+                f"Plugin {name} requested invalid permissions",
+                {"invalid_perms": list(invalid_perms)},
+            )
             raise ValueError(error_msg)
 
         # Validate checksum
         actual_sha256 = hashlib.sha256(plugin_binary).hexdigest()
         if actual_sha256 != manifest.sha256:
             error_msg = f"Checksum mismatch for plugin {name}"
-            await self._log_security_event("plugin_load_error", error_msg, {"expected": manifest.sha256, "actual": actual_sha256})
+            await self._log_security_event(
+                "plugin_load_error",
+                error_msg,
+                {"expected": manifest.sha256, "actual": actual_sha256},
+            )
             raise ValueError(error_msg)
 
         # Validate signature
@@ -85,7 +86,9 @@ class PluginLoader(PluginContract):
             else:
                 # Assuming signature is verifiable by PKIService root CA (or similar logic)
                 # In a real scenario, the signature covers the binary + manifest hash
-                is_valid = await self.pki_service.verify_certificate(manifest.certificate_chain or "")
+                is_valid = await self.pki_service.verify_certificate(
+                    manifest.certificate_chain or ""
+                )
                 if not is_valid:
                     error_msg = f"Invalid certificate chain for plugin {name}"
                     await self._log_security_event("plugin_load_error", error_msg, {})
@@ -100,7 +103,7 @@ class PluginLoader(PluginContract):
         # Register plugin
         result = await self.db.execute(select(PluginRegistry).where(PluginRegistry.name == name))
         existing_plugin = result.scalars().first()
-        
+
         if existing_plugin:
             existing_plugin.version = manifest.version
             existing_plugin.entrypoint = manifest.entrypoint
@@ -118,7 +121,7 @@ class PluginLoader(PluginContract):
                 permissions_json=json.dumps(manifest.permissions),
                 sha256=actual_sha256,
                 signature=signature,
-                is_active=True
+                is_active=True,
             )
             self.db.add(plugin_record)
 

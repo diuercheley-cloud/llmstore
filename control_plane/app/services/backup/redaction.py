@@ -1,6 +1,5 @@
-import os
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 
 ALLOWLIST = {
     "PORT",
@@ -20,10 +19,11 @@ SENSITIVE_KEYWORDS = {
     "credential",
 }
 
+
 class ConfigRedactor:
     def __init__(self):
-        self.redacted_keys: List[str] = []
-        self.excluded_files: List[str] = []
+        self.redacted_keys: list[str] = []
+        self.excluded_files: list[str] = []
 
     def _should_redact(self, key: str) -> bool:
         key_lower = key.lower()
@@ -69,6 +69,7 @@ class ConfigRedactor:
 
     def redact_file_content(self, path: Path, content: str) -> str:
         import yaml
+
         if path.suffix in (".yaml", ".yml"):
             try:
                 parsed = yaml.safe_load(content)
@@ -79,5 +80,5 @@ class ConfigRedactor:
                 pass
         return self.redact_env_content(content)
 
-    def get_redacted_keys(self) -> List[str]:
+    def get_redacted_keys(self) -> list[str]:
         return list(set(self.redacted_keys))

@@ -25,7 +25,7 @@ import uuid
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,10 @@ SYNTHETIC_DATASET = {
     },
     "context_compression": {
         "long_history": [
-            {"role": "user", "content": f"Message {i}: this is synthetic filler context to build up token pressure."}
+            {
+                "role": "user",
+                "content": f"Message {i}: this is synthetic filler context to build up token pressure.",
+            }
             for i in range(20)
         ],
         "prompt": "What was the original goal?",
@@ -86,7 +89,13 @@ SYNTHETIC_DATASET = {
     },
 }
 
-ALLOWED_PROVIDERS = ["mock", "local_gateway", "openrouter", "openai_compatible_custom", "local_llama_cpp"]
+ALLOWED_PROVIDERS = [
+    "mock",
+    "local_gateway",
+    "openrouter",
+    "openai_compatible_custom",
+    "local_llama_cpp",
+]
 
 # ---------------------------------------------------------------------------
 # Enums / Status
@@ -119,7 +128,7 @@ class ProviderConfig:
     model: str
     cost_tier: ProviderCostTier = ProviderCostTier.FREE
     timeout_seconds: int = 30
-    headers: Dict[str, str] = field(default_factory=dict)
+    headers: dict[str, str] = field(default_factory=dict)
     weight: int = 10
 
 
@@ -135,14 +144,14 @@ class ValidationResult:
     cost_brl: float = 0.0
     error_message: str = ""
     retries: int = 0
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class ProviderReport:
     provider: str
     status: str
-    results: Dict[str, ValidationResult]
+    results: dict[str, ValidationResult]
     total_duration_ms: float = 0.0
     total_tokens: int = 0
     total_cost_brl: float = 0.0
@@ -153,7 +162,8 @@ class ProviderReport:
 # Provider configurations
 # ---------------------------------------------------------------------------
 
-def _get_provider_configs() -> Dict[str, ProviderConfig]:
+
+def _get_provider_configs() -> dict[str, ProviderConfig]:
     return {
         "mock": ProviderConfig(
             name="mock",
@@ -165,11 +175,15 @@ def _get_provider_configs() -> Dict[str, ProviderConfig]:
         ),
         "local_gateway": ProviderConfig(
             name="local_gateway",
-            endpoint=os.environ.get("AGENT_LOCAL_GATEWAY_ENDPOINT", "http://localhost:8080/v1/chat/completions"),
+            endpoint=os.environ.get(
+                "AGENT_LOCAL_GATEWAY_ENDPOINT", "http://localhost:8080/v1/chat/completions"
+            ),
             api_key_env="",
             model=os.environ.get("AGENT_LOCAL_GATEWAY_MODEL", "local-model"),
             cost_tier=ProviderCostTier.FREE,
-            timeout_seconds=int(os.environ.get("AGENT_REAL_PROVIDER_VALIDATION_TIMEOUT_SECONDS", "30")),
+            timeout_seconds=int(
+                os.environ.get("AGENT_REAL_PROVIDER_VALIDATION_TIMEOUT_SECONDS", "30")
+            ),
         ),
         "openrouter": ProviderConfig(
             name="openrouter",
@@ -177,8 +191,13 @@ def _get_provider_configs() -> Dict[str, ProviderConfig]:
             api_key_env="OPENROUTER_API_KEY",
             model=os.environ.get("AGENT_OPENROUTER_MODEL", "openai/gpt-4o-mini"),
             cost_tier=ProviderCostTier.PAID,
-            timeout_seconds=int(os.environ.get("AGENT_REAL_PROVIDER_VALIDATION_TIMEOUT_SECONDS", "60")),
-            headers={"HTTP-Referer": "https://agentic-platform.local", "X-Title": "Agentic-Provider-Validation"},
+            timeout_seconds=int(
+                os.environ.get("AGENT_REAL_PROVIDER_VALIDATION_TIMEOUT_SECONDS", "60")
+            ),
+            headers={
+                "HTTP-Referer": "https://agentic-platform.local",
+                "X-Title": "Agentic-Provider-Validation",
+            },
         ),
         "openai_compatible_custom": ProviderConfig(
             name="openai_compatible_custom",
@@ -186,15 +205,21 @@ def _get_provider_configs() -> Dict[str, ProviderConfig]:
             api_key_env="AGENT_CUSTOM_OPENAI_API_KEY",
             model=os.environ.get("AGENT_CUSTOM_OPENAI_MODEL", "gpt-4o-mini"),
             cost_tier=ProviderCostTier.PAID,
-            timeout_seconds=int(os.environ.get("AGENT_REAL_PROVIDER_VALIDATION_TIMEOUT_SECONDS", "60")),
+            timeout_seconds=int(
+                os.environ.get("AGENT_REAL_PROVIDER_VALIDATION_TIMEOUT_SECONDS", "60")
+            ),
         ),
         "local_llama_cpp": ProviderConfig(
             name="local_llama_cpp",
-            endpoint=os.environ.get("AGENT_LOCAL_LLAMA_CPP_ENDPOINT", "http://localhost:8080/v1/chat/completions"),
+            endpoint=os.environ.get(
+                "AGENT_LOCAL_LLAMA_CPP_ENDPOINT", "http://localhost:8080/v1/chat/completions"
+            ),
             api_key_env="",
             model=os.environ.get("AGENT_LOCAL_LLAMA_CPP_MODEL", "llama-3.2-1b"),
             cost_tier=ProviderCostTier.FREE,
-            timeout_seconds=int(os.environ.get("AGENT_REAL_PROVIDER_VALIDATION_TIMEOUT_SECONDS", "30")),
+            timeout_seconds=int(
+                os.environ.get("AGENT_REAL_PROVIDER_VALIDATION_TIMEOUT_SECONDS", "30")
+            ),
         ),
     }
 
@@ -202,6 +227,7 @@ def _get_provider_configs() -> Dict[str, ProviderConfig]:
 # ---------------------------------------------------------------------------
 # Real provider client (HTTP)
 # ---------------------------------------------------------------------------
+
 
 class _ProviderClient:
     def __init__(self, config: ProviderConfig):
@@ -214,7 +240,12 @@ class _ProviderClient:
         key = os.environ.get(self.config.api_key_env, "")
         if key:
             masked = key[:4] + "****" + key[-4:] if len(key) > 8 else "****"
-            logger.info("Provider %s: using API key from %s (masked: %s)", self.config.name, self.config.api_key_env, masked)
+            logger.info(
+                "Provider %s: using API key from %s (masked: %s)",
+                self.config.name,
+                self.config.api_key_env,
+                masked,
+            )
         return key
 
     def _mask_api_key(self, value: str) -> str:
@@ -224,7 +255,7 @@ class _ProviderClient:
             return "****"
         return value[:4] + "****" + value[-4:]
 
-    def _build_headers(self) -> Dict[str, str]:
+    def _build_headers(self) -> dict[str, str]:
         headers = {
             "Content-Type": "application/json",
             **self.config.headers,
@@ -233,7 +264,9 @@ class _ProviderClient:
             headers["Authorization"] = f"Bearer {self._api_key}"
         return headers
 
-    def _build_payload(self, messages: List[Dict], tools: Optional[List] = None, response_format: Optional[Dict] = None) -> Dict:
+    def _build_payload(
+        self, messages: list[dict], tools: list | None = None, response_format: dict | None = None
+    ) -> dict:
         payload = {
             "model": self.config.model,
             "messages": messages,
@@ -250,11 +283,11 @@ class _ProviderClient:
 
     async def chat_completion(
         self,
-        messages: List[Dict],
-        tools: Optional[List] = None,
-        response_format: Optional[Dict] = None,
-        timeout: Optional[int] = None,
-    ) -> Dict[str, Any]:
+        messages: list[dict],
+        tools: list | None = None,
+        response_format: dict | None = None,
+        timeout: int | None = None,
+    ) -> dict[str, Any]:
         if self.config.name == "mock":
             return self._mock_response(messages, tools, response_format)
 
@@ -284,15 +317,23 @@ class _ProviderClient:
                         raise RuntimeError(f"Non-JSON response: {body[:200]}") from e
                     return data
                 elif resp.status == 401:
-                    raise PermissionError(f"Provider {self.config.name} returned 401 (check API key)")
+                    raise PermissionError(
+                        f"Provider {self.config.name} returned 401 (check API key)"
+                    )
                 elif resp.status == 429:
                     raise RuntimeError(f"Provider {self.config.name} rate limited (429)")
                 elif resp.status >= 500:
-                    raise ConnectionError(f"Provider {self.config.name} server error ({resp.status})")
+                    raise ConnectionError(
+                        f"Provider {self.config.name} server error ({resp.status})"
+                    )
                 else:
-                    raise RuntimeError(f"Provider {self.config.name} returned HTTP {resp.status}: {body[:200]}")
+                    raise RuntimeError(
+                        f"Provider {self.config.name} returned HTTP {resp.status}: {body[:200]}"
+                    )
 
-    def _mock_response(self, messages: List[Dict], tools: Optional[List] = None, response_format: Optional[Dict] = None) -> Dict[str, Any]:
+    def _mock_response(
+        self, messages: list[dict], tools: list | None = None, response_format: dict | None = None
+    ) -> dict[str, Any]:
         last_content = messages[-1]["content"] if messages else ""
 
         content = "ok"
@@ -352,6 +393,7 @@ class _ProviderClient:
 # Budget tracker
 # ---------------------------------------------------------------------------
 
+
 class _BudgetTracker:
     def __init__(self, max_brl: float):
         self.max_brl = max_brl
@@ -387,7 +429,7 @@ def _estimate_cost(prompt_tokens: int, completion_tokens: int, provider: str) ->
     return (prompt_tokens * p_rate) + (completion_tokens * c_rate)
 
 
-def _extract_usage(response: Dict) -> Tuple[int, int, int]:
+def _extract_usage(response: dict) -> tuple[int, int, int]:
     usage = response.get("usage", {})
     if isinstance(usage, dict):
         prompt = usage.get("prompt_tokens", 0)
@@ -397,7 +439,7 @@ def _extract_usage(response: Dict) -> Tuple[int, int, int]:
     return 0, 0, 0
 
 
-def _extract_content(response: Dict) -> str:
+def _extract_content(response: dict) -> str:
     choices = response.get("choices", [])
     if not choices:
         return ""
@@ -405,7 +447,7 @@ def _extract_content(response: Dict) -> str:
     return message.get("content", "") or ""
 
 
-def _extract_tool_calls(response: Dict) -> List[Dict]:
+def _extract_tool_calls(response: dict) -> list[dict]:
     choices = response.get("choices", [])
     if not choices:
         return []
@@ -418,7 +460,10 @@ class RealProviderValidator:
         self.artifacts_dir = ARTIFACTS_DIR
         logger.info(
             "RealProviderValidator: enabled=%s allow_paid=%s budget=%.2f timeout=%ds",
-            self.is_enabled, self.allow_paid, self.budget_brl, self.timeout_seconds,
+            self.is_enabled,
+            self.allow_paid,
+            self.budget_brl,
+            self.timeout_seconds,
         )
 
     @property
@@ -427,7 +472,9 @@ class RealProviderValidator:
 
     @property
     def allow_paid(self) -> bool:
-        return os.environ.get("AGENT_REAL_PROVIDER_VALIDATION_ALLOW_PAID", "false").lower() == "true"
+        return (
+            os.environ.get("AGENT_REAL_PROVIDER_VALIDATION_ALLOW_PAID", "false").lower() == "true"
+        )
 
     @property
     def budget_brl(self) -> float:
@@ -438,31 +485,43 @@ class RealProviderValidator:
         return int(os.environ.get("AGENT_REAL_PROVIDER_VALIDATION_TIMEOUT_SECONDS", "60"))
 
     @property
-    def provider_configs(self) -> Dict[str, ProviderConfig]:
+    def provider_configs(self) -> dict[str, ProviderConfig]:
         return _get_provider_configs()
 
     # -----------------------------------------------------------------------
     # Guard methods
     # -----------------------------------------------------------------------
 
-    def _check_enabled(self) -> Optional[Dict]:
+    def _check_enabled(self) -> dict | None:
         if not self.is_enabled:
-            return {"status": ValidationStatus.SKIPPED, "reason": "Real provider validation is disabled (AGENT_REAL_PROVIDER_VALIDATION_ENABLED=false)"}
+            return {
+                "status": ValidationStatus.SKIPPED,
+                "reason": "Real provider validation is disabled (AGENT_REAL_PROVIDER_VALIDATION_ENABLED=false)",
+            }
         return None
 
-    def _check_paid_allowed(self, config: ProviderConfig) -> Optional[Dict]:
+    def _check_paid_allowed(self, config: ProviderConfig) -> dict | None:
         if config.cost_tier == ProviderCostTier.PAID and not self.allow_paid:
-            return {"status": ValidationStatus.SKIPPED, "reason": f"Paid provider {config.name} blocked (AGENT_REAL_PROVIDER_VALIDATION_ALLOW_PAID=false)"}
+            return {
+                "status": ValidationStatus.SKIPPED,
+                "reason": f"Paid provider {config.name} blocked (AGENT_REAL_PROVIDER_VALIDATION_ALLOW_PAID=false)",
+            }
         return None
 
-    def _check_configured(self, config: ProviderConfig) -> Optional[Dict]:
+    def _check_configured(self, config: ProviderConfig) -> dict | None:
         if config.name == "mock":
             return None
         if config.api_key_env and not os.environ.get(config.api_key_env, ""):
-            return {"status": ValidationStatus.SKIPPED, "reason": f"API key missing: {config.api_key_env}"}
+            return {
+                "status": ValidationStatus.SKIPPED,
+                "reason": f"API key missing: {config.api_key_env}",
+            }
         endpoint = config.endpoint
         if not endpoint:
-            return {"status": ValidationStatus.DEGRADED, "reason": f"Provider {config.name} endpoint not configured"}
+            return {
+                "status": ValidationStatus.DEGRADED,
+                "reason": f"Provider {config.name} endpoint not configured",
+            }
         return None
 
     # -----------------------------------------------------------------------
@@ -499,7 +558,11 @@ class RealProviderValidator:
         t0 = time.monotonic()
         try:
             response = await asyncio.wait_for(
-                client.chat_completion(messages=[{"role": "user", "content": SYNTHETIC_DATASET["basic_call"]["prompt"]}]),
+                client.chat_completion(
+                    messages=[
+                        {"role": "user", "content": SYNTHETIC_DATASET["basic_call"]["prompt"]}
+                    ]
+                ),
                 timeout=self.timeout_seconds,
             )
             elapsed = (time.monotonic() - t0) * 1000
@@ -518,7 +581,7 @@ class RealProviderValidator:
             else:
                 result.status = ValidationStatus.FAILED
                 result.error_message = f"Expected '{SYNTHETIC_DATASET['basic_call']['expected_substr']}' in response, got: {content[:100]}"
-        except asyncio.TimeoutError:
+        except TimeoutError:
             result.status = ValidationStatus.FAILED
             result.error_message = f"Timeout after {self.timeout_seconds}s"
         except (ConnectionError, RuntimeError, PermissionError, OSError) as e:
@@ -590,10 +653,16 @@ class RealProviderValidator:
                     parsed = json.loads(content)
                 except json.JSONDecodeError:
                     if attempt < 2:
-                        logger.warning("structured_output malformed JSON for %s on attempt %d, retrying", provider, attempt)
+                        logger.warning(
+                            "structured_output malformed JSON for %s on attempt %d, retrying",
+                            provider,
+                            attempt,
+                        )
                         continue
                     result.status = ValidationStatus.FAILED
-                    result.error_message = f"Malformed JSON after {attempt + 1} retries: {content[:200]}"
+                    result.error_message = (
+                        f"Malformed JSON after {attempt + 1} retries: {content[:200]}"
+                    )
                     return result
 
                 if parsed.get("status") == "ok" and parsed.get("value") == 42:
@@ -605,7 +674,7 @@ class RealProviderValidator:
                     result.error_message = f"JSON fields mismatch: {parsed}"
                     return result
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 result.status = ValidationStatus.FAILED
                 result.error_message = f"Timeout after {self.timeout_seconds}s"
                 return result
@@ -682,7 +751,11 @@ class RealProviderValidator:
             if not tool_calls:
                 content = _extract_content(response)
                 result.status = ValidationStatus.FAILED
-                result.error_message = f"No tool_calls in response. Content: {content[:200]}" if content else "No tool_calls in response."
+                result.error_message = (
+                    f"No tool_calls in response. Content: {content[:200]}"
+                    if content
+                    else "No tool_calls in response."
+                )
                 return result
 
             tc = tool_calls[0]
@@ -690,7 +763,9 @@ class RealProviderValidator:
             missing = [f for f in required_fields if f not in tc]
             if missing:
                 result.status = ValidationStatus.FAILED
-                result.error_message = f"Tool call missing fields: {missing}. Got keys: {list(tc.keys())}"
+                result.error_message = (
+                    f"Tool call missing fields: {missing}. Got keys: {list(tc.keys())}"
+                )
                 return result
 
             if tc.get("type") != "function":
@@ -715,7 +790,7 @@ class RealProviderValidator:
             result.status = ValidationStatus.PASSED
             result.details = {"tool_name": func["name"], "tool_call_id": tc["id"]}
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             result.status = ValidationStatus.FAILED
             result.error_message = f"Timeout after {self.timeout_seconds}s"
         except (ConnectionError, RuntimeError, PermissionError, OSError) as e:
@@ -798,7 +873,7 @@ class RealProviderValidator:
                 result.status = ValidationStatus.FAILED
                 result.error_message = f"Memory not injected. Expected color={dataset['expected_color']} number={dataset['expected_number']}. Content: {content[:200]}"
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             result.status = ValidationStatus.FAILED
             result.error_message = f"Timeout after {self.timeout_seconds}s"
         except (ConnectionError, RuntimeError, PermissionError, OSError) as e:
@@ -875,7 +950,7 @@ class RealProviderValidator:
                 result.status = ValidationStatus.FAILED
                 result.error_message = f"Context goal not preserved. Expected keywords from {goal_keywords}. Content: {content[:200]}"
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             result.status = ValidationStatus.FAILED
             result.error_message = f"Timeout after {self.timeout_seconds}s"
         except (ConnectionError, RuntimeError, PermissionError, OSError) as e:
@@ -922,7 +997,11 @@ class RealProviderValidator:
         fallback = None
         for fb in fallback_targets:
             fb_config = self.provider_configs.get(fb)
-            if fb_config and not self._check_configured(fb_config) and not self._check_paid_allowed(fb_config):
+            if (
+                fb_config
+                and not self._check_configured(fb_config)
+                and not self._check_paid_allowed(fb_config)
+            ):
                 fallback = fb
                 break
 
@@ -942,14 +1021,18 @@ class RealProviderValidator:
             timeout_ctx = aiohttp.ClientTimeout(total=5)
             async with aiohttp.ClientSession(timeout=timeout_ctx) as session:
                 try:
-                    async with session.post(fake_url, json=payload, headers=client._build_headers()) as resp:
+                    async with session.post(
+                        fake_url, json=payload, headers=client._build_headers()
+                    ) as resp:
                         pass
                 except Exception:
                     pass
 
             fallback_client = _ProviderClient(self.provider_configs[fallback])
             response = await asyncio.wait_for(
-                fallback_client.chat_completion(messages=[{"role": "user", "content": "Responda apenas 'ok'."}]),
+                fallback_client.chat_completion(
+                    messages=[{"role": "user", "content": "Responda apenas 'ok'."}]
+                ),
                 timeout=self.timeout_seconds,
             )
             elapsed = (time.monotonic() - t0) * 1000
@@ -970,7 +1053,7 @@ class RealProviderValidator:
                 result.status = ValidationStatus.FAILED
                 result.error_message = f"Fallback response invalid: {content[:100]}"
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             result.status = ValidationStatus.FAILED
             result.error_message = f"Fallback timeout after {self.timeout_seconds}s"
         except (ConnectionError, RuntimeError, PermissionError, OSError) as e:
@@ -1006,7 +1089,11 @@ class RealProviderValidator:
 
         if tracker.exceeded:
             result.status = ValidationStatus.PASSED
-            result.details = {"budget_exceeded": True, "spent": tracker.spent_brl, "max": tracker.max_brl}
+            result.details = {
+                "budget_exceeded": True,
+                "spent": tracker.spent_brl,
+                "max": tracker.max_brl,
+            }
         else:
             result.status = ValidationStatus.FAILED
             result.error_message = "Budget guard did not trigger"
@@ -1055,8 +1142,10 @@ class RealProviderValidator:
                     pass
 
             result.status = ValidationStatus.FAILED
-            result.error_message = "Timeout guard did not trigger (request to unreachable host succeeded unexpectedly)"
-        except (asyncio.TimeoutError, Exception):
+            result.error_message = (
+                "Timeout guard did not trigger (request to unreachable host succeeded unexpectedly)"
+            )
+        except (TimeoutError, Exception):
             elapsed = (time.monotonic() - t0) * 1000
             result.status = ValidationStatus.PASSED
             result.duration_ms = round(elapsed, 1)
@@ -1088,7 +1177,8 @@ class RealProviderValidator:
 
         all_skipped = all(r.status == ValidationStatus.SKIPPED for r in results.values())
         all_passed = all(
-            r.status in (ValidationStatus.PASSED, ValidationStatus.SKIPPED, ValidationStatus.DEGRADED)
+            r.status
+            in (ValidationStatus.PASSED, ValidationStatus.SKIPPED, ValidationStatus.DEGRADED)
             for r in results.values()
         )
         any_error = any(r.status == ValidationStatus.ERROR for r in results.values())
@@ -1111,7 +1201,7 @@ class RealProviderValidator:
             total_cost_brl=round(total_cost, 6),
         )
 
-    async def execute_suite(self, providers: Optional[List[str]] = None) -> List[ProviderReport]:
+    async def execute_suite(self, providers: list[str] | None = None) -> list[ProviderReport]:
         targets = providers or list(self.provider_configs.keys())
         reports = []
 
@@ -1119,7 +1209,11 @@ class RealProviderValidator:
 
         for provider_name in targets:
             if not budget.check():
-                logger.warning("Budget exceeded (%.4f/%.2f). Stopping suite.", budget.spent_brl, self.budget_brl)
+                logger.warning(
+                    "Budget exceeded (%.4f/%.2f). Stopping suite.",
+                    budget.spent_brl,
+                    self.budget_brl,
+                )
                 break
 
             report = await self.run_validations(provider_name)
@@ -1132,8 +1226,8 @@ class RealProviderValidator:
     # Artifact generation
     # -----------------------------------------------------------------------
 
-    def generate_summary_md(self, reports: List[ProviderReport]) -> str:
-        now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    def generate_summary_md(self, reports: list[ProviderReport]) -> str:
+        now = datetime.datetime.now(datetime.UTC).isoformat()
         lines = [
             "# Real Provider Validation Summary",
             "",
@@ -1158,7 +1252,11 @@ class RealProviderValidator:
             lines.append("| Feature | Status | Details |")
             lines.append("|---------|--------|---------|")
             for feat, res in report.results.items():
-                detail = res.error_message[:50] if res.error_message else f"{res.duration_ms:.0f}ms, {res.tokens_used}tok"
+                detail = (
+                    res.error_message[:50]
+                    if res.error_message
+                    else f"{res.duration_ms:.0f}ms, {res.tokens_used}tok"
+                )
                 lines.append(f"| {feat} | {res.status.value} | {detail} |")
             lines.append("")
 
@@ -1171,8 +1269,8 @@ class RealProviderValidator:
 
         return "\n".join(lines)
 
-    def generate_results_json(self, reports: List[ProviderReport]) -> str:
-        now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    def generate_results_json(self, reports: list[ProviderReport]) -> str:
+        now = datetime.datetime.now(datetime.UTC).isoformat()
 
         def _serialize(r: ValidationResult):
             return {
@@ -1219,9 +1317,18 @@ class RealProviderValidator:
         }
         return json.dumps(data, indent=2, default=str)
 
-    def generate_provider_matrix_md(self, reports: List[ProviderReport]) -> str:
-        now = datetime.datetime.now(datetime.timezone.utc).isoformat()
-        features = ["basic_model_call", "structured_output", "tool_call_format", "memory_injection", "context_compression", "fallback", "budget_guard", "timeout_guard"]
+    def generate_provider_matrix_md(self, reports: list[ProviderReport]) -> str:
+        now = datetime.datetime.now(datetime.UTC).isoformat()
+        features = [
+            "basic_model_call",
+            "structured_output",
+            "tool_call_format",
+            "memory_injection",
+            "context_compression",
+            "fallback",
+            "budget_guard",
+            "timeout_guard",
+        ]
 
         lines = [
             "# Provider Validation Matrix",
@@ -1239,34 +1346,48 @@ class RealProviderValidator:
             for feat in features:
                 res = report.results.get(feat)
                 if res:
-                    icon = {"passed": "✓", "degraded": "~", "failed": "✗", "skipped": "–", "error": "!"}
+                    icon = {
+                        "passed": "✓",
+                        "degraded": "~",
+                        "failed": "✗",
+                        "skipped": "–",
+                        "error": "!",
+                    }
                     row.append(icon.get(res.status.value, "?"))
                 else:
                     row.append(" ")
             row.append(report.status.upper())
             lines.append(f"| {' | '.join(row)} |")
 
-        lines.extend([
-            "",
-            "## Legend",
-            "- ✓ = Passed",
-            "- ~ = Degraded",
-            "- ✗ = Failed",
-            "- – = Skipped",
-            "- ! = Error",
-            "",
-            "## Provider Configurations",
-            "",
-        ])
+        lines.extend(
+            [
+                "",
+                "## Legend",
+                "- ✓ = Passed",
+                "- ~ = Degraded",
+                "- ✗ = Failed",
+                "- – = Skipped",
+                "- ! = Error",
+                "",
+                "## Provider Configurations",
+                "",
+            ]
+        )
 
         for name, config in self.provider_configs.items():
             endpoint = config.endpoint or "(mock)"
-            key_status = "configured" if (not config.api_key_env or os.environ.get(config.api_key_env)) else "missing"
-            lines.append(f"- **{name}**: {config.model} @ {endpoint} [{config.cost_tier.value}] key={key_status}")
+            key_status = (
+                "configured"
+                if (not config.api_key_env or os.environ.get(config.api_key_env))
+                else "missing"
+            )
+            lines.append(
+                f"- **{name}**: {config.model} @ {endpoint} [{config.cost_tier.value}] key={key_status}"
+            )
 
         return "\n".join(lines)
 
-    def write_artifacts(self, reports: List[ProviderReport]):
+    def write_artifacts(self, reports: list[ProviderReport]):
         self.artifacts_dir.mkdir(parents=True, exist_ok=True)
 
         summary = self.generate_summary_md(reports)
@@ -1285,7 +1406,8 @@ class RealProviderValidator:
 # Module-level helpers for scripts & admin endpoints
 # ---------------------------------------------------------------------------
 
-async def run_validation_suite(providers: Optional[List[str]] = None) -> Dict[str, Any]:
+
+async def run_validation_suite(providers: list[str] | None = None) -> dict[str, Any]:
     validator = RealProviderValidator()
     reports = await validator.execute_suite(providers)
     validator.write_artifacts(reports)
@@ -1297,17 +1419,17 @@ async def run_validation_suite(providers: Optional[List[str]] = None) -> Dict[st
     return results_json
 
 
-def _sanitize_artifacts(data: Dict):
+def _sanitize_artifacts(data: dict):
     """Mask any potential API keys or secrets in the artifact data."""
     json_str = json.dumps(data)
     # Mask common key patterns
-    json_str = re.sub(r'(sk-[a-zA-Z0-9]{20,})', 'sk-****', json_str)
-    json_str = re.sub(r'(Bearer\s+)[a-zA-Z0-9\-_]{20,}', r'\1****', json_str)
+    json_str = re.sub(r"(sk-[a-zA-Z0-9]{20,})", "sk-****", json_str)
+    json_str = re.sub(r"(Bearer\s+)[a-zA-Z0-9\-_]{20,}", r"\1****", json_str)
     # Re-parse
     return json.loads(json_str)
 
 
-async def get_latest_results() -> Dict[str, Any]:
+async def get_latest_results() -> dict[str, Any]:
     results_path = ARTIFACTS_DIR / "results.json"
     if not results_path.exists():
         return {"status": "not_generated"}
@@ -1315,14 +1437,16 @@ async def get_latest_results() -> Dict[str, Any]:
     return data
 
 
-def get_provider_matrix() -> List[Dict[str, Any]]:
+def get_provider_matrix() -> list[dict[str, Any]]:
     return [
         {
             "name": name,
             "endpoint": config.endpoint,
             "model": config.model,
             "cost_tier": config.cost_tier.value,
-            "api_key_configured": bool(os.environ.get(config.api_key_env, "")) if config.api_key_env else True,
+            "api_key_configured": bool(os.environ.get(config.api_key_env, ""))
+            if config.api_key_env
+            else True,
             "weight": config.weight,
         }
         for name, config in _get_provider_configs().items()

@@ -44,7 +44,9 @@ class DependencyGovernanceService:
             "require_offline_verification": require_offline_verification,
             "require_signature": require_signature,
         }
-        immutable_hash = sha256_hex({"kind": "plugin_dependency_governance_policy", **logical_payload})
+        immutable_hash = sha256_hex(
+            {"kind": "plugin_dependency_governance_policy", **logical_payload}
+        )
         policy = DependencyGovernancePolicy(
             id=sha256_hex({"kind": "plugin_dependency_governance_policy_id", **logical_payload}),
             client_id=client_id,
@@ -110,7 +112,9 @@ class DependencyGovernanceService:
             verification_status=status,
             replay_safe=status in {"passed", "warning"},
             dependency_summary=canonical_json(summary),
-            immutable_hash=sha256_hex({"kind": "plugin_dependency_verification_immutable", **logical_payload}),
+            immutable_hash=sha256_hex(
+                {"kind": "plugin_dependency_verification_immutable", **logical_payload}
+            ),
         )
         verification._summary = summary
         return verification

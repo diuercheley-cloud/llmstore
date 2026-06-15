@@ -1,25 +1,27 @@
+import logging
 import os
 import uuid
-import logging
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
-import httpx
-from fastapi import WebSocket
+from datetime import UTC, datetime, timedelta
 
+import httpx
 from app.core.time import utc_now
 from app.models.governance.human_governance import CriticalApproval
 from app.services.admin_rbac import record_admin_audit_event
+from fastapi import WebSocket
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 
 def _as_utc_aware(value: datetime | None) -> datetime | None:
     if value is None:
         return None
     if value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc)
+        return value.replace(tzinfo=UTC)
     return value
 
+
 logger = logging.getLogger("approval_service")
+
 
 class ApprovalsWebSocketManager:
     def __init__(self):
@@ -41,7 +43,9 @@ class ApprovalsWebSocketManager:
                 logger.error(f"Error broadcasting to approvals websocket: {e}")
                 self.disconnect(connection)
 
+
 approvals_ws_manager = ApprovalsWebSocketManager()
+
 
 class ApprovalService:
     @staticmethod
@@ -50,9 +54,9 @@ class ApprovalService:
         action_type: str,
         description: str,
         requested_by: str,
-        payload: Optional[dict] = None,
-        metadata: Optional[dict] = None,
-        expires_in_seconds: int = 3600
+        payload: dict | None = None,
+        metadata: dict | None = None,
+        expires_in_seconds: int = 3600,
     ) -> CriticalApproval:
         expires_at = utc_now() + timedelta(seconds=expires_in_seconds)
         req = CriticalApproval(
@@ -63,7 +67,7 @@ class ApprovalService:
             requested_at=utc_now(),
             expires_at=expires_at,
             payload=payload,
-            metadata_json=metadata
+            metadata_json=metadata,
         )
         db.add(req)
         await db.commit()
@@ -77,7 +81,7 @@ class ApprovalService:
             actor_identifier=requested_by,
             target_type="critical_approval",
             target_id=str(req.id),
-            metadata={"action_type": action_type, "description": description}
+            metadata={"action_type": action_type, "description": description},
         )
 
         # Dispatch notifications
@@ -87,10 +91,7 @@ class ApprovalService:
 
     @staticmethod
     async def approve_request(
-        db: AsyncSession,
-        request_id: uuid.UUID,
-        decided_by: str,
-        reason: Optional[str] = None
+        db: AsyncSession, request_id: uuid.UUID, decided_by: str, reason: str | None = None
     ) -> CriticalApproval:
         stmt = select(CriticalApproval).where(CriticalApproval.id == request_id)
         res = await db.execute(stmt)
@@ -118,7 +119,7 @@ class ApprovalService:
             actor_identifier=decided_by,
             target_type="critical_approval",
             target_id=str(req.id),
-            metadata={"reason": reason}
+            metadata={"reason": reason},
         )
 
         # Dispatch notifications
@@ -128,10 +129,7 @@ class ApprovalService:
 
     @staticmethod
     async def reject_request(
-        db: AsyncSession,
-        request_id: uuid.UUID,
-        decided_by: str,
-        reason: Optional[str] = None
+        db: AsyncSession, request_id: uuid.UUID, decided_by: str, reason: str | None = None
     ) -> CriticalApproval:
         stmt = select(CriticalApproval).where(CriticalApproval.id == request_id)
         res = await db.execute(stmt)
@@ -159,7 +157,7 @@ class ApprovalService:
             actor_identifier=decided_by,
             target_type="critical_approval",
             target_id=str(req.id),
-            metadata={"reason": reason}
+            metadata={"reason": reason},
         )
 
         # Dispatch notifications
@@ -180,11 +178,8 @@ class ApprovalService:
 
     @staticmethod
     async def list_requests(
-        db: AsyncSession,
-        status: Optional[str] = None,
-        limit: int = 50,
-        offset: int = 0
-    ) -> List[CriticalApproval]:
+        db: AsyncSession, status: str | None = None, limit: int = 50, offset: int = 0
+    ) -> list[CriticalApproval]:
         await ApprovalService.check_all_expirations(db)
 
         stmt = select(CriticalApproval)
@@ -197,9 +192,7 @@ class ApprovalService:
     @staticmethod
     async def check_all_expirations(db: AsyncSession) -> None:
         now = utc_now()
-        stmt = select(CriticalApproval).where(
-            CriticalApproval.status == "pending"
-        )
+        stmt = select(CriticalApproval).where(CriticalApproval.status == "pending")
         res = await db.execute(stmt)
         pending_reqs = res.scalars().all()
         expired_reqs = [r for r in pending_reqs if _as_utc_aware(r.expires_at) < now]
@@ -212,7 +205,7 @@ class ApprovalService:
                 actor_identifier="system",
                 target_type="critical_approval",
                 target_id=str(req.id),
-                metadata={"reason": "Expiration timeout reached"}
+                metadata={"reason": "Expiration timeout reached"},
             )
             await ApprovalService._dispatch_notifications(db, req, "expired")
         if expired_reqs:
@@ -230,12 +223,14 @@ class ApprovalService:
                 actor_identifier="system",
                 target_type="critical_approval",
                 target_id=str(req.id),
-                metadata={"reason": "Expiration timeout reached"}
+                metadata={"reason": "Expiration timeout reached"},
             )
             await ApprovalService._dispatch_notifications(db, req, "expired")
 
     @staticmethod
-    async def _dispatch_notifications(db: AsyncSession, req: CriticalApproval, event_type: str) -> None:
+    async def _dispatch_notifications(
+        db: AsyncSession, req: CriticalApproval, event_type: str
+    ) -> None:
         """
         Dispatches notifications to all configured channels:
         - dashboard: saved to db (implicit)
@@ -250,7 +245,7 @@ class ApprovalService:
             "description": req.description,
             "requested_by": req.requested_by,
             "status": req.status,
-            "expires_at": req.expires_at.isoformat() if req.expires_at else None
+            "expires_at": req.expires_at.isoformat() if req.expires_at else None,
         }
 
         # 1. Websocket
@@ -266,9 +261,9 @@ class ApprovalService:
                         f"{ntfy_url}/{ntfy_topic}",
                         headers={
                             "Title": f"Critical Approval: {req.action_type.upper()} ({event_type})",
-                            "Priority": "high" if req.status == "pending" else "default"
+                            "Priority": "high" if req.status == "pending" else "default",
                         },
-                        content=f"Request {req.id}: {req.description} is now {req.status}."
+                        content=f"Request {req.id}: {req.description} is now {req.status}.",
                     )
             except Exception as e:
                 logger.warning(f"Failed to send ntfy notification: {e}")
@@ -285,8 +280,8 @@ class ApprovalService:
                         json={
                             "title": f"Critical Approval: {req.action_type.upper()} ({event_type})",
                             "message": f"Request {req.id}: {req.description} is now {req.status}.",
-                            "priority": 7 if req.status == "pending" else 4
-                        }
+                            "priority": 7 if req.status == "pending" else 4,
+                        },
                     )
             except Exception as e:
                 logger.warning(f"Failed to send gotify notification: {e}")

@@ -112,12 +112,16 @@ class AutonomousGuardrailsService:
     ) -> CommercialAutonomousExecutionReceipt:
         sanitized = sanitize_report_payload(request)
         previous = (
-            await db.execute(
-                select(CommercialAutonomousExecutionReceipt).order_by(
-                    desc(CommercialAutonomousExecutionReceipt.created_at)
+            (
+                await db.execute(
+                    select(CommercialAutonomousExecutionReceipt).order_by(
+                        desc(CommercialAutonomousExecutionReceipt.created_at)
+                    )
                 )
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         request_hash = sha256_hex(sanitized)
         approval_hash = decision["approval_chain"].get("approval_hash")
         runtime_hash = None
@@ -139,7 +143,9 @@ class AutonomousGuardrailsService:
         receipt_hash = sha256_hex(receipt_payload)
         receipt = CommercialAutonomousExecutionReceipt(
             policy_id=decision["policy"].id if decision.get("policy") else None,
-            checkpoint_id=decision["approval_chain"]["checkpoints"][-1].id if decision["approval_chain"].get("checkpoints") else None,
+            checkpoint_id=decision["approval_chain"]["checkpoints"][-1].id
+            if decision["approval_chain"].get("checkpoints")
+            else None,
             blast_radius_id=blast_radius.id,
             guardrail_event_id=guardrail_event.id,
             tenant_id=sanitized.get("tenant_id"),
@@ -154,7 +160,9 @@ class AutonomousGuardrailsService:
             receipt_hash=receipt_hash,
             previous_receipt_hash=previous.receipt_hash if previous else None,
             detached_signature=f"autonomous_guardrail_sig_{sha256_hex(receipt_hash)[:48]}",
-            immutable_hash=sha256_hex({"receipt_hash": receipt_hash, "timestamp": utc_now().isoformat()}),
+            immutable_hash=sha256_hex(
+                {"receipt_hash": receipt_hash, "timestamp": utc_now().isoformat()}
+            ),
             verification_status="pending",
             receipt_json=sanitize_report_payload(
                 {
@@ -191,7 +199,9 @@ class AutonomousGuardrailsService:
                 "tenant_id": receipt.tenant_id,
             }
         )
-        receipt.verification_status = "verified" if expected_hash == receipt.receipt_hash else "tampered"
+        receipt.verification_status = (
+            "verified" if expected_hash == receipt.receipt_hash else "tampered"
+        )
         receipt.verified_at = utc_now()
         await db.commit()
         await db.refresh(receipt)
@@ -206,8 +216,12 @@ class AutonomousGuardrailsService:
     ) -> dict[str, Any]:
         sanitized = sanitize_report_payload(request)
         action_type = str(sanitized.get("action_type") or "unknown")
-        policy = await self.limits.resolve_active_policy(db, action_type=action_type, tenant_id=sanitized.get("tenant_id"))
-        blast_radius = await self.blast_radius.analyze_and_record(db, request=sanitized, persist=False)
+        policy = await self.limits.resolve_active_policy(
+            db, action_type=action_type, tenant_id=sanitized.get("tenant_id")
+        )
+        blast_radius = await self.blast_radius.analyze_and_record(
+            db, request=sanitized, persist=False
+        )
         if create_checkpoints_if_missing and policy and policy.require_human_approval:
             existing = await self.checkpointing.validate_chain(
                 db,
@@ -217,9 +231,13 @@ class AutonomousGuardrailsService:
                 tenant_id=sanitized.get("tenant_id"),
             )
             if not existing["checkpoints"]:
-                await self.checkpointing.create_checkpoints(db, policy=policy, request=sanitized, persist=False)
+                await self.checkpointing.create_checkpoints(
+                    db, policy=policy, request=sanitized, persist=False
+                )
         limits = await self.limits.evaluate(db, request=sanitized, blast_radius=blast_radius)
-        severity = "critical" if limits["blocked"] else ("high" if limits["pending_approval"] else "low")
+        severity = (
+            "critical" if limits["blocked"] else ("high" if limits["pending_approval"] else "low")
+        )
         event = await self._record_event(
             db,
             event_type="autonomous_execution_evaluated",
@@ -301,7 +319,11 @@ class AutonomousGuardrailsService:
         heatmap = {
             "blocked": len([row for row in blast_rows if row.blocked]),
             "safe": len([row for row in blast_rows if not row.blocked]),
-            "avg_score": round(sum(row.blast_radius_score for row in blast_rows) / len(blast_rows), 4) if blast_rows else 0.0,
+            "avg_score": round(
+                sum(row.blast_radius_score for row in blast_rows) / len(blast_rows), 4
+            )
+            if blast_rows
+            else 0.0,
         }
         return {
             "policies": {
@@ -320,7 +342,9 @@ class AutonomousGuardrailsService:
             "violations": len([item for item in events if item.decision == "blocked"]),
             "receipts": {
                 "total": len(receipts),
-                "verified": len([item for item in receipts if item.verification_status == "verified"]),
+                "verified": len(
+                    [item for item in receipts if item.verification_status == "verified"]
+                ),
             },
         }
 
@@ -348,7 +372,8 @@ class AutonomousGuardrailsService:
             previous = (
                 await db.execute(
                     select(CommercialAutonomousExecutionReceipt).where(
-                        CommercialAutonomousExecutionReceipt.receipt_hash == receipt.previous_receipt_hash
+                        CommercialAutonomousExecutionReceipt.receipt_hash
+                        == receipt.previous_receipt_hash
                     )
                 )
             ).scalar_one_or_none()

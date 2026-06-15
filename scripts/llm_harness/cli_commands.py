@@ -16,6 +16,7 @@ def _print_progress_event(event):
         f"status={event['status']} msg={event['message']}"
     )
 
+
 def _resolve_code_agent(args) -> str:
     code_agent = getattr(args, "code_agent", None) or getattr(args, "provider", None)
     if code_agent:
@@ -83,6 +84,7 @@ def build_config_overrides(args) -> dict[str, Any]:
         "allow_cloud_models": getattr(args, "allow_cloud_models", None),
     }
 
+
 def build_provider_config(args) -> dict[str, Any]:
     return {
         "provider": _resolve_code_agent(args),
@@ -108,6 +110,7 @@ def build_provider_config(args) -> dict[str, Any]:
         "allow_cloud_models": getattr(args, "allow_cloud_models", None),
     }
 
+
 def build_sandbox_config(args) -> dict[str, Any]:
     return {
         "sandbox": getattr(args, "sandbox", None),
@@ -117,6 +120,7 @@ def build_sandbox_config(args) -> dict[str, Any]:
         "sandbox_network": getattr(args, "sandbox_network", None),
         "proxy_url": getattr(args, "proxy_url", None),
     }
+
 
 def _validate_provider_settings(provider: str, config, allow_stub: bool):
     if provider == "stub":
@@ -134,10 +138,7 @@ def _validate_provider_settings(provider: str, config, allow_stub: bool):
         missing.append("--model")
     requires_api_key = provider not in {"local-openai-compatible"}
     if requires_api_key and not os.getenv(config.api_key_env):
-        key_hint = (
-            f"{config.api_key_env} env var "
-            f"(or --api-key-env to set a different variable)"
-        )
+        key_hint = f"{config.api_key_env} env var (or --api-key-env to set a different variable)"
         missing.append(key_hint)
     if missing:
         raise ValueError(
@@ -151,9 +152,8 @@ def _resolve_execution_target(config, args, task_type: str | None = None):
 
     router = ModelRouter(config)
     profile_name = getattr(args, "model_profile", None) or getattr(config, "model_profile", None)
-    fallback_profile_name = (
-        getattr(args, "fallback_model_profile", None)
-        or getattr(config, "fallback_model_profile", None)
+    fallback_profile_name = getattr(args, "fallback_model_profile", None) or getattr(
+        config, "fallback_model_profile", None
     )
 
     if profile_name:
@@ -195,6 +195,7 @@ def _resolve_execution_target(config, args, task_type: str | None = None):
     provider_name = profile_cfg.get("provider", _resolve_code_agent(args))
     return provider_name, resolved_config, profile_name, fallback_profile_name
 
+
 async def run_code_command(args):
     from .config import get_config
     from .legacy_runner import run_harness
@@ -224,6 +225,7 @@ async def run_code_command(args):
         from .policy import PolicyEngine
         from .tools.git import GitTools
         from .workspace import Workspace
+
         ws = Workspace(base_path=workspace_path)
         ws.path = os.path.abspath(workspace_path)
         reporter_git_tools = GitTools(workspace=ws, policy_engine=PolicyEngine())
@@ -253,6 +255,7 @@ async def run_code_command(args):
         print(f"ERROR: {result.error}")
         sys.exit(1)
     print(f"SUCCESS: {result.message}")
+
 
 async def run_code_batch_command(args):
     from .config import get_config
@@ -335,6 +338,7 @@ async def run_code_batch_command(args):
     if success_count < len(results):
         sys.exit(1)
 
+
 async def run_health_command(args):
     results = await HealthCheck.check_local_env()
     print(f"Harness Health: {results['status']}")
@@ -368,6 +372,7 @@ async def run_health_command(args):
         _validate_provider_settings(provider, config, allow_stub=(provider == "stub"))
         from .agent_client import AgentClient
         from .cache import LocalCache
+
         cache = LocalCache(mode=config.cache, cache_dir=config.cache_dir)
         client = AgentClient(
             agent_id=config.code_agent,
@@ -401,6 +406,7 @@ async def run_health_command(args):
                 else:
                     print(f"  {key}: {Sanitizer.sanitize_text(str(value))}")
 
+
 def run_security_command(check_only: bool):
     from .policy import PolicyEngine
 
@@ -418,6 +424,7 @@ def run_security_command(check_only: bool):
         print(f"  {check}: {'OK' if ok else 'FAILED'}")
     if not check_only and not all(checks.values()):
         sys.exit(1)
+
 
 async def run_eval_command(args):
     from .config import get_config
@@ -492,9 +499,7 @@ async def run_eval_command(args):
         md_path = EvalReportGenerator.save_markdown_report(result, output_dir)
 
     judge_scores = [
-        cs.judge_verdict.score
-        for cs in result.case_scores
-        if cs.judge_verdict is not None
+        cs.judge_verdict.score for cs in result.case_scores if cs.judge_verdict is not None
     ]
     judge_avg = sum(judge_scores) / len(judge_scores) if judge_scores else None
 
@@ -518,6 +523,7 @@ def run_server_command(args):
     import uvicorn
 
     from .server.app import server_config
+
     server_config.api_key_env = getattr(args, "api_key_env", None)
     server_config.allow_stub = bool(getattr(args, "allow_stub_code_agent", False))
     print(f"Starting LLM Harness API Server on {args.host}:{args.port}...")
@@ -531,19 +537,17 @@ def run_server_command(args):
 
 def run_plugins_command(args):
     from .plugins import plugin_registry
+
     if args.plugin_command == "list":
-        print(
-            f"Loaded Plugins (Enabled={getattr(args, 'enable_plugins', False)}):"
-        )
+        print(f"Loaded Plugins (Enabled={getattr(args, 'enable_plugins', False)}):")
         if not plugin_registry.plugins:
             print("  No plugins loaded.")
         for name, plugin in plugin_registry.plugins.items():
             print(
-                f"  - {name} (Version: {plugin.metadata.version}, "
-                f"Source: {plugin.metadata.source})"
+                f"  - {name} (Version: {plugin.metadata.version}, Source: {plugin.metadata.source})"
             )
             print(f"    Description: {plugin.metadata.description}")
-            
+
     elif args.plugin_command == "validate":
         print("Validating plugin registry...")
         print(f"  Plugins count: {len(plugin_registry.plugins)}")
@@ -565,6 +569,7 @@ def run_plugins_command(args):
 
 async def run_benchmark_command(args):
     from .benchmarks import BenchmarkSuiteRunner, compare_benchmarks
+
     suite_type = getattr(args, "suite_type", "coding")
     if args.benchmark_command == "run":
         provider = _resolve_code_agent(args)
@@ -572,36 +577,38 @@ async def run_benchmark_command(args):
         base_url = getattr(args, "base_url", None) or ""
         if suite_type == "gsm8k":
             from .benchmarks.gsm8k import GSM8KAdapter
+
             _runner: Any = GSM8KAdapter(
                 suite_path=args.suite,
                 provider=provider,
                 model=getattr(args, "model", "") or "",
                 base_url=base_url,
-                allow_stub=getattr(args, "allow_stub_code_agent", False)
+                allow_stub=getattr(args, "allow_stub_code_agent", False),
             )
         elif suite_type == "swebench":
             from .benchmarks.swebench_adapter import SWEBenchAdapter
+
             _runner = SWEBenchAdapter(
                 suite_path=args.suite,
                 provider=provider,
                 model=getattr(args, "model", "") or "",
                 base_url=base_url,
-                allow_stub=getattr(args, "allow_stub_code_agent", False)
+                allow_stub=getattr(args, "allow_stub_code_agent", False),
             )
         else:
             _runner = BenchmarkSuiteRunner(
                 suite_path=args.suite,
                 provider=provider,
                 model=getattr(args, "model", "") or "",
-                allow_stub=getattr(args, "allow_stub_code_agent", False)
+                allow_stub=getattr(args, "allow_stub_code_agent", False),
             )
         runner = _runner
         print(f"Running {suite_type} benchmark suite from {args.suite}...")
         summary = await runner.run()
-        
+
         with open(args.output, "w") as f:
             json.dump(summary, f, indent=2)
-            
+
         print("\nBenchmark Suite Run Complete:")
         print(f"  Suite: {summary['suite']}")
         print(f"  Total Tasks: {summary['total_tasks']}")
@@ -619,21 +626,21 @@ async def run_benchmark_command(args):
         if not os.path.exists(args.result):
             print(f"ERROR: Result file not found: {args.result}")
             sys.exit(1)
-        with open(args.result, "r") as f:
+        with open(args.result) as f:
             current_summary = json.load(f)
-            
+
         try:
             comparison = compare_benchmarks(
                 current_summary=current_summary,
                 baseline_path=args.baseline,
-                threshold=args.threshold
+                threshold=args.threshold,
             )
             print("\nBenchmark Comparison Result:")
             print(f"  Current Accuracy: {comparison['current_accuracy'] * 100:.1f}%")
             print(f"  Baseline Accuracy: {comparison['baseline_accuracy'] * 100:.1f}%")
             print(f"  Difference: {comparison['diff'] * 100:+.1f}%")
             print(f"  Status: {comparison['status'].upper()}")
-            
+
             if comparison["regressed"]:
                 print(f"ERROR: Regression detected above threshold ({args.threshold * 100:.1f}%)")
                 sys.exit(1)
@@ -661,7 +668,7 @@ async def run_chat_command(args):
     # Initialize workspace
     workspace_path = getattr(args, "workspace", None) or "."
     ws = Workspace(base_path=workspace_path)
-    
+
     cli_overrides = build_config_overrides(args)
     config = get_config(cli_overrides)
     provider_name, config, _, _ = _resolve_execution_target(config, args, task_type="chat")
@@ -671,11 +678,11 @@ async def run_chat_command(args):
 
     async with ws as workspace:
         policy_engine = PolicyEngine(config=config.model_dump())
-        
+
         # Memory
         memory_dir = getattr(args, "memory_dir", None) or config.memory_dir or ".llm_harness_memory"
         memory = LocalMemory(memory_dir=memory_dir)
-        
+
         # Load rules
         rules_context = load_rules_for_path(None, workspace.path)
         docs_context = DocsManager(
@@ -697,7 +704,7 @@ async def run_chat_command(args):
         context_manager = ContextManager(
             max_context_tokens=getattr(args, "token_budget", 4096),
             reserved_output_tokens=1024,
-            token_counter=tokenizer
+            token_counter=tokenizer,
         )
 
         provider_config = config.model_dump()
@@ -711,7 +718,7 @@ async def run_chat_command(args):
             memory=memory,
             context_manager=context_manager,
             token_budget=getattr(args, "token_budget", 4096),
-            rules_context=rules_context
+            rules_context=rules_context,
         )
 
         image_path = getattr(args, "image", None)
@@ -724,19 +731,18 @@ async def run_chat_command(args):
             context_bundle = await build_context_bundle(
                 refs, workspace, policy_engine, token_budget=context_budget
             )
-            
+
             message_content = args.message
             if image_path:
                 from .multimodal import validate_and_load_image
+
                 metadata, b64_data = validate_and_load_image(image_path, workspace.path)
                 message_content = [
                     {"type": "text", "text": args.message or ""},
                     {
                         "type": "image_url",
-                        "image_url": {
-                            "url": f"data:{metadata.mime_type};base64,{b64_data}"
-                        }
-                    }
+                        "image_url": {"url": f"data:{metadata.mime_type};base64,{b64_data}"},
+                    },
                 ]
 
             reply = await session.send_message(message_content, context_bundle=context_bundle)
@@ -750,13 +756,13 @@ async def run_chat_command(args):
                 except (KeyboardInterrupt, EOFError):
                     print("\nGoodbye!")
                     break
-                
+
                 if not user_input:
                     continue
                 if user_input.lower() in ("exit", "quit"):
                     print("Goodbye!")
                     break
-                
+
                 refs = parse_refs(user_input, workspace)
                 context_budget = max(500, getattr(args, "token_budget", 4096) - 2000)
                 context_bundle = await build_context_bundle(
@@ -766,15 +772,14 @@ async def run_chat_command(args):
                 message_content = user_input
                 if image_path and not initial_image_sent:
                     from .multimodal import validate_and_load_image
+
                     metadata, b64_data = validate_and_load_image(image_path, workspace.path)
                     message_content = [
                         {"type": "text", "text": user_input},
                         {
                             "type": "image_url",
-                            "image_url": {
-                                "url": f"data:{metadata.mime_type};base64,{b64_data}"
-                            }
-                        }
+                            "image_url": {"url": f"data:{metadata.mime_type};base64,{b64_data}"},
+                        },
                     ]
                     initial_image_sent = True
 
@@ -809,9 +814,7 @@ async def run_edit_inline_command(args):
 
     cli_overrides = build_config_overrides(args)
     config = get_config(cli_overrides)
-    provider_name, config, _, _ = _resolve_execution_target(
-        config, args, task_type="inline-edit"
-    )
+    provider_name, config, _, _ = _resolve_execution_target(config, args, task_type="inline-edit")
     _validate_provider_settings(
         provider_name, config, getattr(args, "allow_stub_code_agent", False)
     )
@@ -829,7 +832,7 @@ async def run_edit_inline_command(args):
             if not ctx_str.startswith("@"):
                 ctx_str = "@" + ctx_str
             context_refs_list.extend(parse_refs(ctx_str, workspace))
-        
+
         # Build context bundle
         context_bundle = await build_context_bundle(
             context_refs_list, workspace, policy_engine, token_budget=4000
@@ -841,7 +844,7 @@ async def run_edit_inline_command(args):
             start_line=start_line,
             end_line=end_line,
             instruction=args.instruction,
-            context_refs=context_refs_list
+            context_refs=context_refs_list,
         )
 
         res = await perform_inline_edit(
@@ -850,7 +853,7 @@ async def run_edit_inline_command(args):
             policy_engine=policy_engine,
             workspace=workspace,
             dry_run=args.dry_run,
-            context_bundle=context_bundle
+            context_bundle=context_bundle,
         )
 
         if res["success"]:
@@ -874,7 +877,7 @@ def run_index_command(args):
     from .indexing import RepositoryIndexer, query_index
 
     workspace_path = getattr(args, "workspace", None) or "."
-    
+
     if args.index_command == "build":
         indexer = RepositoryIndexer(workspace_root=workspace_path)
         print(f"Building repository index for workspace '{workspace_path}'...")
@@ -890,7 +893,7 @@ def run_index_command(args):
             print(f"Found {len(results)} matches:")
             for res in results[:10]:
                 print(f"  [{res['language'].upper()}] {res['path']} (Score: {res['score']})")
-                if res['symbols']:
+                if res["symbols"]:
                     print(f"    Symbols: {', '.join(res['symbols'])}")
     else:
         print("ERROR: Unknown index command.")
@@ -910,9 +913,7 @@ def run_docs_command(args):
     if args.docs_command == "add":
         print(f"Adding documentation config: name={args.name}, url={args.url}")
         docs_mgr.add_doc(
-            name=args.name,
-            url=args.url,
-            allowlist_domain=getattr(args, "allowlist_domain", None)
+            name=args.name, url=args.url, allowlist_domain=getattr(args, "allowlist_domain", None)
         )
         print("SUCCESS: Config updated.")
     elif args.docs_command == "refresh":
@@ -941,12 +942,13 @@ async def run_fix_error_command(args):
         if not os.path.exists(log_path):
             print(f"ERROR: File '{log_path}' not found.")
             sys.exit(1)
-        with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(log_path, encoding="utf-8", errors="ignore") as f:
             error_content = f.read()
     elif getattr(args, "run_command", None):
         cmd = args.run_command
         print(f"Executing command: '{cmd}'...")
         from .policy import PolicyEngine
+
         policy = PolicyEngine(config=build_config_overrides(args))
         decision = policy.evaluate_shell_command(cmd)
         if not decision.allowed:
@@ -954,6 +956,7 @@ async def run_fix_error_command(args):
             sys.exit(1)
 
         import subprocess
+
         proc = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         error_content = proc.stdout + "\n" + proc.stderr
         print(f"Command finished with exit code {proc.returncode}.")
@@ -992,6 +995,7 @@ async def run_fix_error_command(args):
         from .coding_loop import CodingLoop
 
         orig_apply = CodingLoop.apply_patch
+
         async def dry_apply_patch(self, diff_content: str, dry_run: bool = False):
             print(f"[DRY-RUN] Proposed Patch:\n{diff_content}")
             return await orig_apply(self, diff_content, dry_run=True)
@@ -1004,9 +1008,11 @@ async def run_fix_error_command(args):
             print(f"[DRY-RUN] Replace content in {path}:\n{old_content} -> {new_content}")
             return {"success": True, "message": "Dry-run replacement simulated."}
 
-        with patch.object(CodingLoop, "apply_patch", dry_apply_patch), \
-             patch.object(CodingLoop, "write_file", dry_write_file), \
-             patch.object(CodingLoop, "replace_content", dry_replace_content):
+        with (
+            patch.object(CodingLoop, "apply_patch", dry_apply_patch),
+            patch.object(CodingLoop, "write_file", dry_write_file),
+            patch.object(CodingLoop, "replace_content", dry_replace_content),
+        ):
             result = await run_harness(
                 task=task,
                 workspace_path=workspace_path,
@@ -1032,15 +1038,16 @@ async def run_fix_error_command(args):
 
 
 async def run_agents_command(args):
+    import inspect
     import sys
+
+    from .agent_client import AgentClient
+    from .coding_loop import CodingLoop
+    from .config import get_config
+    from .mas.orchestrator import Orchestrator
     from .mas.registry import AgentRegistry
     from .mas.teams import TeamManager
-    from .mas.orchestrator import Orchestrator
-    from .coding_loop import CodingLoop
-    from .agent_client import AgentClient
     from .workspace import Workspace
-    from .config import get_config
-    import inspect
 
     cli_overrides = build_config_overrides(args)
     config = get_config(cli_overrides)
@@ -1049,14 +1056,13 @@ async def run_agents_command(args):
 
     if args.agents_command == "run":
         team = manager.load_team_from_yaml(args.team_file)
-        
+
         provider_config = build_provider_config(args)
         provider = provider_config.pop("provider", _resolve_code_agent(args))
-        
+
         sig = inspect.signature(AgentClient.__init__)
         client_kwargs = {
-            k: v for k, v in provider_config.items() 
-            if k in sig.parameters and k != "self"
+            k: v for k, v in provider_config.items() if k in sig.parameters and k != "self"
         }
         client_kwargs = _normalize_client_kwargs(client_kwargs)
         client = AgentClient(agent_id=config.code_agent, provider=provider, **client_kwargs)
@@ -1065,10 +1071,10 @@ async def run_agents_command(args):
             loop = CodingLoop(agent_client=client, workspace=workspace)
             loop.config = config
             orchestrator = Orchestrator(loop)
-            
+
             print(f"Running Team: {team.team_name} from {args.team_file}")
             result = await orchestrator.run(team, args.task)
-            
+
             print("\nResult:")
             print(f"Success: {result.success}")
             print(f"Message: {result.message}")
@@ -1094,7 +1100,6 @@ async def run_terminal_command(args):
     from .diagnostics import diagnose_errors
     from .policy import PolicyEngine
 
-
     policy_engine = PolicyEngine(config=build_config_overrides(args))
 
     if args.terminal_command == "diagnose":
@@ -1103,7 +1108,7 @@ async def run_terminal_command(args):
             if not os.path.exists(stderr_file):
                 print(f"ERROR: Stderr log file '{stderr_file}' not found.")
                 sys.exit(1)
-            with open(stderr_file, "r", encoding="utf-8", errors="ignore") as f:
+            with open(stderr_file, encoding="utf-8", errors="ignore") as f:
                 error_content = f.read()
         elif getattr(args, "last_command", None):
             cmd = args.last_command
@@ -1113,6 +1118,7 @@ async def run_terminal_command(args):
                 sys.exit(1)
 
             import subprocess
+
             print(f"Executing command: '{cmd}'...")
             proc = subprocess.run(cmd, shell=True, capture_output=True, text=True)
             error_content = proc.stdout + "\n" + proc.stderr
@@ -1136,7 +1142,7 @@ async def run_terminal_command(args):
         if not os.path.exists(stderr_file):
             print(f"ERROR: Stderr log file '{stderr_file}' not found.")
             sys.exit(1)
-        with open(stderr_file, "r", encoding="utf-8", errors="ignore") as f:
+        with open(stderr_file, encoding="utf-8", errors="ignore") as f:
             error_content = f.read()
 
         diagnostics = diagnose_errors(error_content)
@@ -1183,12 +1189,13 @@ async def run_terminal_command(args):
 
 def run_multimodal_command(args):
     import sys
-    
+
     if args.multimodal_command == "inspect":
         workspace_path = getattr(args, "workspace", None) or "."
         image_path = args.image_path
-        
+
         from .multimodal import validate_and_load_image
+
         try:
             metadata, _ = validate_and_load_image(image_path, workspace_path)
             print("Image Inspection Results:")
@@ -1211,26 +1218,24 @@ def run_multimodal_command(args):
 async def run_complete_command(args):
     from .completions import CompletionRequest, get_completion_suggestions
     from .config import get_config
-    
+
     workspace_path = getattr(args, "workspace", None) or "."
-    
+
     request = CompletionRequest(
         file_path=args.file_path,
         cursor_line=args.line,
         cursor_column=args.column,
     )
-    
+
     cli_overrides = build_config_overrides(args)
     config = get_config(cli_overrides)
-    provider_name, config, _, _ = _resolve_execution_target(
-        config, args, task_type="completion"
-    )
-    
+    provider_name, config, _, _ = _resolve_execution_target(config, args, task_type="completion")
+
     if provider_name not in ("fake", "stub"):
         _validate_provider_settings(
             provider_name, config, getattr(args, "allow_stub_code_agent", False)
         )
-        
+
     completion_config = config.model_dump()
     completion_config["plain_chat"] = True
 
@@ -1240,10 +1245,10 @@ async def run_complete_command(args):
         provider_name=provider_name,
         config_overrides=completion_config,
     )
-    
+
     print("Completion Suggestions:")
     for i, sug in enumerate(suggestions):
-        print(f"Suggestion {i+1}:")
+        print(f"Suggestion {i + 1}:")
         print(f"  Code:       {sug.text}")
         if sug.confidence is not None:
             print(f"  Confidence: {sug.confidence:.2f}")
@@ -1255,6 +1260,7 @@ def run_ide_command(args):
     import sys
 
     from .ide.importers import get_ide_config, import_vscode_config
+
     workspace_path = getattr(args, "workspace", None) or "."
 
     if args.ide_command == "import-vscode":
@@ -1275,6 +1281,7 @@ def run_ide_command(args):
             print("No imported configuration found.")
             return
         import json
+
         print(json.dumps(cfg, indent=2))
 
     else:
@@ -1347,6 +1354,7 @@ async def run_models_command(args):
 
         try:
             from .providers import create_code_agent
+
             cfg_dict = config.model_dump()
             cfg_dict.update(profile_cfg)
             agent = create_code_agent(profile_cfg.get("provider", "stub"), cfg_dict)
@@ -1382,10 +1390,10 @@ async def run_models_command(args):
             print(f"  Response: FAILED - {e}")
             sys.exit(1)
 
-
     else:
         print("ERROR: Unknown models subcommand.")
         sys.exit(1)
+
 
 def _normalize_client_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
     """Ensures numeric arguments are not None to avoid TypeError in providers."""
@@ -1410,7 +1418,7 @@ async def run_teams_command(args):
 
     cli_overrides = build_config_overrides(args)
     config = get_config(cli_overrides)
-    
+
     registry_file = getattr(args, "agent_registry_file", None) or config.agent_registry_file
     try:
         registry = AgentRegistry.load(registry_file)
@@ -1426,14 +1434,14 @@ async def run_teams_command(args):
             print(f"  - {name}: {team.description}")
             print(f"    Topology: {team.topology}")
             print(f"    Members: {len(team.members)}")
-            
+
     elif args.teams_command == "inspect":
         team_name = args.team_name
         team = registry.get_team(team_name)
         if not team:
             print(f"ERROR: Team '{team_name}' not found.")
             sys.exit(1)
-            
+
         print(f"Team Inspection: {team_name}")
         print(f"  Description:       {team.description}")
         print(f"  Topology:          {team.topology}")
@@ -1453,40 +1461,40 @@ async def run_teams_command(args):
     elif args.teams_command == "run":
         team_name = args.team_name
         task = args.task
-        
+
+        import inspect
+
+        from .agent_client import AgentClient
         from .coding_loop import CodingLoop
         from .mas.team_orchestrator import TeamOrchestrator
         from .workspace import Workspace
-        import inspect
-        from .agent_client import AgentClient
-        
+
         provider_config = build_provider_config(args)
         provider = provider_config.pop("provider", _resolve_code_agent(args))
-        
+
         # Robustly filter arguments based on AgentClient.__init__ signature
         sig = inspect.signature(AgentClient.__init__)
         client_kwargs = {
-            k: v for k, v in provider_config.items() 
-            if k in sig.parameters and k != "self"
+            k: v for k, v in provider_config.items() if k in sig.parameters and k != "self"
         }
         client_kwargs = _normalize_client_kwargs(client_kwargs)
         client = AgentClient(agent_id=config.code_agent, provider=provider, **client_kwargs)
-        
+
         async with Workspace(base_path=getattr(args, "workspace", None)) as workspace:
             # Initialize coding loop
             loop = CodingLoop(agent_client=client, workspace=workspace)
             loop.config = config
             orchestrator = TeamOrchestrator(loop)
-            
+
             print(f"Running Team: {team_name}")
             print(f"Task: {task}")
-            
+
             result = await orchestrator.run_team(team_name, task)
-        
+
         print("\nTeam Execution Result:")
         print(f"Success: {result.success}")
         print(f"Message: {result.message}")
-        
+
         if args.report == "markdown":
             for event in result.events:
                 if event.get("event") == "team.report":
@@ -1513,30 +1521,31 @@ async def run_teams_command(args):
         print(f"ERROR: Unknown teams subcommand: {args.teams_command}")
         sys.exit(1)
 
+
 async def run_autonomous_command(args):
+    import inspect
     import sys
-    from .config import get_config
+
+    from .agent_client import AgentClient
     from .coding_loop import CodingLoop
+    from .config import get_config
     from .mas.autonomous_runtime import AutonomousAgentRuntime
     from .workspace import Workspace
-    import inspect
-    from .agent_client import AgentClient
 
     cli_overrides = build_config_overrides(args)
     config = get_config(cli_overrides)
-    
+
     provider_config = build_provider_config(args)
     provider = provider_config.pop("provider", _resolve_code_agent(args))
-    
+
     # Robustly filter arguments based on AgentClient.__init__ signature
     sig = inspect.signature(AgentClient.__init__)
     client_kwargs = {
-        k: v for k, v in provider_config.items() 
-        if k in sig.parameters and k != "self"
+        k: v for k, v in provider_config.items() if k in sig.parameters and k != "self"
     }
     client_kwargs = _normalize_client_kwargs(client_kwargs)
     client = AgentClient(agent_id=config.code_agent, provider=provider, **client_kwargs)
-    
+
     async with Workspace(base_path=getattr(args, "workspace", None)) as workspace:
         loop = CodingLoop(agent_client=client, workspace=workspace)
         loop.config = config
@@ -1545,16 +1554,16 @@ async def run_autonomous_command(args):
         if args.autonomous_command == "run":
             print("Starting Autonomous Run...")
             print(f"Goal: {args.goal}")
-            
+
             result = await runtime.run_autonomous(
                 agent_id=args.agent,
                 team_name=args.team,
                 goal=args.goal,
                 max_steps=getattr(args, "max_steps", 50),
                 budget=getattr(args, "budget", None),
-                cooldown=getattr(args, "cooldown", 60)
+                cooldown=getattr(args, "cooldown", 60),
             )
-            
+
             print("\nAutonomous Run Finished:")
             print(f"Success: {result.success}")
             print(f"Message: {result.message}")
@@ -1573,12 +1582,13 @@ async def run_autonomous_command(args):
 
         elif args.autonomous_command == "inspect":
             from .checkpoint import CheckpointManager
+
             cm = CheckpointManager(config.checkpoint_dir)
             state = cm.load_checkpoint(args.run_id)
             if not state:
                 print(f"ERROR: Run {args.run_id} not found.")
                 sys.exit(1)
-                
+
             print(f"Autonomous Run Inspection: {args.run_id}")
             print(f"  Status:       {state['status']}")
             print(f"  Agent:        {state.get('agent_id')}")

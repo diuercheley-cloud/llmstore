@@ -5,6 +5,7 @@ import sys
 # Ensure project root is in path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+
 class AgentCTL:
     def __init__(self):
         self.parser = argparse.ArgumentParser(prog="agentctl")
@@ -94,6 +95,7 @@ class AgentCTL:
         script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         cmd = [f"{script_dir}/agent-bundle-init.sh", name]
         import subprocess
+
         subprocess.run(cmd, check=True)
 
     def validate(self, path):
@@ -101,14 +103,17 @@ class AgentCTL:
             script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             cmd = [f"{script_dir}/agent-bundle-validate.sh", path]
             import subprocess
+
             subprocess.run(cmd, check=True)
             return
         from scripts.agentctl_pkg.main import validate_workflow
+
         validate_workflow(path)
 
     def bundle(self, dir_path, output_path):
         import shutil
-        shutil.make_archive(output_path.replace(".zip", ""), 'zip', dir_path)
+
+        shutil.make_archive(output_path.replace(".zip", ""), "zip", dir_path)
 
     def run(self):
         args = self.parser.parse_args()
@@ -120,29 +125,39 @@ class AgentCTL:
             self.init(args.name)
         elif args.command == "validate":
             from scripts.agentctl_pkg.main import validate_workflow
+
             validate_workflow(args.path, use_json=getattr(args, "json", False))
         elif args.command == "explain":
             from scripts.agentctl_pkg.main import explain_workflow
+
             explain_workflow(args.path)
         elif args.command == "run":
             from scripts.agentctl_pkg.main import run_workflow
-            run_workflow(args.path, watch=args.watch, debug=args.debug, trace=args.trace, use_json=args.json)
+
+            run_workflow(
+                args.path, watch=args.watch, debug=args.debug, trace=args.trace, use_json=args.json
+            )
         elif args.command == "costs":
             from scripts.agentctl_pkg.main import show_costs
+
             show_costs(agent_id=args.agent, use_json=args.json)
         elif args.command == "replay":
             from scripts.agentctl_pkg.main import replay_run
+
             replay_run(args.run_id, dry_run=args.dry_run, use_json=args.json)
         elif args.command == "eval":
             from scripts.agentctl_pkg.main import run_eval
+
             if args.subcommand == "run":
                 run_eval(args.path, use_json=args.json)
         elif args.command == "policies":
             from scripts.agentctl_pkg.main import test_policy
+
             if args.subcommand == "test":
                 test_policy(args.path, use_json=args.json)
         elif args.command == "backends":
             from scripts.agentctl_pkg.main import list_backends
+
             if args.subcommand == "list":
                 list_backends(use_json=args.json)
         elif args.command == "bundle":
@@ -152,7 +167,8 @@ class AgentCTL:
         script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         if args.subcommand == "init":
             cmd = [f"{script_dir}/agent-bundle-init.sh", args.name]
-            if args.dir: cmd.append(args.dir)
+            if args.dir:
+                cmd.append(args.dir)
             os.execv(cmd[0], cmd)
         elif args.subcommand == "validate":
             cmd = [f"{script_dir}/agent-bundle-validate.sh", args.path]
@@ -162,7 +178,8 @@ class AgentCTL:
             os.execv(cmd[0], cmd)
         elif args.subcommand == "sign":
             cmd = [f"{script_dir}/agent-bundle-sign.sh", args.path]
-            if args.key: cmd.append(args.key)
+            if args.key:
+                cmd.append(args.key)
             os.execv(cmd[0], cmd)
         elif args.subcommand == "publish":
             cmd = [f"{script_dir}/agent-bundle-publish.sh", args.path]

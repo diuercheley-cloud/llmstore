@@ -5,13 +5,15 @@ Revises: phase92_agent_iam
 Create Date: 2026-05-27 16:00:00.000000
 
 """
-from typing import Sequence, Union
+
+from collections.abc import Sequence
+from typing import Union
 
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = 'phase93_agent_optimization'
-down_revision: Union[str, Sequence[str], None] = 'phase92_agent_iam'
+revision: str = "phase93_agent_optimization"
+down_revision: Union[str, Sequence[str], None] = "phase92_agent_iam"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -26,6 +28,7 @@ def upgrade() -> None:
         AgentPromptCandidate,
         AgentToolSelectionCandidate,
     )
+
     bind = op.get_bind()
     tables = [
         AgentOptimizationExperiment.__table__,
@@ -39,9 +42,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_table('agent_tool_selection_candidates')
-    op.drop_table('agent_policy_candidates')
-    op.drop_table('agent_prompt_candidates')
-    op.drop_table('agent_optimization_results')
-    op.drop_table('agent_optimization_candidates')
-    op.drop_table('agent_optimization_experiments')
+    op.drop_table("agent_tool_selection_candidates")
+    op.drop_table("agent_policy_candidates")
+    op.drop_table("agent_prompt_candidates")
+    op.drop_table("agent_optimization_results")
+    op.drop_table("agent_optimization_candidates")
+    op.drop_table("agent_optimization_experiments")

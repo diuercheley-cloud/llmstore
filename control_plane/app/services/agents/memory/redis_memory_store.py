@@ -2,7 +2,7 @@ import json
 import logging
 import math
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from redis.asyncio import Redis
 
@@ -19,12 +19,13 @@ class RedisMemoryStore(VectorStore):
     Uses Redis hashes for item storage and client-side cosine similarity.
     """
 
-    def __init__(self, redis_client: Optional[Redis] = None):
+    def __init__(self, redis_client: Redis | None = None):
         self._redis = redis_client
 
     async def _get_redis(self) -> Redis:
         if self._redis is None:
             from app.db.session import redis_client as _rc
+
             self._redis = _rc
         return self._redis
 
@@ -36,8 +37,8 @@ class RedisMemoryStore(VectorStore):
         tenant_id: str,
         agent_id: uuid.UUID,
         memory_id: uuid.UUID,
-        embedding: List[float],
-        metadata: Dict[str, Any],
+        embedding: list[float],
+        metadata: dict[str, Any],
     ) -> None:
         r = await self._get_redis()
         key = self._tenant_key(tenant_id)
@@ -56,10 +57,10 @@ class RedisMemoryStore(VectorStore):
         self,
         tenant_id: str,
         agent_id: uuid.UUID,
-        query_embedding: List[float],
+        query_embedding: list[float],
         top_k: int = 5,
         score_threshold: float = 0.0,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         r = await self._get_redis()
         key = self._tenant_key(tenant_id)
         raw_items = await r.hgetall(key)
@@ -77,12 +78,14 @@ class RedisMemoryStore(VectorStore):
             norm_e = math.sqrt(sum(x * x for x in emb))
             score = dot / (norm_q * norm_e) if norm_q > 0 and norm_e > 0 else 0.0
             if score >= score_threshold:
-                scored.append({
-                    "memory_id": uuid.UUID(memory_id_str),
-                    "score": score,
-                    "metadata": json.loads(item.get("metadata", "{}")),
-                    "provider": "redis",
-                })
+                scored.append(
+                    {
+                        "memory_id": uuid.UUID(memory_id_str),
+                        "score": score,
+                        "metadata": json.loads(item.get("metadata", "{}")),
+                        "provider": "redis",
+                    }
+                )
 
         scored.sort(key=lambda x: x["score"], reverse=True)
         return scored[:top_k]

@@ -114,7 +114,7 @@ def check_content_in_file(path, patterns, case_sensitive=True):
     if not os.path.isfile(full_path):
         return [False] * len(patterns)
 
-    with open(full_path, "r") as f:
+    with open(full_path) as f:
         content = f.read()
 
     results = []
@@ -133,7 +133,7 @@ def check_mermaid_diagrams(path):
     full_path = os.path.join(REPO_ROOT, path)
     if not os.path.isfile(full_path):
         return False
-    with open(full_path, "r") as f:
+    with open(full_path) as f:
         content = f.read()
     diagrams = re.findall(r"```mermaid\n(.*?)```", content, re.DOTALL)
     return len(diagrams) > 0
@@ -143,7 +143,7 @@ def check_prohibited_claims_in_file(path):
     full_path = os.path.join(REPO_ROOT, path)
     if not os.path.isfile(full_path):
         return True
-    with open(full_path, "r") as f:
+    with open(full_path) as f:
         content = f.read()
     # Exclude sections that discuss prohibited claims as examples
     for marker in ["## Prohibited Claims", "### Validation fails"]:
@@ -163,7 +163,7 @@ def check_internal_links(path):
     full_path = os.path.join(REPO_ROOT, path)
     if not os.path.isfile(full_path):
         return True
-    with open(full_path, "r") as f:
+    with open(full_path) as f:
         content = f.read()
 
     links = re.findall(r"\[([^\]]+)\]\(([^)]+)\)", content)
@@ -211,7 +211,9 @@ def main():
         "docs/FLAGS_INVENTORY.md",
         "docs/PRODUCT_SURFACE.md",
     ]:
-        results = check_content_in_file(doc, ["generated_by: scripts/docs/generate_reference_docs.py"])
+        results = check_content_in_file(
+            doc, ["generated_by: scripts/docs/generate_reference_docs.py"]
+        )
         errors += sum(1 for r in results if not r)
     print()
 

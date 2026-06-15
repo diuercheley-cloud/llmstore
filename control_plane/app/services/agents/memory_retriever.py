@@ -4,10 +4,11 @@ Status: beta
 
 Semantic memory retrieval with tenant isolation, consent, redaction, and scoring.
 """
+
 import logging
 import uuid
-from datetime import timezone
-from typing import Any, Dict, List, Optional
+from datetime import UTC
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -32,7 +33,7 @@ class MemoryRetrievalResult:
         self.score = score
         self.redacted = redacted
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "memory_id": str(self.item.id),
             "content": self.item.raw_content,
@@ -58,10 +59,10 @@ class MemoryRetriever:
         agent_id: uuid.UUID,
         query: str,
         memory_type: str = "long_term",
-        user_id: Optional[str] = None,
+        user_id: str | None = None,
         top_k: int = 5,
         score_threshold: float = 0.0,
-    ) -> List[MemoryRetrievalResult]:
+    ) -> list[MemoryRetrievalResult]:
         semantic = self.settings.agent_memory_semantic_search_enabled
 
         items = await self.indexing.search(
@@ -72,13 +73,13 @@ class MemoryRetriever:
             semantic=semantic,
         )
 
-        results: List[MemoryRetrievalResult] = []
+        results: list[MemoryRetrievalResult] = []
         now = utc_now()
         for item in items:
             retention = item.retention_until
             if retention is not None:
                 if retention.tzinfo is None:
-                    retention = retention.replace(tzinfo=timezone.utc)
+                    retention = retention.replace(tzinfo=UTC)
                 if retention <= now:
                     continue
 
@@ -94,7 +95,7 @@ class MemoryRetriever:
                         continue
 
             raw_content = item.raw_content or ""
-            redacted_types: List[str] = []
+            redacted_types: list[str] = []
 
             search_policy = await self.policy.get_search_policy(tenant_id, agent_id, memory_type)
             if search_policy.get("redaction_enabled", True):
@@ -106,6 +107,7 @@ class MemoryRetriever:
             if semantic and item.id:
                 from app.models.agents.agents import AgentMemoryIndex
                 from sqlalchemy.future import select
+
                 stmt = select(AgentMemoryIndex).where(
                     AgentMemoryIndex.memory_item_id == item.id,
                     AgentMemoryIndex.tenant_id == tenant_id,
@@ -115,6 +117,7 @@ class MemoryRetriever:
                 if idx and idx.embedding:
                     import json
                     import math
+
                     query_emb = await self.indexing._compute_embedding(query)
                     try:
                         item_emb = json.loads(idx.embedding)

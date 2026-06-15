@@ -1,13 +1,12 @@
 import logging
 import uuid
-from typing import Any, Optional
-
-from .base import GraphProvider
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 try:
     from redis import asyncio as aioredis
+
     HAS_REDIS = True
 except ImportError:
     HAS_REDIS = False
@@ -22,7 +21,7 @@ class FalkorDBGraphProvider:
     Implements GraphProvider protocol.
     """
 
-    def __init__(self, enabled: bool, db: Optional[Any] = None):
+    def __init__(self, enabled: bool, db: Any | None = None):
         if not enabled:
             raise RuntimeError("FalkorDB graph provider is disabled by feature flag")
         self._db = db
@@ -34,14 +33,18 @@ class FalkorDBGraphProvider:
             from app.services.agents.knowledge_graph.providers.internal_sql_graph import (
                 InternalSQLGraphProvider,
             )
+
             self._internal = InternalSQLGraphProvider(self._db)
         return self._internal
 
     async def _get_redis(self):
         if self._redis is None and HAS_REDIS:
             from app.core.config import get_settings
+
             settings = get_settings()
-            url = getattr(settings, 'falkordb_url', getattr(settings, 'redis_url', 'redis://localhost:6379'))
+            url = getattr(
+                settings, "falkordb_url", getattr(settings, "redis_url", "redis://localhost:6379")
+            )
             try:
                 self._redis = await aioredis.from_url(url, decode_responses=True)
                 await self._redis.ping()

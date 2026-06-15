@@ -1,9 +1,9 @@
 import logging
 import os
 import uuid
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 from statistics import mean
-from typing import Any, Dict, List
+from typing import Any
 
 from app.core.config import get_settings
 from app.models.agents.agent_workflows import AgentWorkflowEvent
@@ -20,12 +20,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 def sanitize_dict(data: dict) -> dict:
     if not isinstance(data, dict):
         return data
     sanitized = {}
     for k, v in data.items():
-        if any(secret in k.lower() for secret in ["secret", "token", "password", "key", "credential", "auth"]):
+        if any(
+            secret in k.lower()
+            for secret in ["secret", "token", "password", "key", "credential", "auth"]
+        ):
             sanitized[k] = "********"
         elif isinstance(v, dict):
             sanitized[k] = sanitize_dict(v)
@@ -35,12 +39,13 @@ def sanitize_dict(data: dict) -> dict:
             sanitized[k] = v
     return sanitized
 
+
 class VisualObservabilityService:
     def __init__(self, db: AsyncSession = None):
         self.db = db
         self.settings = get_settings()
 
-    def get_dashboard_links(self) -> List[Dict[str, str]]:
+    def get_dashboard_links(self) -> list[dict[str, str]]:
         base_url = os.getenv("GRAFANA_URL", "http://localhost:3001")
         return [
             {"name": "Platform Overview", "url": f"{base_url}/dashboards/platform-overview"},
@@ -53,7 +58,7 @@ class VisualObservabilityService:
             {"name": "SLO & Error Budget", "url": f"{base_url}/dashboards/slo-error-budget"},
         ]
 
-    def get_metrics_derived(self) -> Dict[str, Any]:
+    def get_metrics_derived(self) -> dict[str, Any]:
         requests_total = self._counter_total("llm_requests_total")
         errors_total = self._counter_total("llm_request_errors_total")
         fallbacks_total = self._counter_total("llm_routing_fallbacks_total")
@@ -68,7 +73,11 @@ class VisualObservabilityService:
 
         fallback_rate = (fallbacks_total / decisions_total) if decisions_total > 0 else 0.0
         error_rate = (errors_total / requests_total) if requests_total > 0 else 0.0
-        cache_hit_ratio = (cache_hits_total / (cache_hits_total + cache_misses_total)) if (cache_hits_total + cache_misses_total) > 0 else 0.0
+        cache_hit_ratio = (
+            (cache_hits_total / (cache_hits_total + cache_misses_total))
+            if (cache_hits_total + cache_misses_total) > 0
+            else 0.0
+        )
 
         slo = PlatformSLOService().get_slo_report()
         health = PlatformSLOService().get_platform_health()
@@ -86,12 +95,12 @@ class VisualObservabilityService:
             "critical_issues": health.get("critical_issues", []),
         }
 
-    async def get_error_budget(self) -> Dict[str, Any]:
+    async def get_error_budget(self) -> dict[str, Any]:
         if not self.db:
             return {"status": "no_data", "message": "No database session configured."}
 
         thirty_days_ago = datetime.now(UTC) - timedelta(days=30)
-        
+
         try:
             # Total runs in the last 30 days
             res_total = await self.db.execute(
@@ -113,12 +122,12 @@ class VisualObservabilityService:
         if total_runs == 0:
             return {
                 "status": "no_data",
-                "message": "No agent run data available in the last 30 days."
+                "message": "No agent run data available in the last 30 days.",
             }
 
         availability = ((total_runs - failed_runs) / total_runs) * 100
         slo_target = 99.9
-        
+
         allowed_failures = total_runs * (1 - slo_target / 100.0)
         if allowed_failures > 0:
             remaining = max(0.0, ((allowed_failures - failed_runs) / allowed_failures) * 100.0)
@@ -132,7 +141,7 @@ class VisualObservabilityService:
             "total_runs": total_runs,
             "failed_runs": failed_runs,
             "period_days": 30,
-            "is_critical": remaining < 10.0
+            "is_critical": remaining < 10.0,
         }
 
     def _counter_total(self, metric_name: str) -> float:
@@ -145,8 +154,8 @@ class VisualObservabilityService:
                     total += float(sample.value)
         return total
 
-    def _gauge_values(self, metric_name: str) -> List[float]:
-        values: List[float] = []
+    def _gauge_values(self, metric_name: str) -> list[float]:
+        values: list[float] = []
         for family in REGISTRY.collect():
             if family.name != metric_name:
                 continue
@@ -155,7 +164,7 @@ class VisualObservabilityService:
                     values.append(float(sample.value))
         return values
 
-    async def get_incident_timeline(self, limit: int = 50) -> Dict[str, Any]:
+    async def get_incident_timeline(self, limit: int = 50) -> dict[str, Any]:
         if not self.db:
             return {"status": "no_data", "items": []}
 
@@ -168,7 +177,9 @@ class VisualObservabilityService:
 
             # Query workflow events
             res_wf = await self.db.execute(
-                select(AgentWorkflowEvent).order_by(AgentWorkflowEvent.created_at.desc()).limit(limit)
+                select(AgentWorkflowEvent)
+                .order_by(AgentWorkflowEvent.created_at.desc())
+                .limit(limit)
             )
             wf_events = res_wf.scalars().all()
         except Exception as e:
@@ -177,26 +188,30 @@ class VisualObservabilityService:
 
         items = []
         for inc in incidents:
-            items.append({
-                "id": str(inc.id),
-                "timestamp": inc.created_at.isoformat(),
-                "type": "incident",
-                "incident_type": inc.incident_type,
-                "severity": inc.severity,
-                "title": inc.title,
-                "description": inc.description
-            })
-        
+            items.append(
+                {
+                    "id": str(inc.id),
+                    "timestamp": inc.created_at.isoformat(),
+                    "type": "incident",
+                    "incident_type": inc.incident_type,
+                    "severity": inc.severity,
+                    "title": inc.title,
+                    "description": inc.description,
+                }
+            )
+
         for wf in wf_events:
-            items.append({
-                "id": str(wf.id),
-                "timestamp": wf.created_at.isoformat(),
-                "type": "workflow_event",
-                "event_type": wf.event_type,
-                "from_state": wf.from_state,
-                "to_state": wf.to_state,
-                "payload": sanitize_dict(wf.payload or {})
-            })
+            items.append(
+                {
+                    "id": str(wf.id),
+                    "timestamp": wf.created_at.isoformat(),
+                    "type": "workflow_event",
+                    "event_type": wf.event_type,
+                    "from_state": wf.from_state,
+                    "to_state": wf.to_state,
+                    "payload": sanitize_dict(wf.payload or {}),
+                }
+            )
 
         items.sort(key=lambda x: x["timestamp"], reverse=True)
         items = items[:limit]
@@ -206,7 +221,7 @@ class VisualObservabilityService:
 
         return {"items": items}
 
-    async def get_agent_run_timeline(self, run_id: uuid.UUID) -> Dict[str, Any]:
+    async def get_agent_run_timeline(self, run_id: uuid.UUID) -> dict[str, Any]:
         if not self.db:
             return {"status": "no_data", "items": []}
 
@@ -233,23 +248,27 @@ class VisualObservabilityService:
 
         items = []
         for s in steps:
-            items.append({
-                "id": str(s.id),
-                "timestamp": s.created_at.isoformat() if s.created_at else None,
-                "type": "step",
-                "step_type": s.step_type,
-                "status": s.status,
-                "details": sanitize_dict(s.step_details or {})
-            })
-        
+            items.append(
+                {
+                    "id": str(s.id),
+                    "timestamp": s.created_at.isoformat() if s.created_at else None,
+                    "type": "step",
+                    "step_type": s.step_type,
+                    "status": s.status,
+                    "details": sanitize_dict(s.step_details or {}),
+                }
+            )
+
         for e in events:
-            items.append({
-                "id": str(e.id),
-                "timestamp": e.created_at.isoformat() if e.created_at else None,
-                "type": "event",
-                "event_type": e.event_type,
-                "details": sanitize_dict(e.event_details or {})
-            })
+            items.append(
+                {
+                    "id": str(e.id),
+                    "timestamp": e.created_at.isoformat() if e.created_at else None,
+                    "type": "event",
+                    "event_type": e.event_type,
+                    "details": sanitize_dict(e.event_details or {}),
+                }
+            )
 
         items.sort(key=lambda x: x["timestamp"] or "")
 

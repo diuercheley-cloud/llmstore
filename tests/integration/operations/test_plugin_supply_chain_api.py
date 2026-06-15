@@ -52,12 +52,18 @@ async def test_plugin_supply_chain_api_flow(session):
         assert created.status_code == 200
         provenance_id = created.json()["provenance"]["id"]
 
-        listed = await ac.get(f"/admin/operations/plugin-supply-chain/provenance?client_id={client.id}")
+        listed = await ac.get(
+            f"/admin/operations/plugin-supply-chain/provenance?client_id={client.id}"
+        )
         assert listed.status_code == 200
         assert len(listed.json()) == 1
 
-        detail = await ac.get(f"/admin/operations/plugin-supply-chain/provenance/{provenance_id}?client_id={client.id}")
-        blocked_detail = await ac.get(f"/admin/operations/plugin-supply-chain/provenance/{provenance_id}?client_id={other.id}")
+        detail = await ac.get(
+            f"/admin/operations/plugin-supply-chain/provenance/{provenance_id}?client_id={client.id}"
+        )
+        blocked_detail = await ac.get(
+            f"/admin/operations/plugin-supply-chain/provenance/{provenance_id}?client_id={other.id}"
+        )
         assert detail.status_code == 200
         assert blocked_detail.status_code == 404
 
@@ -69,19 +75,20 @@ async def test_plugin_supply_chain_api_flow(session):
 
         import tempfile
         from pathlib import Path
+
         from app.services.operations.plugin_supply_chain.sbom_service import PluginSBOMService
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             pyproject_file = temp_path / "pyproject.toml"
             pyproject_file.write_text(
-                "[project]\nname = \"test-plugin\"\nversion = \"1.0.0\"\ndependencies = [\"requests>=2.20.0\"]\nlicense = \"MIT\"\n",
-                encoding="utf-8"
+                '[project]\nname = "test-plugin"\nversion = "1.0.0"\ndependencies = ["requests>=2.20.0"]\nlicense = "MIT"\n',
+                encoding="utf-8",
             )
-            
+
             service = PluginSBOMService()
             pkg_hash = service.calculate_package_hash(temp_path)
-            
+
             sbom = await ac.post(
                 f"/admin/operations/plugin-supply-chain/provenance/{provenance_id}/sbom",
                 json={
@@ -92,7 +99,6 @@ async def test_plugin_supply_chain_api_flow(session):
             )
             assert sbom.status_code == 200
             assert sbom.json()["validation"]["signature_only"] is True
-
 
         verification = await ac.post(
             f"/admin/operations/plugin-supply-chain/provenance/{provenance_id}/dependency-verify",
@@ -132,9 +138,14 @@ async def test_plugin_supply_chain_api_flow(session):
         )
         assert receipt.status_code == 200
 
-        dashboard = await ac.get(f"/admin/operations/plugin-supply-chain/dashboard?client_id={client.id}")
+        dashboard = await ac.get(
+            f"/admin/operations/plugin-supply-chain/dashboard?client_id={client.id}"
+        )
         assert dashboard.status_code == 200
-        assert dashboard.json()["section"] == "Plugin Supply-Chain Provenance & SBOM Placeholder Framework"
+        assert (
+            dashboard.json()["section"]
+            == "Plugin Supply-Chain Provenance & SBOM Placeholder Framework"
+        )
 
         cross_tenant = await ac.post(
             f"/admin/operations/plugin-supply-chain/provenance/{provenance_id}/replay-verify",

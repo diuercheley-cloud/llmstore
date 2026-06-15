@@ -12,6 +12,7 @@ Canonical format:
   mock         : bool  — true only when AGENT_MCP_MOCK_MODE was active
   source       : str   — 'mcp_real' | 'mcp_mock'
 """
+
 from __future__ import annotations
 
 from typing import Any

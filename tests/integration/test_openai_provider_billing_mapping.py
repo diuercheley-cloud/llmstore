@@ -1,7 +1,5 @@
 """Tests for OpenAI billing BRL mapping — cost estimation, pricing engine integration."""
 
-
-
 from app.services.billing.pricing_engine import (
     calculate_customer_price,
     calculate_financials,
@@ -122,13 +120,13 @@ class TestProviderBillingIntegration:
     def test_embedding_cost_calculation(self):
         provider = OpenAIProvider()
         cost = provider.estimate_cost("text-embedding-3-small", 100, 0)
-        expected = (100 / 1_000_000 * 0.02)
+        expected = 100 / 1_000_000 * 0.02
         assert cost == expected
 
     def test_embedding_large_cost(self):
         provider = OpenAIProvider()
         cost = provider.estimate_cost("text-embedding-3-large", 100, 0)
-        expected = (100 / 1_000_000 * 0.13)
+        expected = 100 / 1_000_000 * 0.13
         assert cost == expected
 
     def test_pricing_configured_flag(self):

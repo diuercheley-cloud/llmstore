@@ -12,7 +12,6 @@ TEMPLATES = [
 
 
 class TestProposalTemplatesExist:
-
     def test_all_templates_exist(self):
         for t in TEMPLATES:
             assert os.path.exists(ROOT / t), f"Template {t} não encontrado"
@@ -24,7 +23,6 @@ class TestProposalTemplatesExist:
 
 
 class TestTechnicalProposalTemplate:
-
     def test_has_overview(self):
         content = (ROOT / "proposals/TECHNICAL_PROPOSAL_TEMPLATE.md").read_text()
         assert "Visão Geral" in content or "visão geral" in content.lower()
@@ -59,7 +57,12 @@ class TestTechnicalProposalTemplate:
 
     def test_has_upgrade_rollback(self):
         content = (ROOT / "proposals/TECHNICAL_PROPOSAL_TEMPLATE.md").read_text()
-        assert "Upgrade" in content or "upgrade" in content.lower() or "Rollback" in content or "rollback" in content.lower()
+        assert (
+            "Upgrade" in content
+            or "upgrade" in content.lower()
+            or "Rollback" in content
+            or "rollback" in content.lower()
+        )
 
     def test_has_rag(self):
         content = (ROOT / "proposals/TECHNICAL_PROPOSAL_TEMPLATE.md").read_text()
@@ -91,7 +94,6 @@ class TestTechnicalProposalTemplate:
 
 
 class TestCommercialProposalTemplate:
-
     def test_has_problem(self):
         content = (ROOT / "proposals/COMMERCIAL_PROPOSAL_TEMPLATE.md").read_text()
         assert "Problema" in content or "problema" in content.lower()
@@ -134,7 +136,6 @@ class TestCommercialProposalTemplate:
 
 
 class TestOnePager:
-
     def test_has_title(self):
         content = (ROOT / "proposals/LOCAL_AI_APPLIANCE_ONE_PAGER.md").read_text()
         assert "# " in content
@@ -161,25 +162,38 @@ class TestOnePager:
 
 
 class TestProposalDisclaimers:
-
     def test_local_appliance_mentioned(self):
         for t in TEMPLATES:
             content = (ROOT / t).read_text().lower()
-            assert any(phrase in content for phrase in [
-                "appliance local", "local appliance", "on-premise",
-                "appliance local", "local ai appliance"
-            ]), f"{t} não menciona local appliance"
+            assert any(
+                phrase in content
+                for phrase in [
+                    "appliance local",
+                    "local appliance",
+                    "on-premise",
+                    "appliance local",
+                    "local ai appliance",
+                ]
+            ), f"{t} não menciona local appliance"
 
     def test_psp_pix_out_of_scope(self):
         for t in TEMPLATES:
             content = (ROOT / t).read_text().lower()
             if "psp" in content or "pix" in content:
-                assert any(phrase in content for phrase in [
-                    "sem psp", "psp real", "pix real",
-                    "fora do escopo", "billing.*manual",
-                    "faturamento.*manual", "sem psp/pix"
-                ]) or ("manual" in content and ("pix" in content or "psp" in content)), \
+                assert any(
+                    phrase in content
+                    for phrase in [
+                        "sem psp",
+                        "psp real",
+                        "pix real",
+                        "fora do escopo",
+                        "billing.*manual",
+                        "faturamento.*manual",
+                        "sem psp/pix",
+                    ]
+                ) or ("manual" in content and ("pix" in content or "psp" in content)), (
                     f"{t} menciona PSP/PIX mas não deixa claro que está fora do escopo"
+                )
 
     def test_no_absolute_security_promises(self):
         for t in TEMPLATES:
@@ -187,5 +201,5 @@ class TestProposalDisclaimers:
             # Should mention security but not promise absolute
             if "garantimos segurança absoluta" in content:
                 idx = content.index("garantimos segurança absoluta")
-                prev = content[max(0, idx-200):idx]
+                prev = content[max(0, idx - 200) : idx]
                 assert "não" in prev, f"{t} parece prometer segurança absoluta"

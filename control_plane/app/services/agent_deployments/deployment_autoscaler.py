@@ -2,7 +2,6 @@ import asyncio
 import logging
 import time
 import uuid
-from typing import Dict, List, Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -22,9 +21,9 @@ class DeploymentAutoscaler:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.settings = get_settings()
-        self._watchers: Dict[uuid.UUID, asyncio.Task] = {}
+        self._watchers: dict[uuid.UUID, asyncio.Task] = {}
 
-    async def evaluate(self, deployment_id: uuid.UUID) -> Optional[int]:
+    async def evaluate(self, deployment_id: uuid.UUID) -> int | None:
         stmt = select(AgentApiDeployment).where(AgentApiDeployment.id == deployment_id)
         res = await self.db.execute(stmt)
         deploy = res.scalar_one_or_none()
@@ -109,7 +108,7 @@ class DeploymentAutoscaler:
         if task and not task.done():
             task.cancel()
 
-    async def evaluate_all(self) -> List[Dict]:
+    async def evaluate_all(self) -> list[dict]:
         stmt = select(AgentApiDeployment).where(AgentApiDeployment.status == "active")
         res = await self.db.execute(stmt)
         results = []

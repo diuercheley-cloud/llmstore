@@ -20,7 +20,7 @@ def build_promotion_workflow_receipt(workflow: AdapterPromotionWorkflow) -> Adap
     payload_hash = sha256_hex(canonical_json(payload))
     # Deterministic immutable_hash
     immutable_hash = sha256_hex(f"receipt_workflow_{workflow.immutable_hash}")
-    
+
     return AdapterPromotionReceipt(
         client_id=workflow.client_id,
         workflow_id=workflow.id,
@@ -28,8 +28,9 @@ def build_promotion_workflow_receipt(workflow: AdapterPromotionWorkflow) -> Adap
         payload_hash=payload_hash,
         immutable_hash=immutable_hash,
         signature=f"promotion_sig_{payload_hash[:16]}",
-        generated_at=utc_now()
+        generated_at=utc_now(),
     )
+
 
 def build_gate_result_receipt(gate_result: AdapterPromotionGateResult) -> AdapterPromotionReceipt:
     payload = {
@@ -39,7 +40,7 @@ def build_gate_result_receipt(gate_result: AdapterPromotionGateResult) -> Adapte
     }
     payload_hash = sha256_hex(canonical_json(payload))
     immutable_hash = sha256_hex(f"receipt_gate_{gate_result.immutable_hash}")
-    
+
     return AdapterPromotionReceipt(
         client_id=gate_result.client_id,
         workflow_id=gate_result.workflow_id,
@@ -47,10 +48,13 @@ def build_gate_result_receipt(gate_result: AdapterPromotionGateResult) -> Adapte
         payload_hash=payload_hash,
         immutable_hash=immutable_hash,
         signature=f"gate_sig_{payload_hash[:16]}",
-        generated_at=utc_now()
+        generated_at=utc_now(),
     )
 
-def build_transition_receipt(transition: AdapterPromotionStageTransition) -> AdapterPromotionReceipt:
+
+def build_transition_receipt(
+    transition: AdapterPromotionStageTransition,
+) -> AdapterPromotionReceipt:
     payload = {
         "id": str(transition.id),
         "from_stage": transition.from_stage,
@@ -59,7 +63,7 @@ def build_transition_receipt(transition: AdapterPromotionStageTransition) -> Ada
     }
     payload_hash = sha256_hex(canonical_json(payload))
     immutable_hash = sha256_hex(f"receipt_transition_{transition.immutable_hash}")
-    
+
     return AdapterPromotionReceipt(
         client_id=transition.client_id,
         workflow_id=transition.workflow_id,
@@ -67,8 +71,9 @@ def build_transition_receipt(transition: AdapterPromotionStageTransition) -> Ada
         payload_hash=payload_hash,
         immutable_hash=immutable_hash,
         signature=f"transition_sig_{payload_hash[:16]}",
-        generated_at=utc_now()
+        generated_at=utc_now(),
     )
+
 
 def build_rollback_receipt(rollback: AdapterPromotionRollback) -> AdapterPromotionReceipt:
     payload = {
@@ -79,7 +84,7 @@ def build_rollback_receipt(rollback: AdapterPromotionRollback) -> AdapterPromoti
     }
     payload_hash = sha256_hex(canonical_json(payload))
     immutable_hash = sha256_hex(f"receipt_rollback_{rollback.immutable_hash}")
-    
+
     return AdapterPromotionReceipt(
         client_id=rollback.client_id,
         workflow_id=rollback.workflow_id,
@@ -87,5 +92,5 @@ def build_rollback_receipt(rollback: AdapterPromotionRollback) -> AdapterPromoti
         payload_hash=payload_hash,
         immutable_hash=immutable_hash,
         signature=f"rollback_sig_{payload_hash[:16]}",
-        generated_at=utc_now()
+        generated_at=utc_now(),
     )

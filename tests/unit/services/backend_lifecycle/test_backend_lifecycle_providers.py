@@ -1,7 +1,6 @@
 from uuid import uuid4
 
 import pytest
-
 from app.contracts.backend_lifecycle import BackendDesiredState
 from app.services.backend_lifecycle.providers import (
     DockerProvider,

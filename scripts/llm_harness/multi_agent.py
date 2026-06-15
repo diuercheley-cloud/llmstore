@@ -70,6 +70,7 @@ class MultiAgentOrchestrator:
         self.config = getattr(coding_loop, "config", None)
         if self.config is None:
             from .config import HarnessConfig
+
             self.config = HarnessConfig(
                 code_agent=getattr(self.agent_client, "agent_id", "default-coder"),
                 provider=getattr(self.agent_client, "provider", "stub"),
@@ -89,7 +90,9 @@ class MultiAgentOrchestrator:
             "|---|---|---|---|",
         ]
         for st in blackboard.state.sub_tasks:
-            lines.append(f"| {st.id} | {st.description} | {st.status.upper()} | {st.assigned_to or '-'} |")
+            lines.append(
+                f"| {st.id} | {st.description} | {st.status.upper()} | {st.assigned_to or '-'} |"
+            )
 
         lines.append("")
         lines.append("## Agent Dialog")
@@ -137,7 +140,8 @@ class MultiAgentOrchestrator:
 
         logger.warning(
             "LLM returned invalid JSON for %s. Content: %.200s",
-            task_type, content,
+            task_type,
+            content,
         )
         return None
 
@@ -159,12 +163,19 @@ class MultiAgentOrchestrator:
             decision = await self._call_supervisor(task_str, blackboard)
 
             if decision is None:
-                logger.warning("Supervisor returned no valid decision; forcing continue with developer")
-                decision = {"next_agent": "developer", "instruction": "Continue with the task", "type": "action"}
+                logger.warning(
+                    "Supervisor returned no valid decision; forcing continue with developer"
+                )
+                decision = {
+                    "next_agent": "developer",
+                    "instruction": "Continue with the task",
+                    "type": "action",
+                }
 
             if "sub_tasks" in decision:
                 for st_data in decision["sub_tasks"]:
                     from .mas.schemas import SubTask
+
                     try:
                         st = SubTask(**st_data)
                         blackboard.update_sub_task(st)
@@ -183,13 +194,15 @@ class MultiAgentOrchestrator:
                     events=[
                         {
                             "event": "multi_agent.dialog",
-                            "messages": [m.model_dump(mode="json") for m in blackboard.state.messages]
+                            "messages": [
+                                m.model_dump(mode="json") for m in blackboard.state.messages
+                            ],
                         },
                         {
                             "event": "multi_agent.report",
-                            "report": self.generate_orchestration_report(blackboard)
-                        }
-                    ]
+                            "report": self.generate_orchestration_report(blackboard),
+                        },
+                    ],
                 )
 
             if not next_agent_id or next_agent_id not in self.registry.agents:
@@ -217,21 +230,22 @@ class MultiAgentOrchestrator:
                     events=[
                         {
                             "event": "multi_agent.dialog",
-                            "messages": [m.model_dump(mode="json") for m in blackboard.state.messages]
+                            "messages": [
+                                m.model_dump(mode="json") for m in blackboard.state.messages
+                            ],
                         },
                         {
                             "event": "multi_agent.report",
-                            "report": self.generate_orchestration_report(blackboard)
-                        }
-                    ]
+                            "report": self.generate_orchestration_report(blackboard),
+                        },
+                    ],
                 )
 
             # Detect stalled sub-tasks
             current_subtask_ids = {st.id for st in blackboard.state.sub_tasks}
             if current_subtask_ids and current_subtask_ids == last_subtask_ids:
                 all_completed = all(
-                    st.status in ("completed", "failed")
-                    for st in blackboard.state.sub_tasks
+                    st.status in ("completed", "failed") for st in blackboard.state.sub_tasks
                 )
                 if all_completed:
                     logger.info("All sub-tasks completed. Finishing.")
@@ -241,13 +255,15 @@ class MultiAgentOrchestrator:
                         events=[
                             {
                                 "event": "multi_agent.dialog",
-                                "messages": [m.model_dump(mode="json") for m in blackboard.state.messages]
+                                "messages": [
+                                    m.model_dump(mode="json") for m in blackboard.state.messages
+                                ],
                             },
                             {
                                 "event": "multi_agent.report",
-                                "report": self.generate_orchestration_report(blackboard)
-                            }
-                        ]
+                                "report": self.generate_orchestration_report(blackboard),
+                            },
+                        ],
                     )
             last_subtask_ids = current_subtask_ids
 
@@ -258,7 +274,7 @@ class MultiAgentOrchestrator:
                 "Supervisor",
                 next_agent_id,
                 f"Delegated task: {instruction}",
-                {"agent_role": agent_def.role if agent_def else None}
+                {"agent_role": agent_def.role if agent_def else None},
             )
 
             self.coding_loop.current_agent = next_agent_id
@@ -286,7 +302,7 @@ class MultiAgentOrchestrator:
                     "success": result.success,
                     "changed_files": changed_files,
                     "error": result.error,
-                }
+                },
             )
 
             # Mark the relevant sub-task as completed/failed
@@ -302,20 +318,21 @@ class MultiAgentOrchestrator:
             events=[
                 {
                     "event": "multi_agent.dialog",
-                    "messages": [m.model_dump(mode="json") for m in blackboard.state.messages]
+                    "messages": [m.model_dump(mode="json") for m in blackboard.state.messages],
                 },
                 {
                     "event": "multi_agent.report",
-                    "report": self.generate_orchestration_report(blackboard)
-                }
-            ]
+                    "report": self.generate_orchestration_report(blackboard),
+                },
+            ],
         )
 
     async def _call_supervisor(self, task: str, blackboard: Blackboard) -> dict[str, Any] | None:
         supervisor_def = self.registry.get_agent("supervisor")
         available_agents = [
             {"id": k, "role": v.role, "description": v.description}
-            for k, v in self.registry.agents.items() if k != "supervisor"
+            for k, v in self.registry.agents.items()
+            if k != "supervisor"
         ]
 
         custom_state = blackboard.state.custom_state or {}
@@ -371,7 +388,9 @@ class MultiAgentOrchestrator:
 
             plan = await self._call_planner(task_str, bb_summary)
             if not plan:
-                logger.warning("Planner returned empty plan; allowing coder to proceed without plan")
+                logger.warning(
+                    "Planner returned empty plan; allowing coder to proceed without plan"
+                )
                 plan = [{"type": "plan", "message": "Continue with implementation"}]
 
             logger.info("Planner generated %d actions", len(plan))
@@ -380,7 +399,7 @@ class MultiAgentOrchestrator:
                 "Planner",
                 "Orchestrator",
                 f"Generated plan with {len(plan)} actions",
-                {"plan": plan}
+                {"plan": plan},
             )
 
             result = await self.coding_loop.run(task_str, action_plan=plan)
@@ -392,25 +411,29 @@ class MultiAgentOrchestrator:
                 "Coder",
                 "Orchestrator",
                 f"Execution finished. Success: {result.success}",
-                {"changed_files": changed_files}
+                {"changed_files": changed_files},
             )
 
             if not result.success:
                 logger.warning("Coder failed: %s", result.error)
-                result.events.append({
-                    "event": "multi_agent.dialog",
-                    "messages": [m.model_dump(mode="json") for m in blackboard.state.messages]
-                })
+                result.events.append(
+                    {
+                        "event": "multi_agent.dialog",
+                        "messages": [m.model_dump(mode="json") for m in blackboard.state.messages],
+                    }
+                )
                 return result
 
             review = await self._call_reviewer(task_str, plan, result, blackboard)
             if review and review.get("status") == "approved":
                 logger.info("Reviewer approved the changes")
                 blackboard.add_message("Reviewer", "Orchestrator", "Approved changes.")
-                result.events.append({
-                    "event": "multi_agent.dialog",
-                    "messages": [m.model_dump(mode="json") for m in blackboard.state.messages]
-                })
+                result.events.append(
+                    {
+                        "event": "multi_agent.dialog",
+                        "messages": [m.model_dump(mode="json") for m in blackboard.state.messages],
+                    }
+                )
                 return result
 
             feedback_msg = "No feedback provided"
@@ -426,10 +449,12 @@ class MultiAgentOrchestrator:
         if last_result is None:
             raise RuntimeError("Multi-agent loop failed to produce a result")
 
-        last_result.events.append({
-            "event": "multi_agent.dialog",
-            "messages": [m.model_dump(mode="json") for m in blackboard.state.messages]
-        })
+        last_result.events.append(
+            {
+                "event": "multi_agent.dialog",
+                "messages": [m.model_dump(mode="json") for m in blackboard.state.messages],
+            }
+        )
         return last_result
 
     async def _call_planner(self, task: str, blackboard_summary: str) -> list[dict[str, Any]]:

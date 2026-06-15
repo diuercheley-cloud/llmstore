@@ -18,14 +18,14 @@ class TestSignedAdapterRegistryService:
             manifest_hash="mhash",
             immutable_hash="imm_mhash",
             capabilities_json={"requested": []},
-            denied_capabilities_json={"denied": []}
+            denied_capabilities_json={"denied": []},
         )
         session.add(manifest)
         await session.flush()
-        
+
         service = SignedAdapterRegistryService(session)
         entry = await service.register_entry(manifest)
-        
+
         assert entry.adapter_name == "test_adapter"
         assert entry.registry_status == "draft"
         assert isinstance(entry.signature, str) and len(entry.signature) > 0
@@ -40,21 +40,21 @@ class TestSignedAdapterRegistryService:
             manifest_hash="mhash2",
             immutable_hash="imm_mhash2",
             capabilities_json={"requested": []},
-            denied_capabilities_json={"denied": []}
+            denied_capabilities_json={"denied": []},
         )
         session.add(manifest)
         await session.flush()
-        
+
         service = SignedAdapterRegistryService(session)
         entry = await service.register_entry(manifest)
-        
+
         await service.submit_entry(entry, decided_by="admin@test.com")
         assert entry.registry_status == "submitted"
-        
+
         await service.approve_entry(entry, approved_by="admin@test.com")
         assert entry.registry_status == "approved"
         assert entry.approved_by == "admin@test.com"
-        
+
         await service.revoke_entry(entry, reason="security risk", decided_by="admin@test.com")
         assert entry.registry_status == "revoked"
         assert entry.revoked_reason == "security risk"

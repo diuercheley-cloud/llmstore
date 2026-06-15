@@ -81,7 +81,7 @@ cd frontend/admin && npx vitest run
 5. Request review from a maintainer
 
 ## Code of Conduct
-Be respectful, constructive, and inclusive. Harassment or toxic behavior will not be tolerated.
+We are committed to fostering a welcoming and safe community. Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) before participating.
 
 ## License
 See [LICENSE](LICENSE).

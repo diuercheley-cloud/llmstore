@@ -24,6 +24,7 @@ router = APIRouter(
 
 # ── Request / Response schemas ──────────────────────────────────────
 
+
 class NodeSchema(BaseModel):
     id: str
     type: AgentNodeType
@@ -34,11 +35,13 @@ class NodeSchema(BaseModel):
     max_retries: int = 2
     timeout_seconds: int = 300
 
+
 class EdgeSchema(BaseModel):
     source: str
     target: str
     condition: str | None = None
     data: dict[str, Any] = Field(default_factory=dict)
+
 
 class GraphCreateSchema(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
@@ -48,12 +51,15 @@ class GraphCreateSchema(BaseModel):
     max_concurrency: int = 5
     enable_checkpointing: bool = True
 
+
 class GraphRunSchema(BaseModel):
     global_input: dict[str, Any] = Field(default_factory=dict)
+
 
 class GraphRunRequest(BaseModel):
     graph: GraphCreateSchema
     global_input: dict[str, Any] = Field(default_factory=dict)
+
 
 class GraphResponse(BaseModel):
     run_id: str
@@ -67,6 +73,7 @@ class GraphResponse(BaseModel):
 # ── Engine instance (shared) ────────────────────────────────────────
 
 _engine: AgentGraphEngine | None = None
+
 
 def get_engine() -> AgentGraphEngine:
     global _engine
@@ -125,18 +132,30 @@ async def validate_graph(graph: GraphCreateSchema):
     node_ids = set(ids)
     for edge in spec.edges:
         if edge.source not in node_ids:
-            raise HTTPException(status_code=400, detail=f"Edge source '{edge.source}' not found in nodes")
+            raise HTTPException(
+                status_code=400, detail=f"Edge source '{edge.source}' not found in nodes"
+            )
         if edge.target not in node_ids:
-            raise HTTPException(status_code=400, detail=f"Edge target '{edge.target}' not found in nodes")
+            raise HTTPException(
+                status_code=400, detail=f"Edge target '{edge.target}' not found in nodes"
+            )
     # Validate: no cycles
     if engine._detect_cycle({n.id: n for n in spec.nodes}, _build_adj(spec)):
-        raise HTTPException(status_code=400, detail="Graph contains a cycle. Remove cycles to proceed.")
+        raise HTTPException(
+            status_code=400, detail="Graph contains a cycle. Remove cycles to proceed."
+        )
     # Return topological order
     order = engine.topological_sort(spec)
-    return {"valid": True, "topological_order": order, "node_count": len(spec.nodes), "edge_count": len(spec.edges)}
+    return {
+        "valid": True,
+        "topological_order": order,
+        "node_count": len(spec.nodes),
+        "edge_count": len(spec.edges),
+    }
 
 
 # ── Helpers ─────────────────────────────────────────────────────────
+
 
 def _to_graph_spec(schema: GraphCreateSchema) -> AgentGraphSpec:
     return AgentGraphSpec(
@@ -153,18 +172,23 @@ def _to_graph_spec(schema: GraphCreateSchema) -> AgentGraphSpec:
             )
             for n in schema.nodes
         ],
-        edges=[GraphEdge(source=e.source, target=e.target, condition=e.condition, data=e.data) for e in schema.edges],
+        edges=[
+            GraphEdge(source=e.source, target=e.target, condition=e.condition, data=e.data)
+            for e in schema.edges
+        ],
         name=schema.name,
         description=schema.description,
         max_concurrency=schema.max_concurrency,
         enable_checkpointing=schema.enable_checkpointing,
     )
 
+
 def _build_adj(spec: AgentGraphSpec) -> dict[str, list[GraphEdge]]:
     adj: dict[str, list[GraphEdge]] = {n.id: [] for n in spec.nodes}
     for edge in spec.edges:
         adj.setdefault(edge.source, []).append(edge)
     return adj
+
 
 def _to_response(result: Any) -> GraphResponse:
     return GraphResponse(

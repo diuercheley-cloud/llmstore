@@ -1,5 +1,5 @@
 import abc
-from typing import Any, Dict
+from typing import Any
 
 from app.models.commercial.commercial_crypto_trust import CryptoProviderType
 
@@ -18,9 +18,11 @@ class CryptoProviderInterface(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def verify(self, payload: bytes, signature: bytes, key_material: Any, algorithm: str) -> bool:
+    async def verify(
+        self, payload: bytes, signature: bytes, key_material: Any, algorithm: str
+    ) -> bool:
         pass
-        
+
     @abc.abstractmethod
     async def generate_key(self, key_type: str) -> Any:
         pass
@@ -41,7 +43,9 @@ class LocalKeystoreProvider(CryptoProviderInterface):
         # Placeholder for signing
         return b"SIG:" + payload
 
-    async def verify(self, payload: bytes, signature: bytes, key_material: Any, algorithm: str) -> bool:
+    async def verify(
+        self, payload: bytes, signature: bytes, key_material: Any, algorithm: str
+    ) -> bool:
         return signature == b"SIG:" + payload
 
     async def generate_key(self, key_type: str) -> Any:
@@ -60,7 +64,9 @@ class VaultPlaceholderProvider(CryptoProviderInterface):
     async def sign(self, payload: bytes, key_material: Any, algorithm: str) -> bytes:
         return b"VAULT_SIG:" + payload
 
-    async def verify(self, payload: bytes, signature: bytes, key_material: Any, algorithm: str) -> bool:
+    async def verify(
+        self, payload: bytes, signature: bytes, key_material: Any, algorithm: str
+    ) -> bool:
         return signature == b"VAULT_SIG:" + payload
 
     async def generate_key(self, key_type: str) -> Any:
@@ -79,7 +85,9 @@ class HSMPlaceholderProvider(CryptoProviderInterface):
     async def sign(self, payload: bytes, key_material: Any, algorithm: str) -> bytes:
         return b"HSM_SIG:" + payload
 
-    async def verify(self, payload: bytes, signature: bytes, key_material: Any, algorithm: str) -> bool:
+    async def verify(
+        self, payload: bytes, signature: bytes, key_material: Any, algorithm: str
+    ) -> bool:
         return signature == b"HSM_SIG:" + payload
 
     async def generate_key(self, key_type: str) -> Any:
@@ -98,7 +106,9 @@ class SovereignOfflineProvider(CryptoProviderInterface):
     async def sign(self, payload: bytes, key_material: Any, algorithm: str) -> bytes:
         return b"OFFLINE_SIG:" + payload
 
-    async def verify(self, payload: bytes, signature: bytes, key_material: Any, algorithm: str) -> bool:
+    async def verify(
+        self, payload: bytes, signature: bytes, key_material: Any, algorithm: str
+    ) -> bool:
         return signature == b"OFFLINE_SIG:" + payload
 
     async def generate_key(self, key_type: str) -> Any:
@@ -106,7 +116,7 @@ class SovereignOfflineProvider(CryptoProviderInterface):
 
 
 class CryptoProviderRegistry:
-    _providers: Dict[CryptoProviderType, CryptoProviderInterface] = {
+    _providers: dict[CryptoProviderType, CryptoProviderInterface] = {
         CryptoProviderType.LOCAL_KEYSTORE: LocalKeystoreProvider(),
         CryptoProviderType.VAULT: VaultPlaceholderProvider(),
         CryptoProviderType.HSM: HSMPlaceholderProvider(),
@@ -120,5 +130,7 @@ class CryptoProviderRegistry:
         return cls._providers[provider_type]
 
     @classmethod
-    def register_provider(cls, provider_type: CryptoProviderType, provider: CryptoProviderInterface):
+    def register_provider(
+        cls, provider_type: CryptoProviderType, provider: CryptoProviderInterface
+    ):
         cls._providers[provider_type] = provider

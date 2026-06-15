@@ -22,6 +22,8 @@ def test_compatibility_models_exposed():
 
 
 def test_phase_78_migration_present():
-    content = open("control_plane/alembic/versions/phase78_compatibility_contracts.py", "r", encoding="utf-8").read()
+    content = open(
+        "control_plane/alembic/versions/phase78_compatibility_contracts.py", encoding="utf-8"
+    ).read()
     assert "compatibility_contracts" in content
     assert "version_negotiation_sessions" in content

@@ -3,12 +3,14 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from app.services.agents.agent_bundle_signing import AgentBundleSigningService
 from app.services.agents.agent_incident_playbooks import AgentIncidentPlaybookService
 from app.services.agents.agent_scheduler import AgentScheduler
 from app.services.agents.agent_usage_meter import AgentUsageMeter
-from app.services.agents.marketplace_governance import MarketplaceGovernanceService, SubmissionStatus
+from app.services.agents.marketplace_governance import (
+    MarketplaceGovernanceService,
+    SubmissionStatus,
+)
 from app.services.agents.memory_context_builder import MemoryContextBuilder
 from app.services.agents.tool_adapter_contract import ToolAdapterContract
 from app.services.agents.tool_audit import sanitize_payload
@@ -77,7 +79,9 @@ def test_memory_context_builder_respects_budget():
     builder = MemoryContextBuilder(MagicMock())
     memories = [
         SimpleNamespace(item=SimpleNamespace(id=uuid.uuid4(), raw_content="abcd", summary="one")),
-        SimpleNamespace(item=SimpleNamespace(id=uuid.uuid4(), raw_content="x" * 100, summary="large")),
+        SimpleNamespace(
+            item=SimpleNamespace(id=uuid.uuid4(), raw_content="x" * 100, summary="large")
+        ),
     ]
 
     result = builder._build_block(memories, max_tokens=5)

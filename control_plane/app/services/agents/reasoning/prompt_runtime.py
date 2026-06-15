@@ -1,16 +1,17 @@
 # Owner: agent-platform
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 from jinja2 import Template
 
 logger = logging.getLogger(__name__)
 
+
 class PromptRuntime:
     """
     Manages prompt templates and runtime injection for different reasoning loops.
     """
-    
+
     REACT_SYSTEM_PROMPT = """
 You are an intelligent agent operating in a Thought/Action/Observation/Final loop.
 Current Goal: {{ goal }}
@@ -40,6 +41,6 @@ Execute each step and synthesize the final answer.
 """
 
     @staticmethod
-    def render_react_prompt(goal: str, tools: List[Dict[str, Any]]) -> str:
+    def render_react_prompt(goal: str, tools: list[dict[str, Any]]) -> str:
         template = Template(PromptRuntime.REACT_SYSTEM_PROMPT)
         return template.render(goal=goal, tools=tools)

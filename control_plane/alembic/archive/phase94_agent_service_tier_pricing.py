@@ -4,6 +4,7 @@ Revision ID: phase94_agent_service_tier_pricing
 Revises: phase93_agent_optimization
 Create Date: 2026-05-30 10:00:00.000000
 """
+
 import sqlalchemy as sa
 from alembic import op
 
@@ -21,11 +22,20 @@ def upgrade():
 
     existing_columns = {column["name"] for column in inspector.get_columns("agent_service_tiers")}
     if "price_per_run_brl" not in existing_columns:
-        op.add_column("agent_service_tiers", sa.Column("price_per_run_brl", sa.Float(), server_default="0.0", nullable=False))
+        op.add_column(
+            "agent_service_tiers",
+            sa.Column("price_per_run_brl", sa.Float(), server_default="0.0", nullable=False),
+        )
     if "price_per_1k_tokens_brl" not in existing_columns:
-        op.add_column("agent_service_tiers", sa.Column("price_per_1k_tokens_brl", sa.Float(), server_default="0.0", nullable=False))
+        op.add_column(
+            "agent_service_tiers",
+            sa.Column("price_per_1k_tokens_brl", sa.Float(), server_default="0.0", nullable=False),
+        )
     if "monthly_fee_brl" not in existing_columns:
-        op.add_column("agent_service_tiers", sa.Column("monthly_fee_brl", sa.Float(), server_default="0.0", nullable=False))
+        op.add_column(
+            "agent_service_tiers",
+            sa.Column("monthly_fee_brl", sa.Float(), server_default="0.0", nullable=False),
+        )
 
     # Seed default tiers with pricing
     op.execute(

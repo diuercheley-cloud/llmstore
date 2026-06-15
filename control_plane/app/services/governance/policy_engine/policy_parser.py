@@ -1,7 +1,14 @@
 import hashlib
 import json
 
-ALLOWED_ACTIONS = {"allow_if", "deny_if", "require_approval_if", "require_dry_run_if", "block_if", "warn_if"}
+ALLOWED_ACTIONS = {
+    "allow_if",
+    "deny_if",
+    "require_approval_if",
+    "require_dry_run_if",
+    "block_if",
+    "warn_if",
+}
 ALLOWED_OPERATORS = {"eq", "ne", "in", "not_in", "gt", "gte", "lt", "lte", "contains", "exists"}
 
 
@@ -49,4 +56,3 @@ def parse_policy_dsl(policy_dsl: dict) -> dict:
         )
     normalized_rules.sort(key=lambda item: (-item["priority"], item["name"]))
     return {"version": str(policy_dsl.get("version", "1")), "rules": normalized_rules}
-

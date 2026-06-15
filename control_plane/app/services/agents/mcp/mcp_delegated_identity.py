@@ -25,7 +25,8 @@ async def check_scope_policy(
     result = await db.execute(
         select(AgentMCPScopePolicy).where(
             AgentMCPScopePolicy.tenant_id == tenant_id,
-            (AgentMCPScopePolicy.mcp_server == mcp_server) | (AgentMCPScopePolicy.mcp_server == None)
+            (AgentMCPScopePolicy.mcp_server == mcp_server)
+            | (AgentMCPScopePolicy.mcp_server == None),
         )
     )
     policies = result.scalars().all()
@@ -151,7 +152,9 @@ async def resolve_mcp_identity(
 
         # Check Scope Policy
         try:
-            await check_scope_policy(db, tenant_id, agent_id, mcp_server, tool, action, grant.scopes)
+            await check_scope_policy(
+                db, tenant_id, agent_id, mcp_server, tool, action, grant.scopes
+            )
         except PermissionError as exc:
             MCPOAuthAuditLog.record(
                 grant_id=grant.id,
@@ -173,7 +176,9 @@ async def resolve_mcp_identity(
             tool=tool,
             policy_decision="allow",
         )
-        resolved_type = "user_delegated" if grant.user_id != "service_principal" else "tenant_service_principal"
+        resolved_type = (
+            "user_delegated" if grant.user_id != "service_principal" else "tenant_service_principal"
+        )
         return {
             "resolved_type": resolved_type,
             "token": grant.access_token,
@@ -182,7 +187,10 @@ async def resolve_mcp_identity(
         }
 
     # 5. Global Fallback if no grant found
-    if settings.agent_mcp_global_credentials_allowed and not settings.agent_mcp_user_delegation_required:
+    if (
+        settings.agent_mcp_global_credentials_allowed
+        and not settings.agent_mcp_user_delegation_required
+    ):
         MCPOAuthAuditLog.record(
             grant_id=None,
             scopes=[],

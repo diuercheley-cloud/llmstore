@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Any
 from uuid import UUID
 
 from app.core.config import get_settings
 from app.core.security import generate_api_key, hash_secret, short_prefix, verify_secret
-from app.core.time import utc_now
 from app.models.core.admin_rbac import (
     AdminPermission,
     AdminRoleModel,
@@ -52,15 +52,26 @@ RBAC_ADMIN_ROLES: dict[str, dict[str, Any]] = {
     "admin": {
         "description": "Full operational administrator except superadmin-only actions",
         "permissions": [
-            "clients:read", "clients:write", "clients:delete",
-            "billing:read", "billing:write",
-            "providers:read", "providers:write",
-            "models:read", "models:write",
-            "rag:read", "rag:write", "rag:delete",
-            "tts:read", "tts:write",
-            "security:read", "security:write",
-            "governance:read", "governance:write",
-            "system:read", "system:write",
+            "clients:read",
+            "clients:write",
+            "clients:delete",
+            "billing:read",
+            "billing:write",
+            "providers:read",
+            "providers:write",
+            "models:read",
+            "models:write",
+            "rag:read",
+            "rag:write",
+            "rag:delete",
+            "tts:read",
+            "tts:write",
+            "security:read",
+            "security:write",
+            "governance:read",
+            "governance:write",
+            "system:read",
+            "system:write",
         ],
     },
     "operator": {
@@ -68,13 +79,18 @@ RBAC_ADMIN_ROLES: dict[str, dict[str, Any]] = {
         "permissions": [
             "clients:read",
             "billing:read",
-            "providers:read", "providers:write",
-            "models:read", "models:write",
-            "rag:read", "rag:write",
-            "tts:read", "tts:write",
+            "providers:read",
+            "providers:write",
+            "models:read",
+            "models:write",
+            "rag:read",
+            "rag:write",
+            "tts:read",
+            "tts:write",
             "security:read",
             "governance:read",
-            "system:read", "system:write",
+            "system:read",
+            "system:write",
         ],
     },
     "billing_manager": {
@@ -88,8 +104,15 @@ RBAC_ADMIN_ROLES: dict[str, dict[str, Any]] = {
     "read_only": {
         "description": "Read-only administrative access",
         "permissions": [
-            "clients:read", "billing:read", "providers:read", "models:read",
-            "rag:read", "tts:read", "security:read", "governance:read", "system:read",
+            "clients:read",
+            "billing:read",
+            "providers:read",
+            "models:read",
+            "rag:read",
+            "tts:read",
+            "security:read",
+            "governance:read",
+            "system:read",
         ],
     },
 }
@@ -100,6 +123,7 @@ DELETE_PERMISSIONS = {"clients", "rag"}
 
 from app.domains.auth.contracts import UserData
 from app.domains.auth.repositories import SqlAlchemyAuthRepository
+
 
 @dataclass
 class AuthenticatedAdmin:
@@ -130,21 +154,37 @@ def _prefixes_for_domain(domain: str) -> tuple[str, ...]:
         "billing": ("/admin/billing", "/admin/wallets", "/admin/payments", "/admin/financial"),
         "providers": ("/admin/providers", "/admin/backends", "/admin/hybrid/providers"),
         "models": (
-            "/admin/models", "/admin/routing", "/admin/hybrid/routing", "/admin/inference",
-            "/admin/commercial-guardrails", "/admin/backends",
+            "/admin/models",
+            "/admin/routing",
+            "/admin/hybrid/routing",
+            "/admin/inference",
+            "/admin/commercial-guardrails",
+            "/admin/backends",
         ),
         "rag": ("/admin/rag", "/admin/hybrid/rag"),
         "tts": ("/admin/tts",),
         "security": (
-            "/admin/security", "/admin/abuse", "/admin/crypto", "/admin/aiops",
-            "/admin/models/integrity", "/admin/inference/proofs",
+            "/admin/security",
+            "/admin/abuse",
+            "/admin/crypto",
+            "/admin/aiops",
+            "/admin/models/integrity",
+            "/admin/inference/proofs",
         ),
         "governance": (
-            "/admin/governance", "/admin/compliance", "/admin/workflows", "/admin/operations",
+            "/admin/governance",
+            "/admin/compliance",
+            "/admin/workflows",
+            "/admin/operations",
         ),
         "system": (
-            "/admin/health", "/admin/cache", "/admin/requests", "/admin/ops",
-            "/admin/ops-center", "/admin/tests", "/admin/system",
+            "/admin/health",
+            "/admin/cache",
+            "/admin/requests",
+            "/admin/ops",
+            "/admin/ops-center",
+            "/admin/tests",
+            "/admin/system",
         ),
     }
     return mapping[domain]
@@ -159,7 +199,17 @@ def resolve_admin_permission_from_request(request: Request) -> str | None:
         return None
 
     domain = "system"
-    for candidate in ("clients", "billing", "providers", "models", "rag", "tts", "security", "governance", "system"):
+    for candidate in (
+        "clients",
+        "billing",
+        "providers",
+        "models",
+        "rag",
+        "tts",
+        "security",
+        "governance",
+        "system",
+    ):
         if any(path.startswith(prefix) for prefix in _prefixes_for_domain(candidate)):
             domain = candidate
             break
@@ -175,7 +225,9 @@ def resolve_admin_permission_from_request(request: Request) -> str | None:
 
 async def ensure_admin_rbac_seed(session: AsyncSession) -> None:
     for code, description in RBAC_ADMIN_PERMISSIONS.items():
-        existing = await session.execute(select(AdminPermission).where(AdminPermission.code == code))
+        existing = await session.execute(
+            select(AdminPermission).where(AdminPermission.code == code)
+        )
         permission = existing.scalar_one_or_none()
         if permission is None:
             session.add(AdminPermission(code=code, description=description))
@@ -185,7 +237,9 @@ async def ensure_admin_rbac_seed(session: AsyncSession) -> None:
 
     permissions_by_code = await _permissions_by_code(session)
     for role_name, config in RBAC_ADMIN_ROLES.items():
-        existing = await session.execute(select(AdminRoleModel).where(AdminRoleModel.name == role_name))
+        existing = await session.execute(
+            select(AdminRoleModel).where(AdminRoleModel.name == role_name)
+        )
         role = existing.scalar_one_or_none()
         if role is None:
             role = AdminRoleModel(name=role_name, description=config["description"], is_system=True)
@@ -242,7 +296,9 @@ async def ensure_bootstrap_admin_user(session: AsyncSession, legacy_token: str) 
         user.is_legacy_bootstrap = True
 
     role_exists = await session.execute(
-        select(AdminUserRole).where(AdminUserRole.user_id == user.id, AdminUserRole.role_id == role.id)
+        select(AdminUserRole).where(
+            AdminUserRole.user_id == user.id, AdminUserRole.role_id == role.id
+        )
     )
     if role_exists.scalar_one_or_none() is None:
         session.add(AdminUserRole(user_id=user.id, role_id=role.id))
@@ -256,7 +312,7 @@ async def authenticate_admin_token(
 ) -> AuthenticatedAdmin | None:
     if not token:
         return None
-    
+
     print(f"DEBUG auth_token: session bind url: {session.bind.url if session.bind else 'None'}")
     prefix = short_prefix(token)
     print(f"DEBUG auth_token: searching prefix: {prefix}")
@@ -265,7 +321,7 @@ async def authenticate_admin_token(
     print(f"DEBUG auth_token: found users count: {len(users)}")
     for u in users:
         print(f"DEBUG auth_token: user={u.username}, active={u.is_active}, prefix={u.token_prefix}")
-    
+
     for user in users:
         if user.token_hash and verify_secret(token, user.token_hash):
             return AuthenticatedAdmin(
@@ -301,7 +357,12 @@ async def record_admin_audit_event(
         user_agent=request.headers.get("user-agent") if request is not None else None,
         target_type=target_type,
         target_id=target_id,
-        actor_identifier=actor_identifier or (admin.user.username if hasattr(admin, "user") else (admin.get("username") if isinstance(admin, dict) else None)),
+        actor_identifier=actor_identifier
+        or (
+            admin.user.username
+            if hasattr(admin, "user")
+            else (admin.get("username") if isinstance(admin, dict) else None)
+        ),
         metadata_json=metadata,
     )
     await backend.audit_store.record_admin_event(event, auto_commit=True)
@@ -355,17 +416,20 @@ async def require_permissions(
 ) -> AuthenticatedAdmin:
     admin = await authenticate_admin_request(session=session, request=request, token=token)
     permission_list = list(permissions)
-    allowed = all(admin.has_permission(code) for code in permission_list) if require_all else any(
-        admin.has_permission(code) for code in permission_list
+    allowed = (
+        all(admin.has_permission(code) for code in permission_list)
+        if require_all
+        else any(admin.has_permission(code) for code in permission_list)
     )
     if allowed:
         return admin
 
     from app.core.metrics import record_rbac_denial
+
     record_rbac_denial(
         client_id=str(getattr(admin, "client_id", admin.user.id)),
         resource=request.url.path,
-        action=",".join(permission_list)
+        action=",".join(permission_list),
     )
 
     await record_admin_audit_event(
@@ -417,9 +481,13 @@ async def sync_role_permissions(
     permissions_by_code = await _permissions_by_code(session)
     missing = [code for code in permission_codes if code not in permissions_by_code]
     if missing:
-        raise HTTPException(status_code=400, detail={"error": "unknown_permissions", "codes": missing})
+        raise HTTPException(
+            status_code=400, detail={"error": "unknown_permissions", "codes": missing}
+        )
 
-    current = await session.execute(select(AdminRolePermission).where(AdminRolePermission.role_id == role.id))
+    current = await session.execute(
+        select(AdminRolePermission).where(AdminRolePermission.role_id == role.id)
+    )
     current_links = current.scalars().all()
     current_ids = {link.permission_id for link in current_links}
     desired_ids = {permissions_by_code[code].id for code in permission_codes}
@@ -434,6 +502,7 @@ async def sync_role_permissions(
 
 async def serialize_admin_user(session: AsyncSession, user: AdminUser) -> dict[str, Any]:
     from sqlalchemy import inspect
+
     state = inspect(user)
     user_id = state.identity[0] if state.identity else user.id
     result = await session.execute(
@@ -474,11 +543,14 @@ async def serialize_admin_user(session: AsyncSession, user: AdminUser) -> dict[s
 
 async def serialize_role(session: AsyncSession, role: AdminRoleModel) -> dict[str, Any]:
     from sqlalchemy import inspect
+
     state = inspect(role)
     role_id = state.identity[0] if state.identity else role.id
     result = await session.execute(
         select(AdminRoleModel)
-        .options(selectinload(AdminRoleModel.permissions).selectinload(AdminRolePermission.permission))
+        .options(
+            selectinload(AdminRoleModel.permissions).selectinload(AdminRolePermission.permission)
+        )
         .where(AdminRoleModel.id == role_id)
     )
     fresh = result.scalar_one()
@@ -514,18 +586,26 @@ async def _load_roles(
 ) -> list[AdminRoleModel]:
     roles: dict[UUID, AdminRoleModel] = {}
     if role_ids:
-        result = await session.execute(select(AdminRoleModel).where(AdminRoleModel.id.in_(role_ids)))
+        result = await session.execute(
+            select(AdminRoleModel).where(AdminRoleModel.id.in_(role_ids))
+        )
         for role in result.scalars().all():
             roles[role.id] = role
         missing = {str(role_id) for role_id in role_ids if role_id not in roles}
         if missing:
-            raise HTTPException(status_code=400, detail={"error": "unknown_roles", "ids": sorted(missing)})
+            raise HTTPException(
+                status_code=400, detail={"error": "unknown_roles", "ids": sorted(missing)}
+            )
     if role_names:
-        result = await session.execute(select(AdminRoleModel).where(AdminRoleModel.name.in_(role_names)))
+        result = await session.execute(
+            select(AdminRoleModel).where(AdminRoleModel.name.in_(role_names))
+        )
         found_by_name = {role.name: role for role in result.scalars().all()}
         missing = sorted(set(role_names) - set(found_by_name))
         if missing:
-            raise HTTPException(status_code=400, detail={"error": "unknown_roles", "names": missing})
+            raise HTTPException(
+                status_code=400, detail={"error": "unknown_roles", "names": missing}
+            )
         for role in found_by_name.values():
             roles[role.id] = role
     return list(roles.values())

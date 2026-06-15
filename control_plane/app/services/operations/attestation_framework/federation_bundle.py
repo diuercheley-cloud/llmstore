@@ -53,14 +53,18 @@ class AttestationFederationBundleService:
             bundle_status="draft",
             replay_verifiable=True,
             offline_verifiable=True,
-            immutable_hash=sha256_hex({"kind": "bundle", "bundle_hash": bundle_hash, "status": "draft"}),
+            immutable_hash=sha256_hex(
+                {"kind": "bundle", "bundle_hash": bundle_hash, "status": "draft"}
+            ),
         )
         bundle._bundle_payload = bundle_payload
         return bundle, bundle_payload
 
     def export_bundle(self, bundle: AttestationFederationBundle) -> dict[str, Any]:
         bundle.bundle_status = "exported"
-        bundle.immutable_hash = sha256_hex({"kind": "bundle", "bundle_hash": bundle.bundle_hash, "status": "exported"})
+        bundle.immutable_hash = sha256_hex(
+            {"kind": "bundle", "bundle_hash": bundle.bundle_hash, "status": "exported"}
+        )
         return {
             "id": bundle.id,
             "client_id": str(bundle.client_id),
@@ -86,7 +90,9 @@ class AttestationFederationBundleService:
                 "source_environment": bundle_payload["source_environment"],
                 "target_environment": bundle_payload["target_environment"],
                 "attestations": bundle_payload.get("attestations", []),
-                "deterministic_version": bundle_payload.get("deterministic_version", self.deterministic_version),
+                "deterministic_version": bundle_payload.get(
+                    "deterministic_version", self.deterministic_version
+                ),
             }
         )
         bundle = AttestationFederationBundle(
@@ -100,7 +106,9 @@ class AttestationFederationBundleService:
             bundle_status="imported",
             replay_verifiable=True,
             offline_verifiable=True,
-            immutable_hash=sha256_hex({"kind": "bundle", "bundle_hash": bundle_hash, "status": "imported"}),
+            immutable_hash=sha256_hex(
+                {"kind": "bundle", "bundle_hash": bundle_hash, "status": "imported"}
+            ),
         )
         bundle._bundle_payload = {
             "client_id": str(bundle_payload["client_id"]),
@@ -109,14 +117,18 @@ class AttestationFederationBundleService:
             "source_environment": bundle_payload["source_environment"],
             "target_environment": bundle_payload["target_environment"],
             "attestations": bundle_payload.get("attestations", []),
-            "deterministic_version": bundle_payload.get("deterministic_version", self.deterministic_version),
+            "deterministic_version": bundle_payload.get(
+                "deterministic_version", self.deterministic_version
+            ),
         }
         return bundle
 
     def verify_bundle(self, bundle: AttestationFederationBundle) -> dict[str, Any]:
         passed = bundle.replay_verifiable and bundle.offline_verifiable and bool(bundle.bundle_hash)
         bundle.bundle_status = "verified" if passed else "rejected"
-        bundle.immutable_hash = sha256_hex({"kind": "bundle", "bundle_hash": bundle.bundle_hash, "status": bundle.bundle_status})
+        bundle.immutable_hash = sha256_hex(
+            {"kind": "bundle", "bundle_hash": bundle.bundle_hash, "status": bundle.bundle_status}
+        )
         return {
             "bundle_id": bundle.id,
             "bundle_hash": bundle.bundle_hash,

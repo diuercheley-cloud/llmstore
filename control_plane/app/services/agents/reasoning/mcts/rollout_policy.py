@@ -1,13 +1,14 @@
 # Owner: agent-platform
 import random
-from typing import Any, Dict, List
+from typing import Any
 
 
 class RolloutPolicy:
     """
     Defines how the agent chooses actions during the simulation phase of MCTS.
     """
-    def choose_action(self, state: Dict[str, Any], possible_actions: List[str]) -> str:
+
+    def choose_action(self, state: dict[str, Any], possible_actions: list[str]) -> str:
         """
         Uses a heuristic or random choice to simulate a path.
         """

@@ -43,7 +43,9 @@ class MarketplaceAPI:
         return self.client._request("GET", "/admin/agent-marketplace")
 
     def admin_install(self, install_request: Dict[str, Any]) -> Dict[str, Any]:
-        return self.client._request("POST", "/admin/agent-marketplace/install", json=install_request)
+        return self.client._request(
+            "POST", "/admin/agent-marketplace/install", json=install_request
+        )
 
     def admin_enable_install(self, install_id: str) -> Dict[str, Any]:
         return self.client._request("POST", f"/admin/agent-marketplace/{install_id}/enable")
@@ -58,7 +60,11 @@ class MarketplaceAPI:
         return self.client._request("POST", f"/admin/agent-marketplace/bundles/{bundle_id}/publish")
 
     def admin_review_bundle(self, bundle_id: str, review: Dict[str, Any]) -> Dict[str, Any]:
-        return self.client._request("POST", f"/admin/agent-marketplace/bundles/{bundle_id}/review", json=review)
+        return self.client._request(
+            "POST", f"/admin/agent-marketplace/bundles/{bundle_id}/review", json=review
+        )
 
     def get_trust_report(self, version_id: str) -> Dict[str, Any]:
-        return self.client._request("GET", f"/admin/agent-marketplace/versions/{version_id}/trust-report")
+        return self.client._request(
+            "GET", f"/admin/agent-marketplace/versions/{version_id}/trust-report"
+        )

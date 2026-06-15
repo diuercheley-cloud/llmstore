@@ -76,11 +76,7 @@ def _detect_ngram_repetition(
 
 
 def _detect_short_phrase_repetition(text: str, max_repeats: int) -> bool:
-    lines = [
-        line.strip()
-        for line in text.splitlines()
-        if 10 <= len(line.strip()) <= 40
-    ]
+    lines = [line.strip() for line in text.splitlines() if 10 <= len(line.strip()) <= 40]
     line_counts: dict[str, int] = {}
     for line in lines:
         line_counts[line] = line_counts.get(line, 0) + 1
@@ -114,10 +110,7 @@ def truncate_at_repetition(
     for block in blocks:
         indices = [m.start() for m in re.finditer(re.escape(block), text)]
         if len(indices) > max_repeats:
-            return (
-                text[: indices[max_repeats]].strip()
-                + "\n\n[Truncated due to repetition loop]"
-            )
+            return text[: indices[max_repeats]].strip() + "\n\n[Truncated due to repetition loop]"
 
     ngram_threshold = 3 if prompt_template == "gemma" else 4
     if _detect_ngram_repetition(text, threshold=ngram_threshold):
@@ -129,10 +122,7 @@ def truncate_at_repetition(
                 seen[ngram] = seen.get(ngram, 0) + 1
                 if seen[ngram] >= ngram_threshold:
                     char_pos = len(" ".join(words[:i]))
-                    return (
-                        text[:char_pos].strip()
-                        + "\n\n[Truncated due to repetition loop]"
-                    )
+                    return text[:char_pos].strip() + "\n\n[Truncated due to repetition loop]"
 
     if _detect_short_phrase_repetition(text, max_repeats):
         lines = text.splitlines()
@@ -142,10 +132,7 @@ def truncate_at_repetition(
             if 10 <= len(stripped) <= 40:
                 line_counts[stripped] = line_counts.get(stripped, 0) + 1
                 if line_counts[stripped] > max_repeats:
-                    return (
-                        "\n".join(lines[:idx]).strip()
-                        + "\n\n[Truncated due to repetition loop]"
-                    )
+                    return "\n".join(lines[:idx]).strip() + "\n\n[Truncated due to repetition loop]"
 
         sentences = re.split(r"([.!?]\s*)", text)
         reconstructed = ""
@@ -153,17 +140,11 @@ def truncate_at_repetition(
         i = 0
         while i < len(sentences):
             chunk = sentences[i]
-            if (
-                i + 1 < len(sentences)
-                and re.match(r"[.!?]\s*$", sentences[i + 1])
-            ):
+            if i + 1 < len(sentences) and re.match(r"[.!?]\s*$", sentences[i + 1]):
                 phrase = (chunk + sentences[i + 1]).strip()
                 phrase_counts[phrase] = phrase_counts.get(phrase, 0) + 1
                 if phrase_counts[phrase] > max_repeats:
-                    return (
-                        reconstructed.strip()
-                        + "\n\n[Truncated due to repetition loop]"
-                    )
+                    return reconstructed.strip() + "\n\n[Truncated due to repetition loop]"
                 reconstructed += chunk + sentences[i + 1]
                 i += 2
             else:

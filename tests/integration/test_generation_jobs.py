@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from app.models.core.generation_job import GenerationJob
 from app.services.generation_jobs import serialize_job
@@ -8,7 +8,7 @@ from app.services.generation_jobs import serialize_job
 def test_serialize_job_preserves_cancelled_state_and_backend_errors():
     job_id = uuid.uuid4()
     client_id = uuid.uuid4()
-    now = datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 5, 1, 12, 0, tzinfo=UTC)
     job = GenerationJob(
         id=job_id,
         client_id=client_id,

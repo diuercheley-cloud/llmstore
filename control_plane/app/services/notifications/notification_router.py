@@ -1,6 +1,6 @@
 import logging
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.models.agents.agent_notifications import NotificationEvent
 from app.services.notifications.email_provider import EmailProviderService
@@ -22,8 +22,8 @@ class NotificationRouterService:
         recipient: str,  # email string or user_id string
         title: str,
         body: str,
-        run_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        run_id: str | None = None,
+    ) -> dict[str, Any]:
         """
         Orchestrates policy checks, dispatches to providers,
         logs database events, and writes audit trails.
@@ -44,7 +44,7 @@ class NotificationRouterService:
             recipient=recipient,
             title=title,
             body=body,
-            status="pending"
+            status="pending",
         )
         db.add(event)
         await db.flush()
@@ -58,7 +58,7 @@ class NotificationRouterService:
                 title=title,
                 body=body,
                 recipient=recipient,
-                channel=channel
+                channel=channel,
             )
         except ValueError as e:
             err_msg = str(e)
@@ -68,7 +68,7 @@ class NotificationRouterService:
 
             event.status = status
             event.failure_reason = err_msg
-            
+
             # Generate failure receipt
             audit = NotificationAuditService.generate_receipt(
                 tenant_id=tenant_id,
@@ -78,36 +78,28 @@ class NotificationRouterService:
                 title=title,
                 body=body,
                 status=status,
-                additional_info={"error": err_msg}
+                additional_info={"error": err_msg},
             )
             event.audit_hash = audit["audit_hash"]
             await db.commit()
-            
+
             logger.warning(f"Notification blocked by policy: {err_msg}")
             return {
                 "status": status,
                 "error": err_msg,
                 "event_id": str(event.id),
-                "audit_hash": audit["audit_hash"]
+                "audit_hash": audit["audit_hash"],
             }
 
         # 3. Dispatch to provider
         try:
             if channel == "email":
                 res = await EmailProviderService.send_email(
-                    db=db,
-                    tenant_id=tenant_id,
-                    recipient=recipient,
-                    title=title,
-                    body=body
+                    db=db, tenant_id=tenant_id, recipient=recipient, title=title, body=body
                 )
             elif channel == "push":
                 res = await PushProviderService.send_push(
-                    db=db,
-                    tenant_id=tenant_id,
-                    user_id=recipient,
-                    title=title,
-                    body=body
+                    db=db, tenant_id=tenant_id, user_id=recipient, title=title, body=body
                 )
             else:
                 raise ValueError(f"Unsupported notification channel: {channel}")
@@ -121,7 +113,7 @@ class NotificationRouterService:
                 title=title,
                 body=body,
                 status="sent",
-                additional_info={"provider_response": res}
+                additional_info={"provider_response": res},
             )
             event.audit_hash = audit["audit_hash"]
             await db.commit()
@@ -130,14 +122,14 @@ class NotificationRouterService:
                 "status": "sent",
                 "event_id": str(event.id),
                 "audit_hash": audit["audit_hash"],
-                "details": res
+                "details": res,
             }
 
         except Exception as e:
             err_msg = str(e)
             event.status = "failed"
             event.failure_reason = err_msg
-            
+
             audit = NotificationAuditService.generate_receipt(
                 tenant_id=tenant_id,
                 run_id=run_id,
@@ -146,7 +138,7 @@ class NotificationRouterService:
                 title=title,
                 body=body,
                 status="failed",
-                additional_info={"error": err_msg}
+                additional_info={"error": err_msg},
             )
             event.audit_hash = audit["audit_hash"]
             await db.commit()
@@ -156,5 +148,5 @@ class NotificationRouterService:
                 "status": "failed",
                 "error": err_msg,
                 "event_id": str(event.id),
-                "audit_hash": audit["audit_hash"]
+                "audit_hash": audit["audit_hash"],
             }

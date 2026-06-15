@@ -20,11 +20,13 @@ class StepClassifier:
     """
 
     @staticmethod
-    def classify(step_type: str, input_text: str | None = None, metadata: dict | None = None) -> StepClass:
+    def classify(
+        step_type: str, input_text: str | None = None, metadata: dict | None = None
+    ) -> StepClass:
         # Default heuristic classification
         if step_type == "tool_call":
             return StepClass.TOOL_SELECTION
-        
+
         if step_type == "final":
             return StepClass.FINAL_SYNTHESIS
 

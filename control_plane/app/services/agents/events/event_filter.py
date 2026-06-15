@@ -1,12 +1,13 @@
 # Owner: agent-platform
-from typing import Any, Dict
+from typing import Any
 
 
 class EventFilter:
     """
     Filters events based on JSONPath or simple expressions.
     """
-    def matches(self, payload: Dict[str, Any], expression: str) -> bool:
+
+    def matches(self, payload: dict[str, Any], expression: str) -> bool:
         """
         Evaluates the filter expression against the payload.
         Example expression: "$.type == 'order_created'"

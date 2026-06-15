@@ -1,7 +1,7 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import Any, Dict
+from typing import Any
 
 from app.core.config import get_settings
 from app.models.agents.agent_debugger import AgentDebugReplay, AgentRunSnapshot
@@ -11,12 +11,13 @@ from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
+
 class ReplayFromStep:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.settings = get_settings()
 
-    async def initiate_replay(self, run_id: uuid.UUID, step_number: int) -> Dict[str, Any]:
+    async def initiate_replay(self, run_id: uuid.UUID, step_number: int) -> dict[str, Any]:
         """
         Creates a new debug run that starts from the state of a previous run at step N.
         """
@@ -25,8 +26,7 @@ class ReplayFromStep:
 
         # 1. Fetch source snapshot
         stmt = select(AgentRunSnapshot).where(
-            AgentRunSnapshot.run_id == run_id,
-            AgentRunSnapshot.step_number == step_number
+            AgentRunSnapshot.run_id == run_id, AgentRunSnapshot.step_number == step_number
         )
         res = await self.db.execute(stmt)
         snapshot = res.scalar_one_or_none()
@@ -44,7 +44,7 @@ class ReplayFromStep:
             tenant_id=original_run.tenant_id,
             user_id=original_run.user_id,
             status="queued",
-            input_text=f"[DEBUG REPLAY of {run_id} from step {step_number}]"
+            input_text=f"[DEBUG REPLAY of {run_id} from step {step_number}]",
         )
         self.db.add(replay_run)
         await self.db.flush()
@@ -55,7 +55,7 @@ class ReplayFromStep:
             replay_run_id=replay_run.id,
             source_snapshot_id=snapshot.id,
             step_rewind_to=step_number,
-            status="active"
+            status="active",
         )
         self.db.add(replay)
         await self.db.commit()
@@ -64,5 +64,5 @@ class ReplayFromStep:
             "replay_id": str(replay.id),
             "replay_run_id": str(replay_run.id),
             "start_step": step_number,
-            "initial_state": snapshot.full_state
+            "initial_state": snapshot.full_state,
         }

@@ -12,9 +12,12 @@ class PluginsConfig(BaseSettings):
 
     plugin_marketplace_enabled: bool = Field(default=False, alias="PLUGIN_MARKETPLACE_ENABLED")
 
-    marketplace_governance_enabled: bool = Field(default=True, alias="MARKETPLACE_GOVERNANCE_ENABLED")
-    marketplace_require_security_scan: bool = Field(default=True, alias="MARKETPLACE_REQUIRE_SECURITY_SCAN")
+    marketplace_governance_enabled: bool = Field(
+        default=True, alias="MARKETPLACE_GOVERNANCE_ENABLED"
+    )
+    marketplace_require_security_scan: bool = Field(
+        default=True, alias="MARKETPLACE_REQUIRE_SECURITY_SCAN"
+    )
     marketplace_require_approval: bool = Field(default=True, alias="MARKETPLACE_REQUIRE_APPROVAL")
 
     plugin_sbom_policy_decision: str = Field(default="block", alias="PLUGIN_SBOM_POLICY_DECISION")
-

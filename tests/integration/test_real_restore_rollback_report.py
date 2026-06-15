@@ -19,7 +19,10 @@ def latest_report_dir():
 def test_report_json_exists_after_dry_run():
     result = subprocess.run(
         ["bash", str(SCRIPT), "--dry-run"],
-        cwd=ROOT, capture_output=True, text=True, timeout=60,
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        timeout=60,
     )
     assert result.returncode == 0
 
@@ -46,8 +49,18 @@ def test_report_is_valid_json():
     report_json = report_dir / "restore-rollback-report.json"
     data = json.loads(report_json.read_text(encoding="utf-8"))
 
-    required = ["tool", "timestamp", "version", "dry_run", "from_version", "to_version",
-                "results", "failures", "warnings", "safety_guarantees"]
+    required = [
+        "tool",
+        "timestamp",
+        "version",
+        "dry_run",
+        "from_version",
+        "to_version",
+        "results",
+        "failures",
+        "warnings",
+        "safety_guarantees",
+    ]
     for field in required:
         assert field in data, f"Missing required field: {field}"
     assert data["dry_run"] is True
@@ -104,4 +117,6 @@ def test_report_version():
     actual_version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
     report_json = report_dir / "restore-rollback-report.json"
     data = json.loads(report_json.read_text(encoding="utf-8"))
-    assert data["version"] == actual_version, f"Version mismatch: {data['version']} vs {actual_version}"
+    assert data["version"] == actual_version, (
+        f"Version mismatch: {data['version']} vs {actual_version}"
+    )

@@ -7,7 +7,7 @@ import urllib.error
 import urllib.request
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.core.config import get_settings
 from app.models.agents.agent_notifications import NotificationPreference
@@ -46,8 +46,8 @@ class EmailProviderService:
         recipient: str,
         title: str,
         body: str,
-        user_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        user_id: str | None = None,
+    ) -> dict[str, Any]:
         """Sends an email notification if feature flags allow and user preferences are met."""
         settings = get_settings()
 
@@ -60,7 +60,7 @@ class EmailProviderService:
         if user_id:
             stmt = select(NotificationPreference).where(
                 NotificationPreference.tenant_id == tenant_id,
-                NotificationPreference.user_id == user_id
+                NotificationPreference.user_id == user_id,
             )
             res = await db.execute(stmt)
             pref = res.scalar_one_or_none()
@@ -70,7 +70,7 @@ class EmailProviderService:
         # Check by recipient email address (in case user_id is the recipient or pref is registered under recipient)
         stmt_rec = select(NotificationPreference).where(
             NotificationPreference.tenant_id == tenant_id,
-            NotificationPreference.user_id == recipient
+            NotificationPreference.user_id == recipient,
         )
         res_rec = await db.execute(stmt_rec)
         pref_rec = res_rec.scalar_one_or_none()
@@ -83,13 +83,15 @@ class EmailProviderService:
 
         provider = settings.email_provider.lower()
         if provider == "mock":
-            cls.sent_mock_emails.append({
-                "tenant_id": tenant_id,
-                "recipient": recipient,
-                "title": sanitized_title,
-                "body": sanitized_body,
-                "user_id": user_id
-            })
+            cls.sent_mock_emails.append(
+                {
+                    "tenant_id": tenant_id,
+                    "recipient": recipient,
+                    "title": sanitized_title,
+                    "body": sanitized_body,
+                    "user_id": user_id,
+                }
+            )
             logger.info(f"[Mock Email] Sent to {recipient}: {sanitized_title}")
             return {"status": "sent", "provider": "mock", "recipient": recipient}
 
@@ -103,7 +105,7 @@ class EmailProviderService:
             raise ValueError(f"Unknown email provider configured: {provider}")
 
     @classmethod
-    def _send_smtp(cls, recipient: str, title: str, body: str) -> Dict[str, Any]:
+    def _send_smtp(cls, recipient: str, title: str, body: str) -> dict[str, Any]:
         settings = get_settings()
         if not settings.smtp_host:
             raise ValueError("SMTP host is not configured.")
@@ -130,33 +132,33 @@ class EmailProviderService:
             raise RuntimeError(f"SMTP email sending failed: {e}")
 
     @classmethod
-    def _send_sendgrid(cls, recipient: str, title: str, body: str) -> Dict[str, Any]:
+    def _send_sendgrid(cls, recipient: str, title: str, body: str) -> dict[str, Any]:
         settings = get_settings()
         if not settings.sendgrid_api_key:
             raise ValueError("SendGrid API Key is not configured.")
 
         url = "https://api.sendgrid.com/v3/mail/send"
         sender = "no-reply@agentplatform.com"
-        
+
         # Add unsubscribe/opt-out text
         footer = "<br/><br/><hr/><p style='font-size: 11px; color: #666;'>To unsubscribe, update your preferences in the app.</p>"
         payload = {
             "personalizations": [{"to": [{"email": recipient}]}],
             "from": {"email": sender},
             "subject": title,
-            "content": [{"type": "text/html", "value": body + footer}]
+            "content": [{"type": "text/html", "value": body + footer}],
         }
-        
+
         req = urllib.request.Request(
             url,
             data=json.dumps(payload).encode("utf-8"),
             headers={
                 "Authorization": f"Bearer {settings.sendgrid_api_key}",
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             },
-            method="POST"
+            method="POST",
         )
-        
+
         try:
             with urllib.request.urlopen(req, timeout=10) as response:
                 if response.status in (200, 202):

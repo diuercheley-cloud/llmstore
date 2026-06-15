@@ -1,6 +1,6 @@
 # Owner: agent-platform
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from app.core.config import get_settings
 
@@ -11,6 +11,7 @@ from .z3_solver import Z3Solver
 
 logger = logging.getLogger(__name__)
 
+
 class ConstraintRuntime:
     def __init__(self):
         self.settings = get_settings()
@@ -18,7 +19,9 @@ class ConstraintRuntime:
         self.glpk = GLPKSolver(self.settings.agent_glpk_solver_enabled)
         self.validator = ConstraintValidator()
 
-    async def validate_plan(self, model: ConstraintModel, plan_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def validate_plan(
+        self, model: ConstraintModel, plan_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Validates an agentic plan against a formal constraint model.
         """
@@ -39,10 +42,10 @@ class ConstraintRuntime:
         # 2. Fallback to Simple Validator
         errors = self.validator.validate(model, plan_data)
         if errors:
-            return {
-                "status": "rejected",
-                "stage": "fallback_validation",
-                "errors": errors
-            }
+            return {"status": "rejected", "stage": "fallback_validation", "errors": errors}
 
-        return {"status": "validated", "stage": "fallback_validation", "message": "All simple constraints satisfied."}
+        return {
+            "status": "validated",
+            "stage": "fallback_validation",
+            "message": "All simple constraints satisfied.",
+        }

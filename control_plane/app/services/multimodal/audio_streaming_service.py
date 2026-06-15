@@ -1,6 +1,6 @@
 import logging
 import uuid
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from app.services.multimodal.multimodal_policy import MultimodalPolicyService
 from app.services.multimodal.multimodal_usage import MultimodalUsageService
@@ -17,20 +17,15 @@ class AudioStreamingService:
     async def initialize_session(self, db: AsyncSession, client_id: uuid.UUID) -> str:
         # 1. Policy check for real-time audio streaming
         await self.policy_service.check_policy(db, client_id, "audio-streaming")
-        
+
         session_id = str(uuid.uuid4())
         logger.info(
-            f"Initialized real-time audio streaming session: {session_id} "
-            f"for client: {client_id}"
+            f"Initialized real-time audio streaming session: {session_id} for client: {client_id}"
         )
         return session_id
 
     async def stream_audio_response(
-        self,
-        db: AsyncSession,
-        client_id: uuid.UUID,
-        session_id: str,
-        input_prompt: str
+        self, db: AsyncSession, client_id: uuid.UUID, session_id: str, input_prompt: str
     ) -> AsyncGenerator[bytes, None]:
         """
         Mock real-time audio streaming output (chunk generator).

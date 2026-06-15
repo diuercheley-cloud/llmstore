@@ -1,12 +1,11 @@
-from pathlib import Path
 import uuid
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
-from app.services.managed_metrics import update_managed_metrics
 from app.services.compliance_readiness import ComplianceReadinessService
+from app.services.managed_metrics import update_managed_metrics
 from app.services.model_experiments.experiment_metrics import ExperimentMetrics
 from app.services.observability.anomaly_detector import AnomalyDetector
 from app.services.observability.base import MetricType, ObservabilityMetric
@@ -24,9 +23,13 @@ from app.services.platform.release_artifact_resolver import ReleaseArtifactResol
 
 def test_deterministic_operational_hashes_and_compatibility(tmp_path: Path):
     assert build_backup_hash("c", "b", "full") == build_backup_hash("c", "b", "full")
-    assert build_contract_hash("event", "1.0", "local", {}) == build_contract_hash("event", "1.0", "local", {})
+    assert build_contract_hash("event", "1.0", "local", {}) == build_contract_hash(
+        "event", "1.0", "local", {}
+    )
     assert build_trace_hash("c", "trace", "local", "subject")
-    assert build_recovery_receipt("plan-123456789012", "passed")["signature"].startswith("recovery_receipt_")
+    assert build_recovery_receipt("plan-123456789012", "passed")["signature"].startswith(
+        "recovery_receipt_"
+    )
     assert compatibility_status("1.2.0", "1.9.0") == "compatible"
     assert compatibility_status("1.2.0", "2.0.0") == "breaking"
 
@@ -35,7 +38,12 @@ def test_deterministic_operational_hashes_and_compatibility(tmp_path: Path):
 
 
 def test_observability_services_fail_safe(monkeypatch):
-    payload = {"client_id": "c", "metric_name": "latency", "metric_scope": "local", "metric_value": "1"}
+    payload = {
+        "client_id": "c",
+        "metric_name": "latency",
+        "metric_scope": "local",
+        "metric_value": "1",
+    }
     expected = build_metric_hash(**payload)
     assert verify_metric_replay(payload, expected)["replay_safe"] is True
 
@@ -49,7 +57,10 @@ def test_observability_services_fail_safe(monkeypatch):
     collector._available = False
     assert collector.get_status() == "unavailable"
 
-    monkeypatch.setattr("app.services.observability.otlp_exporter.get_settings", lambda: MagicMock(otlp_export_enabled=False))
+    monkeypatch.setattr(
+        "app.services.observability.otlp_exporter.get_settings",
+        lambda: MagicMock(otlp_export_enabled=False),
+    )
     provider = MagicMock()
     OTLPExporter().setup(provider)
     provider.add_span_processor.assert_not_called()

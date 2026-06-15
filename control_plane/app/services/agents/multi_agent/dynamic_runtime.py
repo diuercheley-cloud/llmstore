@@ -16,20 +16,28 @@ class DynamicRoutingRuntime(TeamRuntime):
     Capability-aware team execution with fallback routing and bounded recovery.
     """
 
-    async def execute(self, team_id: uuid.UUID, goal: str, work_items: list[dict[str, Any]] | None = None):
+    async def execute(
+        self, team_id: uuid.UUID, goal: str, work_items: list[dict[str, Any]] | None = None
+    ):
         team = await self.get_team(team_id)
         members = await self.get_members(team_id)
         run = await self.start_run(team_id, team.tenant_id, goal)
         workspace = self.get_workspace(team.tenant_id)
         loop_guard = LoopGuard(self.db)
 
-        candidates = [member for member in members if member.role in {"specialist", "worker", "router", "manager"}]
+        candidates = [
+            member
+            for member in members
+            if member.role in {"specialist", "worker", "router", "manager"}
+        ]
         if not candidates:
             raise ValueError("Dynamic team requires at least one executable member")
 
-        work_items = work_items or team.config.get("work_items") or [
-            {"task_id": "task-1", "description": goal, "required_capability": None}
-        ]
+        work_items = (
+            work_items
+            or team.config.get("work_items")
+            or [{"task_id": "task-1", "description": goal, "required_capability": None}]
+        )
 
         results: list[str] = []
         try:
@@ -38,7 +46,9 @@ class DynamicRoutingRuntime(TeamRuntime):
             for index, item in enumerate(work_items, start=1):
                 selected = self._select_member(candidates, item)
                 if selected is None:
-                    raise ValueError(f"No eligible member found for work item '{item.get('task_id', index)}'")
+                    raise ValueError(
+                        f"No eligible member found for work item '{item.get('task_id', index)}'"
+                    )
 
                 if await loop_guard.detect_cycle(run.id, selected.agent_id, selected.agent_id):
                     raise ValueError("Self-loop detected in dynamic routing")
@@ -75,9 +85,13 @@ class DynamicRoutingRuntime(TeamRuntime):
                         await self.db.refresh(sub_run)
 
                     if sub_run.status != "completed":
-                        raise RuntimeError(f"Agent {selected.agent_id} failed with status {sub_run.status}")
+                        raise RuntimeError(
+                            f"Agent {selected.agent_id} failed with status {sub_run.status}"
+                        )
 
-                    result_text = f"Result from {selected.agent_id} (run {sub_run.id}): Task completed."
+                    result_text = (
+                        f"Result from {selected.agent_id} (run {sub_run.id}): Task completed."
+                    )
                     delegation.status = "completed"
                     chosen_agent = selected
                 except RuntimeError:
@@ -88,7 +102,7 @@ class DynamicRoutingRuntime(TeamRuntime):
                     )
                     if fallback is None:
                         raise
-                    
+
                     sub_run_fb = await agent_runtime.start_run(
                         db=self.db,
                         agent_id=fallback.agent_id,
@@ -113,14 +127,24 @@ class DynamicRoutingRuntime(TeamRuntime):
                         "result": result_text,
                     },
                 )
-                await self.obs.record_message(run.id, chosen_agent.agent_id, None, result_text, "result")
+                await self.obs.record_message(
+                    run.id, chosen_agent.agent_id, None, result_text, "result"
+                )
                 results.append(result_text)
 
-            summary = f"Dynamic team completed '{goal}' with {len(work_items)} routed work items. " + " ".join(results)
+            summary = (
+                f"Dynamic team completed '{goal}' with {len(work_items)} routed work items. "
+                + " ".join(results)
+            )
             await workspace.put(
                 run.id,
                 "dynamic:summary",
-                {"goal": goal, "work_item_count": len(work_items), "results": results, "summary": summary},
+                {
+                    "goal": goal,
+                    "work_item_count": len(work_items),
+                    "results": results,
+                    "summary": summary,
+                },
             )
             await self.complete_run(run.id, summary)
             return summary
@@ -135,7 +159,9 @@ class DynamicRoutingRuntime(TeamRuntime):
         def score(member: Any) -> tuple[int, int]:
             capabilities = member.metadata_json.get("capabilities", [])
             priority = int(member.metadata_json.get("priority", 0))
-            capability_match = 1 if required_capability in capabilities or required_capability is None else 0
+            capability_match = (
+                1 if required_capability in capabilities or required_capability is None else 0
+            )
             return (capability_match, priority)
 
         eligible = []

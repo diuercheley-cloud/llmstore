@@ -5,10 +5,9 @@ from app.services.governance.human_governance.separation_of_duties import (
 
 
 def test_human_governance_normalizes_roles():
-    assert normalize_roles(["admin", "reviewer", "admin"]) == "[\"admin\", \"reviewer\"]"
+    assert normalize_roles(["admin", "reviewer", "admin"]) == '["admin", "reviewer"]'
 
 
 def test_human_governance_separation_of_duties():
     assert validate_separation_of_duties("requester", ["approver", "reviewer"]) is True
     assert validate_separation_of_duties("requester", ["requester"]) is False
-

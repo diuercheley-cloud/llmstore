@@ -134,7 +134,7 @@ def main():
     # 4. AgentClient Real Mocked E2E Test
     e2e_path = "tests/integration/llm_harness/test_e2e_code_mode_provider.py"
     if os.path.exists(e2e_path):
-        with open(e2e_path, "r") as f:
+        with open(e2e_path) as f:
             content = f.read()
         if "test_e2e_code_mode_provider_real_cycle" in content:
             results["mocked_e2e_test_exists"] = {
@@ -155,7 +155,7 @@ def main():
     # 5. Docker Sandbox Cleanup Tested
     sandbox_test_path = "tests/integration/llm_harness/test_llm_harness_sandbox.py"
     if os.path.exists(sandbox_test_path):
-        with open(sandbox_test_path, "r") as f:
+        with open(sandbox_test_path) as f:
             content = f.read()
         has_cleanup_test = "cleanup" in content
         has_signal_test = "signal" in content or "atexit" in content
@@ -178,7 +178,7 @@ def main():
     # 6. Invalid Configuration Fails Explicitly
     config_test_path = "tests/integration/llm_harness/test_llm_harness_config.py"
     if os.path.exists(config_test_path):
-        with open(config_test_path, "r") as f:
+        with open(config_test_path) as f:
             content = f.read()
         if "HarnessConfigParseError" in content or "ValidationError" in content:
             results["invalid_config_fails"] = {
@@ -199,7 +199,7 @@ def main():
     # 7. Providers Matrix Tested
     matrix_test_path = "tests/integration/llm_harness/test_provider_matrix.py"
     if os.path.exists(matrix_test_path):
-        with open(matrix_test_path, "r") as f:
+        with open(matrix_test_path) as f:
             content = f.read()
         if "test_provider_registration" in content and "test_provider_repr_safety" in content:
             results["provider_matrix_tested"] = {
@@ -220,7 +220,9 @@ def main():
     # 8. Local Health Check Passes
     env = os.environ.copy()
     env["PYTHONPATH"] = f".:{env.get('PYTHONPATH', '')}"
-    ok, stdout, stderr = run_cmd([".venv/bin/python3", "-m", "scripts.llm_harness.cli", "health", "--local-only"], env=env)
+    ok, stdout, stderr = run_cmd(
+        [".venv/bin/python3", "-m", "scripts.llm_harness.cli", "health", "--local-only"], env=env
+    )
     if ok and "healthy" in stdout.lower():
         results["local_health_passes"] = {
             "status": "PASS",
@@ -237,11 +239,11 @@ def main():
     cli_test_path = "tests/integration/llm_harness/test_llm_harness_cli.py"
     has_sanitizer_tests = False
     if os.path.exists(sanitizer_test_path):
-        with open(sanitizer_test_path, "r") as f:
+        with open(sanitizer_test_path) as f:
             content = f.read()
         if "redact" in content or "sanitize" in content or "bearer" in content:
             has_sanitizer_tests = True
-    
+
     if has_sanitizer_tests:
         results["secrets_redaction_passes"] = {
             "status": "PASS",
@@ -269,7 +271,7 @@ def main():
     # 11. CI Configured with Harness Job
     ci_workflow_path = ".github/workflows/ci.yml"
     if os.path.exists(ci_workflow_path):
-        with open(ci_workflow_path, "r") as f:
+        with open(ci_workflow_path) as f:
             content = f.read()
         if "llm-harness:" in content:
             results["ci_contains_harness_job"] = {
@@ -355,4 +357,5 @@ def main():
 
 if __name__ == "__main__":
     import time
+
     main()

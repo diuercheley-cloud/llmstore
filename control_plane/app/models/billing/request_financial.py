@@ -4,7 +4,7 @@ from datetime import datetime
 from app.db.base import Base
 from sqlalchemy import Boolean, DateTime, Integer, Numeric, String, func
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 
 class RequestFinancial(Base):
@@ -26,10 +26,18 @@ class RequestFinancial(Base):
     tokens_estimated: Mapped[bool] = mapped_column(Boolean, default=True)
     cache_hit: Mapped[bool] = mapped_column(Boolean, default=False)
     latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    provider_cost_usd: Mapped[float | None] = mapped_column(Numeric(14, 8), nullable=True, default=0.0)
-    provider_cost_brl: Mapped[float | None] = mapped_column(Numeric(14, 8), nullable=True, default=0.0)
-    customer_price_brl: Mapped[float | None] = mapped_column(Numeric(14, 8), nullable=True, default=0.0)
-    gross_profit_brl: Mapped[float | None] = mapped_column(Numeric(14, 8), nullable=True, default=0.0)
+    provider_cost_usd: Mapped[float | None] = mapped_column(
+        Numeric(14, 8), nullable=True, default=0.0
+    )
+    provider_cost_brl: Mapped[float | None] = mapped_column(
+        Numeric(14, 8), nullable=True, default=0.0
+    )
+    customer_price_brl: Mapped[float | None] = mapped_column(
+        Numeric(14, 8), nullable=True, default=0.0
+    )
+    gross_profit_brl: Mapped[float | None] = mapped_column(
+        Numeric(14, 8), nullable=True, default=0.0
+    )
     margin_percent: Mapped[float | None] = mapped_column(Numeric(8, 4), nullable=True, default=0.0)
     fx_rate: Mapped[float | None] = mapped_column(Numeric(10, 6), nullable=True, default=5.0)
     fx_rate_source: Mapped[str | None] = mapped_column(String(32), default="manual_env")

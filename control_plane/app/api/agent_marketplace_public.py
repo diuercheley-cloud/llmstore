@@ -1,6 +1,5 @@
 import logging
 import uuid
-from typing import List, Optional
 
 from app.api.deps import get_current_user, get_db
 from app.models.agents.agent_marketplace import MarketplaceItem, MarketplacePublisher
@@ -17,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/v1/marketplace", tags=["marketplace"])
+
 
 class MarketplaceItemResponse(BaseModel):
     id: uuid.UUID
@@ -35,46 +35,53 @@ class MarketplaceItemResponse(BaseModel):
     created_at: str = ""
     updated_at: str = ""
 
+
 class PaginatedResponse(BaseModel):
     items: list
     total: int
     limit: int
     offset: int
 
+
 class PublishItemRequest(BaseModel):
     agent_definition_id: uuid.UUID
     name: str = Field(..., min_length=1, max_length=255)
     category: str = Field(..., min_length=1, max_length=64)
-    tags: List[str] = []
-    capabilities: List[str] = []
+    tags: list[str] = []
+    capabilities: list[str] = []
     risk_level: str = "medium"
     price_brl: float = 0.0
 
+
 class UpdateItemRequest(BaseModel):
-    name: Optional[str] = None
-    category: Optional[str] = None
-    tags: Optional[List[str]] = None
-    capabilities: Optional[List[str]] = None
-    risk_level: Optional[str] = None
-    price_brl: Optional[float] = None
-    is_public: Optional[bool] = None
+    name: str | None = None
+    category: str | None = None
+    tags: list[str] | None = None
+    capabilities: list[str] | None = None
+    risk_level: str | None = None
+    price_brl: float | None = None
+    is_public: bool | None = None
+
 
 class RatingRequest(BaseModel):
     rating: int = Field(..., ge=1, le=5)
-    review: Optional[str] = None
+    review: str | None = None
+
 
 class RatingResponse(BaseModel):
     id: uuid.UUID
     item_id: uuid.UUID
     user_id: str
     rating: int
-    review: Optional[str] = None
+    review: str | None = None
     created_at: str = ""
+
 
 class RegisterPublisherRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
-    description: Optional[str] = None
-    website: Optional[str] = None
+    description: str | None = None
+    website: str | None = None
+
 
 def _item_to_response(item: MarketplaceItem, publisher_name: str = "") -> dict:
     return {
@@ -95,13 +102,14 @@ def _item_to_response(item: MarketplaceItem, publisher_name: str = "") -> dict:
         "updated_at": item.updated_at.isoformat() if item.updated_at else "",
     }
 
+
 @router.get("/items", response_model=PaginatedResponse)
 async def list_items(
-    query: Optional[str] = Query(None),
-    category: Optional[str] = Query(None),
-    tags: Optional[str] = Query(None),
-    capabilities: Optional[str] = Query(None),
-    risk_level: Optional[str] = Query(None),
+    query: str | None = Query(None),
+    category: str | None = Query(None),
+    tags: str | None = Query(None),
+    capabilities: str | None = Query(None),
+    risk_level: str | None = Query(None),
     min_rating: float = Query(0.0, ge=0.0, le=5.0),
     sort_by: str = Query("created_at"),
     sort_order: str = Query("desc", pattern="^(asc|desc)$"),
@@ -113,10 +121,16 @@ async def list_items(
     tag_list = tags.split(",") if tags else None
     cap_list = capabilities.split(",") if capabilities else None
     result = await search_svc.search(
-        query=query, category=category, tags=tag_list,
-        capabilities=cap_list, risk_level=risk_level,
-        min_rating=min_rating, sort_by=sort_by, sort_order=sort_order,
-        limit=limit, offset=offset,
+        query=query,
+        category=category,
+        tags=tag_list,
+        capabilities=cap_list,
+        risk_level=risk_level,
+        min_rating=min_rating,
+        sort_by=sort_by,
+        sort_order=sort_order,
+        limit=limit,
+        offset=offset,
     )
     items_response = []
     for item in result["items"]:
@@ -129,7 +143,13 @@ async def list_items(
             publisher_name = pub.name
         items_response.append(_item_to_response(item, publisher_name))
 
-    return {"items": items_response, "total": result["total"], "limit": result["limit"], "offset": result["offset"]}
+    return {
+        "items": items_response,
+        "total": result["total"],
+        "limit": result["limit"],
+        "offset": result["offset"],
+    }
+
 
 @router.get("/items/{item_id}")
 async def get_item(
@@ -146,6 +166,7 @@ async def get_item(
     pub = pub_stmt.scalar_one_or_none()
     return _item_to_response(item, pub.name if pub else "")
 
+
 @router.post("/items", status_code=201)
 async def publish_item(
     req: PublishItemRequest,
@@ -156,13 +177,18 @@ async def publish_item(
     pub_svc = PublisherProgramService(db)
     publisher = await pub_svc.get_publisher(tenant_id)
     if not publisher:
-        raise HTTPException(status_code=400, detail="Tenant not registered as publisher. Register first via POST /v1/marketplace/publishers/register")
+        raise HTTPException(
+            status_code=400,
+            detail="Tenant not registered as publisher. Register first via POST /v1/marketplace/publishers/register",
+        )
 
     agent_def = await get_agent_definition(db, req.agent_definition_id)
     if not agent_def:
         raise HTTPException(status_code=404, detail="Agent definition not found")
     if str(agent_def.tenant_id) != tenant_id:
-        raise HTTPException(status_code=403, detail="Agent definition does not belong to your tenant")
+        raise HTTPException(
+            status_code=403, detail="Agent definition does not belong to your tenant"
+        )
 
     item = MarketplaceItem(
         publisher_id=publisher.id,
@@ -178,6 +204,7 @@ async def publish_item(
     await db.commit()
     await db.refresh(item)
     return _item_to_response(item, publisher.name)
+
 
 @router.put("/items/{item_id}")
 async def update_item(
@@ -219,6 +246,7 @@ async def update_item(
     await db.refresh(item)
     return _item_to_response(item, publisher.name)
 
+
 @router.post("/items/{item_id}/rate", response_model=RatingResponse)
 async def rate_item(
     item_id: uuid.UUID,
@@ -238,6 +266,7 @@ async def rate_item(
         "created_at": rating.created_at.isoformat() if rating.created_at else "",
     }
 
+
 @router.get("/items/{item_id}/reviews")
 async def get_item_reviews(
     item_id: uuid.UUID,
@@ -245,9 +274,12 @@ async def get_item_reviews(
 ):
     from app.models.agents.agent_marketplace import MarketplaceRating
     from sqlalchemy import select
-    stmt = select(MarketplaceRating).where(
-        MarketplaceRating.item_id == item_id
-    ).order_by(MarketplaceRating.created_at.desc())
+
+    stmt = (
+        select(MarketplaceRating)
+        .where(MarketplaceRating.item_id == item_id)
+        .order_by(MarketplaceRating.created_at.desc())
+    )
     res = await db.execute(stmt)
     ratings = res.scalars().all()
     return [
@@ -260,6 +292,7 @@ async def get_item_reviews(
         }
         for r in ratings
     ]
+
 
 @router.post("/publishers/register")
 async def register_publisher(
@@ -288,6 +321,7 @@ async def register_publisher(
         "is_verified": publisher.is_verified,
     }
 
+
 @router.get("/publishers/me")
 async def get_my_publisher_profile(
     db: AsyncSession = Depends(get_db),
@@ -308,12 +342,14 @@ async def get_my_publisher_profile(
         "trust_score": publisher.trust_score,
     }
 
+
 @router.get("/categories")
 async def list_categories(
     db: AsyncSession = Depends(get_db),
 ):
     search_svc = MarketplaceSearchService(db)
     return {"categories": await search_svc.get_categories()}
+
 
 @router.get("/my-items")
 async def get_my_items(
@@ -328,6 +364,7 @@ async def get_my_items(
     search_svc = MarketplaceSearchService(db)
     result = await search_svc.search(publisher_id=publisher.id)
     return {"items": [_item_to_response(item) for item in result["items"]]}
+
 
 @router.post("/items/{item_id}/download")
 async def download_item(

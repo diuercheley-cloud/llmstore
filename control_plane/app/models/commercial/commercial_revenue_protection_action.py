@@ -39,7 +39,9 @@ class CommercialRevenueProtectionAction(Base):
     before_state_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     after_state_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     approval_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False, index=True
+    )
     applied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     reverted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 

@@ -20,11 +20,11 @@ def _resolve(path_str, script_path):
     if "${ROOT_DIR}" in path_str:
         return root / path_str.replace("${ROOT_DIR}/", "")
     if "${SCRIPT_DIR}" in path_str:
-        return root / "scripts" / path_str.replace("${SCRIPT_DIR}/", "")
+        return (script_path.resolve().parent / path_str.replace("${SCRIPT_DIR}/", "")).resolve()
     if "${PROJECT_ROOT}" in path_str:
         return root / path_str.replace("${PROJECT_ROOT}/", "")
     if "${script_dir}" in path_str:
-        return root / "scripts" / path_str.replace("${script_dir}/", "")
+        return (script_path.resolve().parent / path_str.replace("${script_dir}/", "")).resolve()
     if path_str.startswith("/"):
         return Path(path_str)
     return (script_path.parent / path_str).resolve()
@@ -42,7 +42,7 @@ def _is_dynamic_source(line):
         return True
     if re.search(r'source\s+["\']?\$\{', line):
         # Check if the entire target after 'source' is just a variable
-        after = re.split(r'\s+', line, maxsplit=1)[1].strip('"').strip("'")
+        after = re.split(r"\s+", line, maxsplit=1)[1].strip('"').strip("'")
         if after.startswith("${") and after.endswith("}"):
             var = after[2:-1]
             if var not in _RESOLVABLE_VARS:
@@ -90,7 +90,7 @@ def test_no_fragile_source():
     for sh in _shell_scripts():
         content = sh.read_text()
         for line in content.splitlines():
-            if '$(dirname "$0")' in line or '$(dirname $0)' in line:
+            if '$(dirname "$0")' in line or "$(dirname $0)" in line:
                 if '$(dirname "${BASH_SOURCE[0]}")' in line:
                     continue
                 rel = sh.relative_to(ROOT_DIR)
@@ -109,7 +109,6 @@ def test_common_sh_sources():
 
 def test_audit_script_runs():
     result = subprocess.run(
-        [str(ROOT_DIR / "scripts" / "audit-shell-lib-layout.sh")],
-        capture_output=True, text=True
+        [str(ROOT_DIR / "scripts" / "audit-shell-lib-layout.sh")], capture_output=True, text=True
     )
     assert result.returncode == 0, f"audit script failed:\n{result.stderr}\n{result.stdout}"

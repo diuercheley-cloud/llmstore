@@ -137,9 +137,7 @@ class ShellTools:
             policy_hash=self.policy_hash,
         )
 
-    async def run_shell_async(
-        self, command: str | list[str], timeout: int = 30
-    ) -> ShellResult:
+    async def run_shell_async(self, command: str | list[str], timeout: int = 30) -> ShellResult:
         """
         Primary asynchronous implementation.
         """

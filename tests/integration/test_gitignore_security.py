@@ -4,9 +4,9 @@ from pathlib import Path
 def test_gitignore_contains_security_patterns():
     gitignore_path = Path(".gitignore")
     assert gitignore_path.exists(), ".gitignore file must exist"
-    
+
     content = gitignore_path.read_text()
-    
+
     required_patterns = [
         ".env",
         ".env.*",
@@ -37,8 +37,8 @@ def test_gitignore_contains_security_patterns():
         "!releases/**/summary.json",
         "!releases/**/summary.md",
         "!releases/**/bundle-manifest.json",
-        "!releases/**/bundle-checksums.sha256"
+        "!releases/**/bundle-checksums.sha256",
     ]
-    
+
     for pattern in required_patterns:
         assert pattern in content, f"Missing required pattern: {pattern} in .gitignore"

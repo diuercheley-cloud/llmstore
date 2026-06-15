@@ -35,9 +35,7 @@ def test_check_secrets_all_passes():
         timeout=120,
     )
     print(f"STDOUT:\n{result.stdout}")
-    assert result.returncode == 0, (
-        f"check-secrets --all failed:\n{result.stdout}"
-    )
+    assert result.returncode == 0, f"check-secrets --all failed:\n{result.stdout}"
 
 
 def test_check_secrets_release_dir():
@@ -52,9 +50,7 @@ def test_check_secrets_release_dir():
         timeout=30,
     )
     print(f"STDOUT:\n{result.stdout}")
-    assert result.returncode == 0, (
-        f"check-secrets on release dir failed:\n{result.stdout}"
-    )
+    assert result.returncode == 0, f"check-secrets on release dir failed:\n{result.stdout}"
 
 
 def test_release_dir_no_tar_gz():

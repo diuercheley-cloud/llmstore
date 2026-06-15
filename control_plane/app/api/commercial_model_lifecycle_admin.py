@@ -2,7 +2,6 @@
 import uuid
 from typing import Any
 
-from app.services.runtime_dependencies import get_db_session
 from app.models.commercial.commercial_model_lifecycle import (
     CommercialOfflineModelVerification,
 )
@@ -47,6 +46,7 @@ from app.services.models.model_quarantine import (
     serialize_rollback_record,
 )
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import desc, select
@@ -82,7 +82,9 @@ class DiscoverModelPayload(BaseModel):
 
 
 class TransitionPayload(BaseModel):
-    target_state: str = Field(pattern=r"^(discovered|staged|pending_approval|approved|promoted|quarantined|revoked|rolled_back|archived)$")
+    target_state: str = Field(
+        pattern=r"^(discovered|staged|pending_approval|approved|promoted|quarantined|revoked|rolled_back|archived)$"
+    )
     changed_by: str | None = None
     reason: str | None = None
 
@@ -93,7 +95,9 @@ class StageModelPayload(BaseModel):
 
 class PromotionRequestPayload(BaseModel):
     lifecycle_record_id: uuid.UUID
-    request_type: str = Field(pattern=r"^(staged_to_pending|pending_to_approved|approved_to_promoted|offline_import|rollback_promotion)$")
+    request_type: str = Field(
+        pattern=r"^(staged_to_pending|pending_to_approved|approved_to_promoted|offline_import|rollback_promotion)$"
+    )
     requested_by: str | None = None
     target_state: str = Field(pattern=r"^(pending_approval|approved|promoted)$")
     source_state: str | None = None
@@ -119,7 +123,9 @@ class ExecutePromotionPayload(BaseModel):
 
 
 class QuarantinePayload(BaseModel):
-    reason: str = Field(pattern=r"^(checksum_mismatch|signature_invalid|provenance_invalid|crl_revoked|policy_violation|manual_quarantine|attestation_failure|lineage_broken|sovereign_violation|runtime_drift)$")
+    reason: str = Field(
+        pattern=r"^(checksum_mismatch|signature_invalid|provenance_invalid|crl_revoked|policy_violation|manual_quarantine|attestation_failure|lineage_broken|sovereign_violation|runtime_drift)$"
+    )
     quarantined_by: str | None = None
 
 
@@ -144,7 +150,9 @@ class LineageEntryPayload(BaseModel):
     source_type: str
     source_ref: str | None = None
     source_cluster_id: str | None = None
-    derivation_method: str = Field(pattern=r"^(original_import|offline_promotion|version_upgrade|finetune_derivative|quantization_derivative|merge_derivative|conversion_derivative|rollback_restoration)$")
+    derivation_method: str = Field(
+        pattern=r"^(original_import|offline_promotion|version_upgrade|finetune_derivative|quantization_derivative|merge_derivative|conversion_derivative|rollback_restoration)$"
+    )
     artifact_hash: str
     predecessor_hash: str | None = None
     provenance_id: uuid.UUID | None = None
@@ -156,7 +164,9 @@ class OfflineVerificationPayload(BaseModel):
     checksum_sha256: str | None = None
     manifest_hash: str | None = None
     lifecycle_record_id: uuid.UUID | None = None
-    verification_type: str = Field(default="offline_import", pattern=r"^(offline_import|usb_media|airgap_transfer|crl_check)$")
+    verification_type: str = Field(
+        default="offline_import", pattern=r"^(offline_import|usb_media|airgap_transfer|crl_check)$"
+    )
     media_ref: str | None = None
     media_uuid: str | None = None
     source_cluster_id: str | None = None
@@ -187,7 +197,9 @@ async def list_lifecycle(
     limit: int = 100,
     db: AsyncSession = Depends(get_db_session),
 ):
-    records = await list_lifecycle_records(db, lifecycle_state=lifecycle_state, cluster_id=cluster_id, limit=limit)
+    records = await list_lifecycle_records(
+        db, lifecycle_state=lifecycle_state, cluster_id=cluster_id, limit=limit
+    )
     return {"items": [serialize_lifecycle_record(r) for r in records]}
 
 
@@ -220,18 +232,22 @@ async def get_lifecycle_dashboard(db: AsyncSession = Depends(get_db_session)):
         .limit(20)
     )
     recent_verifications = verification_rows.scalars().all()
-    return sanitize_report_payload({
-        "status_summary": status,
-        "quarantine_events": [serialize_lifecycle_record(r) for r in quarantined],
-        "rollback_history": [serialize_rollback_record(r) for r in recent_rollbacks],
-        "recent_promotions": [serialize_promotion_request(r) for r in recent_promotions],
-        "pending_approvals": [serialize_promotion_request(r) for r in pending_approvals],
-        "recent_verifications": [serialize_offline_verification(v) for v in recent_verifications],
-        "attestation_status": {
-            "attestation_bound_count": status.get("fully_verified", 0),
-            "pending_count": status.get("pending_approval", 0),
-        },
-    })
+    return sanitize_report_payload(
+        {
+            "status_summary": status,
+            "quarantine_events": [serialize_lifecycle_record(r) for r in quarantined],
+            "rollback_history": [serialize_rollback_record(r) for r in recent_rollbacks],
+            "recent_promotions": [serialize_promotion_request(r) for r in recent_promotions],
+            "pending_approvals": [serialize_promotion_request(r) for r in pending_approvals],
+            "recent_verifications": [
+                serialize_offline_verification(v) for v in recent_verifications
+            ],
+            "attestation_status": {
+                "attestation_bound_count": status.get("fully_verified", 0),
+                "pending_count": status.get("pending_approval", 0),
+            },
+        }
+    )
 
 
 @router.get("/{lifecycle_id}")
@@ -243,7 +259,9 @@ async def get_lifecycle_detail(lifecycle_id: uuid.UUID, db: AsyncSession = Depen
 
 
 @router.post("/{lifecycle_id}/stage")
-async def post_stage(lifecycle_id: uuid.UUID, payload: StageModelPayload, db: AsyncSession = Depends(get_db_session)):
+async def post_stage(
+    lifecycle_id: uuid.UUID, payload: StageModelPayload, db: AsyncSession = Depends(get_db_session)
+):
     try:
         record = await stage_model(db, lifecycle_id, staged_by=payload.staged_by)
         await db.commit()
@@ -254,9 +272,17 @@ async def post_stage(lifecycle_id: uuid.UUID, payload: StageModelPayload, db: As
 
 
 @router.post("/{lifecycle_id}/transition")
-async def post_transition(lifecycle_id: uuid.UUID, payload: TransitionPayload, db: AsyncSession = Depends(get_db_session)):
+async def post_transition(
+    lifecycle_id: uuid.UUID, payload: TransitionPayload, db: AsyncSession = Depends(get_db_session)
+):
     try:
-        record = await transition_lifecycle_state(db, lifecycle_id, target_state=payload.target_state, changed_by=payload.changed_by, reason=payload.reason)
+        record = await transition_lifecycle_state(
+            db,
+            lifecycle_id,
+            target_state=payload.target_state,
+            changed_by=payload.changed_by,
+            reason=payload.reason,
+        )
         await db.commit()
         await db.refresh(record)
         return serialize_lifecycle_record(record)
@@ -273,9 +299,13 @@ async def post_enforce_gates(lifecycle_id: uuid.UUID, db: AsyncSession = Depends
 
 
 @router.post("/{lifecycle_id}/quarantine")
-async def post_quarantine(lifecycle_id: uuid.UUID, payload: QuarantinePayload, db: AsyncSession = Depends(get_db_session)):
+async def post_quarantine(
+    lifecycle_id: uuid.UUID, payload: QuarantinePayload, db: AsyncSession = Depends(get_db_session)
+):
     try:
-        record = await quarantine_lifecycle_model(db, lifecycle_id, reason=payload.reason, quarantined_by=payload.quarantined_by)
+        record = await quarantine_lifecycle_model(
+            db, lifecycle_id, reason=payload.reason, quarantined_by=payload.quarantined_by
+        )
         await db.commit()
         await db.refresh(record)
         return serialize_lifecycle_record(record)
@@ -284,9 +314,19 @@ async def post_quarantine(lifecycle_id: uuid.UUID, payload: QuarantinePayload, d
 
 
 @router.post("/{lifecycle_id}/release-quarantine")
-async def post_release_quarantine(lifecycle_id: uuid.UUID, payload: ReleaseQuarantinePayload, db: AsyncSession = Depends(get_db_session)):
+async def post_release_quarantine(
+    lifecycle_id: uuid.UUID,
+    payload: ReleaseQuarantinePayload,
+    db: AsyncSession = Depends(get_db_session),
+):
     try:
-        record = await release_from_quarantine(db, lifecycle_id, released_by=payload.released_by, target_state=payload.target_state, reason=payload.reason)
+        record = await release_from_quarantine(
+            db,
+            lifecycle_id,
+            released_by=payload.released_by,
+            target_state=payload.target_state,
+            reason=payload.reason,
+        )
         await db.commit()
         await db.refresh(record)
         return serialize_lifecycle_record(record)
@@ -295,7 +335,9 @@ async def post_release_quarantine(lifecycle_id: uuid.UUID, payload: ReleaseQuara
 
 
 @router.post("/{lifecycle_id}/rollback")
-async def post_rollback(lifecycle_id: uuid.UUID, payload: RollbackPayload, db: AsyncSession = Depends(get_db_session)):
+async def post_rollback(
+    lifecycle_id: uuid.UUID, payload: RollbackPayload, db: AsyncSession = Depends(get_db_session)
+):
     try:
         rollback = await rollback_model(
             db,
@@ -315,7 +357,11 @@ async def post_rollback(lifecycle_id: uuid.UUID, payload: RollbackPayload, db: A
 
 
 @router.post("/{lifecycle_id}/lineage")
-async def post_lineage_entry(lifecycle_id: uuid.UUID, payload: LineageEntryPayload, db: AsyncSession = Depends(get_db_session)):
+async def post_lineage_entry(
+    lifecycle_id: uuid.UUID,
+    payload: LineageEntryPayload,
+    db: AsyncSession = Depends(get_db_session),
+):
     try:
         entry = await create_lineage_entry(
             db,
@@ -343,12 +389,16 @@ async def get_lineage(lifecycle_id: uuid.UUID, db: AsyncSession = Depends(get_db
 
 
 @router.get("/{lifecycle_id}/lineage/validate")
-async def get_lineage_validation(lifecycle_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
+async def get_lineage_validation(
+    lifecycle_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)
+):
     return await validate_lineage(db, lifecycle_id)
 
 
 @router.get("/{lifecycle_id}/lineage/provenance")
-async def get_lineage_provenance(lifecycle_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
+async def get_lineage_provenance(
+    lifecycle_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)
+):
     return await verify_provenance_chain(db, lifecycle_id)
 
 
@@ -363,7 +413,9 @@ async def list_promotions(
 
 
 @router.post("/promotions")
-async def post_promotion_request(payload: PromotionRequestPayload, db: AsyncSession = Depends(get_db_session)):
+async def post_promotion_request(
+    payload: PromotionRequestPayload, db: AsyncSession = Depends(get_db_session)
+):
     try:
         request = await create_promotion_request(db, **payload.model_dump())
         await db.commit()
@@ -374,9 +426,15 @@ async def post_promotion_request(payload: PromotionRequestPayload, db: AsyncSess
 
 
 @router.post("/promotions/{request_id}/approve")
-async def post_promotion_approve(request_id: uuid.UUID, payload: ApprovePromotionPayload, db: AsyncSession = Depends(get_db_session)):
+async def post_promotion_approve(
+    request_id: uuid.UUID,
+    payload: ApprovePromotionPayload,
+    db: AsyncSession = Depends(get_db_session),
+):
     try:
-        request = await approve_promotion_request(db, request_id, approved_by=payload.approved_by, approval_note=payload.approval_note)
+        request = await approve_promotion_request(
+            db, request_id, approved_by=payload.approved_by, approval_note=payload.approval_note
+        )
         await db.commit()
         await db.refresh(request)
         return serialize_promotion_request(request)
@@ -385,9 +443,15 @@ async def post_promotion_approve(request_id: uuid.UUID, payload: ApprovePromotio
 
 
 @router.post("/promotions/{request_id}/reject")
-async def post_promotion_reject(request_id: uuid.UUID, payload: RejectPromotionPayload, db: AsyncSession = Depends(get_db_session)):
+async def post_promotion_reject(
+    request_id: uuid.UUID,
+    payload: RejectPromotionPayload,
+    db: AsyncSession = Depends(get_db_session),
+):
     try:
-        request = await reject_promotion_request(db, request_id, rejected_by=payload.rejected_by, reason=payload.reason)
+        request = await reject_promotion_request(
+            db, request_id, rejected_by=payload.rejected_by, reason=payload.reason
+        )
         await db.commit()
         await db.refresh(request)
         return serialize_promotion_request(request)
@@ -396,7 +460,11 @@ async def post_promotion_reject(request_id: uuid.UUID, payload: RejectPromotionP
 
 
 @router.post("/promotions/{request_id}/execute")
-async def post_promotion_execute(request_id: uuid.UUID, payload: ExecutePromotionPayload, db: AsyncSession = Depends(get_db_session)):
+async def post_promotion_execute(
+    request_id: uuid.UUID,
+    payload: ExecutePromotionPayload,
+    db: AsyncSession = Depends(get_db_session),
+):
     try:
         result = await execute_promotion(db, request_id, executed_by=payload.executed_by)
         await db.commit()
@@ -406,7 +474,9 @@ async def post_promotion_execute(request_id: uuid.UUID, payload: ExecutePromotio
 
 
 @router.post("/offline/bundle")
-async def post_offline_bundle(payload: OfflineBundlePayload, db: AsyncSession = Depends(get_db_session)):
+async def post_offline_bundle(
+    payload: OfflineBundlePayload, db: AsyncSession = Depends(get_db_session)
+):
     try:
         result = await create_offline_promotion_bundle(
             db,
@@ -424,7 +494,9 @@ async def post_offline_bundle(payload: OfflineBundlePayload, db: AsyncSession = 
 
 
 @router.post("/offline/import")
-async def post_offline_import(payload: OfflineImportPayload, db: AsyncSession = Depends(get_db_session)):
+async def post_offline_import(
+    payload: OfflineImportPayload, db: AsyncSession = Depends(get_db_session)
+):
     try:
         result = await import_offline_promotion(
             db,
@@ -440,7 +512,9 @@ async def post_offline_import(payload: OfflineImportPayload, db: AsyncSession = 
 
 
 @router.post("/offline/verify")
-async def post_offline_verify(payload: OfflineVerificationPayload, db: AsyncSession = Depends(get_db_session)):
+async def post_offline_verify(
+    payload: OfflineVerificationPayload, db: AsyncSession = Depends(get_db_session)
+):
     try:
         verification = await verify_offline_model(
             db,

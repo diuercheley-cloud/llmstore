@@ -36,10 +36,16 @@ def upgrade() -> None:
         sa.Column("notes", sa.Text(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_commercial_routing_config_scope_type", "commercial_routing_config", ["scope_type"])
-    op.create_index("ix_commercial_routing_config_provider", "commercial_routing_config", ["provider"])
+    op.create_index(
+        "ix_commercial_routing_config_scope_type", "commercial_routing_config", ["scope_type"]
+    )
+    op.create_index(
+        "ix_commercial_routing_config_provider", "commercial_routing_config", ["provider"]
+    )
     op.create_index("ix_commercial_routing_config_model", "commercial_routing_config", ["model"])
-    op.create_index("ix_commercial_routing_config_is_active", "commercial_routing_config", ["is_active"])
+    op.create_index(
+        "ix_commercial_routing_config_is_active", "commercial_routing_config", ["is_active"]
+    )
 
 
 def downgrade() -> None:

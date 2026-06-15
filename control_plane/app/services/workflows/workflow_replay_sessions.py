@@ -34,7 +34,10 @@ class WorkflowReplaySessionService:
     ) -> CommercialWorkflowReplaySession:
         if tenant_id and original_execution.tenant_id and tenant_id != original_execution.tenant_id:
             raise ValueError("cross_tenant_replay_denied")
-        if replay_execution is not None and original_execution.tenant_id != replay_execution.tenant_id:
+        if (
+            replay_execution is not None
+            and original_execution.tenant_id != replay_execution.tenant_id
+        ):
             raise ValueError("cross_tenant_replay_denied")
         provenance = await self.provenance.build_execution_provenance(db, original_execution)
         row = CommercialWorkflowReplaySession(
@@ -57,7 +60,10 @@ class WorkflowReplaySessionService:
             actor_id=requested_by,
             actor_metadata={"tenant_id": tenant_id},
             event_summary=f"Replay session started for execution {original_execution.id}",
-            event_payload={"replay_session_id": str(row.id), "replay_execution_id": str(replay_execution.id) if replay_execution else None},
+            event_payload={
+                "replay_session_id": str(row.id),
+                "replay_execution_id": str(replay_execution.id) if replay_execution else None,
+            },
         )
         return row
 
@@ -70,7 +76,11 @@ class WorkflowReplaySessionService:
         original = await db.get(CommercialWorkflowExecution, session_row.original_execution_id)
         if original is None:
             raise ValueError("workflow_execution_not_found")
-        replay = await db.get(CommercialWorkflowExecution, session_row.replay_execution_id) if session_row.replay_execution_id else None
+        replay = (
+            await db.get(CommercialWorkflowExecution, session_row.replay_execution_id)
+            if session_row.replay_execution_id
+            else None
+        )
         drift = (
             await self.provenance.detect_pipeline_drift(db, original.id, replay.id)
             if replay is not None
@@ -84,15 +94,29 @@ class WorkflowReplaySessionService:
             }
         )
         original_snapshots = (
-            await db.execute(
-                select(CommercialWorkflowPolicySnapshot).where(CommercialWorkflowPolicySnapshot.execution_id == original.id)
+            (
+                await db.execute(
+                    select(CommercialWorkflowPolicySnapshot).where(
+                        CommercialWorkflowPolicySnapshot.execution_id == original.id
+                    )
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         replay_snapshots = (
-            await db.execute(
-                select(CommercialWorkflowPolicySnapshot).where(CommercialWorkflowPolicySnapshot.execution_id == replay.id)
+            (
+                await db.execute(
+                    select(CommercialWorkflowPolicySnapshot).where(
+                        CommercialWorkflowPolicySnapshot.execution_id == replay.id
+                    )
+                )
             )
-        ).scalars().all() if replay is not None else []
+            .scalars()
+            .all()
+            if replay is not None
+            else []
+        )
         original_policy_hashes = [row.snapshot_hash for row in original_snapshots]
         replay_policy_hashes = [row.snapshot_hash for row in replay_snapshots]
         policy_mismatch = original_policy_hashes != replay_policy_hashes
@@ -108,10 +132,16 @@ class WorkflowReplaySessionService:
         }
         comparison_hash = sha256_hex(report)
         material_drift = bool(drift.get("mismatches"))
-        session_row.session_status = "completed" if not material_drift and not policy_mismatch else "drift_detected"
+        session_row.session_status = (
+            "completed" if not material_drift and not policy_mismatch else "drift_detected"
+        )
         session_row.comparison_hash = comparison_hash
-        session_row.report_hash = sha256_hex({"comparison_hash": comparison_hash, "completed_at": utc_now().isoformat()})
-        session_row.report_signature = sign_governance_payload(report, scope="workflow_replay_report")
+        session_row.report_hash = sha256_hex(
+            {"comparison_hash": comparison_hash, "completed_at": utc_now().isoformat()}
+        )
+        session_row.report_signature = sign_governance_payload(
+            report, scope="workflow_replay_report"
+        )
         session_row.mismatch_detected = material_drift
         session_row.policy_mismatch_detected = policy_mismatch
         session_row.drift_score = round(1.0 if material_drift or policy_mismatch else 0.0, 4)
@@ -127,6 +157,9 @@ class WorkflowReplaySessionService:
             actor_id=session_row.requested_by,
             actor_metadata={"policy_mismatch": policy_mismatch},
             event_summary=f"Replay session completed for execution {original.id}",
-            event_payload={"replay_session_id": str(session_row.id), "comparison_hash": comparison_hash},
+            event_payload={
+                "replay_session_id": str(session_row.id),
+                "comparison_hash": comparison_hash,
+            },
         )
         return session_row

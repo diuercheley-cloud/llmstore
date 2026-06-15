@@ -7,24 +7,28 @@ _PROVIDER_ALIASES = {
     "openai compatible": "openai_compatible",
 }
 
-CLOUD_PROVIDER_IDS = frozenset({
-    "openai",
-    "anthropic",
-    "deepseek",
-    "openrouter",
-})
+CLOUD_PROVIDER_IDS = frozenset(
+    {
+        "openai",
+        "anthropic",
+        "deepseek",
+        "openrouter",
+    }
+)
 
-LOCAL_PROVIDER_IDS = frozenset({
-    "local",
-    "lmstudio",
-    "llama.cpp",
-    "ollama",
-    "vllm",
-    "openai_compatible",
-    "mock",
-    "pocket",
-    "pocket-tts",
-})
+LOCAL_PROVIDER_IDS = frozenset(
+    {
+        "local",
+        "lmstudio",
+        "llama.cpp",
+        "ollama",
+        "vllm",
+        "openai_compatible",
+        "mock",
+        "pocket",
+        "pocket-tts",
+    }
+)
 
 
 def normalize_provider_name(provider_name: str | None) -> str:

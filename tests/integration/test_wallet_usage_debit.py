@@ -28,13 +28,20 @@ async def db_session():
 @pytest.fixture
 def fake_client_id():
     import uuid
+
     return uuid.uuid4()
 
 
 @pytest.mark.asyncio
 async def test_debit_after_credit(db_session, fake_client_id):
     await credit_manual(db_session, fake_client_id, Decimal("100.0000"))
-    await debit_usage(db_session, fake_client_id, Decimal("40.0000"), reference_type="chat", reference_id="req-001")
+    await debit_usage(
+        db_session,
+        fake_client_id,
+        Decimal("40.0000"),
+        reference_type="chat",
+        reference_id="req-001",
+    )
     await db_session.commit()
     balance = await get_balance(db_session, fake_client_id)
     assert balance["balance_brl"] == 60.0

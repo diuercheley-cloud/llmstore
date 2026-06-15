@@ -2,10 +2,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class VoiceTurnDetectionService:
     """
     Basic Voice Activity Detection (VAD) and Turn Detection.
     """
+
     async def is_speech(self, audio_data: bytes) -> bool:
         # Simple power-based VAD would go here
         # Mock: always True if data is present

@@ -19,7 +19,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _canonical_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+    )
 
 
 def _hash_bytes(data: bytes) -> str:
@@ -53,14 +55,16 @@ async def issue_challenge(
     effective_ttl = ttl_seconds or settings.commercial_runtime_attestation_challenge_ttl_seconds
 
     nonce = _generate_nonce()
-    challenge_data = sanitize_report_payload({
-        "nonce": nonce,
-        "type": challenge_type,
-        "required_measurements": required_measurements or [],
-        "trust_score_required": trust_score_required,
-        "issued_at": utc_now().isoformat(),
-        "ttl_seconds": effective_ttl,
-    })
+    challenge_data = sanitize_report_payload(
+        {
+            "nonce": nonce,
+            "type": challenge_type,
+            "required_measurements": required_measurements or [],
+            "trust_score_required": trust_score_required,
+            "issued_at": utc_now().isoformat(),
+            "ttl_seconds": effective_ttl,
+        }
+    )
 
     record = CommercialAttestationChallenge(
         node_id=node_id,
@@ -181,8 +185,7 @@ async def verify_challenge(
 
 async def expire_stale_challenges(db: AsyncSession) -> int:
     result = await db.execute(
-        select(CommercialAttestationChallenge)
-        .where(
+        select(CommercialAttestationChallenge).where(
             CommercialAttestationChallenge.status == "pending",
             CommercialAttestationChallenge.expires_at < utc_now(),
         )
@@ -208,22 +211,34 @@ async def revoke_challenge(
 
 async def summarize_challenges(db: AsyncSession) -> dict[str, Any]:
     total = (await db.execute(select(func.count(CommercialAttestationChallenge.id)))).scalar() or 0
-    pending = (await db.execute(
-        select(func.count(CommercialAttestationChallenge.id))
-        .where(CommercialAttestationChallenge.status == "pending")
-    )).scalar() or 0
-    verified = (await db.execute(
-        select(func.count(CommercialAttestationChallenge.id))
-        .where(CommercialAttestationChallenge.status == "verified")
-    )).scalar() or 0
-    failed = (await db.execute(
-        select(func.count(CommercialAttestationChallenge.id))
-        .where(CommercialAttestationChallenge.status == "failed")
-    )).scalar() or 0
-    expired = (await db.execute(
-        select(func.count(CommercialAttestationChallenge.id))
-        .where(CommercialAttestationChallenge.status == "expired")
-    )).scalar() or 0
+    pending = (
+        await db.execute(
+            select(func.count(CommercialAttestationChallenge.id)).where(
+                CommercialAttestationChallenge.status == "pending"
+            )
+        )
+    ).scalar() or 0
+    verified = (
+        await db.execute(
+            select(func.count(CommercialAttestationChallenge.id)).where(
+                CommercialAttestationChallenge.status == "verified"
+            )
+        )
+    ).scalar() or 0
+    failed = (
+        await db.execute(
+            select(func.count(CommercialAttestationChallenge.id)).where(
+                CommercialAttestationChallenge.status == "failed"
+            )
+        )
+    ).scalar() or 0
+    expired = (
+        await db.execute(
+            select(func.count(CommercialAttestationChallenge.id)).where(
+                CommercialAttestationChallenge.status == "expired"
+            )
+        )
+    ).scalar() or 0
 
     recent = await db.execute(
         select(CommercialAttestationChallenge)

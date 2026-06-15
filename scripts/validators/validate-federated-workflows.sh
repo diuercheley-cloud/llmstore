@@ -22,7 +22,7 @@ test -f control_plane/app/services/workflows/federated_consensus.py
 test -f control_plane/app/services/workflows/federated_replay.py
 test -f control_plane/app/services/workflows/workflow_execution_leases.py
 test -f control_plane/app/api/commercial_federated_workflows_admin.py
-test -f control_plane/alembic/versions/20260515_phase57_federated_deterministic_workflows.py
+test -f control_plane/alembic/archive/20260515_phase57_federated_deterministic_workflows.py
 test -f docs/FEDERATED_DETERMINISTIC_WORKFLOWS.md
 
 grep -q "CommercialFederatedWorkflowExecution" control_plane/app.models.commercial.commercial_federated_workflows.py

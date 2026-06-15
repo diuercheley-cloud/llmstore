@@ -1,7 +1,7 @@
 import hashlib
 import logging
-from datetime import datetime, UTC
-from typing import Any, List
+from datetime import UTC, datetime
+from typing import Any
 
 from app.models.commercial.commercial_predictive_aiops import (
     CommercialAIOpsRecommendation,
@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class PredictiveAIOpsService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -27,49 +28,53 @@ class PredictiveAIOpsService:
     async def run_cycle(self, client_id: str = "system"):
         """Runs a full AIOps cycle: anomaly detection -> failure forecasting -> risk scoring -> recommendations"""
         logger.info(f"Running AIOps cycle for client {client_id}")
-        
+
         # 1. Detect and Correlate Anomalies
         anomalies = await self.correlator.process_latest_metrics(client_id)
-        
+
         # 2. Forecast Failures
         forecasts = await self.forecaster.generate_forecasts(client_id, anomalies)
-        
+
         # 3. Score Runtime Risk
         risk_trends = await self.risk_scorer.update_risk_trends(client_id, anomalies, forecasts)
-        
+
         # 4. Generate Recommendations
         recommendations = await self.generate_recommendations(client_id, forecasts, risk_trends)
-        
+
         return {
             "anomalies_detected": len(anomalies),
             "forecasts_generated": len(forecasts),
             "risk_trends_updated": len(risk_trends),
-            "recommendations_generated": len(recommendations)
+            "recommendations_generated": len(recommendations),
         }
 
-    async def generate_recommendations(self, client_id: str, forecasts: List[Any], risk_trends: List[Any]) -> List[CommercialAIOpsRecommendation]:
+    async def generate_recommendations(
+        self, client_id: str, forecasts: list[Any], risk_trends: list[Any]
+    ) -> list[CommercialAIOpsRecommendation]:
         recommendations = []
-        
+
         for forecast in forecasts:
             if forecast.confidence_score > 0.8:
                 rec = CommercialAIOpsRecommendation(
                     client_id=client_id,
                     action_type=self._map_forecast_to_action(forecast),
                     target_id=forecast.target_id,
-                    priority="high" if forecast.predicted_failure_window_seconds < 3600 else "medium",
+                    priority="high"
+                    if forecast.predicted_failure_window_seconds < 3600
+                    else "medium",
                     rationale={
                         "forecast_id": forecast.id,
                         "confidence": forecast.confidence_score,
-                        "window": forecast.predicted_failure_window_seconds
+                        "window": forecast.predicted_failure_window_seconds,
                     },
                     mode="advisory",
-                    status="pending"
+                    status="pending",
                 )
                 rec.deterministic_hash = self._generate_hash(rec)
                 rec.immutable_hash = rec.deterministic_hash
                 self.db.add(rec)
                 recommendations.append(rec)
-        
+
         await self.db.commit()
         return recommendations
 
@@ -79,7 +84,7 @@ class PredictiveAIOpsService:
             "node_failure": "isolate_node",
             "quorum_loss": "resync_mesh",
             "gpu_thermal": "quarantine_model",
-            "drift_detected": "replay_workflow"
+            "drift_detected": "replay_workflow",
         }
         return mapping.get(forecast.prediction_type, "enable_safe_mode")
 
@@ -92,25 +97,41 @@ class PredictiveAIOpsService:
             "status": "active",
             "mode": "sovereign_local",
             "last_cycle": datetime.now(UTC).isoformat(),
-            "engine": "local_heuristics_v1"
+            "engine": "local_heuristics_v1",
         }
 
     async def get_latest_forecasts(self, limit: int = 50):
-        stmt = select(CommercialFailurePrediction).order_by(CommercialFailurePrediction.created_at.desc()).limit(limit)
+        stmt = (
+            select(CommercialFailurePrediction)
+            .order_by(CommercialFailurePrediction.created_at.desc())
+            .limit(limit)
+        )
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
     async def get_latest_anomalies(self, limit: int = 50):
-        stmt = select(CommercialAnomalySignal).order_by(CommercialAnomalySignal.created_at.desc()).limit(limit)
+        stmt = (
+            select(CommercialAnomalySignal)
+            .order_by(CommercialAnomalySignal.created_at.desc())
+            .limit(limit)
+        )
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
     async def get_latest_recommendations(self, limit: int = 50):
-        stmt = select(CommercialAIOpsRecommendation).order_by(CommercialAIOpsRecommendation.created_at.desc()).limit(limit)
+        stmt = (
+            select(CommercialAIOpsRecommendation)
+            .order_by(CommercialAIOpsRecommendation.created_at.desc())
+            .limit(limit)
+        )
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
     async def get_risk_trends(self, limit: int = 50):
-        stmt = select(CommercialRuntimeRiskTrend).order_by(CommercialRuntimeRiskTrend.created_at.desc()).limit(limit)
+        stmt = (
+            select(CommercialRuntimeRiskTrend)
+            .order_by(CommercialRuntimeRiskTrend.created_at.desc())
+            .limit(limit)
+        )
         result = await self.db.execute(stmt)
         return result.scalars().all()

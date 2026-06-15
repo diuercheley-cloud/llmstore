@@ -15,6 +15,7 @@ validate_runtime_security(settings)
 # Print operational modes banner
 try:
     from app.services.platform.deployment_modes import DeploymentModeService
+
     mode_svc = DeploymentModeService()
     mode_svc.print_startup_banner(settings)
 except Exception as e:
@@ -56,6 +57,7 @@ async def deprecate_legacy_admin_file(filename: str):
     if legacy_file.parent != LEGACY_ADMIN_DIR or not legacy_file.exists():
         raise HTTPException(status_code=404, detail="Not Found")
     return _legacy_admin_disabled_payload()
+
 
 if __name__ == "__main__":
     import uvicorn

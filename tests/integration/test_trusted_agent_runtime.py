@@ -1,4 +1,3 @@
-
 import pytest
 from app.models.commercial.commercial_agents import (
     CommercialAgentAction,

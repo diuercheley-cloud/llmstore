@@ -4,9 +4,7 @@ import json
 import re
 from typing import Any
 
-_THINK_BLOCK_RE = re.compile(
-    r"<think>.*?</think>", re.DOTALL | re.IGNORECASE
-)
+_THINK_BLOCK_RE = re.compile(r"<think>.*?</think>", re.DOTALL | re.IGNORECASE)
 
 
 def detect_architecture(
@@ -22,9 +20,7 @@ def detect_architecture(
         if isinstance(value, str) and value.strip():
             return value.strip().lower()
 
-    joined = " ".join(
-        filter(None, [model_id, model_file, model_alias or ""])
-    ).lower()
+    joined = " ".join(filter(None, [model_id, model_file, model_alias or ""])).lower()
     if "gemma" in joined:
         return "gemma"
     if "qwen3" in joined:
@@ -84,9 +80,7 @@ def apply_prompt_template_settings(
         updated["chat_template"] = template
         if not include_reasoning:
             updated["reasoning_format"] = "none"
-            template_kwargs = dict(
-                updated.get("chat_template_kwargs") or {}
-            )
+            template_kwargs = dict(updated.get("chat_template_kwargs") or {})
             template_kwargs["enable_thinking"] = False
             updated["chat_template_kwargs"] = template_kwargs
     elif prompt_template == "gemma":
@@ -109,9 +103,7 @@ def sanitize_assistant_text(
         return content
     if prompt_template == "qwen":
         sanitized = _THINK_BLOCK_RE.sub("", content)
-        sanitized = sanitized.replace("<think>", "").replace(
-            "</think>", ""
-        )
+        sanitized = sanitized.replace("<think>", "").replace("</think>", "")
         return sanitized.strip()
     return content
 

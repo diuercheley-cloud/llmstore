@@ -9,12 +9,13 @@ from app.services.agents.agent_worker import AgentWorkerService
 configure_logging()
 logger = logging.getLogger(__name__)
 
+
 async def main() -> None:
     logger.info("Initializing Agent Worker Service...")
     worker = AgentWorkerService()
-    
+
     loop = asyncio.get_running_loop()
-    
+
     async def shutdown(sig_name: str):
         logger.info(f"Received exit signal {sig_name}. Shutting down worker...")
         await worker.stop()
@@ -35,7 +36,7 @@ async def main() -> None:
             loop.add_signal_handler(sig, lambda s=sig: asyncio.create_task(shutdown(s.name)))
         except NotImplementedError:
             pass
-            
+
     try:
         loop.add_signal_handler(signal.SIGUSR1, lambda: handle_drain("SIGUSR1"))
     except (NotImplementedError, AttributeError):
@@ -60,6 +61,7 @@ async def main() -> None:
     finally:
         if worker.is_running:
             await worker.stop()
+
 
 if __name__ == "__main__":
     try:

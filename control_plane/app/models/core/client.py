@@ -15,9 +15,15 @@ class Client(Base):
     name: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     description: Mapped[str | None] = mapped_column(Text(), nullable=True)
     is_blocked: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    billing_status: Mapped[str] = mapped_column(String(16), default="active", nullable=False, index=True)
-    organization_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("managed_organizations.id"), nullable=True, index=True)
-    billing_plan_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("billing_plans.id"), nullable=True, index=True)
+    billing_status: Mapped[str] = mapped_column(
+        String(16), default="active", nullable=False, index=True
+    )
+    organization_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("managed_organizations.id"), nullable=True, index=True
+    )
+    billing_plan_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("billing_plans.id"), nullable=True, index=True
+    )
     rate_limit_per_minute: Mapped[int] = mapped_column(Integer, default=1000, nullable=False)
     daily_token_quota: Mapped[int] = mapped_column(Integer, default=100_000_000, nullable=False)
     weekly_token_quota: Mapped[int] = mapped_column(Integer, default=500_000_000, nullable=False)
@@ -30,11 +36,19 @@ class Client(Base):
     system_prompt: Mapped[str | None] = mapped_column(Text(), nullable=True)
     metadata_json: Mapped[str | None] = mapped_column(Text(), nullable=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
 
     api_keys = relationship("ApiKey", back_populates="client", cascade="all, delete-orphan")
     billing_plan = relationship("BillingPlan", back_populates="clients")
     invoices = relationship("BillingInvoice", back_populates="client", cascade="all, delete-orphan")
-    payments = relationship("CustomerPayment", back_populates="client", cascade="all, delete-orphan")
-    wallet = relationship("AiWallet", back_populates="client", uselist=False, cascade="all, delete-orphan")
+    payments = relationship(
+        "CustomerPayment", back_populates="client", cascade="all, delete-orphan"
+    )
+    wallet = relationship(
+        "AiWallet", back_populates="client", uselist=False, cascade="all, delete-orphan"
+    )

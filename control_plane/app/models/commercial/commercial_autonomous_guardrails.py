@@ -23,20 +23,30 @@ class CommercialAutonomousExecutionPolicy(Base):
         nullable=True,
         index=True,
     )
-    mode: Mapped[str] = mapped_column(String(32), nullable=False, default="guarded_enforce", index=True)
+    mode: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="guarded_enforce", index=True
+    )
     max_blast_radius_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.35)
     require_human_approval: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     approval_stages_json: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     guarded_window_start: Mapped[str | None] = mapped_column(String(8), nullable=True)
     guarded_window_end: Mapped[str | None] = mapped_column(String(8), nullable=True)
-    runtime_freeze_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
+    runtime_freeze_enabled: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, index=True
+    )
     sovereign_hard_stop: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     rollback_allowed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    require_signed_model_promotion: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    require_signed_model_promotion: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True
+    )
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
 
 
 class CommercialExecutionBlastRadius(Base):
@@ -50,11 +60,15 @@ class CommercialExecutionBlastRadius(Base):
     cluster_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     scope_json: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     risk_vector_json: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
-    blast_radius_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0, index=True)
+    blast_radius_score: Mapped[float] = mapped_column(
+        Float, nullable=False, default=0.0, index=True
+    )
     severity: Mapped[str] = mapped_column(String(32), nullable=False, default="low", index=True)
     reproducibility_hash: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     blocked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False, index=True
+    )
 
 
 class CommercialExecutionGuardrailEvent(Base):
@@ -71,7 +85,9 @@ class CommercialExecutionGuardrailEvent(Base):
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     details_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     immutable_hash: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False, index=True
+    )
 
 
 class CommercialHumanApprovalCheckpoint(Base):
@@ -103,7 +119,9 @@ class CommercialHumanApprovalCheckpoint(Base):
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     immutable_hash: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False, index=True
+    )
 
 
 class CommercialAutonomousExecutionReceipt(Base):
@@ -138,16 +156,24 @@ class CommercialAutonomousExecutionReceipt(Base):
     action_type: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     target_type: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     target_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
-    execution_mode: Mapped[str] = mapped_column(String(32), nullable=False, default="guarded", index=True)
+    execution_mode: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="guarded", index=True
+    )
     decision: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
     request_hash: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     approval_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
     runtime_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
     receipt_hash: Mapped[str] = mapped_column(String(128), nullable=False, unique=True, index=True)
-    previous_receipt_hash: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    previous_receipt_hash: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, index=True
+    )
     detached_signature: Mapped[str | None] = mapped_column(Text, nullable=True)
     immutable_hash: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
-    verification_status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending", index=True)
+    verification_status: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="pending", index=True
+    )
     receipt_json: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False, index=True
+    )
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

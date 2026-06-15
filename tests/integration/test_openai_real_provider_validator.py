@@ -18,9 +18,9 @@ from openai_real_validator import (
     sanitize_log,
 )
 
-OPENAI_MASK_KEY = "sk-" "proj-abcdefghijklmnopqrstuvwxyz123456"
+OPENAI_MASK_KEY = "sk-proj-abcdefghijklmnopqrstuvwxyz123456"
 OPENAI_TEST_KEY = "test-openai-key"
-OPENAI_SANITIZE_KEY = "sk-" "proj-test-key-1234567890"
+OPENAI_SANITIZE_KEY = "sk-proj-test-key-1234567890"
 
 
 def test_estimate_openai_cost_usd():
@@ -72,8 +72,15 @@ def test_load_env_local_returns_dict(tmp_path):
 
 
 class MockArgs:
-    def __init__(self, dry_run=True, real=False, max_cost_brl=2.0, model="gpt-4o-mini",
-                 embeddings_model="text-embedding-3-small", output_dir="/tmp"):
+    def __init__(
+        self,
+        dry_run=True,
+        real=False,
+        max_cost_brl=2.0,
+        model="gpt-4o-mini",
+        embeddings_model="text-embedding-3-small",
+        output_dir="/tmp",
+    ):
         self.dry_run = dry_run
         self.real = real
         self.max_cost_brl = max_cost_brl
@@ -91,7 +98,11 @@ def test_validator_skips_when_no_key():
 
 
 def test_validator_skips_when_rpv_disabled():
-    env = {"REAL_PROVIDER_VALIDATION_ENABLED": "false", "OPENAI_PROVIDER_ENABLED": "true", "OPENAI_API_KEY": OPENAI_TEST_KEY}
+    env = {
+        "REAL_PROVIDER_VALIDATION_ENABLED": "false",
+        "OPENAI_PROVIDER_ENABLED": "true",
+        "OPENAI_API_KEY": OPENAI_TEST_KEY,
+    }
     args = MockArgs(dry_run=False, real=True)
     v = OpenAIRealValidator(args, env)
     report = v.run()
@@ -99,7 +110,11 @@ def test_validator_skips_when_rpv_disabled():
 
 
 def test_validator_skips_when_ope_disabled():
-    env = {"REAL_PROVIDER_VALIDATION_ENABLED": "true", "OPENAI_PROVIDER_ENABLED": "false", "OPENAI_API_KEY": OPENAI_TEST_KEY}
+    env = {
+        "REAL_PROVIDER_VALIDATION_ENABLED": "true",
+        "OPENAI_PROVIDER_ENABLED": "false",
+        "OPENAI_API_KEY": OPENAI_TEST_KEY,
+    }
     args = MockArgs(dry_run=False, real=True)
     v = OpenAIRealValidator(args, env)
     report = v.run()
@@ -107,7 +122,11 @@ def test_validator_skips_when_ope_disabled():
 
 
 def test_validator_dry_run_passes():
-    env = {"REAL_PROVIDER_VALIDATION_ENABLED": "true", "OPENAI_PROVIDER_ENABLED": "true", "OPENAI_API_KEY": OPENAI_TEST_KEY}
+    env = {
+        "REAL_PROVIDER_VALIDATION_ENABLED": "true",
+        "OPENAI_PROVIDER_ENABLED": "true",
+        "OPENAI_API_KEY": OPENAI_TEST_KEY,
+    }
     args = MockArgs(dry_run=True)
     v = OpenAIRealValidator(args, env)
     report = v.run()
@@ -116,7 +135,11 @@ def test_validator_dry_run_passes():
 
 
 def test_validator_dry_run_no_real_calls():
-    env = {"REAL_PROVIDER_VALIDATION_ENABLED": "true", "OPENAI_PROVIDER_ENABLED": "true", "OPENAI_API_KEY": OPENAI_TEST_KEY}
+    env = {
+        "REAL_PROVIDER_VALIDATION_ENABLED": "true",
+        "OPENAI_PROVIDER_ENABLED": "true",
+        "OPENAI_API_KEY": OPENAI_TEST_KEY,
+    }
     args = MockArgs(dry_run=True)
     v = OpenAIRealValidator(args, env)
     report = v.run()
@@ -126,7 +149,11 @@ def test_validator_dry_run_no_real_calls():
 
 
 def test_validator_report_has_expected_fields():
-    env = {"REAL_PROVIDER_VALIDATION_ENABLED": "true", "OPENAI_PROVIDER_ENABLED": "true", "OPENAI_API_KEY": OPENAI_TEST_KEY}
+    env = {
+        "REAL_PROVIDER_VALIDATION_ENABLED": "true",
+        "OPENAI_PROVIDER_ENABLED": "true",
+        "OPENAI_API_KEY": OPENAI_TEST_KEY,
+    }
     args = MockArgs(dry_run=True)
     v = OpenAIRealValidator(args, env)
     report = v.run()
@@ -139,7 +166,11 @@ def test_validator_report_has_expected_fields():
 
 
 def test_validator_writes_report(tmp_path):
-    env = {"REAL_PROVIDER_VALIDATION_ENABLED": "true", "OPENAI_PROVIDER_ENABLED": "true", "OPENAI_API_KEY": OPENAI_TEST_KEY}
+    env = {
+        "REAL_PROVIDER_VALIDATION_ENABLED": "true",
+        "OPENAI_PROVIDER_ENABLED": "true",
+        "OPENAI_API_KEY": OPENAI_TEST_KEY,
+    }
     args = MockArgs(dry_run=True, output_dir=str(tmp_path))
     v = OpenAIRealValidator(args, env)
     v.run()
@@ -152,7 +183,11 @@ def test_validator_writes_report(tmp_path):
 
 
 def test_validator_masks_key_in_report(tmp_path):
-    env = {"REAL_PROVIDER_VALIDATION_ENABLED": "true", "OPENAI_PROVIDER_ENABLED": "true", "OPENAI_API_KEY": OPENAI_SANITIZE_KEY}
+    env = {
+        "REAL_PROVIDER_VALIDATION_ENABLED": "true",
+        "OPENAI_PROVIDER_ENABLED": "true",
+        "OPENAI_API_KEY": OPENAI_SANITIZE_KEY,
+    }
     args = MockArgs(dry_run=True, output_dir=str(tmp_path))
     v = OpenAIRealValidator(args, env)
     report = v.run()
@@ -162,7 +197,11 @@ def test_validator_masks_key_in_report(tmp_path):
 
 
 def test_validator_respects_max_cost_brl():
-    env = {"REAL_PROVIDER_VALIDATION_ENABLED": "true", "OPENAI_PROVIDER_ENABLED": "true", "OPENAI_API_KEY": OPENAI_TEST_KEY}
+    env = {
+        "REAL_PROVIDER_VALIDATION_ENABLED": "true",
+        "OPENAI_PROVIDER_ENABLED": "true",
+        "OPENAI_API_KEY": OPENAI_TEST_KEY,
+    }
     args = MockArgs(dry_run=True, max_cost_brl=5.0)
     v = OpenAIRealValidator(args, env)
     assert v.max_cost_brl == 5.0
@@ -170,13 +209,13 @@ def test_validator_respects_max_cost_brl():
 
 def test_estimate_cost_embedding_model():
     cost = estimate_openai_cost_usd("text-embedding-3-small", 100, 0)
-    expected = (100 / 1_000_000 * 0.02)
+    expected = 100 / 1_000_000 * 0.02
     assert cost == expected
 
 
 def test_estimate_cost_embedding_large():
     cost = estimate_openai_cost_usd("text-embedding-3-large", 100, 0)
-    expected = (100 / 1_000_000 * 0.13)
+    expected = 100 / 1_000_000 * 0.13
     assert cost == expected
 
 

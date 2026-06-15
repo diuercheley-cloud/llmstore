@@ -1,20 +1,24 @@
 from __future__ import annotations
-import logging
+
 import asyncio
+import logging
 import random
-from typing import Any, Dict, Optional, List
+from typing import Any
+
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
+
 class ActiveInjection:
-    def __init__(self, injection_type: str, config: Dict[str, Any]):
+    def __init__(self, injection_type: str, config: dict[str, Any]):
         self.injection_type = injection_type
         self.config = config
 
+
 class ChaosInjectionRegistry:
     _instance = None
-    _injections: List[ActiveInjection] = []
+    _injections: list[ActiveInjection] = []
 
     @classmethod
     def get_instance(cls):
@@ -22,7 +26,7 @@ class ChaosInjectionRegistry:
             cls._instance = cls()
         return cls._instance
 
-    def add_injection(self, injection_type: str, config: Dict[str, Any]):
+    def add_injection(self, injection_type: str, config: dict[str, Any]):
         self._injections.append(ActiveInjection(injection_type, config))
         logger.warning(f"CHAOS INJECTION ACTIVATED: {injection_type} with {config}")
 
@@ -30,8 +34,9 @@ class ChaosInjectionRegistry:
         self._injections = []
         logger.info("All chaos injections cleared.")
 
-    def get_injections_by_type(self, injection_type: str) -> List[ActiveInjection]:
+    def get_injections_by_type(self, injection_type: str) -> list[ActiveInjection]:
         return [i for i in self._injections if i.injection_type == injection_type]
+
 
 async def inject_chaos(injection_type: str):
     settings = get_settings()
@@ -40,7 +45,7 @@ async def inject_chaos(injection_type: str):
 
     registry = ChaosInjectionRegistry.get_instance()
     injections = registry.get_injections_by_type(injection_type)
-    
+
     for inj in injections:
         ratio = inj.config.get("ratio", 1.0)
         if random.random() > ratio:
@@ -56,7 +61,7 @@ async def inject_chaos(injection_type: str):
             timeout = inj.config.get("timeout", 30)
             logger.warning(f"CHAOS: Simulating provider timeout ({timeout}s)")
             await asyncio.sleep(timeout)
-            raise asyncio.TimeoutError("Simulated chaos timeout")
+            raise TimeoutError("Simulated chaos timeout")
 
         elif injection_type == "redis_failure":
             logger.warning("CHAOS: Simulating Redis failure")
@@ -65,6 +70,7 @@ async def inject_chaos(injection_type: str):
         elif injection_type == "db_outage":
             logger.warning("CHAOS: Simulating DB outage")
             raise RuntimeError("Simulated chaos Database outage")
+
 
 async def inject_chaos_db():
     await inject_chaos("db_outage")

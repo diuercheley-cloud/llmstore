@@ -15,6 +15,7 @@ Usage:
     # result.context_block contains a structured, citation-ready string
     # result.path contains the PathResult with full metadata
 """
+
 from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -46,13 +47,11 @@ class GraphRAG:
             )
         )
         entity_names = ", ".join(entity.name for entity in result.entities) or "No entities found"
-        provenance_refs = ", ".join(
-            (item.get("source_id") or "inline") for item in result.provenance
-        ) or "n/a"
+        provenance_refs = (
+            ", ".join((item.get("source_id") or "inline") for item in result.provenance) or "n/a"
+        )
         result.context_block = (
-            f"Vector Result: {text}\n"
-            f"Graph Result: {entity_names}\n"
-            f"Provenance: {provenance_refs}"
+            f"Vector Result: {text}\nGraph Result: {entity_names}\nProvenance: {provenance_refs}"
         )
         return result
 
@@ -111,17 +110,20 @@ class GraphRAG:
 
         # Build context block
         entity_names = ", ".join(e.name for e in entity_result.entities) or "No entities found"
-        provenance_refs = ", ".join(
-            (item.get("source_id") or "inline") for item in entity_result.provenance
-        ) or "n/a"
+        provenance_refs = (
+            ", ".join((item.get("source_id") or "inline") for item in entity_result.provenance)
+            or "n/a"
+        )
 
         if path.status == PathStatus.found:
             path_desc = " → ".join(n.name for n in path.nodes)
             edge_types = ", ".join(path.relation_types) or "unknown"
-            path_provenance = "; ".join(
-                f"{p['entity_id']}={p.get('source_id') or 'inline'}"
-                for p in path.provenance
-            ) or "n/a"
+            path_provenance = (
+                "; ".join(
+                    f"{p['entity_id']}={p.get('source_id') or 'inline'}" for p in path.provenance
+                )
+                or "n/a"
+            )
             path_block = (
                 f"Path ({path.depth} hops, cost={path.traversal_cost}, "
                 f"confidence={path.confidence:.2f}, time={path.query_time_ms:.1f}ms): "
@@ -129,9 +131,8 @@ class GraphRAG:
                 f"Path Provenance: {path_provenance}"
             )
         else:
-            path_block = (
-                f"Path not available: status={path.status.value}"
-                + (f", reason={path.reason}" if path.reason else "")
+            path_block = f"Path not available: status={path.status.value}" + (
+                f", reason={path.reason}" if path.reason else ""
             )
 
         context_block = (

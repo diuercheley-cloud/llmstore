@@ -16,9 +16,9 @@ if str(SCRIPT_LIB) not in sys.path:
     sys.path.insert(0, str(SCRIPT_LIB))
 from anthropic_real_validator import mask_key, sanitize_log
 
-ANTHROPIC_MASK_KEY = "sk-" "ant-test-key-1234567890abcdef"
-ANTHROPIC_REALISTIC_KEY = "sk-" "ant-test-real-key-1234567890abcdef"
-ANTHROPIC_REPORT_KEY = "sk-" "ant-real-key-12345678901234567890"
+ANTHROPIC_MASK_KEY = "sk-ant-test-key-1234567890abcdef"
+ANTHROPIC_REALISTIC_KEY = "sk-ant-test-real-key-1234567890abcdef"
+ANTHROPIC_REPORT_KEY = "sk-ant-real-key-12345678901234567890"
 ANTHROPIC_REPORT_ENV_KEY = "test-anthropic-key"
 
 
@@ -61,6 +61,7 @@ async def test_health_check_not_configured_returns_sanitized():
     os.environ["ANTHROPIC_PROVIDER_ENABLED"] = "true"
     os.environ["REAL_PROVIDER_VALIDATION_ENABLED"] = "true"
     from app.core.config import get_settings
+
     get_settings.cache_clear()
     provider = AnthropicProvider()
     result = await provider.health_check()
@@ -82,6 +83,7 @@ async def test_no_key_in_health_check_output():
     os.environ["ANTHROPIC_PROVIDER_ENABLED"] = "true"
     os.environ["REAL_PROVIDER_VALIDATION_ENABLED"] = "true"
     from app.core.config import get_settings
+
     get_settings.cache_clear()
     provider = AnthropicProvider()
     result = await provider.health_check()
@@ -140,8 +142,18 @@ def test_mask_key_keeps_prefix_suffix():
 
 def test_no_full_prompt_in_report_by_default(tmp_path):
     from anthropic_real_validator import AnthropicRealValidator
-    args = type("Args", (), {"dry_run": True, "real": True, "max_cost_brl": 2.0, "model": "claude-3-haiku-20240307",
-                             "output_dir": str(tmp_path)})
+
+    args = type(
+        "Args",
+        (),
+        {
+            "dry_run": True,
+            "real": True,
+            "max_cost_brl": 2.0,
+            "model": "claude-3-haiku-20240307",
+            "output_dir": str(tmp_path),
+        },
+    )
     env = {
         "REAL_PROVIDER_VALIDATION_ENABLED": "true",
         "ANTHROPIC_PROVIDER_ENABLED": "true",

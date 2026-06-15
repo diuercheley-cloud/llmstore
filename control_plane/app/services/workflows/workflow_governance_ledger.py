@@ -60,7 +60,10 @@ class WorkflowGovernanceLedgerService:
             await db.execute(
                 select(CommercialWorkflowGovernanceEvent)
                 .where(CommercialWorkflowGovernanceEvent.execution_id == execution.id)
-                .order_by(desc(CommercialWorkflowGovernanceEvent.created_at), desc(CommercialWorkflowGovernanceEvent.id))
+                .order_by(
+                    desc(CommercialWorkflowGovernanceEvent.created_at),
+                    desc(CommercialWorkflowGovernanceEvent.id),
+                )
                 .limit(1)
             )
         ).scalar_one_or_none()
@@ -83,7 +86,9 @@ class WorkflowGovernanceLedgerService:
         )
         ledger_hash = sha256_hex(
             {
-                "previous_ledger_hash": previous.ledger_hash if previous else execution.governance_ledger_hash,
+                "previous_ledger_hash": previous.ledger_hash
+                if previous
+                else execution.governance_ledger_hash,
                 "event_hash": event_hash,
             }
         )
@@ -116,12 +121,19 @@ class WorkflowGovernanceLedgerService:
         execution_id,
     ) -> dict[str, Any]:
         rows = (
-            await db.execute(
-                select(CommercialWorkflowGovernanceEvent)
-                .where(CommercialWorkflowGovernanceEvent.execution_id == execution_id)
-                .order_by(CommercialWorkflowGovernanceEvent.created_at.asc(), CommercialWorkflowGovernanceEvent.id.asc())
+            (
+                await db.execute(
+                    select(CommercialWorkflowGovernanceEvent)
+                    .where(CommercialWorkflowGovernanceEvent.execution_id == execution_id)
+                    .order_by(
+                        CommercialWorkflowGovernanceEvent.created_at.asc(),
+                        CommercialWorkflowGovernanceEvent.id.asc(),
+                    )
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         previous_event_hash = None
         previous_ledger_hash = None
         issues: list[str] = []
@@ -147,9 +159,16 @@ class WorkflowGovernanceLedgerService:
         execution_id,
     ) -> list[CommercialWorkflowGovernanceEvent]:
         return (
-            await db.execute(
-                select(CommercialWorkflowGovernanceEvent)
-                .where(CommercialWorkflowGovernanceEvent.execution_id == execution_id)
-                .order_by(CommercialWorkflowGovernanceEvent.created_at.asc(), CommercialWorkflowGovernanceEvent.id.asc())
+            (
+                await db.execute(
+                    select(CommercialWorkflowGovernanceEvent)
+                    .where(CommercialWorkflowGovernanceEvent.execution_id == execution_id)
+                    .order_by(
+                        CommercialWorkflowGovernanceEvent.created_at.asc(),
+                        CommercialWorkflowGovernanceEvent.id.asc(),
+                    )
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )

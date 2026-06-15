@@ -1,6 +1,6 @@
 # Owner: agent-platform
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.api.deps import get_db_session, require_admin
 from app.services.agents.agent_evals import AgentEvalService
@@ -16,14 +16,15 @@ router = APIRouter(prefix="/admin/agent-evals", tags=["agent-evals"])
 # Datasets (Versioned)
 # ---------------------------------------------------------------------------
 
+
 @router.post("/datasets")
 async def create_eval_dataset(
     agent_id: uuid.UUID = Body(...),
     name: str = Body(...),
-    description: Optional[str] = Body(None),
+    description: str | None = Body(None),
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     service = EvalDatasetRegistryService(db)
     dataset = await service.create_dataset(agent_id, name, description)
     return {
@@ -39,10 +40,10 @@ async def create_eval_dataset(
 async def create_dataset_version(
     id: uuid.UUID,
     version: str = Body(...),
-    cases_json: List[dict] = Body(...),
+    cases_json: list[dict] = Body(...),
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     service = EvalDatasetRegistryService(db)
     try:
         dv = await service.create_dataset_version(id, version, cases_json)
@@ -62,19 +63,20 @@ async def create_dataset_version(
 # Evaluation Runs
 # ---------------------------------------------------------------------------
 
+
 @router.post("/run")
 async def run_evaluation(
     agent_id: uuid.UUID = Body(...),
-    suite_id: Optional[uuid.UUID] = Body(None),
-    dataset_id: Optional[uuid.UUID] = Body(None),
-    version: Optional[str] = Body(None),
-    metadata: Optional[dict] = Body(None),
+    suite_id: uuid.UUID | None = Body(None),
+    dataset_id: uuid.UUID | None = Body(None),
+    version: str | None = Body(None),
+    metadata: dict | None = Body(None),
     allow_paid_provider: bool = Body(False),
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     service = AgentEvalService(db)
-    
+
     if suite_id:
         eval_run = await service.run_eval_suite(suite_id, metadata)
     elif dataset_id and version:
@@ -86,7 +88,9 @@ async def run_evaluation(
             allow_paid_provider=allow_paid_provider,
         )
     else:
-        raise HTTPException(status_code=400, detail="Either suite_id or dataset_id + version must be provided")
+        raise HTTPException(
+            status_code=400, detail="Either suite_id or dataset_id + version must be provided"
+        )
 
     return {
         "id": str(eval_run.id),
@@ -103,12 +107,13 @@ async def run_evaluation(
 # Reports & Promotion Gates
 # ---------------------------------------------------------------------------
 
+
 @router.get("/reports/{agent_id}")
 async def get_agent_eval_report(
     agent_id: uuid.UUID,
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     service = EvalGateService(db)
     return await service.get_report(agent_id)
 
@@ -118,11 +123,11 @@ async def check_promotion_gate(
     agent_id: uuid.UUID,
     eval_run_id: uuid.UUID = Body(...),
     audit_override: bool = Body(False),
-    override_reason: Optional[str] = Body(None),
-    override_by: Optional[str] = Body(None),
+    override_reason: str | None = Body(None),
+    override_by: str | None = Body(None),
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     service = EvalGateService(db)
     try:
         promo_result = await service.evaluate_promotion(
@@ -143,4 +148,3 @@ async def check_promotion_gate(
         "details": promo_result.details,
         "created_at": promo_result.created_at.isoformat(),
     }
-

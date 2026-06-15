@@ -4,15 +4,13 @@ import uuid
 from app.core.config import get_settings
 from app.core.security import generate_api_key, hash_secret, short_prefix
 from app.core.time import utc_now
-from app.services.runtime_dependencies import get_db_session
+from app.models.billing.billing_plan import BillingPlan
 from app.models.core.api_key import ApiKey
 from app.models.core.client import Client
-from app.models.core.security_event import SecurityEvent
-from app.models.billing.billing_plan import BillingPlan
 from app.schemas.admin import ApiKeyCreate, ApiKeyCreated, ApiKeyRotateResponse
 from app.services.auth import require_admin
-from app.services.security_monitor import log_security_event
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from app.services.runtime_dependencies import get_db_session
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -91,7 +89,7 @@ async def list_api_keys(session: AsyncSession = Depends(get_db_session)):
             ApiKey,
             Client.name.label("client_name"),
             Client.created_at.label("client_created_at"),
-            BillingPlan.name.label("plan_name")
+            BillingPlan.name.label("plan_name"),
         )
         .join(Client, Client.id == ApiKey.client_id)
         .outerjoin(BillingPlan, BillingPlan.id == Client.billing_plan_id)
@@ -113,7 +111,9 @@ async def list_api_keys(session: AsyncSession = Depends(get_db_session)):
             "last_used_at": api_key.last_used_at.isoformat() if api_key.last_used_at else None,
             "revoked_at": api_key.revoked_at.isoformat() if api_key.revoked_at else None,
             "expires_at": api_key.expires_at.isoformat() if api_key.expires_at else None,
-            "allowed_ips": json.loads(api_key.allowed_ips_json) if api_key.allowed_ips_json else None,
+            "allowed_ips": json.loads(api_key.allowed_ips_json)
+            if api_key.allowed_ips_json
+            else None,
             "scopes": json.loads(api_key.scopes_json) if api_key.scopes_json else None,
         }
         for api_key, client_name, client_created_at, plan_name in rows

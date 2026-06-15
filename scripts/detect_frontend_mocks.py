@@ -8,7 +8,6 @@ from pathlib import Path
 
 import yaml
 
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ADMIN_ROOT = REPO_ROOT / "frontend" / "admin" / "src"
 CLIENT_ROOT = REPO_ROOT / "frontend" / "client" / "src"
@@ -142,7 +141,10 @@ def collect_graph(entrypoints: list[Path], extra_import_resolver=None) -> set[Pa
 def admin_entrypoints() -> list[Path]:
     routes_file = ADMIN_ROOT / "routes" / "adminRoutes.tsx"
     content = routes_file.read_text(encoding="utf-8")
-    targets = [resolve_relative_import(routes_file, m.group(1)) for m in ADMIN_DYNAMIC_IMPORT_RE.finditer(content)]
+    targets = [
+        resolve_relative_import(routes_file, m.group(1))
+        for m in ADMIN_DYNAMIC_IMPORT_RE.finditer(content)
+    ]
     return [routes_file, *[t for t in targets if t is not None]]
 
 
@@ -250,7 +252,9 @@ def scan_arrays(path: Path, content: str) -> list[Violation]:
 
 def collect_official_files() -> set[Path]:
     admin_files = collect_graph(admin_entrypoints())
-    client_files = collect_graph([CLIENT_ROOT / "App.tsx"], extra_import_resolver=client_extra_imports)
+    client_files = collect_graph(
+        [CLIENT_ROOT / "App.tsx"], extra_import_resolver=client_extra_imports
+    )
     return {path for path in admin_files | client_files if path.suffix in {".ts", ".tsx"}}
 
 
@@ -274,9 +278,13 @@ def main() -> int:
 
     if unique:
         print("Frontend mock detection failed.\n")
-        for violation in sorted(unique.values(), key=lambda item: (item.path, item.line, item.detail)):
+        for violation in sorted(
+            unique.values(), key=lambda item: (item.path, item.line, item.detail)
+        ):
             print(f"- {violation.path}:{violation.line} [{violation.rule}] {violation.detail}")
-        print("\nAllowed locations: tests, stories, fixtures, explicit demo paths, or governance/frontend_mock_exceptions.yml")
+        print(
+            "\nAllowed locations: tests, stories, fixtures, explicit demo paths, or governance/frontend_mock_exceptions.yml"
+        )
         return 1
 
     print("No silent frontend mocks detected in official frontend surfaces.")

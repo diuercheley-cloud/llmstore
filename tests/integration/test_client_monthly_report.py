@@ -14,10 +14,14 @@ def _extract_path(output: str, suffix: str) -> str | None:
 
 def test_generate_report_basic():
     cmd = [
-        "bash", SCRIPT,
-        "--client-id", "00000000-0000-0000-0000-000000000000",
-        "--email", "test@example.local",
-        "--month", "2026-05",
+        "bash",
+        SCRIPT,
+        "--client-id",
+        "00000000-0000-0000-0000-000000000000",
+        "--email",
+        "test@example.local",
+        "--month",
+        "2026-05",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
     assert "Monthly report generated successfully" in result.stdout
@@ -30,13 +34,13 @@ def test_generate_report_basic():
     assert os.path.exists(md_path)
     assert os.path.exists(json_path)
 
-    with open(md_path, "r") as f:
+    with open(md_path) as f:
         content = f.read()
     assert "test@example.local" in content or "test" in content.lower()
     assert "Relatório Mensal" in content
     assert "2026-05" in content
 
-    with open(json_path, "r") as f:
+    with open(json_path) as f:
         data = json.load(f)
     assert data["period"]["month"] == "2026-05"
     assert "usage" in data
@@ -49,9 +53,12 @@ def test_generate_report_basic():
 
 def test_generate_report_with_technical_details():
     cmd = [
-        "bash", SCRIPT,
-        "--email", "tech@example.local",
-        "--month", "2026-06",
+        "bash",
+        SCRIPT,
+        "--email",
+        "tech@example.local",
+        "--month",
+        "2026-06",
         "--include-technical-details",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
@@ -59,7 +66,7 @@ def test_generate_report_with_technical_details():
     json_path = _extract_path(result.stdout, "monthly-report.json")
     assert json_path is not None
 
-    with open(json_path, "r") as f:
+    with open(json_path) as f:
         data = json.load(f)
     assert data["period"]["month"] == "2026-06"
     assert data["period"]["year"] == 2026
@@ -74,10 +81,14 @@ def test_generate_report_with_technical_details():
 def test_generate_report_custom_output():
     output_dir = "/tmp/test-monthly-report"
     cmd = [
-        "bash", SCRIPT,
-        "--email", "custom@example.local",
-        "--month", "2026-07",
-        "--output-dir", output_dir,
+        "bash",
+        SCRIPT,
+        "--email",
+        "custom@example.local",
+        "--month",
+        "2026-07",
+        "--output-dir",
+        output_dir,
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
@@ -101,9 +112,12 @@ def test_generate_report_missing_month():
 
 def test_generate_report_invalid_month():
     cmd = [
-        "bash", SCRIPT,
-        "--email", "test@example.local",
-        "--month", "2026-13",
+        "bash",
+        SCRIPT,
+        "--email",
+        "test@example.local",
+        "--month",
+        "2026-13",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True)
     assert result.returncode != 0
@@ -123,28 +137,44 @@ def test_generate_report_help():
 
 def test_json_has_required_fields():
     cmd = [
-        "bash", SCRIPT,
-        "--email", "fields@example.local",
-        "--month", "2026-08",
+        "bash",
+        SCRIPT,
+        "--email",
+        "fields@example.local",
+        "--month",
+        "2026-08",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
     json_path = _extract_path(result.stdout, "monthly-report.json")
-    with open(json_path, "r") as f:
+    with open(json_path) as f:
         data = json.load(f)
 
     required_fields = [
-        "report_version", "generated_at", "generated_date",
-        "client", "period", "usage", "billing", "recommendations",
+        "report_version",
+        "generated_at",
+        "generated_date",
+        "client",
+        "period",
+        "usage",
+        "billing",
+        "recommendations",
     ]
     for field in required_fields:
         assert field in data, f"Missing required field: {field}"
 
     usage_fields = [
-        "chat_tokens", "requests", "responses",
-        "embeddings_requests", "embeddings_tokens",
-        "rag_queries", "rag_documents",
-        "tts_chars", "errors", "rate_limit_events", "avg_latency_ms",
+        "chat_tokens",
+        "requests",
+        "responses",
+        "embeddings_requests",
+        "embeddings_tokens",
+        "rag_queries",
+        "rag_documents",
+        "tts_chars",
+        "errors",
+        "rate_limit_events",
+        "avg_latency_ms",
     ]
     for field in usage_fields:
         assert field in data["usage"], f"Missing usage field: {field}"
@@ -162,14 +192,17 @@ def test_json_has_required_fields():
 
 def test_markdown_contains_required_sections():
     cmd = [
-        "bash", SCRIPT,
-        "--email", "sections@example.local",
-        "--month", "2026-09",
+        "bash",
+        SCRIPT,
+        "--email",
+        "sections@example.local",
+        "--month",
+        "2026-09",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
     md_path = _extract_path(result.stdout, "monthly-report.md")
-    with open(md_path, "r") as f:
+    with open(md_path) as f:
         content = f.read()
 
     required_sections = [

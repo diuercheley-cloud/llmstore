@@ -2,7 +2,9 @@ import json
 import re
 from pathlib import Path
 
-BRANDING_CONFIG_PATH = Path(__file__).resolve().parent.parent.parent.parent / "config" / "branding.local.json"
+BRANDING_CONFIG_PATH = (
+    Path(__file__).resolve().parent.parent.parent.parent / "config" / "branding.local.json"
+)
 
 HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 
@@ -47,7 +49,7 @@ def load_branding() -> dict:
         return branding
 
     try:
-        with open(BRANDING_CONFIG_PATH, "r", encoding="utf-8") as f:
+        with open(BRANDING_CONFIG_PATH, encoding="utf-8") as f:
             raw = json.load(f)
     except (json.JSONDecodeError, OSError):
         return branding
@@ -56,8 +58,12 @@ def load_branding() -> dict:
         return branding
 
     string_fields = [
-        "product_name", "company_name", "tagline",
-        "support_email", "footer_text", "capabilities_title",
+        "product_name",
+        "company_name",
+        "tagline",
+        "support_email",
+        "footer_text",
+        "capabilities_title",
     ]
     for field in string_fields:
         if field in raw and isinstance(raw[field], str):

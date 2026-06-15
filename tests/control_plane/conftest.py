@@ -42,8 +42,6 @@ os.environ.setdefault("AGENT_MULTI_AGENT_CRITIC_REVIEW_ENABLED", "true")
 os.environ.setdefault("AGENT_MULTI_AGENT_MOCK_ARBITRATION", "true")
 
 
-
-
 from app.core.config import get_settings
 from app.main import app
 
@@ -52,6 +50,7 @@ from app.main import app
 async def async_client():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
+
 
 @pytest.fixture
 def admin_token_headers():
@@ -80,27 +79,27 @@ def pytest_collection_modifyitems(config, items):
         "test_key_rotation.py",
         "test_policy_evaluator.py",
         "test_rego_runtime.py",
-        "test_signing_service.py"
+        "test_signing_service.py",
     }
 
     for item in items:
         path = str(item.fspath)
         filename = Path(path).name
-        
+
         # All tests were previously marked as release here, but this is handled by release_gate now
-        
+
         # 1. Chaos marker
         if "/chaos/" in path or "chaos" in item.name.lower():
             item.add_marker(pytest.mark.chaos)
-        
+
         # 2. K8s marker
         elif "/kubernetes/" in path or "/k8s/" in path or "k8s" in item.name.lower():
             item.add_marker(pytest.mark.k8s)
-            
+
         # 3. Quick marker
         elif filename in quick_files or "/smoke/" in path:
             item.add_marker(pytest.mark.quick)
-            
+
         # 4. Slow marker
         elif "slow" in item.name.lower():
             item.add_marker(pytest.mark.slow)

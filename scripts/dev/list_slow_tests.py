@@ -60,7 +60,9 @@ def get_slow_tests(
     report_parts = [f"# Slow Tests Report — {test_dir}", ""]
 
     if not slow_lines:
-        report_parts.append("No duration data captured (tests may have been skipped or none collected).")
+        report_parts.append(
+            "No duration data captured (tests may have been skipped or none collected)."
+        )
         if result.returncode != 0:
             report_parts.append("")
             report_parts.append("## pytest output (stderr)")

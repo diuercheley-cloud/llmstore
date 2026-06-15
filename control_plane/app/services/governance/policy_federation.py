@@ -1,7 +1,7 @@
 import hashlib
 import json
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -33,16 +33,17 @@ class PolicyFederationService:
         db: AsyncSession,
         peer_cluster_id: str,
         environment: str,
-        region: Optional[str] = None,
-        base_url: Optional[str] = None,
+        region: str | None = None,
+        base_url: str | None = None,
         sync_mode: str = "manual",
         trust_level: str = "trusted",
         status: str = "active",
-        metadata_json: Optional[Dict[str, Any]] = None,
+        metadata_json: dict[str, Any] | None = None,
     ) -> CommercialGovernanceFederationPeer:
         existing = await db.execute(
-            select(CommercialGovernanceFederationPeer)
-            .where(CommercialGovernanceFederationPeer.peer_cluster_id == peer_cluster_id)
+            select(CommercialGovernanceFederationPeer).where(
+                CommercialGovernanceFederationPeer.peer_cluster_id == peer_cluster_id
+            )
         )
         if existing.scalar_one_or_none():
             raise ValueError(f"Peer {peer_cluster_id} already registered")
@@ -80,7 +81,7 @@ class PolicyFederationService:
         db: AsyncSession,
         bundle_id: uuid.UUID,
         peer_cluster_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         peer = await self._get_peer(db, peer_cluster_id)
         if peer.status == "disabled":
             raise ValueError(f"Peer {peer_cluster_id} is disabled")
@@ -100,7 +101,9 @@ class PolicyFederationService:
             or bundle.rules_json.get("classification")
         )
         if bundle_classification == "sovereign_restricted":
-            raise ValueError("Sovereign restricted bundles cannot be exported via online federation; use encrypted airgap packages")
+            raise ValueError(
+                "Sovereign restricted bundles cannot be exported via online federation; use encrypted airgap packages"
+            )
 
         if bundle.client_id:
             allowed_peers = bundle_meta.get("allowed_federation_peers", [])
@@ -110,11 +113,12 @@ class PolicyFederationService:
         signature = self.engine.sign_policy_bundle(
             bundle.rules_json,
             bundle.immutable_hash,
-            self.settings.commercial_governance_federation_shared_token or "governance-federation-secret",
+            self.settings.commercial_governance_federation_shared_token
+            or "governance-federation-secret",
         )
-        
+
         rules_payload = bundle.rules_json
-        
+
         # Phase 36: Confidential Computing & Export Controls
         if _settings.commercial_tenant_encryption_enabled:
             # Block restricted for non-trusted peers
@@ -138,19 +142,21 @@ class PolicyFederationService:
             "client_id": str(bundle.client_id) if bundle.client_id else None,
             "cluster_id": self.settings.commercial_governance_federation_cluster_id,
         }
-        
+
         # Optional: Encrypt full payload for transit if mode is enforce
         if _settings.commercial_tenant_encryption_mode == "enforce":
             import base64
 
             from app.services.security.local_aead import AESGCM
-            
-            transport_key = hashlib.sha256((self.settings.commercial_governance_federation_shared_token or "").encode()).digest()
+
+            transport_key = hashlib.sha256(
+                (self.settings.commercial_governance_federation_shared_token or "").encode()
+            ).digest()
             aesgcm = AESGCM(transport_key)
-            nonce = b"\x00" * 12 
+            nonce = b"\x00" * 12
             encoded_payload = json.dumps(export).encode()
             encrypted = aesgcm.encrypt(nonce, encoded_payload, None)
-            
+
             export = {
                 "encrypted_bundle": base64.b64encode(encrypted).decode(),
                 "payload_hash": hashlib.sha256(encoded_payload).hexdigest(),
@@ -163,10 +169,10 @@ class PolicyFederationService:
     async def ingest_policy_bundle_from_peer(
         self,
         db: AsyncSession,
-        payload: Dict[str, Any],
-        peer_token: Optional[str] = None,
-        peer_signature: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        payload: dict[str, Any],
+        peer_token: str | None = None,
+        peer_signature: str | None = None,
+    ) -> dict[str, Any]:
         if self.settings.commercial_governance_federation_require_token:
             expected_token = self.settings.commercial_governance_federation_shared_token
             if not expected_token:
@@ -182,7 +188,8 @@ class PolicyFederationService:
             expected_sig = self.engine.sign_policy_bundle(
                 rules,
                 bundle_hash,
-                self.settings.commercial_governance_federation_shared_token or "governance-federation-secret",
+                self.settings.commercial_governance_federation_shared_token
+                or "governance-federation-secret",
             )
             if peer_signature != expected_sig:
                 raise ValueError("Invalid bundle signature")
@@ -293,7 +300,7 @@ class PolicyFederationService:
         bundle_name: str,
         bundle_version: str,
         remote_hash: str,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         result = await db.execute(
             select(CommercialPolicyBundle).where(
                 and_(
@@ -350,41 +357,51 @@ class PolicyFederationService:
     async def summarize_federation_status(
         self,
         db: AsyncSession,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         peers_result = await db.execute(select(CommercialGovernanceFederationPeer))
         peers = peers_result.scalars().all()
 
         syncs_result = await db.execute(
-            select(CommercialFederatedPolicySync).order_by(desc(CommercialFederatedPolicySync.created_at)).limit(100)
+            select(CommercialFederatedPolicySync)
+            .order_by(desc(CommercialFederatedPolicySync.created_at))
+            .limit(100)
         )
         syncs = syncs_result.scalars().all()
 
         peer_summaries = []
         for p in peers:
-            peer_summaries.append({
-                "peer_cluster_id": p.peer_cluster_id,
-                "region": p.region,
-                "environment": p.environment,
-                "status": p.status,
-                "sync_mode": p.sync_mode,
-                "trust_level": p.trust_level,
-                "last_policy_sync_at": p.last_policy_sync_at.isoformat() if p.last_policy_sync_at else None,
-                "last_audit_sync_at": p.last_audit_sync_at.isoformat() if p.last_audit_sync_at else None,
-            })
+            peer_summaries.append(
+                {
+                    "peer_cluster_id": p.peer_cluster_id,
+                    "region": p.region,
+                    "environment": p.environment,
+                    "status": p.status,
+                    "sync_mode": p.sync_mode,
+                    "trust_level": p.trust_level,
+                    "last_policy_sync_at": p.last_policy_sync_at.isoformat()
+                    if p.last_policy_sync_at
+                    else None,
+                    "last_audit_sync_at": p.last_audit_sync_at.isoformat()
+                    if p.last_audit_sync_at
+                    else None,
+                }
+            )
 
         sync_summaries = []
         for s in syncs:
-            sync_summaries.append({
-                "id": str(s.id),
-                "source_cluster_id": s.source_cluster_id,
-                "target_cluster_id": s.target_cluster_id,
-                "bundle_name": s.bundle_name,
-                "bundle_version": s.bundle_version,
-                "status": s.status,
-                "sync_direction": s.sync_direction,
-                "created_at": s.created_at.isoformat(),
-                "completed_at": s.completed_at.isoformat() if s.completed_at else None,
-            })
+            sync_summaries.append(
+                {
+                    "id": str(s.id),
+                    "source_cluster_id": s.source_cluster_id,
+                    "target_cluster_id": s.target_cluster_id,
+                    "bundle_name": s.bundle_name,
+                    "bundle_version": s.bundle_version,
+                    "status": s.status,
+                    "sync_direction": s.sync_direction,
+                    "created_at": s.created_at.isoformat(),
+                    "completed_at": s.completed_at.isoformat() if s.completed_at else None,
+                }
+            )
 
         status_counts = {}
         for s in syncs:
@@ -402,10 +419,13 @@ class PolicyFederationService:
             "local_cluster_id": self.settings.commercial_governance_federation_cluster_id,
         }
 
-    async def _get_peer(self, db: AsyncSession, peer_cluster_id: str) -> CommercialGovernanceFederationPeer:
+    async def _get_peer(
+        self, db: AsyncSession, peer_cluster_id: str
+    ) -> CommercialGovernanceFederationPeer:
         result = await db.execute(
-            select(CommercialGovernanceFederationPeer)
-            .where(CommercialGovernanceFederationPeer.peer_cluster_id == peer_cluster_id)
+            select(CommercialGovernanceFederationPeer).where(
+                CommercialGovernanceFederationPeer.peer_cluster_id == peer_cluster_id
+            )
         )
         peer = result.scalar_one_or_none()
         if not peer:

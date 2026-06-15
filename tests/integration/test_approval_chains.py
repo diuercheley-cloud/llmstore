@@ -71,7 +71,11 @@ async def test_multi_approver_chain_requires_all_approvals(session):
         summary="Infra execution",
     )
 
-    chain = await approve_action(session, chain_id=decision.approval_chain.id, approver="approver-1")
+    chain = await approve_action(
+        session, chain_id=decision.approval_chain.id, approver="approver-1"
+    )
     assert chain.status == "pending"
-    chain = await approve_action(session, chain_id=decision.approval_chain.id, approver="approver-2")
+    chain = await approve_action(
+        session, chain_id=decision.approval_chain.id, approver="approver-2"
+    )
     assert chain.status == "approved"

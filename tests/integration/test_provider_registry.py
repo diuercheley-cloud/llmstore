@@ -45,7 +45,23 @@ class TestProviderRegistry:
         assert local.provider_id == "local"
 
     def test_cloud_providers_disabled_by_default(self):
-        for pid in ("openai", "anthropic", "deepseek", "gemini", "bedrock", "azure_openai", "mistral", "cohere", "groq", "together", "perplexity", "replicate", "xai", "fireworks", "ai21"):
+        for pid in (
+            "openai",
+            "anthropic",
+            "deepseek",
+            "gemini",
+            "bedrock",
+            "azure_openai",
+            "mistral",
+            "cohere",
+            "groq",
+            "together",
+            "perplexity",
+            "replicate",
+            "xai",
+            "fireworks",
+            "ai21",
+        ):
             p = get_provider(pid)
             assert p is not None
             assert p.configured is False, f"{pid} should be configured=false by default"

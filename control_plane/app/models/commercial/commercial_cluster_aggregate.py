@@ -13,7 +13,9 @@ class CommercialClusterAggregate(Base):
     __tablename__ = "commercial_cluster_aggregates"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    bucket_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    bucket_start: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
     bucket_minutes: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     node_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
     provider: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
@@ -29,4 +31,6 @@ class CommercialClusterAggregate(Base):
     actual_margin_brl: Mapped[float | None] = mapped_column(Numeric(14, 8), nullable=True)
     avg_latency_ms: Mapped[float | None] = mapped_column(Numeric(14, 4), nullable=True)
     error_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now(), index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
+    )

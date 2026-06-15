@@ -10,10 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 async def test_failure_forecasting_node_exhaustion(session: AsyncSession):
     node_id = str(uuid.uuid4())
     health = CommercialRuntimeFabricHealth(
-        id=str(uuid.uuid4()),
-        node_id=node_id,
-        status="healthy",
-        metrics={"cpu": 98, "mem": 40}
+        id=str(uuid.uuid4()), node_id=node_id, status="healthy", metrics={"cpu": 98, "mem": 40}
     )
     session.add(health)
     await session.commit()

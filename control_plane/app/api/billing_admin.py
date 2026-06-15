@@ -1,11 +1,11 @@
 # Owner: platform-ops
-from app.services.runtime_dependencies import get_db_session
 from app.models.billing.request_financial import RequestFinancial
 from app.services.auth import require_admin
 from app.services.billing.pricing_engine import (
     calculate_financials,
     get_provider_pricing_config,
 )
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import desc, func, select
@@ -65,12 +65,14 @@ async def get_provider_costs():
     providers = pricing.get("providers", {})
     result = []
     for pid, cfg in providers.items():
-        result.append(ProviderCostRead(
-            provider=pid,
-            cost_usd_per_1k_prompt=float(cfg.get("cost_usd_per_1k_prompt", 0.0)),
-            cost_usd_per_1k_completion=float(cfg.get("cost_usd_per_1k_completion", 0.0)),
-            pricing_configured=cfg.get("pricing_configured", False),
-        ))
+        result.append(
+            ProviderCostRead(
+                provider=pid,
+                cost_usd_per_1k_prompt=float(cfg.get("cost_usd_per_1k_prompt", 0.0)),
+                cost_usd_per_1k_completion=float(cfg.get("cost_usd_per_1k_completion", 0.0)),
+                pricing_configured=cfg.get("pricing_configured", False),
+            )
+        )
     return result
 
 
@@ -96,14 +98,18 @@ async def get_margins_summary(
     rows = result.all()
     output = []
     for row in rows:
-        output.append(MarginSummaryRead(
-            provider=row.provider,
-            total_requests=int(row.total_requests),
-            total_provider_cost_brl=float(row.total_provider_cost_brl or 0.0),
-            total_customer_price_brl=float(row.total_customer_price_brl or 0.0),
-            total_gross_profit_brl=float(row.total_gross_profit_brl or 0.0),
-            avg_margin_percent=float(row.avg_margin_percent) if row.avg_margin_percent is not None else None,
-        ))
+        output.append(
+            MarginSummaryRead(
+                provider=row.provider,
+                total_requests=int(row.total_requests),
+                total_provider_cost_brl=float(row.total_provider_cost_brl or 0.0),
+                total_customer_price_brl=float(row.total_customer_price_brl or 0.0),
+                total_gross_profit_brl=float(row.total_gross_profit_brl or 0.0),
+                avg_margin_percent=float(row.avg_margin_percent)
+                if row.avg_margin_percent is not None
+                else None,
+            )
+        )
     return output
 
 
@@ -113,11 +119,7 @@ async def get_usage_financials(
     limit: int = Query(default=50, ge=1, le=500),
     client_id: str | None = None,
 ):
-    stmt = (
-        select(RequestFinancial)
-        .order_by(desc(RequestFinancial.created_at))
-        .limit(limit)
-    )
+    stmt = select(RequestFinancial).order_by(desc(RequestFinancial.created_at)).limit(limit)
     if client_id:
         stmt = (
             select(RequestFinancial)
@@ -129,22 +131,32 @@ async def get_usage_financials(
     records = result.scalars().all()
     output = []
     for r in records:
-        output.append(UsageFinancialRead(
-            id=str(r.id),
-            client_id=str(r.client_id),
-            provider=r.provider,
-            model=r.model,
-            prompt_tokens=r.prompt_tokens,
-            completion_tokens=r.completion_tokens,
-            total_tokens=r.total_tokens,
-            cache_hit=r.cache_hit,
-            provider_cost_usd=float(r.provider_cost_usd) if r.provider_cost_usd is not None else None,
-            provider_cost_brl=float(r.provider_cost_brl) if r.provider_cost_brl is not None else None,
-            customer_price_brl=float(r.customer_price_brl) if r.customer_price_brl is not None else None,
-            gross_profit_brl=float(r.gross_profit_brl) if r.gross_profit_brl is not None else None,
-            margin_percent=float(r.margin_percent) if r.margin_percent is not None else None,
-            created_at=r.created_at.isoformat() if r.created_at else "",
-        ))
+        output.append(
+            UsageFinancialRead(
+                id=str(r.id),
+                client_id=str(r.client_id),
+                provider=r.provider,
+                model=r.model,
+                prompt_tokens=r.prompt_tokens,
+                completion_tokens=r.completion_tokens,
+                total_tokens=r.total_tokens,
+                cache_hit=r.cache_hit,
+                provider_cost_usd=float(r.provider_cost_usd)
+                if r.provider_cost_usd is not None
+                else None,
+                provider_cost_brl=float(r.provider_cost_brl)
+                if r.provider_cost_brl is not None
+                else None,
+                customer_price_brl=float(r.customer_price_brl)
+                if r.customer_price_brl is not None
+                else None,
+                gross_profit_brl=float(r.gross_profit_brl)
+                if r.gross_profit_brl is not None
+                else None,
+                margin_percent=float(r.margin_percent) if r.margin_percent is not None else None,
+                created_at=r.created_at.isoformat() if r.created_at else "",
+            )
+        )
     return output
 
 

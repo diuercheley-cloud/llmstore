@@ -15,14 +15,15 @@ async def session(isolated_db_url):
         yield s
     await engine.dispose()
 
+
 @pytest.mark.asyncio
 async def test_generate_retrieval_receipt(session: AsyncSession):
     vault = await confidential_rag_vault.create_vault(session, "tenant-1", "V1")
-    
+
     receipt = await retrieval_receipts.generate_retrieval_receipt(
         session, vault.id, "sess-01", "What is the capital of France?", ["hash1", "hash2"]
     )
-    
+
     assert receipt.session_id == "sess-01"
     assert len(receipt.retrieved_chunk_hashes) == 2
     assert receipt.receipt_hash is not None

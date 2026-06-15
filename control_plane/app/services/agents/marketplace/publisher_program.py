@@ -1,7 +1,6 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import Optional
 
 from app.models.agents.agent_marketplace import MarketplacePublisher
 from sqlalchemy import select
@@ -9,19 +8,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class PublisherProgramService:
     """
     Manages the publisher program and verification process.
     """
+
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def register_publisher(self, tenant_id: str, name: str, description: str = None) -> MarketplacePublisher:
-        publisher = MarketplacePublisher(
-            tenant_id=tenant_id,
-            name=name,
-            description=description
-        )
+    async def register_publisher(
+        self, tenant_id: str, name: str, description: str = None
+    ) -> MarketplacePublisher:
+        publisher = MarketplacePublisher(tenant_id=tenant_id, name=name, description=description)
         self.db.add(publisher)
         await self.db.flush()
         return publisher
@@ -35,7 +34,7 @@ class PublisherProgramService:
             publisher.trust_score = trust_score
             await self.db.flush()
 
-    async def get_publisher(self, tenant_id: str) -> Optional[MarketplacePublisher]:
+    async def get_publisher(self, tenant_id: str) -> MarketplacePublisher | None:
         stmt = select(MarketplacePublisher).where(MarketplacePublisher.tenant_id == tenant_id)
         res = await self.db.execute(stmt)
         return res.scalar_one_or_none()

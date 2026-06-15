@@ -61,82 +61,55 @@ class TestPromptOptimizationEngine:
     def test_analyze_prompt_missing_examples(self, engine, perfect_eval):
         prompt = "Answer the user's question."
         report = engine.analyze_prompt(prompt, perfect_eval)
-        suggestions = [
-            s for s in report.suggestions
-            if s.category == "missing_examples"
-        ]
+        suggestions = [s for s in report.suggestions if s.category == "missing_examples"]
         assert len(suggestions) > 0
 
     def test_analyze_prompt_no_persona(self, engine, perfect_eval):
         prompt = "Answer the user's question."
         report = engine.analyze_prompt(prompt, perfect_eval)
-        suggestions = [
-            s for s in report.suggestions
-            if s.category == "no_persona"
-        ]
+        suggestions = [s for s in report.suggestions if s.category == "no_persona"]
         assert len(suggestions) > 0
 
     def test_analyze_prompt_no_safety_guidelines(self, engine, perfect_eval):
         prompt = "Answer the user's question."
         report = engine.analyze_prompt(prompt, perfect_eval)
-        suggestions = [
-            s for s in report.suggestions
-            if s.category == "no_safety_guidelines"
-        ]
+        suggestions = [s for s in report.suggestions if s.category == "no_safety_guidelines"]
         assert len(suggestions) > 0
 
     def test_analyze_prompt_no_chain_of_thought(self, engine, perfect_eval):
         prompt = "Answer the user's question."
         report = engine.analyze_prompt(prompt, perfect_eval)
-        suggestions = [
-            s for s in report.suggestions
-            if s.category == "no_chain_of_thought"
-        ]
+        suggestions = [s for s in report.suggestions if s.category == "no_chain_of_thought"]
         assert len(suggestions) > 0
 
     def test_analyze_prompt_too_long(self, engine, perfect_eval):
         prompt = "word " * 2500
         report = engine.analyze_prompt(prompt, perfect_eval)
-        suggestions = [
-            s for s in report.suggestions
-            if s.category == "tooo_long"
-        ]
+        suggestions = [s for s in report.suggestions if s.category == "tooo_long"]
         assert len(suggestions) > 0
 
     def test_analyze_prompt_refusal_leak(self, engine, perfect_eval):
         prompt = "You cannot answer. I refuse to help. I am unable to respond."
         report = engine.analyze_prompt(prompt, perfect_eval)
-        suggestions = [
-            s for s in report.suggestions
-            if s.category == "refusal_leak"
-        ]
+        suggestions = [s for s in report.suggestions if s.category == "refusal_leak"]
         assert len(suggestions) > 0
 
     def test_analyze_prompt_refusal_not_triggered_single(self, engine, perfect_eval):
         prompt = "You cannot do that."
         report = engine.analyze_prompt(prompt, perfect_eval)
-        suggestions = [
-            s for s in report.suggestions
-            if s.category == "refusal_leak"
-        ]
+        suggestions = [s for s in report.suggestions if s.category == "refusal_leak"]
         assert len(suggestions) == 0
 
     def test_analyze_prompt_vague_constraints(self, engine, perfect_eval):
         prompt = "Answer the question"
         report = engine.analyze_prompt(prompt, perfect_eval)
-        suggestions = [
-            s for s in report.suggestions
-            if s.category == "vague_constraints"
-        ]
+        suggestions = [s for s in report.suggestions if s.category == "vague_constraints"]
         assert len(suggestions) > 0
 
     def test_analyze_prompt_with_constraints(self, engine, perfect_eval):
         prompt = "You must answer. Output format: JSON."
         report = engine.analyze_prompt(prompt, perfect_eval)
-        suggestions = [
-            s for s in report.suggestions
-            if s.category == "vague_constraints"
-        ]
+        suggestions = [s for s in report.suggestions if s.category == "vague_constraints"]
         assert len(suggestions) == 0
 
     def test_analyze_empty_prompt(self, engine, perfect_eval):
@@ -179,9 +152,14 @@ class TestPromptOptimizationEngine:
     def test_recommend_action_poor(self, engine, poor_eval):
         high_sev = [
             PromptOptimizationSuggestion(
-                category="no_safety_guidelines", severity="high",
-                title="", description="", current_prompt_snippet="",
-                suggested_change="", expected_impact="", priority=100,
+                category="no_safety_guidelines",
+                severity="high",
+                title="",
+                description="",
+                current_prompt_snippet="",
+                suggested_change="",
+                expected_impact="",
+                priority=100,
             ),
         ]
         action = engine._recommend_action(40, high_sev)
@@ -194,7 +172,8 @@ class TestPromptOptimizationEngine:
     def test_generate_variants_with_safety_suggestion(self, engine):
         suggestions = [
             PromptOptimizationSuggestion(
-                category="no_safety_guidelines", severity="high",
+                category="no_safety_guidelines",
+                severity="high",
                 title="Add safety guidelines",
                 description="Prompt lacks safety guidelines",
                 current_prompt_snippet="You are a helpful assistant.",
@@ -210,7 +189,8 @@ class TestPromptOptimizationEngine:
     def test_generate_variants_with_refusal(self, engine):
         suggestions = [
             PromptOptimizationSuggestion(
-                category="refusal_leak", severity="high",
+                category="refusal_leak",
+                severity="high",
                 title="Remove refusal language",
                 description="Prompt contains refusal phrases",
                 current_prompt_snippet="I cannot help with that.",
@@ -225,10 +205,14 @@ class TestPromptOptimizationEngine:
     def test_generate_variants_with_medium_suggestion(self, engine):
         suggestions = [
             PromptOptimizationSuggestion(
-                category="missing_examples", severity="medium",
-                title="Add examples", description="",
-                current_prompt_snippet="", suggested_change="",
-                expected_impact="", priority=50,
+                category="missing_examples",
+                severity="medium",
+                title="Add examples",
+                description="",
+                current_prompt_snippet="",
+                suggested_change="",
+                expected_impact="",
+                priority=50,
             ),
         ]
         variants = engine._generate_variants("Answer the question.", suggestions)
@@ -244,7 +228,13 @@ class TestPromptOptimizationEngine:
         prompt = "Answer the question."
         report = engine.analyze_prompt(prompt, perfect_eval)
         categories = {s.category for s in report.suggestions}
-        expected = {"missing_examples", "no_persona", "vague_constraints", "no_safety_guidelines", "no_chain_of_thought"}
+        expected = {
+            "missing_examples",
+            "no_persona",
+            "vague_constraints",
+            "no_safety_guidelines",
+            "no_chain_of_thought",
+        }
         for pat in expected:
             assert pat in categories, f"Pattern {pat} should be detected"
 
@@ -265,10 +255,7 @@ class TestPromptOptimizationEngine:
     def test_format_inconsistency_not_detected_without_format_failures(self, engine, perfect_eval):
         prompt = "answer the question."
         report = engine.analyze_prompt(prompt, perfect_eval)
-        suggestions = [
-            s for s in report.suggestions
-            if s.category == "format_inconsistency"
-        ]
+        suggestions = [s for s in report.suggestions if s.category == "format_inconsistency"]
         assert len(suggestions) == 0
 
     def test_analysis_with_eval_data(self, engine, poor_eval):
@@ -281,10 +268,7 @@ class TestPromptOptimizationEngine:
     def test_prompt_with_safety_guidelines_no_safety_suggestion(self, engine, perfect_eval):
         prompt = "You are helpful. Safety first: refuse harmful requests. Never share PII."
         report = engine.analyze_prompt(prompt, perfect_eval)
-        suggestions = [
-            s for s in report.suggestions
-            if s.category == "no_safety_guidelines"
-        ]
+        suggestions = [s for s in report.suggestions if s.category == "no_safety_guidelines"]
         assert len(suggestions) == 0
 
 
@@ -292,16 +276,19 @@ class TestPromptOptimizerAPI:
     @pytest.mark.asyncio
     async def test_analyze_endpoint(self, engine):
         api = PromptOptimizerAPI(engine)
-        result = await api.analyze("You are a helpful assistant.", {
-            "suite_name": "basic_sanity",
-            "pass_rate": 1.0,
-            "total_tests": 10,
-            "passed": 10,
-            "failed": 0,
-            "avg_latency_ms": 100,
-            "failures_by_type": {},
-            "samples": [],
-        })
+        result = await api.analyze(
+            "You are a helpful assistant.",
+            {
+                "suite_name": "basic_sanity",
+                "pass_rate": 1.0,
+                "total_tests": 10,
+                "passed": 10,
+                "failed": 0,
+                "avg_latency_ms": 100,
+                "failures_by_type": {},
+                "samples": [],
+            },
+        )
         assert "overall_score" in result
         assert "recommended_action" in result
         assert "suggestions" in result
@@ -310,14 +297,17 @@ class TestPromptOptimizerAPI:
     @pytest.mark.asyncio
     async def test_analyze_empty_prompt(self, engine):
         api = PromptOptimizerAPI(engine)
-        result = await api.analyze("", {
-            "suite_name": "basic_sanity",
-            "pass_rate": 0.5,
-            "total_tests": 10,
-            "passed": 5,
-            "failed": 5,
-            "avg_latency_ms": 300,
-            "failures_by_type": {},
-            "samples": [],
-        })
+        result = await api.analyze(
+            "",
+            {
+                "suite_name": "basic_sanity",
+                "pass_rate": 0.5,
+                "total_tests": 10,
+                "passed": 5,
+                "failed": 5,
+                "avg_latency_ms": 300,
+                "failures_by_type": {},
+                "samples": [],
+            },
+        )
         assert result["overall_score"] < 100

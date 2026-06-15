@@ -8,9 +8,9 @@ import re
 import subprocess
 import tarfile
 import tempfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any
 
 from app.core.config import get_settings
 from app.models.core.inference_backend import InferenceBackend
@@ -33,7 +33,7 @@ REDACT_PATTERNS = [
     r"X-Admin-Token:\s*[a-zA-Z0-9._-]{12,}",
     r"API_KEY=[a-zA-Z0-9._-]{12,}",
     r"DATABASE_URL=[a-z]+://[^:]+:[^@]+@[^/]+",
-    r"REDIS_URL=[a-z]+://:[^@]+@[^/]+"
+    r"REDIS_URL=[a-z]+://:[^@]+@[^/]+",
 ]
 
 SAFE_PATTERNS = [
@@ -46,11 +46,12 @@ SAFE_PATTERNS = [
     r"admin-token-example",
     r"sk-example",
     r"__redacted__",
-    r"FAKE SECRET FOR TESTS ONLY"
+    r"FAKE SECRET FOR TESTS ONLY",
 ]
 
+
 class SupportBundleService:
-    def __init__(self, db: Optional[AsyncSession] = None):
+    def __init__(self, db: AsyncSession | None = None):
         self.settings = get_settings()
         self.db = db
         self.root_dir = Path(__file__).resolve().parents[3]
@@ -60,14 +61,15 @@ class SupportBundleService:
     def _redact_string(self, val: str) -> str:
         if not val:
             return val
-        
+
         for pattern in REDACT_PATTERNS:
+
             def replace_func(match):
                 m_val = match.group(0)
                 for safe in SAFE_PATTERNS:
                     if re.search(safe, m_val):
                         return m_val
-                
+
                 if "=" in m_val and not m_val.startswith("---"):
                     key, _ = m_val.split("=", 1)
                     return f"{key}=[REDACTED]"
@@ -76,7 +78,7 @@ class SupportBundleService:
                 if "X-Admin-Token: " in m_val:
                     return "X-Admin-Token: [REDACTED]"
                 return "[REDACTED]"
-                
+
             val = re.sub(pattern, replace_func, val)
         return val
 
@@ -90,23 +92,19 @@ class SupportBundleService:
         else:
             return obj
 
-    def _run_command(self, cmd: List[str], cwd: Optional[Path] = None) -> str:
+    def _run_command(self, cmd: list[str], cwd: Path | None = None) -> str:
         try:
             result = subprocess.run(
-                cmd,
-                cwd=cwd or self.root_dir,
-                capture_output=True,
-                text=True,
-                timeout=30
+                cmd, cwd=cwd or self.root_dir, capture_output=True, text=True, timeout=30
             )
             return result.stdout.strip()
         except Exception as e:
             return f"Error running command {' '.join(cmd)}: {str(e)}"
 
     async def generate_bundle(self) -> str:
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         bundle_name = f"support-bundle-{timestamp}"
-        
+
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_path = Path(tmp_dir)
             bundle_root = tmp_path / bundle_name
@@ -118,7 +116,7 @@ class SupportBundleService:
                 "git_commit": self._run_command(["git", "rev-parse", "HEAD"]),
                 "timestamp": timestamp,
                 "docker_mode": os.path.exists("/.dockerenv"),
-                "k8s_mode": "KUBERNETES_SERVICE_HOST" in os.environ
+                "k8s_mode": "KUBERNETES_SERVICE_HOST" in os.environ,
             }
             with open(bundle_root / "version.json", "w") as f:
                 json.dump(version_info, f, indent=2)
@@ -126,10 +124,10 @@ class SupportBundleService:
             # 2. Runtime Profile and Feature Flags
             ff_service = FeatureFlagRegistryService()
             ff_results = ff_service.scan_orphans()
-            
+
             runtime_info = {
                 "runtime_profile": os.getenv("RUNTIME_PROFILE", "default"),
-                "feature_flags": self._redact_obj(ff_results)
+                "feature_flags": self._redact_obj(ff_results),
             }
             with open(bundle_root / "runtime.json", "w") as f:
                 json.dump(runtime_info, f, indent=2)
@@ -142,13 +140,15 @@ class SupportBundleService:
             # 4. Readiness Summary (Latest)
             readiness_dir = self.root_dir / "artifacts" / "production-readiness"
             if readiness_dir.exists():
-                latest_report = self._run_command(["find", str(readiness_dir), "-name", "report.json"])
+                latest_report = self._run_command(
+                    ["find", str(readiness_dir), "-name", "report.json"]
+                )
                 if latest_report:
                     report_paths = sorted(latest_report.split("\n"))
                     if report_paths:
                         report_path = report_paths[-1]
                         if os.path.exists(report_path):
-                            with open(report_path, "r") as f:
+                            with open(report_path) as f:
                                 try:
                                     report_data = json.load(f)
                                     with open(bundle_root / "readiness_report.json", "w") as rf:
@@ -157,7 +157,9 @@ class SupportBundleService:
                                     pass
 
             # 5. Alembic Head
-            alembic_head = self._run_command(["alembic", "current"], cwd=self.root_dir / "control_plane")
+            alembic_head = self._run_command(
+                ["alembic", "current"], cwd=self.root_dir / "control_plane"
+            )
             with open(bundle_root / "alembic.txt", "w") as f:
                 f.write(alembic_head)
 
@@ -170,7 +172,11 @@ class SupportBundleService:
                 f.write(script_manifest)
 
             # 7. Hardware Summary (Sanitized)
-            gpu_info = self._run_command(["nvidia-smi", "-L"]) if os.path.exists("/usr/bin/nvidia-smi") else "No NVIDIA GPU detected"
+            gpu_info = (
+                self._run_command(["nvidia-smi", "-L"])
+                if os.path.exists("/usr/bin/nvidia-smi")
+                else "No NVIDIA GPU detected"
+            )
             cpu_info = self._run_command(["lscpu"])
             mem_info = self._run_command(["free", "-h"])
             hardware_summary = f"GPU:\n{gpu_info}\n\nCPU:\n{cpu_info}\n\nMemory:\n{mem_info}"
@@ -180,7 +186,7 @@ class SupportBundleService:
             # 8. Logs (Sanitized) - Last 1000 lines of common log files
             logs_dir = bundle_root / "logs"
             logs_dir.mkdir()
-            
+
             log_files = ["logs/control-plane.log", "logs/data-plane.log", "logs/worker.log"]
             for log_file in log_files:
                 log_path = self.root_dir / log_file
@@ -199,7 +205,7 @@ class SupportBundleService:
                     for fw in frameworks:
                         report = await compliance_service.get_readiness_report(fw.id)
                         compliance_summary.append(report)
-                    
+
                     with open(bundle_root / "compliance.json", "w") as f:
                         json.dump(self._redact_obj(compliance_summary), f, indent=2)
                 except Exception:
@@ -212,13 +218,15 @@ class SupportBundleService:
                     backends = backends_result.scalars().all()
                     backend_info = []
                     for b in backends:
-                        backend_info.append({
-                            "name": b.name,
-                            "provider": b.provider,
-                            "backend_url": b.backend_url,
-                            "is_active": b.is_active,
-                            "status": b.status
-                        })
+                        backend_info.append(
+                            {
+                                "name": b.name,
+                                "provider": b.provider,
+                                "backend_url": b.backend_url,
+                                "is_active": b.is_active,
+                                "status": b.status,
+                            }
+                        )
                     with open(bundle_root / "backends.json", "w") as f:
                         json.dump(self._redact_obj(backend_info), f, indent=2)
                 except Exception:
@@ -229,13 +237,15 @@ class SupportBundleService:
                 try:
                     total_requests_stmt = select(func.count()).select_from(RequestLog)
                     total_requests = await self.db.execute(total_requests_stmt)
-                    
-                    avg_latency_stmt = select(func.avg(RequestLog.latency_ms)).select_from(RequestLog)
+
+                    avg_latency_stmt = select(func.avg(RequestLog.latency_ms)).select_from(
+                        RequestLog
+                    )
                     avg_latency = await self.db.execute(avg_latency_stmt)
-                    
+
                     metrics_summary = {
                         "total_requests": total_requests.scalar(),
-                        "average_latency_ms": float(avg_latency.scalar() or 0)
+                        "average_latency_ms": float(avg_latency.scalar() or 0),
                     }
                     with open(bundle_root / "metrics_summary.json", "w") as f:
                         json.dump(metrics_summary, f, indent=2)
@@ -249,7 +259,7 @@ class SupportBundleService:
 
             return str(bundle_path)
 
-    def get_latest_bundle(self) -> Optional[str]:
+    def get_latest_bundle(self) -> str | None:
         bundles = list(self.bundles_dir.glob("support-bundle-*.tar.gz"))
         if not bundles:
             return None

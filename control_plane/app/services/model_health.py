@@ -1,20 +1,19 @@
 # Owner: agent-platform
 import logging
 import uuid
-from datetime import datetime, timezone
-from typing import Dict, Any, Optional, List
+from datetime import UTC
+from typing import Any
 
+from app.core.time import utc_now
+from app.models.core.model_backend_route import ModelBackendRoute
+from app.models.core.model_health import ModelHealthStatus
+from app.models.core.model_registry import ModelRegistry
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.time import utc_now
-from app.models.core.model_registry import ModelRegistry
-from app.models.core.inference_backend import InferenceBackend
-from app.models.core.model_backend_route import ModelBackendRoute
-from app.models.core.model_health import ModelHealthStatus
-
 logger = logging.getLogger(__name__)
+
 
 class ModelHealthService:
     def __init__(self, db: AsyncSession):
@@ -24,7 +23,7 @@ class ModelHealthService:
         self,
         backend_id: uuid.UUID,
         model_id: str,
-        route_id: Optional[uuid.UUID] = None,
+        route_id: uuid.UUID | None = None,
         success: bool = True,
         latency_ms: float = 0.0,
         error_rate: float = 0.0,
@@ -34,8 +33,7 @@ class ModelHealthService:
         Record or update health check status for a backend route.
         """
         stmt = select(ModelHealthStatus).where(
-            ModelHealthStatus.backend_id == backend_id,
-            ModelHealthStatus.model_id == model_id
+            ModelHealthStatus.backend_id == backend_id, ModelHealthStatus.model_id == model_id
         )
         if route_id:
             stmt = stmt.where(ModelHealthStatus.route_id == route_id)
@@ -71,7 +69,9 @@ class ModelHealthService:
         await self.db.commit()
         return status
 
-    async def get_model_health_summary(self, heart_beat_window_seconds: int = 300) -> Dict[str, Any]:
+    async def get_model_health_summary(
+        self, heart_beat_window_seconds: int = 300
+    ) -> dict[str, Any]:
         """
         Calculates and returns:
           - online_models_count
@@ -81,7 +81,9 @@ class ModelHealthService:
         """
         # Fetch all models
         stmt_models = select(ModelRegistry).options(
-            selectinload(ModelRegistry.backend_routes).selectinload(ModelBackendRoute.inference_backend)
+            selectinload(ModelRegistry.backend_routes).selectinload(
+                ModelBackendRoute.inference_backend
+            )
         )
         res_models = await self.db.execute(stmt_models)
         models = res_models.scalars().all()
@@ -127,7 +129,7 @@ class ModelHealthService:
 
                 last_success = health.last_success_at
                 if last_success.tzinfo is None:
-                    last_success = last_success.replace(tzinfo=timezone.utc)
+                    last_success = last_success.replace(tzinfo=UTC)
 
                 time_since_success = (now - last_success).total_seconds()
                 if time_since_success > heart_beat_window_seconds:

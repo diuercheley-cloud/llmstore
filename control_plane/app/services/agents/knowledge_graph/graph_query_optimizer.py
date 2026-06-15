@@ -8,6 +8,7 @@ Controls:
 - timeout_seconds: hard wall-clock timeout
 - explain_plan: returns a simplified query plan for observability
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -106,7 +107,7 @@ class GraphQueryOptimizer:
                 f"Limit {req.limit}",
             ]
             # Compute raw upper-bound BEFORE capping to detect large traversals
-            raw_estimated = req.max_fan_out ** req.max_depth
+            raw_estimated = req.max_fan_out**req.max_depth
             if raw_estimated > 10_000:
                 plan.warnings.append(
                     f"Estimated {raw_estimated:,} nodes - consider reducing max_depth or max_fan_out"
@@ -139,13 +140,9 @@ class GraphQueryOptimizer:
         max_fan_out_cap = getattr(get_settings(), "agent_kg_query_max_fan_out_hard_cap", 200)
 
         if req.max_depth > max_depth_cap:
-            raise ValueError(
-                f"max_depth={req.max_depth} exceeds hard cap of {max_depth_cap}"
-            )
+            raise ValueError(f"max_depth={req.max_depth} exceeds hard cap of {max_depth_cap}")
         if req.max_fan_out > max_fan_out_cap:
-            raise ValueError(
-                f"max_fan_out={req.max_fan_out} exceeds hard cap of {max_fan_out_cap}"
-            )
+            raise ValueError(f"max_fan_out={req.max_fan_out} exceeds hard cap of {max_fan_out_cap}")
         if req.timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be positive")
 
@@ -157,10 +154,8 @@ class GraphQueryOptimizer:
         """Execute a coroutine with a hard timeout."""
         try:
             return await asyncio.wait_for(coro, timeout=timeout_seconds)
-        except asyncio.TimeoutError:
-            raise TimeoutError(
-                f"Graph query exceeded timeout of {timeout_seconds:.1f}s"
-            )
+        except TimeoutError:
+            raise TimeoutError(f"Graph query exceeded timeout of {timeout_seconds:.1f}s")
 
     def apply_fan_out_limit(
         self,

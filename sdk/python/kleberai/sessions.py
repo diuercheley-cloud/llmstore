@@ -21,10 +21,14 @@ class SessionsAPI:
         return self.client._request("PATCH", f"/v1/agents/sessions/{session_id}", json=params)
 
     def send_message(self, session_id: str, message: Dict[str, Any]) -> Dict[str, Any]:
-        return self.client._request("POST", f"/v1/agents/sessions/{session_id}/messages", json=message)
+        return self.client._request(
+            "POST", f"/v1/agents/sessions/{session_id}/messages", json=message
+        )
 
     def list_messages(self, session_id: str) -> List[Dict[str, Any]]:
         return self.client._request("GET", f"/v1/agents/sessions/{session_id}/messages")
 
     def run(self, session_id: str, input_data: Dict[str, Any]) -> Dict[str, Any]:
-        return self.client._request("POST", f"/v1/agents/sessions/{session_id}/runs", json=input_data)
+        return self.client._request(
+            "POST", f"/v1/agents/sessions/{session_id}/runs", json=input_data
+        )

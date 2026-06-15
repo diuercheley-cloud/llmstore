@@ -60,8 +60,8 @@ def tmp_dir():
 
 # ── Test: Loader ──────────────────────────────────────────────────────────────
 
-class TestEvalLoader:
 
+class TestEvalLoader:
     def test_load_valid_suite(self, sample_suite_path):
         suite = EvalLoader.load(sample_suite_path)
         assert suite.name == "Sample Coding Eval Suite"
@@ -172,8 +172,8 @@ class TestEvalLoader:
 
 # ── Test: Scorers ─────────────────────────────────────────────────────────────
 
-class TestScorers:
 
+class TestScorers:
     def test_score_case_pass(self):
         case = EvalCase(id="test-1", task="Do it")
         result = ExecutionResult(success=True, message="Done", output="All good")
@@ -232,7 +232,9 @@ class TestScorers:
         assert score.checks["file_match:output.txt"] is True
 
     def test_aggregate_all_pass(self):
-        suite = EvalSuite(name="Test", cases=[EvalCase(id="a", task="a"), EvalCase(id="b", task="b")])
+        suite = EvalSuite(
+            name="Test", cases=[EvalCase(id="a", task="a"), EvalCase(id="b", task="b")]
+        )
         scores = [
             score_case(suite.cases[0], ExecutionResult(success=True), 1.0),
             score_case(suite.cases[1], ExecutionResult(success=True), 2.0),
@@ -246,7 +248,9 @@ class TestScorers:
         assert result.total_duration_seconds == 3.0
 
     def test_aggregate_some_fail(self):
-        suite = EvalSuite(name="Test", cases=[EvalCase(id="a", task="a"), EvalCase(id="b", task="b")])
+        suite = EvalSuite(
+            name="Test", cases=[EvalCase(id="a", task="a"), EvalCase(id="b", task="b")]
+        )
         scores = [
             score_case(suite.cases[0], ExecutionResult(success=True), 1.0),
             score_case(suite.cases[1], ExecutionResult(success=False, error="fail"), 2.0),
@@ -261,8 +265,8 @@ class TestScorers:
 
 # ── Test: Report ──────────────────────────────────────────────────────────────
 
-class TestEvalReport:
 
+class TestEvalReport:
     def test_generate_summary(self):
         suite = EvalSuite(name="Test", cases=[EvalCase(id="a", task="a")])
         scores = [score_case(suite.cases[0], ExecutionResult(success=True), 1.0)]
@@ -340,8 +344,8 @@ class TestEvalReport:
 
 # ── Test: Runner (with stub) ──────────────────────────────────────────────────
 
-class TestEvalRunner:
 
+class TestEvalRunner:
     @pytest.mark.asyncio
     async def test_run_with_stub_provider(self, sample_suite_path):
         suite = EvalLoader.load(sample_suite_path)
@@ -385,11 +389,12 @@ class TestEvalRunner:
 
 # ── Test: CLI eval help ──────────────────────────────────────────────────────
 
-class TestEvalCLI:
 
+class TestEvalCLI:
     def test_eval_help(self):
         import subprocess
         import sys
+
         result = subprocess.run(
             [sys.executable, "-m", "scripts.llm_harness.cli", "eval", "--help"],
             capture_output=True,
@@ -403,6 +408,7 @@ class TestEvalCLI:
     def test_eval_missing_suite(self):
         import subprocess
         import sys
+
         result = subprocess.run(
             [sys.executable, "-m", "scripts.llm_harness.cli", "eval", "--suite", "/nonexistent"],
             capture_output=True,
@@ -414,6 +420,7 @@ class TestEvalCLI:
     def test_eval_help_includes_judge_flags(self):
         import subprocess
         import sys
+
         result = subprocess.run(
             [sys.executable, "-m", "scripts.llm_harness.cli", "eval", "--help"],
             capture_output=True,
@@ -428,8 +435,8 @@ class TestEvalCLI:
 
 # ── Test: Judge ───────────────────────────────────────────────────────────────
 
-class TestJudge:
 
+class TestJudge:
     def test_judge_verdict_defaults(self):
         v = JudgeVerdict()
         assert v.score == 0.0
@@ -548,6 +555,7 @@ class TestJudge:
 
     def test_judge_config_from_args(self):
         from argparse import Namespace
+
         args = Namespace(
             judge="openai-compatible",
             judge_model="gpt-4",
@@ -582,8 +590,8 @@ class TestJudge:
 
 # ── Test: Tracking ────────────────────────────────────────────────────────────
 
-class TestTracking:
 
+class TestTracking:
     def test_experiment_config_to_dict(self):
         config = ExperimentConfig(
             model="gpt-4",

@@ -22,6 +22,7 @@ Feature flags:
   AGENT_KG_PATHFINDING_MAX_NODES
   AGENT_KG_PATHFINDING_TIMEOUT_MS
 """
+
 from __future__ import annotations
 
 import time
@@ -40,13 +41,10 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-from .base import GraphProvider
-
-
 class InternalSQLGraphProvider:
     """
     SQL-backed graph provider with real BFS/DFS pathfinding.
-    
+
     Implements GraphProvider protocol.
     """
 
@@ -57,14 +55,18 @@ class InternalSQLGraphProvider:
     # Source / extraction lifecycle
     # ------------------------------------------------------------------
 
-    async def create_source(self, tenant_id: str, uri: str, content_hash: str | None = None) -> AgentKGSource:
+    async def create_source(
+        self, tenant_id: str, uri: str, content_hash: str | None = None
+    ) -> AgentKGSource:
         source = AgentKGSource(tenant_id=tenant_id, uri=uri, content_hash=content_hash)
         self.db.add(source)
         await self.db.commit()
         await self.db.refresh(source)
         return source
 
-    async def create_extraction_run(self, tenant_id: str, document_id: str | None = None) -> AgentKGExtractionRun:
+    async def create_extraction_run(
+        self, tenant_id: str, document_id: str | None = None
+    ) -> AgentKGExtractionRun:
         run = AgentKGExtractionRun(tenant_id=tenant_id, status="completed", document_id=document_id)
         self.db.add(run)
         await self.db.commit()
@@ -145,13 +147,17 @@ class InternalSQLGraphProvider:
     # Entity / relation listings
     # ------------------------------------------------------------------
 
-    async def list_entities(self, tenant_id: str, entity_name: str | None = None) -> list[AgentKGEntity]:
+    async def list_entities(
+        self, tenant_id: str, entity_name: str | None = None
+    ) -> list[AgentKGEntity]:
         stmt = select(AgentKGEntity).where(AgentKGEntity.tenant_id == tenant_id)
         if entity_name:
             stmt = stmt.where(AgentKGEntity.name.ilike(f"%{entity_name}%"))
         return list((await self.db.execute(stmt)).scalars().all())
 
-    async def list_relations(self, tenant_id: str, entity_id: uuid.UUID | None = None) -> list[AgentKGRelation]:
+    async def list_relations(
+        self, tenant_id: str, entity_id: uuid.UUID | None = None
+    ) -> list[AgentKGRelation]:
         stmt = select(AgentKGRelation).where(AgentKGRelation.tenant_id == tenant_id)
         if entity_id:
             stmt = stmt.where(
@@ -162,12 +168,16 @@ class InternalSQLGraphProvider:
             )
         return list((await self.db.execute(stmt)).scalars().all())
 
-    async def related_entities(self, tenant_id: str, entity_id: uuid.UUID) -> tuple[list[AgentKGEntity], list[AgentKGRelation]]:
+    async def related_entities(
+        self, tenant_id: str, entity_id: uuid.UUID
+    ) -> tuple[list[AgentKGEntity], list[AgentKGRelation]]:
         relations = await self.list_relations(tenant_id, entity_id=entity_id)
         entity_ids = {entity_id}
         entity_ids.update(relation.source_entity_id for relation in relations)
         entity_ids.update(relation.target_entity_id for relation in relations)
-        stmt = select(AgentKGEntity).where(AgentKGEntity.tenant_id == tenant_id, AgentKGEntity.id.in_(entity_ids))
+        stmt = select(AgentKGEntity).where(
+            AgentKGEntity.tenant_id == tenant_id, AgentKGEntity.id.in_(entity_ids)
+        )
         entities = list((await self.db.execute(stmt)).scalars().all())
         return entities, relations
 
@@ -207,7 +217,9 @@ class InternalSQLGraphProvider:
             stmt = stmt.where(AgentKGRelation.relation_type.in_(relation_types))
         return list((await self.db.execute(stmt)).scalars().all())
 
-    async def _fetch_entities_by_ids(self, tenant_id: str, entity_ids: set[uuid.UUID]) -> dict[uuid.UUID, AgentKGEntity]:
+    async def _fetch_entities_by_ids(
+        self, tenant_id: str, entity_ids: set[uuid.UUID]
+    ) -> dict[uuid.UUID, AgentKGEntity]:
         if not entity_ids:
             return {}
         stmt = select(AgentKGEntity).where(
@@ -255,13 +267,24 @@ class InternalSQLGraphProvider:
                 return (
                     [entity],
                     [],
-                    {"status": "found", "depth": 0, "traversal_cost": 0, "query_time_ms": elapsed_ms},
+                    {
+                        "status": "found",
+                        "depth": 0,
+                        "traversal_cost": 0,
+                        "query_time_ms": elapsed_ms,
+                    },
                 )
-            return ([], [], {"status": "no_path", "depth": 0, "traversal_cost": 0, "query_time_ms": elapsed_ms})
+            return (
+                [],
+                [],
+                {"status": "no_path", "depth": 0, "traversal_cost": 0, "query_time_ms": elapsed_ms},
+            )
 
         # BFS state
         # parent_edge[node_id] = (parent_id, relation) — used to reconstruct path
-        parent_edge: dict[uuid.UUID, tuple[uuid.UUID, AgentKGRelation | None]] = {source_id: (source_id, None)}
+        parent_edge: dict[uuid.UUID, tuple[uuid.UUID, AgentKGRelation | None]] = {
+            source_id: (source_id, None)
+        }
         frontier: deque[uuid.UUID] = deque([source_id])
         visited: set[uuid.UUID] = {source_id}
         traversal_cost = 0
@@ -272,12 +295,23 @@ class InternalSQLGraphProvider:
                 break
             if time.monotonic() > deadline:
                 elapsed_ms = (time.monotonic() - started) * 1000
-                return ([], [], {"status": "timeout", "depth": depth, "traversal_cost": traversal_cost, "query_time_ms": elapsed_ms})
+                return (
+                    [],
+                    [],
+                    {
+                        "status": "timeout",
+                        "depth": depth,
+                        "traversal_cost": traversal_cost,
+                        "query_time_ms": elapsed_ms,
+                    },
+                )
 
             # Fetch all edges incident to the current frontier in one query
             frontier_set = set(frontier)
             frontier.clear()
-            relations = await self._fetch_relations_for_nodes(tenant_id, frontier_set, relation_types, directed=False)
+            relations = await self._fetch_relations_for_nodes(
+                tenant_id, frontier_set, relation_types, directed=False
+            )
             traversal_cost += len(relations)
 
             for rel in relations:
@@ -297,7 +331,16 @@ class InternalSQLGraphProvider:
                 if len(visited) >= max_nodes:
                     # Node budget exhausted — treat as no-path (path may exist deeper)
                     elapsed_ms = (time.monotonic() - started) * 1000
-                    return ([], [], {"status": "no_path", "depth": depth, "traversal_cost": traversal_cost, "query_time_ms": elapsed_ms})
+                    return (
+                        [],
+                        [],
+                        {
+                            "status": "no_path",
+                            "depth": depth,
+                            "traversal_cost": traversal_cost,
+                            "query_time_ms": elapsed_ms,
+                        },
+                    )
 
                 if neighbour == target_id:
                     found = True
@@ -310,7 +353,16 @@ class InternalSQLGraphProvider:
         elapsed_ms = (time.monotonic() - started) * 1000
 
         if not found:
-            return ([], [], {"status": "no_path", "depth": 0, "traversal_cost": traversal_cost, "query_time_ms": elapsed_ms})
+            return (
+                [],
+                [],
+                {
+                    "status": "no_path",
+                    "depth": 0,
+                    "traversal_cost": traversal_cost,
+                    "query_time_ms": elapsed_ms,
+                },
+            )
 
         # Reconstruct path from target back to source
         path_node_ids: list[uuid.UUID] = []
@@ -373,14 +425,20 @@ class InternalSQLGraphProvider:
             if time.monotonic() > deadline:
                 break
 
-            relations = await self._fetch_relations_for_nodes(tenant_id, frontier, relation_types, directed=directed)
+            relations = await self._fetch_relations_for_nodes(
+                tenant_id, frontier, relation_types, directed=directed
+            )
             traversal_cost += len(relations)
 
             next_frontier: set[uuid.UUID] = set()
             for rel in relations:
                 if rel not in all_relations:
                     all_relations.append(rel)
-                neighbour = rel.target_entity_id if directed or rel.source_entity_id in frontier else rel.source_entity_id
+                neighbour = (
+                    rel.target_entity_id
+                    if directed or rel.source_entity_id in frontier
+                    else rel.source_entity_id
+                )
                 if neighbour not in visited:
                     visited.add(neighbour)
                     next_frontier.add(neighbour)
@@ -434,8 +492,12 @@ class InternalSQLGraphProvider:
     # Query / observability
     # ------------------------------------------------------------------
 
-    async def record_query(self, tenant_id: str, query: str, execution_time_ms: float) -> AgentKGQueryEvent:
-        event = AgentKGQueryEvent(tenant_id=tenant_id, query=query, execution_time_ms=execution_time_ms)
+    async def record_query(
+        self, tenant_id: str, query: str, execution_time_ms: float
+    ) -> AgentKGQueryEvent:
+        event = AgentKGQueryEvent(
+            tenant_id=tenant_id, query=query, execution_time_ms=execution_time_ms
+        )
         self.db.add(event)
         await self.db.commit()
         await self.db.refresh(event)

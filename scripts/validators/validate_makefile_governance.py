@@ -98,7 +98,9 @@ def _split_words(value: str) -> list[str]:
     return [token for token in value.strip().split() if token != "\\"]
 
 
-def expand_variable_tokens(variables: dict[str, list[str]], name: str, seen: set[str] | None = None) -> list[str]:
+def expand_variable_tokens(
+    variables: dict[str, list[str]], name: str, seen: set[str] | None = None
+) -> list[str]:
     seen = set() if seen is None else set(seen)
     if name in seen:
         return []
@@ -198,7 +200,9 @@ def find_duplicate_targets(parsed: ParsedMakefile) -> list[dict[str, str]]:
     for name, definitions in sorted(parsed.targets.items()):
         if len(definitions) > 1:
             locations = ", ".join(str(definition.lineno) for definition in definitions)
-            failures.append(_failure("Makefile", f"duplicate target definition for {name} at lines {locations}"))
+            failures.append(
+                _failure("Makefile", f"duplicate target definition for {name} at lines {locations}")
+            )
     return failures
 
 
@@ -229,7 +233,9 @@ def find_missing_phase_registrations(parsed: ParsedMakefile) -> list[dict[str, s
     if not registered:
         return [_failure("Makefile", f"missing variable: {PHASE_TARGETS_VARIABLE}")]
 
-    defined_phase_targets = sorted(name for name in parsed.targets if name.startswith("validate-phase-"))
+    defined_phase_targets = sorted(
+        name for name in parsed.targets if name.startswith("validate-phase-")
+    )
     if sorted(registered) != defined_phase_targets:
         failures.append(
             _failure(
@@ -244,10 +250,14 @@ def find_missing_aggregate_variables(parsed: ParsedMakefile) -> list[dict[str, s
     failures: list[dict[str, str]] = []
     for target, variable in AGGREGATE_VARIABLES.items():
         if variable not in parsed.variables:
-            failures.append(_failure("Makefile", f"missing aggregate variable {variable} for {target}"))
+            failures.append(
+                _failure("Makefile", f"missing aggregate variable {variable} for {target}")
+            )
             continue
         if not expand_variable_tokens(parsed.variables, variable):
-            failures.append(_failure("Makefile", f"aggregate variable {variable} for {target} is empty"))
+            failures.append(
+                _failure("Makefile", f"aggregate variable {variable} for {target} is empty")
+            )
     return failures
 
 
@@ -258,7 +268,10 @@ def find_orphaned_aggregate_entries(parsed: ParsedMakefile) -> list[dict[str, st
         for dependency in expand_variable_tokens(parsed.variables, variable):
             if dependency not in valid_targets:
                 failures.append(
-                    _failure("Makefile", f"{target} references missing aggregate entry {dependency} via {variable}")
+                    _failure(
+                        "Makefile",
+                        f"{target} references missing aggregate entry {dependency} via {variable}",
+                    )
                 )
     return failures
 
@@ -275,7 +288,9 @@ def find_missing_docs() -> list[dict[str, str]]:
     failures: list[dict[str, str]] = []
     for doc in REQUIRED_DOCS:
         if not doc.exists():
-            failures.append(_failure(str(doc.relative_to(REPO_ROOT)), "missing governance documentation"))
+            failures.append(
+                _failure(str(doc.relative_to(REPO_ROOT)), "missing governance documentation")
+            )
     return failures
 
 
@@ -285,8 +300,14 @@ def find_shadowing_and_overrides(parsed: ParsedMakefile) -> list[dict[str, str]]
         if len(definitions) > 1:
             continue
         definition = definitions[0]
-        if not definition.has_recipe and name.startswith("validate-") and not definition.prerequisites:
-            failures.append(_failure("Makefile", f"validate target {name} has no recipe or alias prerequisite"))
+        if (
+            not definition.has_recipe
+            and name.startswith("validate-")
+            and not definition.prerequisites
+        ):
+            failures.append(
+                _failure("Makefile", f"validate target {name} has no recipe or alias prerequisite")
+            )
     return failures
 
 
@@ -294,7 +315,11 @@ def _aggregate_edges(parsed: ParsedMakefile) -> dict[str, list[str]]:
     edges: dict[str, list[str]] = {}
     unique_targets = parsed.unique_targets
     for target, variable in AGGREGATE_VARIABLES.items():
-        edges[target] = [entry for entry in expand_variable_tokens(parsed.variables, variable) if entry in unique_targets]
+        edges[target] = [
+            entry
+            for entry in expand_variable_tokens(parsed.variables, variable)
+            if entry in unique_targets
+        ]
     for name, definition in unique_targets.items():
         if definition.is_alias:
             edges.setdefault(name, []).extend(
@@ -310,7 +335,11 @@ def find_simple_loops(parsed: ParsedMakefile) -> list[dict[str, str]]:
         for dependency in dependencies:
             reverse = edges.get(dependency, [])
             if source in reverse:
-                failures.append(_failure("Makefile", f"simple dependency loop between {source} and {dependency}"))
+                failures.append(
+                    _failure(
+                        "Makefile", f"simple dependency loop between {source} and {dependency}"
+                    )
+                )
     return failures
 
 
@@ -325,14 +354,26 @@ def find_unsafe_recipes(parsed: ParsedMakefile) -> list[dict[str, str]]:
             for fragment in DANGEROUS_RECIPE_FRAGMENTS:
                 if fragment in recipe:
                     failures.append(
-                        _failure("Makefile", f"unsafe recipe fragment {fragment!r} found in target {target}")
+                        _failure(
+                            "Makefile",
+                            f"unsafe recipe fragment {fragment!r} found in target {target}",
+                        )
                     )
             normalized = recipe.strip()
             if normalized in {"do \\", "done"}:
                 continue
-            if target in AGGREGATE_VARIABLES and normalized and "$(MAKE)" not in recipe and "echo " not in recipe and "set -e;" not in recipe:
+            if (
+                target in AGGREGATE_VARIABLES
+                and normalized
+                and "$(MAKE)" not in recipe
+                and "echo " not in recipe
+                and "set -e;" not in recipe
+            ):
                 failures.append(
-                    _failure("Makefile", f"aggregate target {target} contains non-deterministic direct shell recipe: {normalized}")
+                    _failure(
+                        "Makefile",
+                        f"aggregate target {target} contains non-deterministic direct shell recipe: {normalized}",
+                    )
                 )
     return failures
 

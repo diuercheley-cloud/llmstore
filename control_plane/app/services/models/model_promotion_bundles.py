@@ -6,11 +6,11 @@ from typing import Any
 from uuid import UUID
 
 from app.core.time import utc_now
-from app.models.core.admin_action_log import AdminActionLog
 from app.models.commercial.commercial_model_supply_chain import (
     CommercialModelPromotionBundle,
     CommercialSignedModelRegistryEntry,
 )
+from app.models.core.admin_action_log import AdminActionLog
 from app.services.models.model_provenance import create_provenance_attestation
 from app.services.models.signed_model_registry import (
     get_provenance_entry,
@@ -25,7 +25,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _canonical_json(payload: Any) -> str:
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+    )
 
 
 def _bundle_manifest_hash(manifest: dict[str, Any]) -> str:
@@ -130,7 +132,9 @@ async def verify_model_promotion_bundle(
         return {"valid": False, "reason": "missing_model_checksum_or_manifest"}
     if not provenance.get("artifact_hash"):
         return {"valid": False, "reason": "missing_provenance"}
-    if await is_bundle_revoked(db, model.get("checksum_sha256")) or await is_bundle_revoked(db, model.get("manifest_hash")):
+    if await is_bundle_revoked(db, model.get("checksum_sha256")) or await is_bundle_revoked(
+        db, model.get("manifest_hash")
+    ):
         bundle.status = "rejected"
         await db.flush()
         return {"valid": False, "reason": "revoked_by_offline_crl"}
@@ -189,7 +193,11 @@ async def promote_model_from_bundle(
         db,
         action="bundle_promoted",
         status="success",
-        payload={"bundle_id": str(bundle.id), "registry_entry_id": str(entry.id), "manifest_hash": bundle.manifest_hash},
+        payload={
+            "bundle_id": str(bundle.id),
+            "registry_entry_id": str(entry.id),
+            "manifest_hash": bundle.manifest_hash,
+        },
     )
     await db.flush()
     return entry
@@ -217,6 +225,8 @@ async def reject_model_bundle(
 
 async def list_bundles(db: AsyncSession) -> list[CommercialModelPromotionBundle]:
     result = await db.execute(
-        select(CommercialModelPromotionBundle).order_by(desc(CommercialModelPromotionBundle.created_at))
+        select(CommercialModelPromotionBundle).order_by(
+            desc(CommercialModelPromotionBundle.created_at)
+        )
     )
     return result.scalars().all()

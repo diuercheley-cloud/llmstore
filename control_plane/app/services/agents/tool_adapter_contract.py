@@ -1,6 +1,6 @@
 # Owner: agent-platform
 import abc
-from typing import Any, Dict
+from typing import Any
 
 
 class ToolAdapterContract(abc.ABC):
@@ -23,13 +23,13 @@ class ToolAdapterContract(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def input_schema(self) -> Dict[str, Any]:
+    def input_schema(self) -> dict[str, Any]:
         """JSON Schema for the tool input."""
         pass
 
     @property
     @abc.abstractmethod
-    def output_schema(self) -> Dict[str, Any]:
+    def output_schema(self) -> dict[str, Any]:
         """JSON Schema for the tool output."""
         pass
 
@@ -40,7 +40,7 @@ class ToolAdapterContract(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    async def execute(self, **kwargs) -> dict[str, Any]:
         """
         Performs the real execution of the tool.
         Must respect security boundaries and tenant isolation.
@@ -48,7 +48,7 @@ class ToolAdapterContract(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def dry_run(self, **kwargs) -> Dict[str, Any]:
+    async def dry_run(self, **kwargs) -> dict[str, Any]:
         """
         Simulates execution without side effects.
         Mandatory for write/destructive tools.
@@ -56,7 +56,7 @@ class ToolAdapterContract(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def rollback(self, invocation_id: str, **kwargs) -> Dict[str, Any]:
+    async def rollback(self, invocation_id: str, **kwargs) -> dict[str, Any]:
         """
         Attempts to revert side effects produced by a previous execution.
         """
@@ -67,7 +67,7 @@ class ToolAdapterContract(abc.ABC):
         """Verifies if the tool's dependencies are available."""
         pass
 
-    def to_registry_dict(self) -> Dict[str, Any]:
+    def to_registry_dict(self) -> dict[str, Any]:
         """Converts the adapter metadata to a format suitable for ToolRegistry."""
         return {
             "name": self.name,
@@ -75,5 +75,5 @@ class ToolAdapterContract(abc.ABC):
             "input_schema_json": self.input_schema,
             "output_schema_json": self.output_schema,
             "side_effect_level": self.side_effect_level,
-            "rollback_supported": True, # Adapters should ideally support rollback
+            "rollback_supported": True,  # Adapters should ideally support rollback
         }

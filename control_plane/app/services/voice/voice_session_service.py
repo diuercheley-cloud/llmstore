@@ -1,7 +1,6 @@
 # Owner: voice-agent
 import logging
 import uuid
-from typing import Optional
 
 from app.core.time import utc_now
 from app.models.core.realtime_voice import VoiceSession
@@ -40,17 +39,17 @@ class VoiceSessionService:
         logger.info(f"Voice session created: {session.id} tenant={tenant_id} agent={agent_id}")
         return session
 
-    async def get_session(self, session_id: uuid.UUID) -> Optional[VoiceSession]:
+    async def get_session(self, session_id: uuid.UUID) -> VoiceSession | None:
         return await self.db.get(VoiceSession, session_id)
 
-    async def activate_session(self, session_id: uuid.UUID) -> Optional[VoiceSession]:
+    async def activate_session(self, session_id: uuid.UUID) -> VoiceSession | None:
         session = await self.get_session(session_id)
         if session and session.status == "starting":
             session.status = "active"
             await self.db.flush()
         return session
 
-    async def end_session(self, session_id: uuid.UUID) -> Optional[VoiceSession]:
+    async def end_session(self, session_id: uuid.UUID) -> VoiceSession | None:
         session = await self.get_session(session_id)
         if session and session.status != "ended":
             session.status = "ended"

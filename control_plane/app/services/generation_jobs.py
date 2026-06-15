@@ -8,10 +8,9 @@ from dataclasses import dataclass
 
 from app.core.config import get_settings
 from app.core.metrics import ASYNC_JOB_COUNTER, ASYNC_QUEUE_DEPTH
-from app.core.time import utc_now
 from app.core.request_context import get_tenant_id
+from app.core.time import utc_now
 from app.db.session import redis_client
-from app.services.cache.semantic_cache_redis import get_semantic_cache
 from app.models.billing.billing_plan import BillingPlan
 from app.models.core.client import Client
 from app.models.core.generation_job import GenerationJob
@@ -25,6 +24,7 @@ from app.services.billing import (
     get_current_usage_snapshot,
 )
 from app.services.billing.core import resolve_effective_plan_for_session
+from app.services.cache.semantic_cache_redis import get_semantic_cache
 from app.services.context_manager import get_context_manager
 from app.services.inference_proxy import InferenceProxy
 from app.services.model_policy import plan_routing_order, resolve_requested_model
@@ -118,17 +118,20 @@ async def prepare_async_chat_job(
     )
     # Normalize messages (handling content parts)
     messages = normalize_messages([item.model_dump() for item in payload.messages])
-    
+
     # Apply Client System Prompt if available
     if client.system_prompt:
         system_msg_idx = next((i for i, m in enumerate(messages) if m["role"] == "system"), None)
         if system_msg_idx is not None:
-            messages[system_msg_idx]["content"] = f"{client.system_prompt}\n\n{messages[system_msg_idx]['content']}"
+            messages[system_msg_idx]["content"] = (
+                f"{client.system_prompt}\n\n{messages[system_msg_idx]['content']}"
+            )
         else:
             messages.insert(0, {"role": "system", "content": client.system_prompt})
 
     # Manage Context
     from app.services.tokenizer_service import get_tokenizer_service
+
     tokenizer = get_tokenizer_service()
     cm = get_context_manager()
     messages, max_tokens_capped, context_metrics = await cm.manage(
@@ -142,17 +145,21 @@ async def prepare_async_chat_job(
     token_count_method = context_metrics.get("token_count_method", "estimated")
     tokens_estimated = context_metrics.get("tokens_estimated", True)
     if prompt_tokens > client.max_context_tokens:
-        raise HTTPException(status_code=413, detail="prompt exceeds client context limit after management")
+        raise HTTPException(
+            status_code=413, detail="prompt exceeds client context limit after management"
+        )
 
     import logging
+
     logging.getLogger(__name__).info(
-        "Async inference context optimized",
-        extra={"extra_data": context_metrics}
+        "Async inference context optimized", extra={"extra_data": context_metrics}
     )
 
-    max_tokens, temperature, top_p, effective_plan = await validate_params_for_session(session, client, payload)
+    max_tokens, temperature, top_p, effective_plan = await validate_params_for_session(
+        session, client, payload
+    )
     max_tokens = max_tokens_capped
-    
+
     incoming_tokens = prompt_tokens + max_tokens
     try:
         await enforce_rate_limit(redis, client.id, effective_plan.rate_limit_per_minute)
@@ -177,8 +184,12 @@ async def prepare_async_chat_job(
     body["top_p"] = top_p
     usage_snapshot = await get_current_usage_snapshot(session, client.id)
     daily_used_before = int(usage_snapshot["daily"].used_tokens) if usage_snapshot["daily"] else 0
-    weekly_used_before = int(usage_snapshot["weekly"].used_tokens) if usage_snapshot["weekly"] else 0
-    monthly_used_before = int(usage_snapshot["monthly"].used_tokens) if usage_snapshot["monthly"] else 0
+    weekly_used_before = (
+        int(usage_snapshot["weekly"].used_tokens) if usage_snapshot["weekly"] else 0
+    )
+    monthly_used_before = (
+        int(usage_snapshot["monthly"].used_tokens) if usage_snapshot["monthly"] else 0
+    )
     estimated_request_cost = float(
         estimate_request_cost(
             monthly_tokens_used_before=monthly_used_before,
@@ -233,20 +244,20 @@ async def create_chat_generation_job(
     prepared = await prepare_async_chat_job(session, redis=redis, client=client, payload=payload)
     from app.services.routing.commercial_qos import CommercialQoSService
     from app.services.routing.qos_rate_limiter import QoSRateLimiter
-    
+
     qos_tier = await CommercialQoSService.resolve_qos_tier(session, client.id, None)
-    
+
     # QoS Phase 24: Rate Limiting
     rl = QoSRateLimiter(redis)
     is_allowed, rl_status, rl_reason = await rl.check_rate_limit(
         client.id, qos_tier.name, prepared.selected_model_id
     )
-    
+
     if not is_allowed:
         raise HTTPException(status_code=429, detail=rl_reason)
 
     now = utc_now()
-    
+
     # Calculate effective priority for Sorted Set
     priority_weight = qos_tier.queue_priority
     created_at_ms = int(now.timestamp() * 1000)
@@ -282,38 +293,50 @@ async def create_chat_generation_job(
     return job
 
 
-async def enqueue_generation_job(redis: Redis, job_id: uuid.UUID, priority: int = 100, effective_priority: float = 0) -> None:
+async def enqueue_generation_job(
+    redis: Redis, job_id: uuid.UUID, priority: int = 100, effective_priority: float = 0
+) -> None:
     settings = get_settings()
-    
+
     # 1. Legacy Enqueue (Always if not active, or if shadow)
-    if not settings.commercial_qos_priority_queue_enabled or settings.commercial_qos_priority_queue_mode != "active":
+    if (
+        not settings.commercial_qos_priority_queue_enabled
+        or settings.commercial_qos_priority_queue_mode != "active"
+    ):
         queue_depth = await redis.rpush(settings.async_job_queue_name, str(job_id))
         ASYNC_QUEUE_DEPTH.set(int(queue_depth))
-    
+
     # 2. QoS Priority Queue (if enabled or shadow)
     if settings.commercial_qos_priority_queue_enabled:
         from app.services.routing.qos_priority_queue import QoSPriorityQueue
+
         pq = QoSPriorityQueue(redis)
         # Use provided effective_priority if available, otherwise calculate
         if effective_priority == 0:
             now_ms = int(time.time() * 1000)
             effective_priority = -(priority * 1_000_000) + now_ms
-            
-        await pq.enqueue(job_id, priority, int(time.time() * 1000)) # Simple enqueue for now
+
+        await pq.enqueue(job_id, priority, int(time.time() * 1000))  # Simple enqueue for now
         # Re-using the calculated score if we want exact same score
         await redis.zadd(QoSPriorityQueue.QUEUE_KEY, {str(job_id): effective_priority})
-        
+
     ASYNC_JOB_COUNTER.labels(status="queued").inc()
 
 
-async def get_job_for_client(session: AsyncSession, client_id: uuid.UUID, job_id: uuid.UUID) -> GenerationJob | None:
+async def get_job_for_client(
+    session: AsyncSession, client_id: uuid.UUID, job_id: uuid.UUID
+) -> GenerationJob | None:
     result = await session.execute(
-        select(GenerationJob).where(GenerationJob.id == job_id, GenerationJob.client_id == client_id)
+        select(GenerationJob).where(
+            GenerationJob.id == job_id, GenerationJob.client_id == client_id
+        )
     )
     return result.scalar_one_or_none()
 
 
-async def cancel_job(session: AsyncSession, client_id: uuid.UUID, job_id: uuid.UUID) -> GenerationJob:
+async def cancel_job(
+    session: AsyncSession, client_id: uuid.UUID, job_id: uuid.UUID
+) -> GenerationJob:
     job = await get_job_for_client(session, client_id, job_id)
     if job is None:
         raise HTTPException(status_code=404, detail="job not found")
@@ -330,20 +353,30 @@ async def cancel_job(session: AsyncSession, client_id: uuid.UUID, job_id: uuid.U
 
 async def get_admin_job_snapshot(session: AsyncSession, redis: Redis) -> dict:
     summary_row = (
-        await session.execute(
-            select(
-                func.count(GenerationJob.id).label("total"),
-                func.count().filter(GenerationJob.status == "queued").label("queued"),
-                func.count().filter(GenerationJob.status == "running").label("running"),
-                func.count().filter(GenerationJob.status == "completed").label("completed"),
-                func.count().filter(GenerationJob.status == "failed").label("failed"),
-                func.count().filter(GenerationJob.status == "cancelled").label("cancelled"),
+        (
+            await session.execute(
+                select(
+                    func.count(GenerationJob.id).label("total"),
+                    func.count().filter(GenerationJob.status == "queued").label("queued"),
+                    func.count().filter(GenerationJob.status == "running").label("running"),
+                    func.count().filter(GenerationJob.status == "completed").label("completed"),
+                    func.count().filter(GenerationJob.status == "failed").label("failed"),
+                    func.count().filter(GenerationJob.status == "cancelled").label("cancelled"),
+                )
             )
         )
-    ).mappings().one()
+        .mappings()
+        .one()
+    )
     jobs = (
-        await session.execute(select(GenerationJob).order_by(desc(GenerationJob.created_at)).limit(200))
-    ).scalars().all()
+        (
+            await session.execute(
+                select(GenerationJob).order_by(desc(GenerationJob.created_at)).limit(200)
+            )
+        )
+        .scalars()
+        .all()
+    )
     queue_depth = int(await redis.llen(get_settings().async_job_queue_name))
     ASYNC_QUEUE_DEPTH.set(queue_depth)
     return {
@@ -369,7 +402,9 @@ async def process_generation_job(
     result = await session.execute(
         select(GenerationJob)
         .options(
-            selectinload(GenerationJob.client).selectinload(Client.billing_plan).selectinload(BillingPlan.pricing_rules),
+            selectinload(GenerationJob.client)
+            .selectinload(Client.billing_plan)
+            .selectinload(BillingPlan.pricing_rules),
             selectinload(GenerationJob.model_registry)
             .selectinload(ModelRegistry.backend_routes)
             .selectinload(ModelBackendRoute.inference_backend),
@@ -379,7 +414,7 @@ async def process_generation_job(
     job = result.scalar_one_or_none()
     if job is None:
         return "missing"
-    
+
     # Explicitly load client with all billing relationships to avoid MissingGreenlet
     client_result = await session.execute(
         select(Client)
@@ -423,16 +458,18 @@ async def process_generation_job(
         request_hash=cache_key,
         plan_code=effective_plan.code,
     )
-    
+
     # Semantic Cache Fallback
     if not cached.hit and settings.semantic_cache_enabled:
         sem_cache = get_semantic_cache(redis_client)
-        prompt_text = "\n".join([f"{m.get('role')}: {m.get('content')}" for m in request_body.get("messages", [])])
+        prompt_text = "\n".join(
+            [f"{m.get('role')}: {m.get('content')}" for m in request_body.get("messages", [])]
+        )
         sem_hit = await sem_cache.get(
             tenant_id=get_tenant_id(),
             client_id=str(job.client_id),
             model=job.resolved_model,
-            prompt=prompt_text
+            prompt=prompt_text,
         )
         if sem_hit:
             cached.hit = True
@@ -443,12 +480,12 @@ async def process_generation_job(
     if cached.hit and cached.payload is not None:
         now = utc_now()
         await record_usage(
-            session, 
-            job.client_id, 
-            job.prompt_tokens_estimated, 
+            session,
+            job.client_id,
+            job.prompt_tokens_estimated,
             cached.completion_tokens,
             token_count_method=job.token_count_method,
-            tokens_estimated=job.tokens_estimated
+            tokens_estimated=job.tokens_estimated,
         )
         await log_request(
             session,
@@ -467,7 +504,9 @@ async def process_generation_job(
             cache_hit=True,
             backend_errors=[],
             error_message=None,
-            request_summary=summarize_chat_request(request_body.get("messages", []), include_reasoning=include_reasoning),
+            request_summary=summarize_chat_request(
+                request_body.get("messages", []), include_reasoning=include_reasoning
+            ),
             plan_code=effective_plan.code,
             request_payload=request_body,
             response_payload=cached.payload,
@@ -521,10 +560,12 @@ async def process_generation_job(
     if job.queued_at:
         wait_delta = now - job.queued_at
         job.queue_wait_ms = int(wait_delta.total_seconds() * 1000)
-    
+
     job.updated_at = now
     job.inference_backend_id = chosen_route.inference_backend_id
-    job.backend_name = chosen_route.inference_backend.name if chosen_route.inference_backend else None
+    job.backend_name = (
+        chosen_route.inference_backend.name if chosen_route.inference_backend else None
+    )
     await session.commit()
 
     is_admin = False
@@ -564,21 +605,23 @@ async def process_generation_job(
 
         if settings.semantic_cache_enabled:
             sem_cache = get_semantic_cache(redis_client)
-            prompt_text = "\n".join([f"{m.get('role')}: {m.get('content')}" for m in request_body.get("messages", [])])
+            prompt_text = "\n".join(
+                [f"{m.get('role')}: {m.get('content')}" for m in request_body.get("messages", [])]
+            )
             await sem_cache.set(
                 tenant_id=get_tenant_id(),
                 client_id=str(job.client_id),
                 model=job.resolved_model,
                 prompt=prompt_text,
-                response=response_payload
+                response=response_payload,
             )
         await record_usage(
-            session, 
-            job.client_id, 
-            job.prompt_tokens_estimated, 
+            session,
+            job.client_id,
+            job.prompt_tokens_estimated,
             completion_tokens,
             token_count_method=job.token_count_method,
-            tokens_estimated=job.tokens_estimated
+            tokens_estimated=job.tokens_estimated,
         )
         await log_request(
             session,
@@ -597,7 +640,9 @@ async def process_generation_job(
             cache_hit=False,
             backend_errors=result.backend_errors,
             error_message=None,
-            request_summary=summarize_chat_request(request_body.get("messages", []), include_reasoning=include_reasoning),
+            request_summary=summarize_chat_request(
+                request_body.get("messages", []), include_reasoning=include_reasoning
+            ),
             plan_code=effective_plan.code,
             request_payload=request_body,
             response_payload=response_payload,
@@ -616,7 +661,9 @@ async def process_generation_job(
         job.response_json = json.dumps(response_payload)
         job.attempts = result.attempts
         job.fallback_used = result.fallback_used
-        job.backend_errors_json = json.dumps(result.backend_errors) if result.backend_errors else None
+        job.backend_errors_json = (
+            json.dumps(result.backend_errors) if result.backend_errors else None
+        )
         job.completion_tokens_estimated = completion_tokens
         job.completed_at = finished_at
         job.updated_at = finished_at
@@ -625,7 +672,9 @@ async def process_generation_job(
         return "completed"
     except HTTPException as exc:
         finished_at = utc_now()
-        backend_errors = exc.detail.get("backend_errors", []) if isinstance(exc.detail, dict) else []
+        backend_errors = (
+            exc.detail.get("backend_errors", []) if isinstance(exc.detail, dict) else []
+        )
         await log_request(
             session,
             client_id=job.client_id,
@@ -642,8 +691,12 @@ async def process_generation_job(
             fallback_used=len(backend_errors) > 1,
             cache_hit=False,
             backend_errors=backend_errors,
-            error_message=str(exc.detail.get("message")) if isinstance(exc.detail, dict) else str(exc.detail),
-            request_summary=summarize_chat_request(request_body.get("messages", []), include_reasoning=include_reasoning),
+            error_message=str(exc.detail.get("message"))
+            if isinstance(exc.detail, dict)
+            else str(exc.detail),
+            request_summary=summarize_chat_request(
+                request_body.get("messages", []), include_reasoning=include_reasoning
+            ),
             plan_code=effective_plan.code,
             request_payload=request_body,
             response_payload=None,
@@ -658,7 +711,9 @@ async def process_generation_job(
             },
         )
         job.status = "failed"
-        job.error_message = str(exc.detail.get("message")) if isinstance(exc.detail, dict) else str(exc.detail)
+        job.error_message = (
+            str(exc.detail.get("message")) if isinstance(exc.detail, dict) else str(exc.detail)
+        )
         job.attempts = max(len(backend_errors), 1)
         job.fallback_used = len(backend_errors) > 1
         job.backend_errors_json = json.dumps(backend_errors) if backend_errors else None

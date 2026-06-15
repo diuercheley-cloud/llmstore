@@ -1,7 +1,8 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import Any, Iterable, Optional
+from collections.abc import Iterable
+from typing import Any
 
 from app.core.time import utc_now
 from app.models.agents.agent_cicd import AgentDeployment, AgentDeploymentEvent
@@ -10,10 +11,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class BlueGreenDeploymentService:
     """
     Manages Blue/Green deployment strategy for agents.
     """
+
     def __init__(self, db: AsyncSession):
         self.db = db
 
@@ -24,7 +27,7 @@ class BlueGreenDeploymentService:
         strategy: str = "blue-green",
         pipeline_id: uuid.UUID | None = None,
         version_tag: str | None = None,
-        rollout_metadata: Optional[dict[str, Any]] = None,
+        rollout_metadata: dict[str, Any] | None = None,
     ) -> AgentDeployment:
         deployment = AgentDeployment(
             agent_id=agent_id,
@@ -33,11 +36,11 @@ class BlueGreenDeploymentService:
             strategy=strategy,
             version_tag=version_tag or f"v-{utc_now().strftime('%Y%m%d%H%M%S')}",
             status="in_progress",
-            traffic_weight=0.0 # Green version starts with 0 traffic
+            traffic_weight=0.0,  # Green version starts with 0 traffic
         )
         self.db.add(deployment)
         await self.db.flush()
-        
+
         await self._record_event(
             deployment.id,
             "deployment_started",
@@ -58,31 +61,30 @@ class BlueGreenDeploymentService:
         stmt = select(AgentDeployment).where(AgentDeployment.id == deployment_id)
         res = await self.db.execute(stmt)
         deployment = res.scalar_one_or_none()
-        if not deployment: return
+        if not deployment:
+            return
 
         deployment.traffic_weight = weight
         if not deployment.status:
             deployment.status = "in_progress"
         await self._record_event(deployment_id, "traffic_switch", {"weight": weight})
-        
+
         if weight >= 1.0:
             deployment.status = "completed"
             deployment.completed_at = utc_now()
-            
+
         await self.db.flush()
 
     async def _record_event(self, deployment_id: uuid.UUID, event_type: str, details: dict):
         event = AgentDeploymentEvent(
-            deployment_id=deployment_id,
-            event_type=event_type,
-            details=details
+            deployment_id=deployment_id, event_type=event_type, details=details
         )
         self.db.add(event)
 
     async def progressive_rollout(
         self,
         deployment_id: uuid.UUID,
-        weights: Optional[Iterable[float]] = None,
+        weights: Iterable[float] | None = None,
         *,
         require_healthy: bool = True,
         healthy: bool = True,
@@ -100,7 +102,9 @@ class BlueGreenDeploymentService:
                 {"weight": weight, "healthy": healthy},
             )
             if require_healthy and not healthy:
-                await self.mark_failed(deployment_id, f"Health checks failed at traffic weight {weight}")
+                await self.mark_failed(
+                    deployment_id, f"Health checks failed at traffic weight {weight}"
+                )
                 return False
 
         return True
@@ -110,7 +114,9 @@ class BlueGreenDeploymentService:
         if not deployment:
             return False
         deployment.status = "paused"
-        await self._record_event(deployment_id, "deployment_paused", {"reason": reason or "manual_pause"})
+        await self._record_event(
+            deployment_id, "deployment_paused", {"reason": reason or "manual_pause"}
+        )
         await self.db.flush()
         return True
 
@@ -120,7 +126,9 @@ class BlueGreenDeploymentService:
             return False
         if deployment.status == "paused":
             deployment.status = "in_progress"
-        await self._record_event(deployment_id, "deployment_resumed", {"reason": reason or "manual_resume"})
+        await self._record_event(
+            deployment_id, "deployment_resumed", {"reason": reason or "manual_resume"}
+        )
         await self.db.flush()
         return True
 

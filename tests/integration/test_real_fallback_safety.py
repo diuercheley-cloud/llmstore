@@ -1,6 +1,5 @@
 """Tests for fallback safety — cloud not forced, cost cap respected, no secret leak."""
 
-
 import pytest
 from app.schemas.routing import EndpointType, RoutingStrategy, SmartRouterInput
 from app.services.routing.smart_router import SmartRouter
@@ -9,6 +8,7 @@ from app.services.routing.smart_router import SmartRouter
 @pytest.fixture(autouse=True)
 def clear_settings_cache():
     from app.core.config import get_settings
+
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()
@@ -31,7 +31,9 @@ def test_cloud_not_used_when_cloud_allowed_false(router):
 
 
 def test_cloud_not_used_when_global_disabled(router, monkeypatch):
-    monkeypatch.setattr("app.services.routing.smart_router._get_cloud_providers_enabled", lambda: False)
+    monkeypatch.setattr(
+        "app.services.routing.smart_router._get_cloud_providers_enabled", lambda: False
+    )
     inp = SmartRouterInput(
         endpoint_type=EndpointType.chat,
         cloud_allowed=True,
@@ -67,8 +69,12 @@ def test_cost_cap_respected(router, monkeypatch):
 
 
 def test_zero_wallet_blocks_cloud(router, monkeypatch):
-    monkeypatch.setattr("app.services.routing.smart_router._get_cloud_providers_enabled", lambda: True)
-    monkeypatch.setattr("app.services.routing.smart_router._is_provider_available", lambda pid: True)
+    monkeypatch.setattr(
+        "app.services.routing.smart_router._get_cloud_providers_enabled", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.services.routing.smart_router._is_provider_available", lambda pid: True
+    )
     inp = SmartRouterInput(
         endpoint_type=EndpointType.chat,
         cloud_allowed=True,
@@ -116,7 +122,9 @@ def test_reason_sanitized_max_length(router):
 
 
 def test_fallback_to_mock_when_nothing_available(router, monkeypatch):
-    monkeypatch.setattr("app.services.routing.smart_router._is_provider_available", lambda pid: False)
+    monkeypatch.setattr(
+        "app.services.routing.smart_router._is_provider_available", lambda pid: False
+    )
     inp = SmartRouterInput(
         endpoint_type=EndpointType.chat,
         cloud_allowed=True,
@@ -127,7 +135,10 @@ def test_fallback_to_mock_when_nothing_available(router, monkeypatch):
 
 
 def test_local_only_mode_no_cloud_strategy(router, monkeypatch):
-    monkeypatch.setattr("app.services.routing.smart_router._is_provider_available", lambda pid: pid in ("local", "mock"))
+    monkeypatch.setattr(
+        "app.services.routing.smart_router._is_provider_available",
+        lambda pid: pid in ("local", "mock"),
+    )
     inp = SmartRouterInput(
         endpoint_type=EndpointType.chat,
         cloud_allowed=False,

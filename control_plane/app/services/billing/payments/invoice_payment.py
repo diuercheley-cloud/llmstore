@@ -2,13 +2,11 @@
 import asyncio
 import logging
 import uuid
-from typing import Optional
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.billing.billing_invoice import BillingInvoice
-from app.models.core.client import Client
 from app.models.billing.payments import PaymentAuditEvent, PaymentCustomer, PaymentIntent
+from app.models.core.client import Client
 from app.services.billing.payments.mock_payment_provider import MockPaymentProvider
 from app.services.billing.payments.payment_provider import PaymentProvider
 from app.services.billing.payments.stripe_provider import StripePaymentProvider
@@ -21,17 +19,16 @@ logger = logging.getLogger("invoice_payment")
 # Global lock to prevent race conditions during customer creation in same process
 _customer_lock = asyncio.Lock()
 
+
 def get_payment_provider() -> PaymentProvider:
     settings = get_settings()
     if settings.payment_provider == "stripe":
         return StripePaymentProvider()
     return MockPaymentProvider()
 
+
 async def get_or_create_customer(
-    db: AsyncSession,
-    client_id: uuid.UUID,
-    provider_name: str,
-    provider: PaymentProvider
+    db: AsyncSession, client_id: uuid.UUID, provider_name: str, provider: PaymentProvider
 ) -> str:
     async with _customer_lock:
         # 1. Fetch Client name/email
@@ -43,8 +40,7 @@ async def get_or_create_customer(
 
         # 2. Check if customer already exists for this provider
         stmt_cust = select(PaymentCustomer).where(
-            PaymentCustomer.client_id == client_id,
-            PaymentCustomer.provider == provider_name
+            PaymentCustomer.client_id == client_id, PaymentCustomer.provider == provider_name
         )
         res_cust = await db.execute(stmt_cust)
         cust = res_cust.scalar_one_or_none()
@@ -60,11 +56,11 @@ async def get_or_create_customer(
             id=uuid.uuid4(),
             client_id=client_id,
             provider=provider_name,
-            provider_customer_id=cust_id
+            provider_customer_id=cust_id,
         )
         db.add(cust)
-        await db.commit() # Commit here to release for other requests
-        
+        await db.commit()  # Commit here to release for other requests
+
         return cust_id
 
 
@@ -75,10 +71,10 @@ class PaymentService:
         client_id: uuid.UUID,
         amount_cents: int,
         currency: str = "BRL",
-        invoice_id: Optional[uuid.UUID] = None,
-        description: Optional[str] = None,
-        metadata: Optional[dict] = None,
-        idempotency_key: Optional[str] = None
+        invoice_id: uuid.UUID | None = None,
+        description: str | None = None,
+        metadata: dict | None = None,
+        idempotency_key: str | None = None,
     ) -> PaymentIntent:
         # Check idempotency
         if idempotency_key:
@@ -86,7 +82,9 @@ class PaymentService:
             res = await db.execute(stmt)
             existing = res.scalar_one_or_none()
             if existing:
-                logger.info(f"Returning existing payment intent due to idempotency match: {existing.id}")
+                logger.info(
+                    f"Returning existing payment intent due to idempotency match: {existing.id}"
+                )
                 return existing
 
         provider = get_payment_provider()
@@ -101,7 +99,7 @@ class PaymentService:
             amount_cents=amount_cents,
             currency=currency,
             provider_customer_id=provider_cust_id,
-            idempotency_key=idempotency_key
+            idempotency_key=idempotency_key,
         )
 
         # 3. Save intent in DB
@@ -116,10 +114,10 @@ class PaymentService:
             amount_cents=amount_cents,
             currency=currency.lower(),
             status=external_res.get("status", "requires_payment_method"),
-            idempotency_key=idempotency_key
+            idempotency_key=idempotency_key,
         )
         db.add(intent)
-        
+
         # 4. Log event
         event = PaymentAuditEvent(
             id=uuid.uuid4(),
@@ -130,11 +128,11 @@ class PaymentService:
             metadata_json={
                 "intent_id": str(intent.id),
                 "external_id": external_res["id"],
-                "amount_cents": amount_cents
-            }
+                "amount_cents": amount_cents,
+            },
         )
         db.add(event)
-        
+
         await db.commit()
         await db.refresh(intent)
         return intent
@@ -146,7 +144,7 @@ class PaymentService:
         intent = res.scalar_one_or_none()
         if not intent:
             raise HTTPException(status_code=404, detail="Payment intent not found.")
-            
+
         # In a real system we'd call provider API here.
         # For now we just return it.
         return intent
@@ -162,29 +160,37 @@ class PaymentService:
         # Update status (in a real system we'd check provider API)
         intent.status = "succeeded"
         intent.updated_at = utc_now()
-        
+
         event = PaymentAuditEvent(
             id=uuid.uuid4(),
             client_id=intent.client_id,
             event_type="payment.succeeded",
             status="success",
             provider=intent.provider,
-            metadata_json={"intent_id": str(intent.id)}
+            metadata_json={"intent_id": str(intent.id)},
         )
         db.add(event)
-        
+
         await db.commit()
         await db.refresh(intent)
         return intent
 
     @staticmethod
     async def list_client_payments(db: AsyncSession, client_id: uuid.UUID) -> list[PaymentIntent]:
-        stmt = select(PaymentIntent).where(PaymentIntent.client_id == client_id).order_by(PaymentIntent.created_at.desc())
+        stmt = (
+            select(PaymentIntent)
+            .where(PaymentIntent.client_id == client_id)
+            .order_by(PaymentIntent.created_at.desc())
+        )
         res = await db.execute(stmt)
         return list(res.scalars().all())
 
     @staticmethod
     async def get_audit_log(db: AsyncSession, client_id: uuid.UUID) -> list[PaymentAuditEvent]:
-        stmt = select(PaymentAuditEvent).where(PaymentAuditEvent.client_id == client_id).order_by(PaymentAuditEvent.created_at.desc())
+        stmt = (
+            select(PaymentAuditEvent)
+            .where(PaymentAuditEvent.client_id == client_id)
+            .order_by(PaymentAuditEvent.created_at.desc())
+        )
         res = await db.execute(stmt)
         return list(res.scalars().all())

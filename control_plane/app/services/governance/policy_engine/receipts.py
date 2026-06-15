@@ -8,4 +8,3 @@ def build_policy_receipt(policy_id: str, decision: str, subject_ref: str) -> dic
         "payload_hash": hash_payload(payload),
         "signature": f"policy_receipt_{policy_id[:12]}",
     }
-

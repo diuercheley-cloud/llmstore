@@ -19,40 +19,57 @@ async def session(isolated_db_url):
         yield session
     await engine.dispose()
 
+
 @pytest.mark.asyncio
-async def test_unauthorized_model_rewrite_to_default(admin_client: AsyncClient, admin_token_headers: dict, session: AsyncSession):
+async def test_unauthorized_model_rewrite_to_default(
+    admin_client: AsyncClient, admin_token_headers: dict, session: AsyncSession
+):
     # 1. Setup Default Model
     default_model = ModelRegistry(
-        model_id="default-model", 
-        provider="llama.cpp", 
-        model_file="default.gguf", 
+        model_id="default-model",
+        provider="llama.cpp",
+        model_file="default.gguf",
         context_length=2048,
         is_active=True,
-        is_default=True
+        is_default=True,
     )
     session.add(default_model)
-    
+
     premium_model = ModelRegistry(
-        model_id="premium-model", 
-        provider="llama.cpp", 
-        model_file="premium.gguf", 
+        model_id="premium-model",
+        provider="llama.cpp",
+        model_file="premium.gguf",
         context_length=2048,
         is_active=True,
-        is_default=False
+        is_default=False,
     )
     session.add(premium_model)
-    
+
     backend = InferenceBackend(name="main-backend", provider="llama.cpp", backend_url="http://main")
     session.add(backend)
     await session.commit()
     await session.refresh(default_model)
     await session.refresh(premium_model)
     await session.refresh(backend)
-    
+
     # Routes for both
-    session.add(ModelBackendRoute(model_registry_id=default_model.id, inference_backend_id=backend.id, priority=100, weight=100))
-    session.add(ModelBackendRoute(model_registry_id=premium_model.id, inference_backend_id=backend.id, priority=100, weight=100))
-    
+    session.add(
+        ModelBackendRoute(
+            model_registry_id=default_model.id,
+            inference_backend_id=backend.id,
+            priority=100,
+            weight=100,
+        )
+    )
+    session.add(
+        ModelBackendRoute(
+            model_registry_id=premium_model.id,
+            inference_backend_id=backend.id,
+            priority=100,
+            weight=100,
+        )
+    )
+
     # 2. Client on Restricted Plan (only default model allowed)
     plan = BillingPlan(
         code="free",
@@ -62,25 +79,25 @@ async def test_unauthorized_model_rewrite_to_default(admin_client: AsyncClient, 
         weekly_token_quota=5000,
         monthly_token_quota=10000,
         max_output_tokens=1024,
-        allowed_models_json=json.dumps(["default-model"])
+        allowed_models_json=json.dumps(["default-model"]),
     )
     session.add(plan)
     await session.commit()
     await session.refresh(plan)
-    
+
     test_client = Client(name="free-client", billing_plan_id=plan.id)
     session.add(test_client)
     await session.commit()
     await session.refresh(test_client)
-    
+
     # 3. Request unauthorized model via Explain
     res = await admin_client.post(
         "/admin/routing/explain",
         json={"model": "premium-model", "client_id": str(test_client.id)},
-        headers=admin_token_headers
+        headers=admin_token_headers,
     )
-    
+
     assert res.status_code == 200
     data = res.json()
     assert data["requested_model"] == "premium-model"
-    assert data["resolved_model_id"] == "default-model" # Rewritten!
+    assert data["resolved_model_id"] == "default-model"  # Rewritten!

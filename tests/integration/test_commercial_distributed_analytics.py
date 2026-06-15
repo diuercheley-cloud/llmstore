@@ -107,7 +107,17 @@ async def test_ingest_duplicate_becomes_duplicate(session, monkeypatch):
     second = await ingest_routing_event(session, payload, "node-b")
     await session.commit()
 
-    rows = (await session.execute(select(CommercialRoutingEventIngest).order_by(CommercialRoutingEventIngest.received_at.asc()))).scalars().all()
+    rows = (
+        (
+            await session.execute(
+                select(CommercialRoutingEventIngest).order_by(
+                    CommercialRoutingEventIngest.received_at.asc()
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
     assert first["status"] == "pending"
     assert second["status"] == "duplicate"
     assert rows[1].status == "duplicate"
@@ -265,7 +275,17 @@ async def test_cleanup_retention(session, monkeypatch):
     assert result["ingest_deleted"] == 1
     assert result["aggregate_deleted"] == 1
     assert result["heartbeat_deleted"] == 1
-    assert (await session.execute(select(CommercialRoutingEvent).where(CommercialRoutingEvent.request_id == "keep-main"))).scalars().one()
+    assert (
+        (
+            await session.execute(
+                select(CommercialRoutingEvent).where(
+                    CommercialRoutingEvent.request_id == "keep-main"
+                )
+            )
+        )
+        .scalars()
+        .one()
+    )
 
 
 @pytest.mark.asyncio
@@ -273,7 +293,9 @@ async def test_endpoints_require_admin_auth(admin_client, monkeypatch):
     _enable_distributed(monkeypatch)
     nodes = await admin_client.get("/admin/routing/distributed/nodes")
     overview = await admin_client.get("/admin/routing/distributed/cluster-overview")
-    ingest = await admin_client.post("/admin/routing/distributed/ingest", json={"request_id": "req-auth"})
+    ingest = await admin_client.post(
+        "/admin/routing/distributed/ingest", json={"request_id": "req-auth"}
+    )
 
     assert nodes.status_code == 401
     assert overview.status_code == 401

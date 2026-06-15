@@ -60,8 +60,12 @@ async def test_acquire_leader(session, monkeypatch):
 @pytest.mark.asyncio
 async def test_second_node_rejected(session, monkeypatch):
     _enable_ha(monkeypatch)
-    first = await try_acquire_leader(session, cluster_id="cluster-ha-test", leader_role="aggregator", node_id="node-a")
-    second = await try_acquire_leader(session, cluster_id="cluster-ha-test", leader_role="aggregator", node_id="node-b")
+    first = await try_acquire_leader(
+        session, cluster_id="cluster-ha-test", leader_role="aggregator", node_id="node-a"
+    )
+    second = await try_acquire_leader(
+        session, cluster_id="cluster-ha-test", leader_role="aggregator", node_id="node-b"
+    )
     await session.commit()
 
     assert first["acquired"] is True
@@ -72,7 +76,9 @@ async def test_second_node_rejected(session, monkeypatch):
 @pytest.mark.asyncio
 async def test_lease_renew(session, monkeypatch):
     _enable_ha(monkeypatch)
-    lease = await try_acquire_leader(session, cluster_id="cluster-ha-test", leader_role="reporter", node_id="node-a")
+    lease = await try_acquire_leader(
+        session, cluster_id="cluster-ha-test", leader_role="reporter", node_id="node-a"
+    )
     first_expiry = lease["lease"]["lease_expires_at"]
     renewed = await renew_leader_lease(
         session,
@@ -90,11 +96,17 @@ async def test_lease_renew(session, monkeypatch):
 @pytest.mark.asyncio
 async def test_lease_expire(session, monkeypatch):
     _enable_ha(monkeypatch)
-    lease = await try_acquire_leader(session, cluster_id="cluster-ha-test", leader_role="reporter", node_id="node-a")
+    lease = await try_acquire_leader(
+        session, cluster_id="cluster-ha-test", leader_role="reporter", node_id="node-a"
+    )
     row = (await session.execute(select(CommercialLeaderLease))).scalars().one()
     row.lease_expires_at = utc_now() - timedelta(seconds=1)
-    expired = await force_expire_stale_leases(session, cluster_id="cluster-ha-test", leader_role="reporter")
-    current = await get_current_leader(session, cluster_id="cluster-ha-test", leader_role="reporter")
+    expired = await force_expire_stale_leases(
+        session, cluster_id="cluster-ha-test", leader_role="reporter"
+    )
+    current = await get_current_leader(
+        session, cluster_id="cluster-ha-test", leader_role="reporter"
+    )
     await session.commit()
 
     assert lease["acquired"] is True
@@ -105,11 +117,15 @@ async def test_lease_expire(session, monkeypatch):
 @pytest.mark.asyncio
 async def test_failover(session, monkeypatch):
     _enable_ha(monkeypatch)
-    first = await try_acquire_leader(session, cluster_id="cluster-ha-test", leader_role="aggregator", node_id="node-a")
+    first = await try_acquire_leader(
+        session, cluster_id="cluster-ha-test", leader_role="aggregator", node_id="node-a"
+    )
     row = (await session.execute(select(CommercialLeaderLease))).scalars().one()
     row.lease_expires_at = utc_now() - timedelta(seconds=1)
     await force_expire_stale_leases(session, cluster_id="cluster-ha-test", leader_role="aggregator")
-    second = await try_acquire_leader(session, cluster_id="cluster-ha-test", leader_role="aggregator", node_id="node-b")
+    second = await try_acquire_leader(
+        session, cluster_id="cluster-ha-test", leader_role="aggregator", node_id="node-b"
+    )
     await session.commit()
 
     assert second["acquired"] is True
@@ -120,11 +136,15 @@ async def test_failover(session, monkeypatch):
 @pytest.mark.asyncio
 async def test_fencing_token_grows(session, monkeypatch):
     _enable_ha(monkeypatch)
-    first = await try_acquire_leader(session, cluster_id="cluster-ha-test", leader_role="canary", node_id="node-a")
+    first = await try_acquire_leader(
+        session, cluster_id="cluster-ha-test", leader_role="canary", node_id="node-a"
+    )
     row = (await session.execute(select(CommercialLeaderLease))).scalars().one()
     row.lease_expires_at = utc_now() - timedelta(seconds=1)
     await force_expire_stale_leases(session, cluster_id="cluster-ha-test", leader_role="canary")
-    second = await try_acquire_leader(session, cluster_id="cluster-ha-test", leader_role="canary", node_id="node-b")
+    second = await try_acquire_leader(
+        session, cluster_id="cluster-ha-test", leader_role="canary", node_id="node-b"
+    )
     await session.commit()
 
     assert second["lease"]["lease_token"] == first["lease"]["lease_token"] + 1
@@ -144,8 +164,12 @@ async def test_stale_lease_expires_when_node_offline(session, monkeypatch):
             metadata_json={},
         )
     )
-    await try_acquire_leader(session, cluster_id="cluster-ha-test", leader_role="global", node_id="node-a")
-    expired = await force_expire_stale_leases(session, cluster_id="cluster-ha-test", leader_role="global")
+    await try_acquire_leader(
+        session, cluster_id="cluster-ha-test", leader_role="global", node_id="node-a"
+    )
+    expired = await force_expire_stale_leases(
+        session, cluster_id="cluster-ha-test", leader_role="global"
+    )
     await session.commit()
 
     assert expired["expired_count"] == 1
@@ -154,8 +178,12 @@ async def test_stale_lease_expires_when_node_offline(session, monkeypatch):
 @pytest.mark.asyncio
 async def test_scheduler_singleton(session, monkeypatch):
     _enable_ha(monkeypatch)
-    leader = await try_acquire_leader(session, cluster_id="cluster-ha-test", leader_role="reporter", node_id="node-a")
-    follower = await try_acquire_leader(session, cluster_id="cluster-ha-test", leader_role="reporter", node_id="node-b")
+    leader = await try_acquire_leader(
+        session, cluster_id="cluster-ha-test", leader_role="reporter", node_id="node-a"
+    )
+    follower = await try_acquire_leader(
+        session, cluster_id="cluster-ha-test", leader_role="reporter", node_id="node-b"
+    )
     await session.commit()
 
     assert leader["acquired"] is True
@@ -172,7 +200,9 @@ async def test_scheduler_singleton(session, monkeypatch):
 @pytest.mark.asyncio
 async def test_cleanup_not_execute_on_follower(session, monkeypatch):
     _enable_ha(monkeypatch)
-    leader = await try_acquire_leader(session, cluster_id="cluster-ha-test", leader_role="aggregator", node_id="node-a")
+    leader = await try_acquire_leader(
+        session, cluster_id="cluster-ha-test", leader_role="aggregator", node_id="node-a"
+    )
     rejected = await cleanup_old_analytics(
         session,
         cluster_id="cluster-ha-test",
@@ -188,7 +218,9 @@ async def test_cleanup_not_execute_on_follower(session, monkeypatch):
 @pytest.mark.asyncio
 async def test_rebuild_not_execute_on_follower(session, monkeypatch):
     _enable_ha(monkeypatch)
-    leader = await try_acquire_leader(session, cluster_id="cluster-ha-test", leader_role="aggregator", node_id="node-a")
+    leader = await try_acquire_leader(
+        session, cluster_id="cluster-ha-test", leader_role="aggregator", node_id="node-a"
+    )
     rejected = await rebuild_aggregates(
         session,
         cluster_id="cluster-ha-test",
@@ -204,8 +236,12 @@ async def test_rebuild_not_execute_on_follower(session, monkeypatch):
 @pytest.mark.asyncio
 async def test_split_brain_avoided(session, monkeypatch):
     _enable_ha(monkeypatch)
-    first = await try_acquire_leader(session, cluster_id="cluster-ha-test", leader_role="aggregator", node_id="node-a")
-    second = await try_acquire_leader(session, cluster_id="cluster-ha-test", leader_role="aggregator", node_id="node-b")
+    first = await try_acquire_leader(
+        session, cluster_id="cluster-ha-test", leader_role="aggregator", node_id="node-a"
+    )
+    second = await try_acquire_leader(
+        session, cluster_id="cluster-ha-test", leader_role="aggregator", node_id="node-b"
+    )
     valid_old = await validate_fencing_token(
         session,
         cluster_id="cluster-ha-test",
@@ -224,7 +260,9 @@ async def test_split_brain_avoided(session, monkeypatch):
 async def test_endpoints_require_admin_auth():
     app = FastAPI()
     app.include_router(commercial_ha_admin_router)
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         for path in [
             "/admin/routing/ha/leaders",
             "/admin/routing/ha/cluster-state",

@@ -1,10 +1,12 @@
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Request
 import logging
+from dataclasses import dataclass
+from typing import Any
+
+from fastapi import Request
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class InferenceContext:
@@ -18,17 +20,18 @@ class InferenceContext:
     is_stream: bool
     correlation_id: str
     request: Request
-    commercial_guardrail_context: Optional[Dict] = None
-    qos_tier: Optional[Any] = None
-    routes: Optional[List[Any]] = None
-    backend_name: Optional[str] = None
-    latency_ms: Optional[int] = None
-    status_code: Optional[int] = None
+    commercial_guardrail_context: dict | None = None
+    qos_tier: Any | None = None
+    routes: list[Any] | None = None
+    backend_name: str | None = None
+    latency_ms: int | None = None
+    status_code: int | None = None
+
 
 class InferenceInterceptor:
     async def pre_routing(self, context: InferenceContext) -> None:
         pass
-        
+
     async def post_routing(self, context: InferenceContext) -> None:
         pass
 
@@ -38,17 +41,21 @@ class InferenceInterceptor:
     async def on_error(self, context: InferenceContext, error: Exception) -> None:
         pass
 
+
 class CommercialAnalyticsInterceptor(InferenceInterceptor):
     async def post_routing(self, context: InferenceContext) -> None:
-        from app.services.routing import commercial_analytics
         from app.schemas.routing import TaskType
-        from app.services.billing.pricing_engine import calculate_customer_price, estimate_provider_cost
+        from app.services.billing.pricing_engine import (
+            calculate_customer_price,
+            estimate_provider_cost,
+        )
         from app.services.provider_classification import is_cloud_provider
-        
+        from app.services.routing import commercial_analytics
+
         routes = context.routes or []
         selected_pid = routes[0].inference_backend.provider if routes else None
         est_cost, est_rev = 0.0, 0.0
-        
+
         if selected_pid:
             est_cost_res = estimate_provider_cost(selected_pid, 100, 500)
             est_rev_res = calculate_customer_price(context.plan_code, 100, 500)
@@ -75,7 +82,9 @@ class CommercialAnalyticsInterceptor(InferenceInterceptor):
                 estimated_cost_brl=est_cost,
                 estimated_revenue_brl=est_rev,
                 estimated_margin_brl=est_rev - est_cost,
-                estimated_margin_percent=((est_rev - est_cost) / est_rev * 100) if est_rev > 0 else 0,
+                estimated_margin_percent=((est_rev - est_cost) / est_rev * 100)
+                if est_rev > 0
+                else 0,
                 ranked_routes=routes,
                 guardrail_decisions=cg_context.get("blocked_candidates", []),
                 qos_tier=context.qos_tier.name if context.qos_tier else None,
@@ -86,13 +95,20 @@ class CommercialAnalyticsInterceptor(InferenceInterceptor):
             logger.warning(f"Commercial analytics pre-routing failed: {e}")
 
     async def post_request(self, context: InferenceContext) -> None:
+        from app.services.billing.pricing_engine import (
+            calculate_customer_price,
+            estimate_provider_cost,
+        )
         from app.services.routing import commercial_analytics
-        from app.services.billing.pricing_engine import calculate_customer_price, estimate_provider_cost
-        
+
         try:
-            act_cost_res = estimate_provider_cost(context.backend_name or "unknown", context.prompt_tokens, context.completion_tokens)
-            act_rev_res = calculate_customer_price(context.plan_code, context.prompt_tokens, context.completion_tokens)
-            
+            act_cost_res = estimate_provider_cost(
+                context.backend_name or "unknown", context.prompt_tokens, context.completion_tokens
+            )
+            act_rev_res = calculate_customer_price(
+                context.plan_code, context.prompt_tokens, context.completion_tokens
+            )
+
             await commercial_analytics.update_actual_financials(
                 context.session,
                 correlation_id=context.correlation_id,
@@ -103,9 +119,10 @@ class CommercialAnalyticsInterceptor(InferenceInterceptor):
         except Exception as e:
             logger.warning(f"Commercial analytics post-request failed: {e}")
 
+
 class InterceptorChain:
     def __init__(self):
-        self.interceptors: List[InferenceInterceptor] = []
+        self.interceptors: list[InferenceInterceptor] = []
 
     def add(self, interceptor: InferenceInterceptor):
         self.interceptors.append(interceptor)
@@ -126,9 +143,11 @@ class InterceptorChain:
         for i in reversed(self.interceptors):
             await i.on_error(context, error)
 
+
 def get_commercial_interceptor_chain() -> InterceptorChain:
     chain = InterceptorChain()
     from app.core.config import get_settings
+
     if getattr(get_settings(), "commercial_routing_analytics_enabled", True):
         chain.add(CommercialAnalyticsInterceptor())
     return chain

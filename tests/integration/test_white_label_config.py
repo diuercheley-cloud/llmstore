@@ -3,9 +3,15 @@ import os
 
 CONFIG_EXAMPLE = "config/branding.example.json"
 REQUIRED_FIELDS = [
-    "product_name", "company_name", "tagline", "support_email",
-    "primary_color", "secondary_color", "footer_text",
-    "show_powered_by", "capabilities_title",
+    "product_name",
+    "company_name",
+    "tagline",
+    "support_email",
+    "primary_color",
+    "secondary_color",
+    "footer_text",
+    "show_powered_by",
+    "capabilities_title",
 ]
 
 
@@ -14,20 +20,20 @@ def test_config_example_exists():
 
 
 def test_config_example_valid_json():
-    with open(CONFIG_EXAMPLE, "r") as f:
+    with open(CONFIG_EXAMPLE) as f:
         data = json.load(f)
     assert isinstance(data, dict)
 
 
 def test_config_example_has_all_fields():
-    with open(CONFIG_EXAMPLE, "r") as f:
+    with open(CONFIG_EXAMPLE) as f:
         data = json.load(f)
     for field in REQUIRED_FIELDS:
         assert field in data, f"Missing field: {field}"
 
 
 def test_config_example_no_secrets():
-    with open(CONFIG_EXAMPLE, "r") as f:
+    with open(CONFIG_EXAMPLE) as f:
         content = f.read()
     forbidden = ["sk-", "ghp_", "-----BEGIN", "ADMIN_TOKEN=", "JWT_SECRET="]
     for pattern in forbidden:
@@ -35,24 +41,31 @@ def test_config_example_no_secrets():
 
 
 def test_config_example_hex_colors():
-    with open(CONFIG_EXAMPLE, "r") as f:
+    with open(CONFIG_EXAMPLE) as f:
         data = json.load(f)
     import re
+
     hex_pattern = re.compile(r"^#[0-9a-fA-F]{6}$")
-    assert hex_pattern.match(data["primary_color"]), f"Invalid primary_color: {data['primary_color']}"
-    assert hex_pattern.match(data["secondary_color"]), f"Invalid secondary_color: {data['secondary_color']}"
+    assert hex_pattern.match(data["primary_color"]), (
+        f"Invalid primary_color: {data['primary_color']}"
+    )
+    assert hex_pattern.match(data["secondary_color"]), (
+        f"Invalid secondary_color: {data['secondary_color']}"
+    )
 
 
 def test_config_example_show_powered_by_is_bool():
-    with open(CONFIG_EXAMPLE, "r") as f:
+    with open(CONFIG_EXAMPLE) as f:
         data = json.load(f)
     assert isinstance(data["show_powered_by"], bool)
 
 
 def test_branding_service_defaults():
     import sys
+
     sys.path.insert(0, "control_plane")
     from app.services.branding import get_safe_branding
+
     b = get_safe_branding()
     assert b["product_name"] == "Local AI Appliance"
     assert b["primary_color"] == "#c84c2f"
@@ -61,8 +74,10 @@ def test_branding_service_defaults():
 
 def test_color_validation():
     import sys
+
     sys.path.insert(0, "control_plane")
     from app.services.branding import _validate_hex_color
+
     assert _validate_hex_color("#ff0000") == "#ff0000"
     assert _validate_hex_color("#FF0000") == "#ff0000"
     assert _validate_hex_color("#aabbcc") == "#aabbcc"
@@ -74,8 +89,10 @@ def test_color_validation():
 
 def test_sanitize_string():
     import sys
+
     sys.path.insert(0, "control_plane")
     from app.services.branding import _sanitize_string
+
     assert _sanitize_string("  Hello  ") == "Hello"
     assert _sanitize_string("<script>alert(1)</script>Test") == "alert(1)Test"
     assert len(_sanitize_string("A" * 500)) <= 200
@@ -85,6 +102,7 @@ def test_show_powered_by_disabled():
     import json
     import os
     import sys
+
     sys.path.insert(0, "control_plane")
     from app.services.branding import BRANDING_CONFIG_PATH, load_branding
 

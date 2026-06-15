@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from app.core.config import get_settings
 from app.models.agents.agents import AgentDefinition, AgentRun
-from app.models.core.client import Client
 from app.models.billing.request_financial import RequestFinancial
+from app.models.core.client import Client
 from app.services.agents.agent_executor import AgentExecutor
 from app.services.billing.pricing_engine import record_request_financials
 from app.services.token_counting.token_counter import TokenCounter
@@ -27,6 +27,7 @@ async def test_token_counter_fallback_explicit(monkeypatch):
         assert res.prompt_tokens > 0
         assert res.completion_tokens > 0
 
+
 @pytest.mark.asyncio
 async def test_token_counter_openai_when_available(monkeypatch):
     """Ensures that openai tokenizer is used when tiktoken is available."""
@@ -46,6 +47,7 @@ async def test_token_counter_openai_when_available(monkeypatch):
         assert res.prompt_tokens == 3
         assert res.completion_tokens == 3
 
+
 @pytest.mark.asyncio
 async def test_budget_enforcement_uses_real_tokens(monkeypatch, session):
     """Ensures that agent run budgets use real token counting."""
@@ -61,7 +63,7 @@ async def test_budget_enforcement_uses_real_tokens(monkeypatch, session):
         monthly_token_quota=20000,
         rate_limit_per_minute=100,
         max_output_tokens=1000,
-        max_context_tokens=4096
+        max_context_tokens=4096,
     )
     session.add(client)
 
@@ -75,7 +77,7 @@ async def test_budget_enforcement_uses_real_tokens(monkeypatch, session):
         status="active",
         max_steps=5,
         max_runtime_seconds=300,
-        agent_class="restricted_class"
+        agent_class="restricted_class",
     )
     session.add(agent_def)
     await session.flush()
@@ -86,19 +88,15 @@ async def test_budget_enforcement_uses_real_tokens(monkeypatch, session):
         input_text="Hi",
         status="running",
         total_tokens=0,
-        estimated_cost_brl=0.0
+        estimated_cost_brl=0.0,
     )
     session.add(run)
     await session.commit()
 
     from app.services.agents.agent_budget import AgentBudgetService
+
     mock_class_config = {
-        "classes": {
-            "restricted_class": {
-                "max_tokens_per_run": 20,
-                "max_cost_brl_per_run": 10.0
-            }
-        }
+        "classes": {"restricted_class": {"max_tokens_per_run": 20, "max_cost_brl_per_run": 10.0}}
     }
 
     with patch.object(AgentBudgetService, "_config", mock_class_config):
@@ -112,6 +110,7 @@ async def test_budget_enforcement_uses_real_tokens(monkeypatch, session):
         is_valid, reason = await executor.budget_svc.validate_run_budget(agent_def, run)
         assert is_valid is False
         assert "Token budget exceeded" in reason
+
 
 @pytest.mark.asyncio
 async def test_billing_records_with_real_tokens(monkeypatch, session):
@@ -133,7 +132,7 @@ async def test_billing_records_with_real_tokens(monkeypatch, session):
         prompt_tokens=150,
         completion_tokens=75,
         token_count_method="openai",
-        tokens_estimated=False
+        tokens_estimated=False,
     )
     await session.commit()
 

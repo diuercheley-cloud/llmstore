@@ -15,6 +15,7 @@ async def session(isolated_db_url):
         yield s
     await engine.dispose()
 
+
 @pytest.mark.asyncio
 async def test_create_vault(session: AsyncSession):
     vault = await confidential_rag_vault.create_vault(session, "tenant-123", "Finance Vault")
@@ -22,11 +23,14 @@ async def test_create_vault(session: AsyncSession):
     assert vault.tenant_id == "tenant-123"
     assert vault.encryption_key_hash is not None
 
+
 @pytest.mark.asyncio
 async def test_add_document(session: AsyncSession):
     vault = await confidential_rag_vault.create_vault(session, "tenant-123", "HR Vault")
-    doc = await confidential_rag_vault.add_document_to_vault(session, vault.id, "Secret salary data", "restricted")
-    
+    doc = await confidential_rag_vault.add_document_to_vault(
+        session, vault.id, "Secret salary data", "restricted"
+    )
+
     assert doc.document_hash is not None
     assert doc.classification_level == "restricted"
     assert doc.expires_at is not None

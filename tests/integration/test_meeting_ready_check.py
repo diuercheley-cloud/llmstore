@@ -17,9 +17,7 @@ def test_script_executable():
 
 
 def test_help_flag():
-    result = subprocess.run(
-        [SCRIPT, "--help"], capture_output=True, text=True
-    )
+    result = subprocess.run([SCRIPT, "--help"], capture_output=True, text=True)
     assert result.returncode == 0
     assert "Usage:" in result.stdout
     assert "MEETING_READY" in result.stdout
@@ -33,9 +31,7 @@ def test_help_exits_zero():
 
 
 def test_unknown_param_fails():
-    result = subprocess.run(
-        [SCRIPT, "--unknown-param"], capture_output=True, text=True
-    )
+    result = subprocess.run([SCRIPT, "--unknown-param"], capture_output=True, text=True)
     assert result.returncode != 0
 
 
@@ -46,29 +42,40 @@ def test_base_url_flag_accepted():
     with tempfile.TemporaryDirectory() as tmpdir:
         result = subprocess.run(
             [SCRIPT, "--base-url", "http://localhost:18080", "--output-dir", tmpdir, *OFFLINE_ARGS],
-            capture_output=True, text=True, timeout=30
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
-        assert "MEETING_READY" in result.stdout or "READY_WITH_WARNINGS" in result.stdout or "NOT_READY" in result.stdout
+        assert (
+            "MEETING_READY" in result.stdout
+            or "READY_WITH_WARNINGS" in result.stdout
+            or "NOT_READY" in result.stdout
+        )
 
 
 def test_generates_json_and_md():
     with tempfile.TemporaryDirectory() as tmpdir:
         result = subprocess.run(
             [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS],
-            capture_output=True, text=True, timeout=30
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         dirs = [d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))]
         assert len(dirs) > 0, f"No timestamp directory created in {tmpdir}"
         report_dir = os.path.join(tmpdir, sorted(dirs)[-1])
-        assert os.path.exists(os.path.join(report_dir, "meeting-ready.json")), "meeting-ready.json not found"
-        assert os.path.exists(os.path.join(report_dir, "meeting-ready.md")), "meeting-ready.md not found"
+        assert os.path.exists(os.path.join(report_dir, "meeting-ready.json")), (
+            "meeting-ready.json not found"
+        )
+        assert os.path.exists(os.path.join(report_dir, "meeting-ready.md")), (
+            "meeting-ready.md not found"
+        )
 
 
 def test_json_has_valid_structure():
     with tempfile.TemporaryDirectory() as tmpdir:
         subprocess.run(
-            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS],
-            capture_output=True, timeout=30
+            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS], capture_output=True, timeout=30
         )
         dirs = sorted([d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))])
         assert len(dirs) > 0
@@ -93,8 +100,7 @@ def test_json_has_valid_structure():
 def test_json_checks_have_required_fields():
     with tempfile.TemporaryDirectory() as tmpdir:
         subprocess.run(
-            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS],
-            capture_output=True, timeout=30
+            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS], capture_output=True, timeout=30
         )
         dirs = sorted([d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))])
         assert len(dirs) > 0
@@ -112,8 +118,7 @@ def test_json_checks_have_required_fields():
 def test_json_no_secrets():
     with tempfile.TemporaryDirectory() as tmpdir:
         subprocess.run(
-            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS],
-            capture_output=True, timeout=30
+            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS], capture_output=True, timeout=30
         )
         dirs = sorted([d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))])
         assert len(dirs) > 0
@@ -136,8 +141,7 @@ def test_json_no_secrets():
 def test_md_has_required_sections():
     with tempfile.TemporaryDirectory() as tmpdir:
         subprocess.run(
-            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS],
-            capture_output=True, timeout=30
+            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS], capture_output=True, timeout=30
         )
         dirs = sorted([d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))])
         assert len(dirs) > 0
@@ -161,8 +165,7 @@ def test_md_has_required_sections():
 def test_md_limitations_psp_pix():
     with tempfile.TemporaryDirectory() as tmpdir:
         subprocess.run(
-            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS],
-            capture_output=True, timeout=30
+            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS], capture_output=True, timeout=30
         )
         dirs = sorted([d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))])
         assert len(dirs) > 0
@@ -175,16 +178,19 @@ def test_md_limitations_psp_pix():
 def test_md_fictional_data_disclaimer():
     with tempfile.TemporaryDirectory() as tmpdir:
         subprocess.run(
-            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS],
-            capture_output=True, timeout=30
+            [SCRIPT, "--output-dir", tmpdir, *OFFLINE_ARGS], capture_output=True, timeout=30
         )
         dirs = sorted([d for d in os.listdir(tmpdir) if os.path.isdir(os.path.join(tmpdir, d))])
         assert len(dirs) > 0
         report_dir = os.path.join(tmpdir, dirs[-1])
         with open(os.path.join(report_dir, "meeting-ready.md")) as f:
             content = f.read()
-        assert "fictício" in content or "ficticio" in content or "fictional" in content or "FICTICIO" in content, \
-            "Fictional data disclaimer not found in MD report"
+        assert (
+            "fictício" in content
+            or "ficticio" in content
+            or "fictional" in content
+            or "FICTICIO" in content
+        ), "Fictional data disclaimer not found in MD report"
 
 
 def test_validation_script_exists():
@@ -196,7 +202,5 @@ def test_validation_script_executable():
 
 
 def test_validation_script_help():
-    result = subprocess.run(
-        [SCRIPT, "--help"], capture_output=True, text=True
-    )
+    result = subprocess.run([SCRIPT, "--help"], capture_output=True, text=True)
     assert result.returncode == 0

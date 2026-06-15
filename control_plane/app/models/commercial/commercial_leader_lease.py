@@ -18,8 +18,12 @@ class CommercialLeaderLease(Base):
     node_id: Mapped[str] = mapped_column(sa.String(128), nullable=False, index=True)
     lease_token: Mapped[int] = mapped_column(sa.BigInteger(), nullable=False, index=True)
     lease_acquired_at: Mapped[datetime] = mapped_column(sa.DateTime(timezone=True), nullable=False)
-    lease_expires_at: Mapped[datetime] = mapped_column(sa.DateTime(timezone=True), nullable=False, index=True)
-    last_heartbeat_at: Mapped[datetime] = mapped_column(sa.DateTime(timezone=True), nullable=False, index=True)
+    lease_expires_at: Mapped[datetime] = mapped_column(
+        sa.DateTime(timezone=True), nullable=False, index=True
+    )
+    last_heartbeat_at: Mapped[datetime] = mapped_column(
+        sa.DateTime(timezone=True), nullable=False, index=True
+    )
     status: Mapped[str] = mapped_column(sa.String(32), nullable=False, default="active", index=True)
     metadata_json: Mapped[dict | None] = mapped_column(sa.JSON(), nullable=True)
 

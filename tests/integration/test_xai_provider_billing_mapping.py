@@ -1,6 +1,5 @@
 """Tests for xAI billing mapping — cost estimation, pricing engine integration."""
 
-
 from app.services.billing.pricing_engine import estimate_provider_cost
 from app.services.providers.xai_provider import XAIProvider
 

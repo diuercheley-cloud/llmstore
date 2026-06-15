@@ -5,9 +5,10 @@ import json
 import logging
 import time
 import uuid
+from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Iterable
+from typing import Any
 
 from app.core.time import utc_now
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -83,42 +84,74 @@ BENCHMARK_TASKS: dict[str, tuple[AgentEvalTask, ...]] = {
         AgentEvalTask(
             "agentbench-web-query",
             "Use a web search tool to find the current population of Tokyo and return only the number.",
-            "AgentBench", True, True, ("million",), timeout_seconds=60,
+            "AgentBench",
+            True,
+            True,
+            ("million",),
+            timeout_seconds=60,
         ),
         AgentEvalTask(
             "agentbench-code-exec",
             "Write and execute a Python script that computes the first 10 Fibonacci numbers and prints them comma-separated.",
-            "AgentBench", True, True, ("34", "55"), timeout_seconds=120,
+            "AgentBench",
+            True,
+            True,
+            ("34", "55"),
+            timeout_seconds=120,
         ),
         AgentEvalTask(
             "agentbench-planning",
             "Plan the steps needed to deploy a web application: requirements, implementation, testing, deployment, monitoring.",
-            "AgentBench", False, True, ("test", "deploy"), timeout_seconds=60,
+            "AgentBench",
+            False,
+            True,
+            ("test", "deploy"),
+            timeout_seconds=60,
         ),
         AgentEvalTask(
             "agentbench-multi-turn",
             "First, look up the current weather in London. Then, based on the weather, suggest an appropriate outdoor activity.",
-            "AgentBench", True, True, ("weather",), timeout_seconds=90,
+            "AgentBench",
+            True,
+            True,
+            ("weather",),
+            timeout_seconds=90,
         ),
         AgentEvalTask(
             "agentbench-data-analysis",
             "Load the CSV file 'data.csv' (name,age,city), count how many people are older than 30, and return the count.",
-            "AgentBench", True, True, ("2", "3"), timeout_seconds=120,
+            "AgentBench",
+            True,
+            True,
+            ("2", "3"),
+            timeout_seconds=120,
         ),
         AgentEvalTask(
             "agentbench-file-ops",
             "Create a directory called 'project', write a file 'hello.py' that prints 'Hello AgentBench', then run it.",
-            "AgentBench", True, True, ("Hello AgentBench",), timeout_seconds=60,
+            "AgentBench",
+            True,
+            True,
+            ("Hello AgentBench",),
+            timeout_seconds=60,
         ),
         AgentEvalTask(
             "agentbench-api-call",
             "Call a REST API at https://jsonplaceholder.typicode.com/todos/1 and summarize the response.",
-            "AgentBench", True, True, ("userId", "title"), timeout_seconds=60,
+            "AgentBench",
+            True,
+            True,
+            ("userId", "title"),
+            timeout_seconds=60,
         ),
         AgentEvalTask(
             "agentbench-json-transform",
             "Given the JSON {'items': [{'id': 1, 'value': 10}, {'id': 2, 'value': 20}]}, write a script to compute the sum of all values and return the result.",
-            "AgentBench", True, True, ("30",), timeout_seconds=90,
+            "AgentBench",
+            True,
+            True,
+            ("30",),
+            timeout_seconds=90,
         ),
     ),
     "GAIA": (
@@ -127,42 +160,74 @@ BENCHMARK_TASKS: dict[str, tuple[AgentEvalTask, ...]] = {
         AgentEvalTask(
             "gaia-factual-reasoning",
             "What is the world record for the fastest marathon run by a person dressed as a fruit? Provide the time and the fruit costume.",
-            "GAIA", False, True, ("hour", "minute"), timeout_seconds=120,
+            "GAIA",
+            False,
+            True,
+            ("hour", "minute"),
+            timeout_seconds=120,
         ),
         AgentEvalTask(
             "gaia-multi-source",
             "Using multiple sources, determine the population of Brazil in 2020 and the percentage living in urban areas.",
-            "GAIA", True, True, ("million", "urban"), timeout_seconds=120,
+            "GAIA",
+            True,
+            True,
+            ("million", "urban"),
+            timeout_seconds=120,
         ),
         AgentEvalTask(
             "gaia-ambiguous-query",
             "A user says 'Book a flight to Paris for next Tuesday.' What information is missing to complete this request? List all missing fields.",
-            "GAIA", False, True, ("date", "location", "return"), timeout_seconds=60,
+            "GAIA",
+            False,
+            True,
+            ("date", "location", "return"),
+            timeout_seconds=60,
         ),
         AgentEvalTask(
             "gaia-comparison",
             "Compare the GDP of Germany and France in 2023. Which country has a higher GDP and by how much?",
-            "GAIA", True, True, ("Germany", "France", "trillion"), timeout_seconds=120,
+            "GAIA",
+            True,
+            True,
+            ("Germany", "France", "trillion"),
+            timeout_seconds=120,
         ),
         AgentEvalTask(
             "gaia-temporal-reasoning",
             "If today is March 15, 2025, and a subscription renews every 45 days starting January 1, 2025, how many times has it renewed so far?",
-            "GAIA", False, True, ("renew", "times"), timeout_seconds=90,
+            "GAIA",
+            False,
+            True,
+            ("renew", "times"),
+            timeout_seconds=90,
         ),
         AgentEvalTask(
             "gaia-research-synthesis",
             "Research the three most common causes of data breaches in 2024 and summarize each in one sentence.",
-            "GAIA", True, True, ("phishing", "credential", "human"), timeout_seconds=150,
+            "GAIA",
+            True,
+            True,
+            ("phishing", "credential", "human"),
+            timeout_seconds=150,
         ),
         AgentEvalTask(
             "gaia-uncertainty",
             "A study claims that a new drug reduces symptoms by 50%. The study had 20 participants. Is this result statistically significant? Explain your reasoning and any uncertainty.",
-            "GAIA", False, True, ("significant", "uncertain"), timeout_seconds=120,
+            "GAIA",
+            False,
+            True,
+            ("significant", "uncertain"),
+            timeout_seconds=120,
         ),
         AgentEvalTask(
             "gaia-step-by-step",
             "Calculate the compound interest on $10,000 invested at 5% annually for 10 years, compounded monthly. Show your work step by step.",
-            "GAIA", False, True, ("interest", "total"), timeout_seconds=120,
+            "GAIA",
+            False,
+            True,
+            ("interest", "total"),
+            timeout_seconds=120,
         ),
     ),
     "BFCL": (
@@ -171,42 +236,78 @@ BENCHMARK_TASKS: dict[str, tuple[AgentEvalTask, ...]] = {
         AgentEvalTask(
             "bfcl-simple",
             "Call the function `get_weather(city: str)` for the city 'San Francisco' and return the result.",
-            "BFCL", True, False, ("get_weather",), expected_tool="get_weather", timeout_seconds=60,
+            "BFCL",
+            True,
+            False,
+            ("get_weather",),
+            expected_tool="get_weather",
+            timeout_seconds=60,
         ),
         AgentEvalTask(
             "bfcl-multiple-functions",
             "You have functions `create_calendar_event(title, date, time)` and `send_email(to, subject, body)`. Create a meeting for tomorrow at 10am and email the participant.",
-            "BFCL", True, False, ("create_calendar_event", "send_email"), timeout_seconds=60,
+            "BFCL",
+            True,
+            False,
+            ("create_calendar_event", "send_email"),
+            timeout_seconds=60,
         ),
         AgentEvalTask(
             "bfcl-parallel",
             "Call `get_stock_price(symbol)` for both 'AAPL' and 'GOOGL' in parallel and return both prices.",
-            "BFCL", True, False, ("AAPL", "GOOGL"), expected_tool="get_stock_price", timeout_seconds=60,
+            "BFCL",
+            True,
+            False,
+            ("AAPL", "GOOGL"),
+            expected_tool="get_stock_price",
+            timeout_seconds=60,
         ),
         AgentEvalTask(
             "bfcl-nested",
             "Using `search_database(query)` to find a user by email, then call `get_user_profile(user_id)` with the found user's ID.",
-            "BFCL", True, False, ("search_database", "get_user_profile"), timeout_seconds=60,
+            "BFCL",
+            True,
+            False,
+            ("search_database", "get_user_profile"),
+            timeout_seconds=60,
         ),
         AgentEvalTask(
             "bfcl-optional-params",
             "Call `book_hotel(city, check_in, check_out, stars=None)` for Paris with check-in March 1 and check-out March 5, with 4 stars.",
-            "BFCL", True, False, ("book_hotel",), expected_tool="book_hotel", timeout_seconds=60,
+            "BFCL",
+            True,
+            False,
+            ("book_hotel",),
+            expected_tool="book_hotel",
+            timeout_seconds=60,
         ),
         AgentEvalTask(
             "bfcl-error-handling",
             "Call `divide_numbers(a, b)` with a=10 and b=0. Handle the division error gracefully and return an error message instead of crashing.",
-            "BFCL", True, False, ("divide_numbers", "error"), timeout_seconds=60,
+            "BFCL",
+            True,
+            False,
+            ("divide_numbers", "error"),
+            timeout_seconds=60,
         ),
         AgentEvalTask(
             "bfcl-rest-api",
             "Make a POST request to create a resource: call `create_user(name, email, role)` with name='Alice', email='alice@example.com', role='admin'.",
-            "BFCL", True, False, ("create_user",), expected_tool="create_user", timeout_seconds=60,
+            "BFCL",
+            True,
+            False,
+            ("create_user",),
+            expected_tool="create_user",
+            timeout_seconds=60,
         ),
         AgentEvalTask(
             "bfcl-chained",
             "First call `search_flights(origin, destination, date)` for NYC to London on June 10. Then call `book_flight(flight_id, seat_class)` with the cheapest flight ID and 'economy' class.",
-            "BFCL", True, False, ("search_flights", "book_flight"), timeout_seconds=90,
+            "BFCL",
+            True,
+            False,
+            ("search_flights", "book_flight"),
+            timeout_seconds=90,
         ),
     ),
 }
@@ -323,7 +424,11 @@ class AgentEvaluationService:
                 elapsed = (time.perf_counter() - start) * 1000
                 output = getattr(res, "output", "") or getattr(res, "message", "") or ""
                 events = getattr(res, "events", []) or []
-                tool_calls = sum(1 for e in events if e.get("action_type") in ("tool_call", "run_shell", "run_tests"))
+                tool_calls = sum(
+                    1
+                    for e in events
+                    if e.get("action_type") in ("tool_call", "run_shell", "run_tests")
+                )
                 tokens_in = getattr(res, "tokens_in", 0) or (len(task.prompt) // 4)
                 tokens_out = getattr(res, "tokens_out", 0) or (len(output) // 4)
                 success = getattr(res, "success", False)
@@ -337,7 +442,7 @@ class AgentEvaluationService:
                     "sources": [e.get("action_type", "") for e in events],
                     "error": getattr(res, "error", None),
                 }
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 elapsed = (time.perf_counter() - start) * 1000
                 return {
                     "output": "",
@@ -391,7 +496,7 @@ class AgentEvaluationService:
         if task.benchmark == "BFCL":
             tool = task.expected_tool or "search"
             return {
-                "output": f"tool_call(function={tool}, params={{\"query\": \"example\"}})",
+                "output": f'tool_call(function={tool}, params={{"query": "example"}})',
                 "tool_calls": 1,
                 "tokens_in": 96,
                 "tokens_out": 24,
@@ -462,7 +567,7 @@ class AgentEvaluationService:
         for kw in task.expected_keywords:
             idx = output.lower().find(kw.lower())
             if idx > 0:
-                preceding = output[max(0, idx - 30):idx].lower()
+                preceding = output[max(0, idx - 30) : idx].lower()
                 if any(neg in preceding for neg in ("not ", "no ", "never", "without", "cannot")):
                     contradiction_penalty += 0.2
 
@@ -487,9 +592,7 @@ class AgentEvaluationService:
         success_rate = sum(1 for r in results if r.success) / n
 
         total_tool_calls = sum(r.tool_calls for r in results)
-        successful_tool_calls = sum(
-            1 for r in results if r.success and r.tool_calls > 0
-        )
+        successful_tool_calls = sum(1 for r in results if r.success and r.tool_calls > 0)
         tool_efficiency = successful_tool_calls / max(total_tool_calls, 1)
         avg_latency = sum(r.latency_ms for r in results) / n
         total_tokens = sum(r.tokens_in + r.tokens_out for r in results)
@@ -582,9 +685,7 @@ class AgentEvaluationService:
         lines.append(
             "| Task ID | Success | Tool calls | Tokens (in/out) | Latency (ms) | Hallucination | Error |"
         )
-        lines.append(
-            "| :--- | :---: | :---: | :---: | :---: | :---: | :--- |"
-        )
+        lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :--- |")
         for item in report.results:
             status = "PASS" if item.success else "FAIL"
             token_str = f"{item.tokens_in}/{item.tokens_out}"
@@ -626,11 +727,11 @@ th {{ background: #f0f0f0; }}
 <strong>Agent:</strong> <code>{report.agent_id}</code> &mdash;
 <strong>Model:</strong> <code>{report.model_name}</code></p>
 <div class="metrics">
-<div class="metric"><div class="metric-label">Success rate</div><div class="metric-value">{metrics['success_rate']:.2%}</div></div>
-<div class="metric"><div class="metric-label">Tool efficiency</div><div class="metric-value">{metrics['tool_efficiency']:.2%}</div></div>
-<div class="metric"><div class="metric-label">Avg latency</div><div class="metric-value">{metrics['latency_ms']:.1f} ms</div></div>
-<div class="metric"><div class="metric-label">Token cost</div><div class="metric-value">${metrics['token_cost']:.6f}</div></div>
-<div class="metric"><div class="metric-label">Hallucination</div><div class="metric-value">{metrics['hallucination_score']:.4f}</div></div>
+<div class="metric"><div class="metric-label">Success rate</div><div class="metric-value">{metrics["success_rate"]:.2%}</div></div>
+<div class="metric"><div class="metric-label">Tool efficiency</div><div class="metric-value">{metrics["tool_efficiency"]:.2%}</div></div>
+<div class="metric"><div class="metric-label">Avg latency</div><div class="metric-value">{metrics["latency_ms"]:.1f} ms</div></div>
+<div class="metric"><div class="metric-label">Token cost</div><div class="metric-value">${metrics["token_cost"]:.6f}</div></div>
+<div class="metric"><div class="metric-label">Hallucination</div><div class="metric-value">{metrics["hallucination_score"]:.4f}</div></div>
 </div>
 <h2>Per-Task Results</h2>
 <table>
@@ -639,4 +740,3 @@ th {{ background: #f0f0f0; }}
 </table>
 </body>
 </html>"""
-

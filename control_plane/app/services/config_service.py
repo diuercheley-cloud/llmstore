@@ -2,7 +2,7 @@ import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Self
+from typing import Any, Self
 
 import yaml
 from pydantic import computed_field, model_validator
@@ -11,14 +11,15 @@ from pydantic_settings import SettingsConfigDict
 from control_plane.app.core.config_agent import AgentSettings
 from control_plane.app.core.config_commercial import CommercialSettings
 from control_plane.app.core.cors import get_cors_warnings, resolve_cors_origins
-from control_plane.app.services.config.core_config import CoreConfig
-from control_plane.app.services.config.security_config import SecurityConfig
-from control_plane.app.services.config.backup_config import BackupConfig
-from control_plane.app.services.config.plugins_config import PluginsConfig
-from control_plane.app.services.config.billing_config import BillingConfig
 from control_plane.app.services.config.agents_config import AgentsConfig
+from control_plane.app.services.config.backup_config import BackupConfig
+from control_plane.app.services.config.billing_config import BillingConfig
+from control_plane.app.services.config.core_config import CoreConfig
+from control_plane.app.services.config.plugins_config import PluginsConfig
+from control_plane.app.services.config.security_config import SecurityConfig
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass(frozen=True)
 class ConfigDetail:
@@ -99,9 +100,9 @@ class BaseAppConfig(
         env_nested_delimiter="__",
     )
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     @classmethod
-    def apply_simplification_profiles(cls, data: Dict[str, Any]) -> Dict[str, Any]:
+    def apply_simplification_profiles(cls, data: dict[str, Any]) -> dict[str, Any]:
         """
         Maps high-level profiles to individual feature flags.
         """
@@ -109,7 +110,12 @@ class BaseAppConfig(
             return data
 
         def _get_val(key: str) -> Any:
-            return data.get(key) or data.get(key.lower()) or os.environ.get(key) or os.environ.get(key.lower())
+            return (
+                data.get(key)
+                or data.get(key.lower())
+                or os.environ.get(key)
+                or os.environ.get(key.lower())
+            )
 
         def _set_with_warning(key: str, value: Any, profile_name: str, profile_value: str):
             if key in data and data[key] != value:
@@ -145,19 +151,25 @@ class BaseAppConfig(
         obs_profile = _get_val("OBSERVABILITY_PROFILE") or "basic"
         if obs_profile == "off":
             _set_with_warning("OBSERVABILITY_ENABLED", False, "OBSERVABILITY_PROFILE", obs_profile)
-            _set_with_warning("AGENT_OBSERVABILITY_ENABLED", False, "OBSERVABILITY_PROFILE", obs_profile)
+            _set_with_warning(
+                "AGENT_OBSERVABILITY_ENABLED", False, "OBSERVABILITY_PROFILE", obs_profile
+            )
             _set_with_warning("PROMETHEUS_ENABLED", False, "OBSERVABILITY_PROFILE", obs_profile)
             _set_with_warning("LOKI_ENABLED", False, "OBSERVABILITY_PROFILE", obs_profile)
             _set_with_warning("TEMPO_ENABLED", False, "OBSERVABILITY_PROFILE", obs_profile)
         elif obs_profile == "basic":
             _set_with_warning("OBSERVABILITY_ENABLED", True, "OBSERVABILITY_PROFILE", obs_profile)
-            _set_with_warning("AGENT_OBSERVABILITY_ENABLED", True, "OBSERVABILITY_PROFILE", obs_profile)
+            _set_with_warning(
+                "AGENT_OBSERVABILITY_ENABLED", True, "OBSERVABILITY_PROFILE", obs_profile
+            )
             _set_with_warning("PROMETHEUS_ENABLED", True, "OBSERVABILITY_PROFILE", obs_profile)
             _set_with_warning("LOKI_ENABLED", False, "OBSERVABILITY_PROFILE", obs_profile)
             _set_with_warning("TEMPO_ENABLED", False, "OBSERVABILITY_PROFILE", obs_profile)
         elif obs_profile == "full":
             _set_with_warning("OBSERVABILITY_ENABLED", True, "OBSERVABILITY_PROFILE", obs_profile)
-            _set_with_warning("AGENT_OBSERVABILITY_ENABLED", True, "OBSERVABILITY_PROFILE", obs_profile)
+            _set_with_warning(
+                "AGENT_OBSERVABILITY_ENABLED", True, "OBSERVABILITY_PROFILE", obs_profile
+            )
             _set_with_warning("PROMETHEUS_ENABLED", True, "OBSERVABILITY_PROFILE", obs_profile)
             _set_with_warning("LOKI_ENABLED", True, "OBSERVABILITY_PROFILE", obs_profile)
             _set_with_warning("TEMPO_ENABLED", True, "OBSERVABILITY_PROFILE", obs_profile)
@@ -166,16 +178,28 @@ class BaseAppConfig(
         comm_profile = _get_val("COMMERCIAL_PROFILE") or "off"
         if comm_profile == "off":
             _set_with_warning("CLOUD_PROVIDERS_ENABLED", False, "COMMERCIAL_PROFILE", comm_profile)
-            _set_with_warning("COMMERCIAL_GUARDRAILS_ENABLED", False, "COMMERCIAL_PROFILE", comm_profile)
-            _set_with_warning("PAYMENT_PROCESSING_ENABLED", False, "COMMERCIAL_PROFILE", comm_profile)
+            _set_with_warning(
+                "COMMERCIAL_GUARDRAILS_ENABLED", False, "COMMERCIAL_PROFILE", comm_profile
+            )
+            _set_with_warning(
+                "PAYMENT_PROCESSING_ENABLED", False, "COMMERCIAL_PROFILE", comm_profile
+            )
         elif comm_profile == "billing":
             _set_with_warning("CLOUD_PROVIDERS_ENABLED", True, "COMMERCIAL_PROFILE", comm_profile)
-            _set_with_warning("COMMERCIAL_GUARDRAILS_ENABLED", True, "COMMERCIAL_PROFILE", comm_profile)
-            _set_with_warning("PAYMENT_PROCESSING_ENABLED", False, "COMMERCIAL_PROFILE", comm_profile)
+            _set_with_warning(
+                "COMMERCIAL_GUARDRAILS_ENABLED", True, "COMMERCIAL_PROFILE", comm_profile
+            )
+            _set_with_warning(
+                "PAYMENT_PROCESSING_ENABLED", False, "COMMERCIAL_PROFILE", comm_profile
+            )
         elif comm_profile == "billing_payments":
             _set_with_warning("CLOUD_PROVIDERS_ENABLED", True, "COMMERCIAL_PROFILE", comm_profile)
-            _set_with_warning("COMMERCIAL_GUARDRAILS_ENABLED", True, "COMMERCIAL_PROFILE", comm_profile)
-            _set_with_warning("PAYMENT_PROCESSING_ENABLED", True, "COMMERCIAL_PROFILE", comm_profile)
+            _set_with_warning(
+                "COMMERCIAL_GUARDRAILS_ENABLED", True, "COMMERCIAL_PROFILE", comm_profile
+            )
+            _set_with_warning(
+                "PAYMENT_PROCESSING_ENABLED", True, "COMMERCIAL_PROFILE", comm_profile
+            )
 
         # 4. Map SECURITY_PROFILE
         sec_profile = _get_val("SECURITY_PROFILE") or "local"
@@ -197,12 +221,18 @@ class BaseAppConfig(
 
         # 5. Invalid Combinations Validation
         if comm_profile != "off" and sec_profile == "local":
-            raise ValueError(f"Incompatible Profiles: COMMERCIAL_PROFILE='{comm_profile}' requires SECURITY_PROFILE='standard' or 'enterprise' (current: '{sec_profile}').")
-        
-        if tool_set == "full" and sec_profile == "local":
-            raise ValueError(f"Incompatible Profiles: AGENT_TOOL_SET='full' (includes Shell access) requires SECURITY_PROFILE='standard' or 'enterprise' (current: '{sec_profile}').")
+            raise ValueError(
+                f"Incompatible Profiles: COMMERCIAL_PROFILE='{comm_profile}' requires SECURITY_PROFILE='standard' or 'enterprise' (current: '{sec_profile}')."
+            )
 
-        local_appliance_mode = data.get("LOCAL_APPLIANCE_MODE", data.get("local_appliance_mode", False))
+        if tool_set == "full" and sec_profile == "local":
+            raise ValueError(
+                f"Incompatible Profiles: AGENT_TOOL_SET='full' (includes Shell access) requires SECURITY_PROFILE='standard' or 'enterprise' (current: '{sec_profile}')."
+            )
+
+        local_appliance_mode = data.get(
+            "LOCAL_APPLIANCE_MODE", data.get("local_appliance_mode", False)
+        )
         if local_appliance_mode:
             data["LOCALHOST_MODE"] = True
             data["PUBLIC_EXPOSURE"] = False
@@ -211,28 +241,51 @@ class BaseAppConfig(
 
         return data
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_sensitive_fields(self) -> Self:
         sensitive_fields = [
-            "jwt_secret", "admin_token", "pinecone_api_key", "sendgrid_api_key",
-            "fcm_api_key", "stripe_secret_key", "stripe_webhook_secret",
-            "openai_api_key", "anthropic_api_key", "deepseek_api_key",
-            "openrouter_api_key", "gemini_api_key", "aws_secret_access_key",
-            "azure_openai_api_key", "mistral_api_key", "cohere_api_key",
-            "groq_api_key", "together_api_key", "perplexity_api_key",
-            "replicate_api_key", "xai_api_key", "fireworks_api_key",
-            "ai21_api_key", "oauth_google_client_secret", "oauth_github_client_secret",
-            "enterprise_sso_azure_client_secret", "enterprise_sso_okta_client_secret",
-            "vault_token", "a2a_api_key"
+            "jwt_secret",
+            "admin_token",
+            "pinecone_api_key",
+            "sendgrid_api_key",
+            "fcm_api_key",
+            "stripe_secret_key",
+            "stripe_webhook_secret",
+            "openai_api_key",
+            "anthropic_api_key",
+            "deepseek_api_key",
+            "openrouter_api_key",
+            "gemini_api_key",
+            "aws_secret_access_key",
+            "azure_openai_api_key",
+            "mistral_api_key",
+            "cohere_api_key",
+            "groq_api_key",
+            "together_api_key",
+            "perplexity_api_key",
+            "replicate_api_key",
+            "xai_api_key",
+            "fireworks_api_key",
+            "ai21_api_key",
+            "oauth_google_client_secret",
+            "oauth_github_client_secret",
+            "enterprise_sso_azure_client_secret",
+            "enterprise_sso_okta_client_secret",
+            "vault_token",
+            "a2a_api_key",
         ]
 
-        is_production = getattr(self, "app_env", "local") in ["production", "enterprise-production", "local-production"]
+        is_production = getattr(self, "app_env", "local") in [
+            "production",
+            "enterprise-production",
+            "local-production",
+        ]
         insecure_defaults = [
-            "change-me-at-all-costs", 
-            "default-admin-token", 
-            "ChangeMe_ProdAdminToken_2026!", 
+            "change-me-at-all-costs",
+            "default-admin-token",
+            "ChangeMe_ProdAdminToken_2026!",
             "QuickstartAdminToken-ChangeMe-1234",
-            "quickstart-jwt-secret-change-me"
+            "quickstart-jwt-secret-change-me",
         ]
 
         for field in sensitive_fields:
@@ -241,13 +294,19 @@ class BaseAppConfig(
                 if isinstance(value, str) and value:
                     if value in insecure_defaults:
                         if is_production:
-                            raise RuntimeError(f"SECURITY BREACH: {field.upper()} is using an insecure default value in a production environment ({self.app_env}).")
+                            raise RuntimeError(
+                                f"SECURITY BREACH: {field.upper()} is using an insecure default value in a production environment ({self.app_env})."
+                            )
                         else:
-                            raise ValueError(f"{field.upper()}: Default value is insecure; set a secure, unique value.")
+                            raise ValueError(
+                                f"{field.upper()}: Default value is insecure; set a secure, unique value."
+                            )
                     if field == "jwt_secret" and len(value) < 32:
                         raise ValueError("JWT_SECRET is too short. Minimum 32 characters required.")
                     if is_production and len(value) < 32:
-                        raise RuntimeError(f"SECURITY BREACH: {field.upper()} is too short for production. Minimum 32 characters required.")
+                        raise RuntimeError(
+                            f"SECURITY BREACH: {field.upper()} is too short for production. Minimum 32 characters required."
+                        )
         return self
 
     @computed_field
@@ -257,24 +316,21 @@ class BaseAppConfig(
 
     @computed_field
     @property
-    def cors_origins(self) -> List[str]:
+    def cors_origins(self) -> list[str]:
         return resolve_cors_origins(
             self.cors_allow_origins,
             self.app_public_url,
             self.localhost_mode,
-            self.local_appliance_mode
+            self.local_appliance_mode,
         )
 
     @computed_field
     @property
-    def cors_warnings(self) -> List[dict[str, str]]:
-        return get_cors_warnings(
-            self.cors_allow_origins,
-            self.local_appliance_mode
-        )
+    def cors_warnings(self) -> list[dict[str, str]]:
+        return get_cors_warnings(self.cors_allow_origins, self.local_appliance_mode)
 
 
-def load_config_profile(profile: str = "lite") -> Dict[str, Any]:
+def load_config_profile(profile: str = "lite") -> dict[str, Any]:
     candidates = [
         Path(__file__).resolve().parents[3] / "config" / "profiles",
         Path("/config/profiles"),
@@ -282,7 +338,7 @@ def load_config_profile(profile: str = "lite") -> Dict[str, Any]:
     for config_dir in candidates:
         profile_path = config_dir / f"{profile}.yaml"
         if profile_path.exists():
-            with open(profile_path, "r", encoding="utf-8") as f:
+            with open(profile_path, encoding="utf-8") as f:
                 return yaml.safe_load(f) or {}
     raise ValueError(f"Unknown operational profile: {profile}")
 
@@ -291,14 +347,14 @@ def _resolve_file_secret(value: str) -> str:
     """Read secret from file if the path exists."""
     if os.path.isfile(value):
         try:
-            with open(value, "r", encoding="utf-8") as f:
+            with open(value, encoding="utf-8") as f:
                 return f.read().strip()
         except Exception:
             pass
     return value
 
 
-def _profile_settings(profile_config: Dict[str, Any]) -> Dict[str, Any]:
+def _profile_settings(profile_config: dict[str, Any]) -> dict[str, Any]:
     settings = profile_config.get("settings", profile_config)
     if not isinstance(settings, dict):
         raise ValueError("Operational profile settings must be a mapping")
@@ -306,18 +362,18 @@ def _profile_settings(profile_config: Dict[str, Any]) -> Dict[str, Any]:
     # environment_keys includes both real env vars and keys from .env files
     # We need to check for _FILE counterparts and resolve them
     env_keys = set(os.environ) | _read_dotenv_keys()
-    
+
     # Pre-resolve secrets for Pydantic
     for key in list(env_keys):
         if key.endswith("_FILE"):
             base_key = key[:-5]
-            # If ADMIN_TOKEN_FILE exists but ADMIN_TOKEN doesn't in os.environ, 
+            # If ADMIN_TOKEN_FILE exists but ADMIN_TOKEN doesn't in os.environ,
             # we should put the resolved value into os.environ so Pydantic sees it via AliasChoices.
-            # However, pydantic-settings handles env vars directly. 
+            # However, pydantic-settings handles env vars directly.
             # If we have ADMIN_TOKEN_FILE in os.environ, Pydantic's AliasChoices will pick it up
             # but it will be the PATH, not the CONTENT.
             # So we MUST resolve it and put it in os.environ or pass it to BaseAppConfig.
-            
+
             file_path = os.environ.get(key) or _read_dotenv_value(key)
             if file_path:
                 secret_value = _resolve_file_secret(file_path)
@@ -325,11 +381,7 @@ def _profile_settings(profile_config: Dict[str, Any]) -> Dict[str, Any]:
                 if base_key not in os.environ:
                     os.environ[base_key] = secret_value
 
-    return {
-        key: value
-        for key, value in settings.items()
-        if key not in env_keys
-    }
+    return {key: value for key, value in settings.items() if key not in env_keys}
 
 
 class ConfigService:
@@ -344,9 +396,9 @@ class ConfigService:
             or "lite"
         )
         self.profile_config = load_config_profile(self.profile)
-        self._runtime_overrides: Dict[str, Any] = {}
+        self._runtime_overrides: dict[str, Any] = {}
         self._feature_flags = self.profile_config.get("features", {})
-        self._file_configs: Dict[str, Dict[str, Any]] = {}
+        self._file_configs: dict[str, dict[str, Any]] = {}
         settings = _profile_settings(self.profile_config)
         settings.setdefault("OPERATIONAL_PROFILE", self.profile)
         self.settings = BaseAppConfig(**settings)
@@ -360,7 +412,7 @@ class ConfigService:
     def _file_value(self, key: str) -> tuple[Any, str] | None:
         normalized = key.lower()
 
-        def visit(mapping: Dict[str, Any], prefix: str = "") -> Any:
+        def visit(mapping: dict[str, Any], prefix: str = "") -> Any:
             for name, value in mapping.items():
                 path = f"{prefix}_{name}".strip("_").lower()
                 if path == normalized:
@@ -383,8 +435,11 @@ class ConfigService:
             return ConfigDetail(self._runtime_overrides[normalized], "runtime")
         if normalized in os.environ:
             field_name = next(
-                (name for name, field in type(self.settings).model_fields.items()
-                 if (field.alias or name.upper()) == normalized),
+                (
+                    name
+                    for name, field in type(self.settings).model_fields.items()
+                    if (field.alias or name.upper()) == normalized
+                ),
                 None,
             )
             if field_name:
@@ -399,37 +454,45 @@ class ConfigService:
         if file_value:
             return ConfigDetail(*file_value)
         field_name = next(
-            (name for name, field in type(self.settings).model_fields.items()
-             if (field.alias or name.upper()) == normalized),
+            (
+                name
+                for name, field in type(self.settings).model_fields.items()
+                if (field.alias or name.upper()) == normalized
+            ),
             None,
         )
         if field_name:
             return ConfigDetail(getattr(self.settings, field_name), "default")
         return ConfigDetail(None, "default")
 
-    def get_effective_config(self, *, redact: bool = True) -> List[Dict[str, Any]]:
-        keys = {
-            (field.alias or name.upper())
-            for name, field in type(self.settings).model_fields.items()
-        } | set(self._runtime_overrides) | set(self._feature_flags)
+    def get_effective_config(self, *, redact: bool = True) -> list[dict[str, Any]]:
+        keys = (
+            {
+                (field.alias or name.upper())
+                for name, field in type(self.settings).model_fields.items()
+            }
+            | set(self._runtime_overrides)
+            | set(self._feature_flags)
+        )
         result = []
         for key in sorted(keys):
             detail = self.get_detailed(key)
             value = detail.value
-            if redact and any(marker in key for marker in ("PASSWORD", "SECRET", "TOKEN", "API_KEY")) and value:
+            if (
+                redact
+                and any(marker in key for marker in ("PASSWORD", "SECRET", "TOKEN", "API_KEY"))
+                and value
+            ):
                 value = "********"
             result.append({"key": key, "value": value, "source": detail.source})
         return result
 
-    def get_profile_summary(self) -> Dict[str, Any]:
+    def get_profile_summary(self) -> dict[str, Any]:
         features = self.profile_config.get("features", {})
         if not isinstance(features, dict):
             raise ValueError("Operational profile features must be a mapping")
 
-        normalized_features = {
-            str(name): bool(enabled)
-            for name, enabled in features.items()
-        }
+        normalized_features = {str(name): bool(enabled) for name, enabled in features.items()}
         return {
             "profile": self.profile,
             "description": self.profile_config.get("description", ""),

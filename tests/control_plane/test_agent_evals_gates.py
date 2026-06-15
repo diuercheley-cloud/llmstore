@@ -51,6 +51,7 @@ async def setup_db():
         import app.models.agents.agents  # noqa
         import app.models.agents.agent_execution  # noqa
         import app.models.agents.agent_tool_execution  # noqa
+
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with engine.begin() as conn:
@@ -74,6 +75,7 @@ def eval_settings():
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 async def _create_agent_definition(db: AsyncSession) -> AgentDefinition:
     agent_def = AgentDefinition(
         id=uuid.uuid4(),
@@ -94,7 +96,9 @@ async def _create_agent_definition(db: AsyncSession) -> AgentDefinition:
     return agent_def
 
 
-async def _create_registry_entry(db: AsyncSession, name: str = None, owner: str = "test-owner") -> AgentRegistryEntry:
+async def _create_registry_entry(
+    db: AsyncSession, name: str = None, owner: str = "test-owner"
+) -> AgentRegistryEntry:
     entry = AgentRegistryEntry(
         id=uuid.uuid4(),
         agent_id=uuid.uuid4(),
@@ -135,9 +139,9 @@ async def _create_eval_suite_and_run(
         case = AgentEvalCase(
             id=uuid.uuid4(),
             suite_id=suite.id,
-            name=f"Case {i+1}",
-            input_text=f"Test input {i+1}",
-            input_hash=f"hash-{i+1}",
+            name=f"Case {i + 1}",
+            input_text=f"Test input {i + 1}",
+            input_hash=f"hash-{i + 1}",
             assertions=[{"type": "final_answer_contains", "value": "answer"}],
             created_at=utc_now(),
         )
@@ -168,7 +172,9 @@ async def _create_eval_suite_and_run(
             case_id=case.id,
             passed=passed,
             score=1.0 if passed else 0.0,
-            assertion_results=[{"type": "final_answer_contains", "passed": passed, "message": "ok"}],
+            assertion_results=[
+                {"type": "final_answer_contains", "passed": passed, "message": "ok"}
+            ],
             latency_ms=latency,
             total_tokens=100,
             total_cost_brl=cost / total_count,
@@ -180,7 +186,9 @@ async def _create_eval_suite_and_run(
     return eval_run
 
 
-async def _set_baseline(db: AsyncSession, agent_id: uuid.UUID, eval_run: AgentEvalRun, stale: bool = False) -> AgentEvalBaseline:
+async def _set_baseline(
+    db: AsyncSession, agent_id: uuid.UUID, eval_run: AgentEvalRun, stale: bool = False
+) -> AgentEvalBaseline:
     pass_rate = eval_run.passed_count / eval_run.total_count if eval_run.total_count > 0 else 0.0
     baseline = AgentEvalBaseline(
         id=uuid.uuid4(),
@@ -203,6 +211,7 @@ async def _set_baseline(db: AsyncSession, agent_id: uuid.UUID, eval_run: AgentEv
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_activation_without_baseline_fails(eval_settings):
@@ -261,11 +270,15 @@ async def test_regression_blocks_promotion_gate(eval_settings):
         agent_def = await _create_agent_definition(db)
 
         # Create passing baseline run
-        baseline_run = await _create_eval_suite_and_run(db, agent_def.id, passed=True, total_count=4)
+        baseline_run = await _create_eval_suite_and_run(
+            db, agent_def.id, passed=True, total_count=4
+        )
         await _set_baseline(db, entry.id, baseline_run)
 
         # Create new run that regresses (fewer passes)
-        regressed_run = await _create_eval_suite_and_run(db, agent_def.id, passed=False, total_count=4)
+        regressed_run = await _create_eval_suite_and_run(
+            db, agent_def.id, passed=False, total_count=4
+        )
 
         # Run promotion gate
         gate_svc = EvalGatesService(db)
@@ -353,7 +366,9 @@ async def test_secret_leak_detection_fails_gate(eval_settings):
             case_id=case.id,
             passed=True,
             score=1.0,
-            assertion_results=[{"type": "output", "passed": True, "message": "Contains SECRET_KEY_VALUE here"}],
+            assertion_results=[
+                {"type": "output", "passed": True, "message": "Contains SECRET_KEY_VALUE here"}
+            ],
             latency_ms=50,
             total_cost_brl=0.5,
         )
@@ -380,12 +395,15 @@ async def test_mock_provider_default(eval_settings):
 
         service = AgentEvalService(db)
         suite = await service.create_suite(agent_def.id, "Mock Provider Test")
-        await service.create_case(suite.id, {
-            "name": "Basic case",
-            "input_text": "Hello",
-            "assertions": [{"type": "final_answer_contains", "value": "mock"}],
-            "tags": ["auto_satisfy"],
-        })
+        await service.create_case(
+            suite.id,
+            {
+                "name": "Basic case",
+                "input_text": "Hello",
+                "assertions": [{"type": "final_answer_contains", "value": "mock"}],
+                "tags": ["auto_satisfy"],
+            },
+        )
 
         # Run with default (no paid provider)
         eval_run = await service.run_eval_suite(suite.id, allow_paid_provider=False)
@@ -403,7 +421,11 @@ async def test_dataset_version_immutability(eval_settings):
         dataset = await service.create_dataset(entry.id, "Immutability Test")
 
         cases_json = [
-            {"name": "Case 1", "input_text": "test", "assertions": [{"type": "final_answer_contains", "value": "ok"}]}
+            {
+                "name": "Case 1",
+                "input_text": "test",
+                "assertions": [{"type": "final_answer_contains", "value": "ok"}],
+            }
         ]
 
         # First creation succeeds
@@ -473,7 +495,9 @@ async def test_promotion_gate_passes_all_green(eval_settings):
     async with SessionLocal() as db:
         entry = await _create_registry_entry(db)
         agent_def = await _create_agent_definition(db)
-        eval_run = await _create_eval_suite_and_run(db, agent_def.id, passed=True, cost=1.0, latency=50)
+        eval_run = await _create_eval_suite_and_run(
+            db, agent_def.id, passed=True, cost=1.0, latency=50
+        )
 
         # Set baseline
         await _set_baseline(db, entry.id, eval_run)

@@ -1,6 +1,5 @@
 import logging
 import uuid
-from typing import Optional
 
 from app.models.agents.agent_service import AgentServiceTier, AgentServiceUsage
 from app.services.agents.wallets.agent_wallet import AgentWalletService
@@ -27,9 +26,27 @@ class AgentUsageMeter:
         if tier:
             return tier
         defaults = {
-            "free": {"rate_limit_per_minute": 10, "monthly_run_limit": 100, "price_per_run_brl": 0.0, "price_per_1k_tokens_brl": 0.0, "monthly_fee_brl": 0.0},
-            "pro": {"rate_limit_per_minute": 60, "monthly_run_limit": 10000, "price_per_run_brl": 0.01, "price_per_1k_tokens_brl": 0.02, "monthly_fee_brl": 29.0},
-            "enterprise": {"rate_limit_per_minute": 300, "monthly_run_limit": 100000, "price_per_run_brl": 0.005, "price_per_1k_tokens_brl": 0.01, "monthly_fee_brl": 99.0},
+            "free": {
+                "rate_limit_per_minute": 10,
+                "monthly_run_limit": 100,
+                "price_per_run_brl": 0.0,
+                "price_per_1k_tokens_brl": 0.0,
+                "monthly_fee_brl": 0.0,
+            },
+            "pro": {
+                "rate_limit_per_minute": 60,
+                "monthly_run_limit": 10000,
+                "price_per_run_brl": 0.01,
+                "price_per_1k_tokens_brl": 0.02,
+                "monthly_fee_brl": 29.0,
+            },
+            "enterprise": {
+                "rate_limit_per_minute": 300,
+                "monthly_run_limit": 100000,
+                "price_per_run_brl": 0.005,
+                "price_per_1k_tokens_brl": 0.01,
+                "monthly_fee_brl": 99.0,
+            },
         }
         cfg = defaults.get(name, defaults["free"])
         tier = AgentServiceTier(name=name, **cfg)
@@ -89,7 +106,7 @@ class AgentUsageMeter:
     async def get_monthly_usage(
         self,
         tenant_id: str,
-        agent_id: Optional[uuid.UUID] = None,
+        agent_id: uuid.UUID | None = None,
     ) -> dict:
         stmt = select(
             func.count(AgentServiceUsage.id),

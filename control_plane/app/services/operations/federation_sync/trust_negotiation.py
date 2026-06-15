@@ -6,7 +6,9 @@ from app.services.operations.federation_sync.hash_utils import compute_negotiati
 
 
 class FederationTrustNegotiationService:
-    def negotiate(self, source_environment: Any, target_environment: Any) -> FederationTrustNegotiation:
+    def negotiate(
+        self, source_environment: Any, target_environment: Any
+    ) -> FederationTrustNegotiation:
         requirements = self.evaluate_trust_requirements(source_environment, target_environment)
         logical_payload = {
             "client_id": str(source_environment.client_id),
@@ -33,7 +35,9 @@ class FederationTrustNegotiationService:
     def validate_negotiation(self, negotiation: FederationTrustNegotiation) -> dict[str, Any]:
         accepted = negotiation.negotiation_status == "accepted"
         return {
-            "valid": accepted and negotiation.offline_verification_required and negotiation.replay_verification_required,
+            "valid": accepted
+            and negotiation.offline_verification_required
+            and negotiation.replay_verification_required,
             "accepted": accepted,
             "placeholder_trust_only": True,
             "signature_is_real_trust": False,
@@ -48,7 +52,11 @@ class FederationTrustNegotiationService:
                 "replay_verification_required": True,
                 "offline_verification_required": True,
             }
-        level = source.trust_level if TRUST_SCORES[source.trust_level] <= TRUST_SCORES[target.trust_level] else target.trust_level
+        level = (
+            source.trust_level
+            if TRUST_SCORES[source.trust_level] <= TRUST_SCORES[target.trust_level]
+            else target.trust_level
+        )
         if "verified" in {source.trust_level, target.trust_level}:
             level = "verified"
         return {

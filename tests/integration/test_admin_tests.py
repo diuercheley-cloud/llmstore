@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 async def client(isolated_db_url, fake_redis):
     engine = create_async_engine(isolated_db_url)
     TestingSessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-    
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -31,19 +31,22 @@ async def client(isolated_db_url, fake_redis):
 
     app.dependency_overrides[get_db_session] = override_get_db_session
     app.dependency_overrides[get_redis] = override_get_redis
-    
+
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         yield c
-        
+
     app.dependency_overrides.clear()
+
 
 @pytest.fixture
 def admin_headers():
     return {"X-Admin-Token": get_settings().admin_token}
 
+
 @pytest.fixture
 def read_headers():
     return {"X-Admin-Token": get_settings().admin_read_token or get_settings().admin_token}
+
 
 @pytest.mark.asyncio
 async def test_admin_tests_page_html(client):
@@ -51,6 +54,7 @@ async def test_admin_tests_page_html(client):
     assert response.status_code == 200
     assert "text/html" in response.headers.get("content-type", "")
     assert "Admin Tests - LLM Inference Stack" in response.text
+
 
 @pytest.mark.asyncio
 async def test_admin_tests_system_resources(client, admin_headers):
@@ -62,33 +66,41 @@ async def test_admin_tests_system_resources(client, admin_headers):
     assert "gpu" in data
     assert "available" in data["gpu"]
 
+
 @pytest.mark.asyncio
 async def test_admin_tests_user_not_found(client, admin_headers):
     fake_id = str(uuid.uuid4())
     response = await client.get(f"/admin/tests/users/{fake_id}", headers=admin_headers)
     assert response.status_code == 404
 
+
 @pytest.mark.asyncio
 async def test_admin_tests_set_quota_negative(client, admin_headers):
     fake_id = str(uuid.uuid4())
-    response = await client.post(f"/admin/tests/users/{fake_id}/quota/set", json={"daily_quota": -1}, headers=admin_headers)
+    response = await client.post(
+        f"/admin/tests/users/{fake_id}/quota/set", json={"daily_quota": -1}, headers=admin_headers
+    )
     assert response.status_code in [400, 404]
+
 
 @pytest.mark.asyncio
 async def test_chat_completions_401_no_token(client):
     response = await client.post("/v1/chat/completions", json={"model": "gemma", "messages": []})
     assert response.status_code == 401
 
+
 @pytest.mark.asyncio
 async def test_audit_logs_unauthorized(client):
     response = await client.get("/admin/tests/audit")
     assert response.status_code == 401
+
 
 @pytest.mark.asyncio
 async def test_audit_logs_authorized(client, admin_headers):
     response = await client.get("/admin/tests/audit", headers=admin_headers)
     assert response.status_code == 200
     assert isinstance(response.json(), list)
+
 
 @pytest.mark.asyncio
 async def test_auth_whoami(client, admin_headers):
@@ -97,6 +109,7 @@ async def test_auth_whoami(client, admin_headers):
     data = response.json()
     assert data["authenticated"] is True
     assert "role" in data
+
 
 @pytest.mark.asyncio
 async def test_openrouter_backend_status_returns_backend_url(client, admin_headers):
@@ -122,7 +135,9 @@ async def test_openrouter_backend_status_returns_backend_url(client, admin_heade
 
 
 @pytest.mark.asyncio
-async def test_openrouter_configure_reassigns_alias_when_model_id_already_exists(client, admin_headers, monkeypatch):
+async def test_openrouter_configure_reassigns_alias_when_model_id_already_exists(
+    client, admin_headers, monkeypatch
+):
     async def fake_fetch_metadata(model_id: str):
         return {}
 
@@ -199,12 +214,10 @@ async def test_openrouter_configure_reassigns_alias_when_model_id_already_exists
         assert stale_alias is not None
         assert stale_alias.model_alias is None
 
-        route = (
-            await session.execute(
-                select(ModelBackendRoute).where(
-                    ModelBackendRoute.model_registry_id == target.id,
-                    ModelBackendRoute.inference_backend_id == backend.id,
-                )
+        route = await session.execute(
+            select(ModelBackendRoute).where(
+                ModelBackendRoute.model_registry_id == target.id,
+                ModelBackendRoute.inference_backend_id == backend.id,
             )
         )
         assert route.scalars().first() is not None

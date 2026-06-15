@@ -26,10 +26,14 @@ def upgrade() -> None:
         sa.Column("client_id", _uuid_type(), nullable=True),
         sa.Column("vault_name", sa.String(length=255), nullable=False),
         sa.Column("vault_mode", sa.String(length=32), nullable=False),
-        sa.Column("encryption_required", sa.Boolean(), nullable=False, server_default=sa.text("false")),
+        sa.Column(
+            "encryption_required", sa.Boolean(), nullable=False, server_default=sa.text("false")
+        ),
         sa.Column("retrieval_mode", sa.String(length=32), nullable=False),
         sa.Column("retention_policy_seconds", sa.Integer(), nullable=True),
-        sa.Column("immutable_audit_enabled", sa.Boolean(), nullable=False, server_default=sa.text("true")),
+        sa.Column(
+            "immutable_audit_enabled", sa.Boolean(), nullable=False, server_default=sa.text("true")
+        ),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"]),
@@ -55,10 +59,20 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["vault_id"], ["commercial_rag_vaults.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_commercial_rag_documents_vault_id", "commercial_rag_documents", ["vault_id"])
-    op.create_index("ix_commercial_rag_documents_document_hash", "commercial_rag_documents", ["document_hash"])
-    op.create_index("ix_commercial_rag_documents_classification", "commercial_rag_documents", ["classification"])
-    op.create_index("ix_commercial_rag_documents_ingestion_status", "commercial_rag_documents", ["ingestion_status"])
+    op.create_index(
+        "ix_commercial_rag_documents_vault_id", "commercial_rag_documents", ["vault_id"]
+    )
+    op.create_index(
+        "ix_commercial_rag_documents_document_hash", "commercial_rag_documents", ["document_hash"]
+    )
+    op.create_index(
+        "ix_commercial_rag_documents_classification", "commercial_rag_documents", ["classification"]
+    )
+    op.create_index(
+        "ix_commercial_rag_documents_ingestion_status",
+        "commercial_rag_documents",
+        ["ingestion_status"],
+    )
 
     op.create_table(
         "commercial_rag_chunks",
@@ -74,9 +88,13 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["document_id"], ["commercial_rag_documents.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_commercial_rag_chunks_document_id", "commercial_rag_chunks", ["document_id"])
+    op.create_index(
+        "ix_commercial_rag_chunks_document_id", "commercial_rag_chunks", ["document_id"]
+    )
     op.create_index("ix_commercial_rag_chunks_chunk_hash", "commercial_rag_chunks", ["chunk_hash"])
-    op.create_index("ix_commercial_rag_chunks_poisoned_flag", "commercial_rag_chunks", ["poisoned_flag"])
+    op.create_index(
+        "ix_commercial_rag_chunks_poisoned_flag", "commercial_rag_chunks", ["poisoned_flag"]
+    )
 
     op.create_table(
         "commercial_rag_access_policies",
@@ -84,18 +102,31 @@ def upgrade() -> None:
         sa.Column("vault_id", _uuid_type(), nullable=False),
         sa.Column("policy_name", sa.String(length=255), nullable=False),
         sa.Column("policy_mode", sa.String(length=32), nullable=False),
-        sa.Column("allow_cross_tenant", sa.Boolean(), nullable=False, server_default=sa.text("false")),
+        sa.Column(
+            "allow_cross_tenant", sa.Boolean(), nullable=False, server_default=sa.text("false")
+        ),
         sa.Column("require_abac", sa.Boolean(), nullable=False, server_default=sa.text("false")),
-        sa.Column("require_signed_document", sa.Boolean(), nullable=False, server_default=sa.text("false")),
-        sa.Column("require_confidential_runtime", sa.Boolean(), nullable=False, server_default=sa.text("false")),
-        sa.Column("require_trusted_model", sa.Boolean(), nullable=False, server_default=sa.text("false")),
+        sa.Column(
+            "require_signed_document", sa.Boolean(), nullable=False, server_default=sa.text("false")
+        ),
+        sa.Column(
+            "require_confidential_runtime",
+            sa.Boolean(),
+            nullable=False,
+            server_default=sa.text("false"),
+        ),
+        sa.Column(
+            "require_trusted_model", sa.Boolean(), nullable=False, server_default=sa.text("false")
+        ),
         sa.Column("max_context_chunks", sa.Integer(), nullable=False, server_default=sa.text("20")),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["vault_id"], ["commercial_rag_vaults.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_commercial_rag_access_policies_vault_id", "commercial_rag_access_policies", ["vault_id"])
+    op.create_index(
+        "ix_commercial_rag_access_policies_vault_id", "commercial_rag_access_policies", ["vault_id"]
+    )
 
     op.create_table(
         "commercial_rag_retrieval_audits",
@@ -105,7 +136,9 @@ def upgrade() -> None:
         sa.Column("request_hash", sa.String(length=128), nullable=False),
         sa.Column("retrieval_hash", sa.String(length=128), nullable=False),
         sa.Column("user_identity_hash", sa.String(length=128), nullable=True),
-        sa.Column("retrieved_chunk_count", sa.Integer(), nullable=False, server_default=sa.text("0")),
+        sa.Column(
+            "retrieved_chunk_count", sa.Integer(), nullable=False, server_default=sa.text("0")
+        ),
         sa.Column("policy_result", sa.String(length=64), nullable=False),
         sa.Column("model_id", sa.String(length=255), nullable=True),
         sa.Column("immutable_hash", sa.String(length=128), nullable=True),
@@ -114,10 +147,26 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["client_id"], ["clients.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_commercial_rag_retrieval_audits_vault_id", "commercial_rag_retrieval_audits", ["vault_id"])
-    op.create_index("ix_commercial_rag_retrieval_audits_client_id", "commercial_rag_retrieval_audits", ["client_id"])
-    op.create_index("ix_commercial_rag_retrieval_audits_request_hash", "commercial_rag_retrieval_audits", ["request_hash"])
-    op.create_index("ix_commercial_rag_retrieval_audits_immutable_hash", "commercial_rag_retrieval_audits", ["immutable_hash"])
+    op.create_index(
+        "ix_commercial_rag_retrieval_audits_vault_id",
+        "commercial_rag_retrieval_audits",
+        ["vault_id"],
+    )
+    op.create_index(
+        "ix_commercial_rag_retrieval_audits_client_id",
+        "commercial_rag_retrieval_audits",
+        ["client_id"],
+    )
+    op.create_index(
+        "ix_commercial_rag_retrieval_audits_request_hash",
+        "commercial_rag_retrieval_audits",
+        ["request_hash"],
+    )
+    op.create_index(
+        "ix_commercial_rag_retrieval_audits_immutable_hash",
+        "commercial_rag_retrieval_audits",
+        ["immutable_hash"],
+    )
 
     op.create_table(
         "commercial_rag_poisoning_alerts",
@@ -131,9 +180,21 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["vault_id"], ["commercial_rag_vaults.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_commercial_rag_poisoning_alerts_vault_id", "commercial_rag_poisoning_alerts", ["vault_id"])
-    op.create_index("ix_commercial_rag_poisoning_alerts_alert_type", "commercial_rag_poisoning_alerts", ["alert_type"])
-    op.create_index("ix_commercial_rag_poisoning_alerts_resolved", "commercial_rag_poisoning_alerts", ["resolved"])
+    op.create_index(
+        "ix_commercial_rag_poisoning_alerts_vault_id",
+        "commercial_rag_poisoning_alerts",
+        ["vault_id"],
+    )
+    op.create_index(
+        "ix_commercial_rag_poisoning_alerts_alert_type",
+        "commercial_rag_poisoning_alerts",
+        ["alert_type"],
+    )
+    op.create_index(
+        "ix_commercial_rag_poisoning_alerts_resolved",
+        "commercial_rag_poisoning_alerts",
+        ["resolved"],
+    )
 
     op.create_table(
         "commercial_rag_legal_holds",
@@ -148,9 +209,15 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["document_id"], ["commercial_rag_documents.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_commercial_rag_legal_holds_vault_id", "commercial_rag_legal_holds", ["vault_id"])
-    op.create_index("ix_commercial_rag_legal_holds_document_id", "commercial_rag_legal_holds", ["document_id"])
-    op.create_index("ix_commercial_rag_legal_holds_active", "commercial_rag_legal_holds", ["active"])
+    op.create_index(
+        "ix_commercial_rag_legal_holds_vault_id", "commercial_rag_legal_holds", ["vault_id"]
+    )
+    op.create_index(
+        "ix_commercial_rag_legal_holds_document_id", "commercial_rag_legal_holds", ["document_id"]
+    )
+    op.create_index(
+        "ix_commercial_rag_legal_holds_active", "commercial_rag_legal_holds", ["active"]
+    )
 
 
 def downgrade() -> None:

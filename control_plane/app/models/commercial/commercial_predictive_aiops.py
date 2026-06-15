@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 from app.db.base import Base
 from sqlalchemy import JSON, Boolean, Column, DateTime, Float, Integer, String
@@ -19,6 +19,7 @@ class CommercialFailurePrediction(Base):
     sovereign_mode = Column(Boolean, default=False)
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
+
 class CommercialAnomalySignal(Base):
     __tablename__ = "commercial_anomaly_signals"
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -34,6 +35,7 @@ class CommercialAnomalySignal(Base):
     sovereign_mode = Column(Boolean, default=False)
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
+
 class CommercialNodeHealthForecast(Base):
     __tablename__ = "commercial_node_health_forecasts"
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -46,6 +48,7 @@ class CommercialNodeHealthForecast(Base):
     immutable_hash = Column(String)
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
+
 class CommercialRuntimeRiskTrend(Base):
     __tablename__ = "commercial_runtime_risk_trends"
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -57,6 +60,7 @@ class CommercialRuntimeRiskTrend(Base):
     deterministic_hash = Column(String)
     immutable_hash = Column(String)
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+
 
 class CommercialAIOpsRecommendation(Base):
     __tablename__ = "commercial_aiops_recommendations"

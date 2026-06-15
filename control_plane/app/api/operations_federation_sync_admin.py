@@ -1,5 +1,5 @@
 # Owner: platform-ops
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 from app.api.dependencies import get_current_admin, get_db
@@ -69,7 +69,7 @@ class BundleExportRequest(BaseModel):
     session_id: str
     bundle_name: str
     bundle_type: str
-    parent_bundle_hash: Optional[str] = None
+    parent_bundle_hash: str | None = None
     payload: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -163,7 +163,9 @@ def _serialize_conflict(item: FederationConflictResolution) -> dict[str, Any]:
     }
 
 
-async def _get_environment(db: AsyncSession, environment_id: str, client_id: UUID) -> SovereignFederationEnvironment:
+async def _get_environment(
+    db: AsyncSession, environment_id: str, client_id: UUID
+) -> SovereignFederationEnvironment:
     environment = (
         await db.execute(
             select(SovereignFederationEnvironment).where(
@@ -177,7 +179,9 @@ async def _get_environment(db: AsyncSession, environment_id: str, client_id: UUI
     return environment
 
 
-async def _get_session(db: AsyncSession, session_id: str, client_id: UUID) -> FederationSynchronizationSession:
+async def _get_session(
+    db: AsyncSession, session_id: str, client_id: UUID
+) -> FederationSynchronizationSession:
     item = (
         await db.execute(
             select(FederationSynchronizationSession).where(
@@ -191,7 +195,9 @@ async def _get_session(db: AsyncSession, session_id: str, client_id: UUID) -> Fe
     return item
 
 
-async def _get_bundle(db: AsyncSession, bundle_id: str, client_id: UUID) -> FederationSynchronizationBundle:
+async def _get_bundle(
+    db: AsyncSession, bundle_id: str, client_id: UUID
+) -> FederationSynchronizationBundle:
     item = (
         await db.execute(
             select(FederationSynchronizationBundle).where(
@@ -236,12 +242,16 @@ async def list_environments(
     _admin: Any = Depends(get_current_admin),
 ):
     rows = (
-        await db.execute(
-            select(SovereignFederationEnvironment)
-            .where(SovereignFederationEnvironment.client_id == client_id)
-            .order_by(SovereignFederationEnvironment.created_at.desc())
+        (
+            await db.execute(
+                select(SovereignFederationEnvironment)
+                .where(SovereignFederationEnvironment.client_id == client_id)
+                .order_by(SovereignFederationEnvironment.created_at.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return [_serialize_environment(item) for item in rows]
 
 
@@ -275,12 +285,16 @@ async def list_sessions(
     _admin: Any = Depends(get_current_admin),
 ):
     rows = (
-        await db.execute(
-            select(FederationSynchronizationSession)
-            .where(FederationSynchronizationSession.client_id == client_id)
-            .order_by(FederationSynchronizationSession.created_at.desc())
+        (
+            await db.execute(
+                select(FederationSynchronizationSession)
+                .where(FederationSynchronizationSession.client_id == client_id)
+                .order_by(FederationSynchronizationSession.created_at.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return [_serialize_session(item) for item in rows]
 
 
@@ -293,13 +307,17 @@ async def get_session_detail(
 ):
     session = await _get_session(db, session_id, client_id)
     bundles_count = await db.scalar(
-        select(func.count()).select_from(FederationSynchronizationBundle).where(
+        select(func.count())
+        .select_from(FederationSynchronizationBundle)
+        .where(
             FederationSynchronizationBundle.client_id == client_id,
             FederationSynchronizationBundle.session_id == session_id,
         )
     )
     conflicts_count = await db.scalar(
-        select(func.count()).select_from(FederationConflictResolution).where(
+        select(func.count())
+        .select_from(FederationConflictResolution)
+        .where(
             FederationConflictResolution.client_id == client_id,
             FederationConflictResolution.session_id == session_id,
         )
@@ -331,7 +349,13 @@ async def export_bundle(
             parent_bundle_hash=bundle.parent_bundle_hash,
             lineage_hash=bundle.lineage_hash,
             replay_verifiable=True,
-            immutable_hash=sha256_hex({"kind": "federation_lineage_link_immutable", "bundle_id": bundle.id, "lineage_hash": bundle.lineage_hash}),
+            immutable_hash=sha256_hex(
+                {
+                    "kind": "federation_lineage_link_immutable",
+                    "bundle_id": bundle.id,
+                    "lineage_hash": bundle.lineage_hash,
+                }
+            ),
         )
     )
     await db.commit()
@@ -384,7 +408,13 @@ async def import_bundle(
         parent_bundle_hash=raw.get("parent_bundle_hash"),
         replay_hash=raw["replay_hash"],
         bundle_status="created",
-        immutable_hash=sha256_hex({"kind": "federation_bundle_import_immutable", "bundle_hash": raw["bundle_hash"], "session_id": session.id}),
+        immutable_hash=sha256_hex(
+            {
+                "kind": "federation_bundle_import_immutable",
+                "bundle_hash": raw["bundle_hash"],
+                "session_id": session.id,
+            }
+        ),
     )
     bundle._logical_payload = {
         "client_id": str(request.client_id),
@@ -421,13 +451,17 @@ async def verify_bundle(
     session = await _get_session(db, bundle.session_id, request.client_id)
     replay = REPLAY_VERIFIER.replay_bundle(bundle)
     lineage_rows = (
-        await db.execute(
-            select(FederationLineageLink).where(
-                FederationLineageLink.client_id == request.client_id,
-                FederationLineageLink.bundle_id == bundle.id,
+        (
+            await db.execute(
+                select(FederationLineageLink).where(
+                    FederationLineageLink.client_id == request.client_id,
+                    FederationLineageLink.bundle_id == bundle.id,
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     lineage = REPLAY_VERIFIER.validate_lineage(lineage_rows)
     verified = replay["match"] and lineage["valid"]
     bundle.bundle_status = "verified" if verified else "conflicted"
@@ -493,9 +527,13 @@ async def resolve_conflict(
     source = await _get_bundle(db, request.source_bundle_id, request.client_id)
     target = await _get_bundle(db, request.target_bundle_id, request.client_id)
     conflicts = CONFLICT_SERVICE.detect_conflicts(source, target)
-    matched = next((item for item in conflicts if item["conflict_type"] == request.conflict_type), None)
+    matched = next(
+        (item for item in conflicts if item["conflict_type"] == request.conflict_type), None
+    )
     if not matched:
-        raise HTTPException(status_code=400, detail="Conflict not detected for the provided bundles")
+        raise HTTPException(
+            status_code=400, detail="Conflict not detected for the provided bundles"
+        )
     resolution = CONFLICT_SERVICE.resolve_conflict(
         {
             **matched,
@@ -528,12 +566,19 @@ async def get_lineage(
 ):
     await _get_bundle(db, bundle_id, client_id)
     links = (
-        await db.execute(
-            select(FederationLineageLink)
-            .where(FederationLineageLink.client_id == client_id, FederationLineageLink.bundle_id == bundle_id)
-            .order_by(FederationLineageLink.created_at.asc())
+        (
+            await db.execute(
+                select(FederationLineageLink)
+                .where(
+                    FederationLineageLink.client_id == client_id,
+                    FederationLineageLink.bundle_id == bundle_id,
+                )
+                .order_by(FederationLineageLink.created_at.asc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {
         "bundle_id": bundle_id,
         "lineage_chain": [
@@ -559,7 +604,13 @@ async def generate_session_receipt(
     session = await _get_session(db, session_id, request.client_id)
     receipt_payload = build_sync_session_receipt(session)
     receipt = FederationSynchronizationReceipt(
-        id=sha256_hex({"kind": "federation_receipt_id", "session_id": session.id, "payload_hash": receipt_payload["payload_hash"]}),
+        id=sha256_hex(
+            {
+                "kind": "federation_receipt_id",
+                "session_id": session.id,
+                "payload_hash": receipt_payload["payload_hash"],
+            }
+        ),
         client_id=session.client_id,
         session_id=session.id,
         receipt_type=receipt_payload["receipt_type"],

@@ -1,42 +1,46 @@
 import csv
 import io
 import json
-from typing import Any, Dict, List, Optional
 
-from app.services.runtime_dependencies import get_db_session
 from app.schemas.compliance_evidence import (
-    ComplianceFramework, EvidenceCollectionRequest, EvidenceExportFormat, EvidenceItem
+    ComplianceFramework,
+    EvidenceCollectionRequest,
+    EvidenceExportFormat,
+    EvidenceItem,
 )
 from app.services.compliance.evidence.collector import ComplianceEvidenceService
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/api/admin/compliance/evidence", tags=["admin-compliance"])
 
 # In-memory store for this prototype session
-COLLECTED_EVIDENCE: List[EvidenceItem] = []
+COLLECTED_EVIDENCE: list[EvidenceItem] = []
 
-@router.get("", response_model=List[EvidenceItem])
+
+@router.get("", response_model=list[EvidenceItem])
 async def list_evidence():
     return COLLECTED_EVIDENCE
 
-@router.post("/collect", response_model=List[EvidenceItem])
+
+@router.post("/collect", response_model=list[EvidenceItem])
 async def collect_evidence(
-    request: EvidenceCollectionRequest,
-    db: AsyncSession = Depends(get_db_session)
+    request: EvidenceCollectionRequest, db: AsyncSession = Depends(get_db_session)
 ):
     service = ComplianceEvidenceService(db)
     items = await service.collect_evidence(request.frameworks)
-    
+
     if not request.dry_run:
         COLLECTED_EVIDENCE.extend(items)
-        
+
     return items
+
 
 @router.get("/export")
 async def export_evidence(
     format: EvidenceExportFormat = Query(EvidenceExportFormat.JSON),
-    db: AsyncSession = Depends(get_db_session)
+    db: AsyncSession = Depends(get_db_session),
 ):
     if not COLLECTED_EVIDENCE:
         # Collect if empty for demo purposes
@@ -51,29 +55,46 @@ async def export_evidence(
     elif format == EvidenceExportFormat.CSV:
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow([
-            "id", "framework", "control_id", "evidence_type", "source", 
-            "collected_at", "status", "content_hash", "redaction_status"
-        ])
+        writer.writerow(
+            [
+                "id",
+                "framework",
+                "control_id",
+                "evidence_type",
+                "source",
+                "collected_at",
+                "status",
+                "content_hash",
+                "redaction_status",
+            ]
+        )
         for item in COLLECTED_EVIDENCE:
-            writer.writerow([
-                item.id, item.framework, item.control_id, item.evidence_type, 
-                item.source, item.collected_at, item.status, 
-                item.content_hash, item.redaction_status
-            ])
+            writer.writerow(
+                [
+                    item.id,
+                    item.framework,
+                    item.control_id,
+                    item.evidence_type,
+                    item.source,
+                    item.collected_at,
+                    item.status,
+                    item.content_hash,
+                    item.redaction_status,
+                ]
+            )
         return Response(
-            content=output.getvalue(), 
+            content=output.getvalue(),
             media_type="text/csv",
-            headers={"Content-Disposition": "attachment; filename=compliance_evidence.csv"}
+            headers={"Content-Disposition": "attachment; filename=compliance_evidence.csv"},
         )
 
     elif format == EvidenceExportFormat.MARKDOWN:
         service = ComplianceEvidenceService(db)
         report = service.format_as_markdown(COLLECTED_EVIDENCE)
         return Response(
-            content=report, 
+            content=report,
             media_type="text/markdown",
-            headers={"Content-Disposition": "attachment; filename=compliance_report.md"}
+            headers={"Content-Disposition": "attachment; filename=compliance_report.md"},
         )
 
     raise HTTPException(status_code=400, detail="Invalid export format")

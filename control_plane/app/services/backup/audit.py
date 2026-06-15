@@ -1,8 +1,10 @@
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
+
 
 class BackupAuditEmitter:
     def __init__(self, db: AsyncSession):
@@ -21,9 +23,9 @@ class BackupAuditEmitter:
         checksum: str | None,
     ) -> None:
         try:
-            from app.services.security.immutable_audit import ImmutableAuditStore
             from app.core.time import utc_now
-            
+            from app.services.security.immutable_audit import ImmutableAuditStore
+
             payload = {
                 "actor": actor,
                 "timestamp": ImmutableAuditStore.format_timestamp(utc_now()),
@@ -35,25 +37,17 @@ class BackupAuditEmitter:
                 "checksum": checksum or "none",
             }
             await ImmutableAuditStore.write_entry(
-                db=self.db,
-                action=action,
-                actor=actor,
-                payload=payload,
-                tenant_id="default"
+                db=self.db, action=action, actor=actor, payload=payload, tenant_id="default"
             )
         except Exception as e:
             logger.error(f"Failed to write immutable audit log: {e}")
 
     async def record_admin_audit(
-        self,
-        event_type: str,
-        status: str,
-        actor: str,
-        target_id: str,
-        metadata: Dict[str, Any]
+        self, event_type: str, status: str, actor: str, target_id: str, metadata: dict[str, Any]
     ) -> None:
         try:
             from app.services.admin_rbac import record_admin_audit_event
+
             await record_admin_audit_event(
                 self.db,
                 event_type=event_type,
@@ -61,7 +55,7 @@ class BackupAuditEmitter:
                 actor_identifier=actor,
                 target_type="backup",
                 target_id=target_id,
-                metadata=metadata
+                metadata=metadata,
             )
         except Exception as e:
             logger.error(f"Failed to record admin audit event: {e}")

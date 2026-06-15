@@ -1,6 +1,6 @@
 import re
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.core.time import utc_now
 from app.models.core.mlops import MLDatasetVersion, MLTrainingJob
@@ -17,12 +17,12 @@ def sanitize_logs(log_text: str) -> str:
     # Also sk-... patterns for openai key
     patterns = [
         r'(?i)(api[-_ ]?key|secret|password|token|private[-_ ]?key|auth_token)\s*[:=]\s*["\']?[a-zA-Z0-9_\-\.\+\/]{10,}["\']?',
-        r'sk-[a-zA-Z0-9]{32,}',
-        r'Bearer\s+[a-zA-Z0-9_\-\.]+'
+        r"sk-[a-zA-Z0-9]{32,}",
+        r"Bearer\s+[a-zA-Z0-9_\-\.]+",
     ]
     sanitized = log_text
     for p in patterns:
-        sanitized = re.sub(p, r'[REDACTED_SENSITIVE_DATA]', sanitized)
+        sanitized = re.sub(p, r"[REDACTED_SENSITIVE_DATA]", sanitized)
     return sanitized
 
 
@@ -35,8 +35,8 @@ class TrainingJobRegistry:
         model_name: str,
         dataset_version_id: uuid.UUID,
         provider: str = "mock",
-        hyperparameters: Optional[Dict[str, Any]] = None,
-        admin_user_id: Optional[uuid.UUID] = None,
+        hyperparameters: dict[str, Any] | None = None,
+        admin_user_id: uuid.UUID | None = None,
     ) -> MLTrainingJob:
         # Check dataset version exists
         result = await self.session.execute(
@@ -76,13 +76,11 @@ class TrainingJobRegistry:
         self,
         job_id: uuid.UUID,
         status: str,
-        logs: Optional[str] = None,
-        output_model_id: Optional[str] = None,
-        admin_user_id: Optional[uuid.UUID] = None,
+        logs: str | None = None,
+        output_model_id: str | None = None,
+        admin_user_id: uuid.UUID | None = None,
     ) -> MLTrainingJob:
-        result = await self.session.execute(
-            select(MLTrainingJob).where(MLTrainingJob.id == job_id)
-        )
+        result = await self.session.execute(select(MLTrainingJob).where(MLTrainingJob.id == job_id))
         job = result.scalar_one_or_none()
         if not job:
             raise HTTPException(status_code=404, detail="Training job not found")
@@ -105,8 +103,6 @@ class TrainingJobRegistry:
         )
         return job
 
-    async def get_job(self, job_id: uuid.UUID) -> Optional[MLTrainingJob]:
-        result = await self.session.execute(
-            select(MLTrainingJob).where(MLTrainingJob.id == job_id)
-        )
+    async def get_job(self, job_id: uuid.UUID) -> MLTrainingJob | None:
+        result = await self.session.execute(select(MLTrainingJob).where(MLTrainingJob.id == job_id))
         return result.scalar_one_or_none()

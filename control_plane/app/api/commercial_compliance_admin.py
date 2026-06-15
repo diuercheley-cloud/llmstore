@@ -1,13 +1,12 @@
 # Owner: commercial-ops
 from __future__ import annotations
 
+import json
 import uuid
 from datetime import date, datetime
-import json
 from pathlib import Path
 from typing import Any
 
-from app.services.runtime_dependencies import get_db_session
 from app.models.commercial.commercial_compliance import (
     CommercialApprovalChain,
     CommercialControlAttestation,
@@ -46,6 +45,7 @@ from app.services.compliance.operational_controls import (
     update_control,
 )
 from app.services.routing.commercial_report_export import sanitize_report_payload
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from pydantic import BaseModel, Field
@@ -178,7 +178,13 @@ async def get_controls(
 async def post_control(payload: ControlPolicyPayload, db: AsyncSession = Depends(get_db_session)):
     item = CommercialControlPolicy(**sanitize_report_payload(payload.model_dump()))
     db.add(item)
-    await record_control_event(db, action="compliance_control_created", status="created", payload=payload.model_dump(), result={"control_policy_id": str(item.id)})
+    await record_control_event(
+        db,
+        action="compliance_control_created",
+        status="created",
+        payload=payload.model_dump(),
+        result={"control_policy_id": str(item.id)},
+    )
     await db.commit()
     await db.refresh(item)
     return item
@@ -190,7 +196,11 @@ async def get_approval_chains(
     limit: int = Query(default=100, ge=1, le=500),
     db: AsyncSession = Depends(get_db_session),
 ):
-    stmt = select(CommercialApprovalChain).order_by(desc(CommercialApprovalChain.created_at)).limit(limit)
+    stmt = (
+        select(CommercialApprovalChain)
+        .order_by(desc(CommercialApprovalChain.created_at))
+        .limit(limit)
+    )
     if status:
         stmt = stmt.where(CommercialApprovalChain.status == status)
     return list((await db.execute(stmt)).scalars().all())
@@ -203,8 +213,16 @@ async def post_approval_chain_approve(
     db: AsyncSession = Depends(get_db_session),
 ):
     try:
-        chain = await approve_action(db, chain_id=chain_id, approver=payload.actor, notes=payload.notes)
-        await record_control_event(db, action="compliance_approval_approved", status=chain.status, payload={"chain_id": str(chain_id), "actor": payload.actor}, result={"status": chain.status})
+        chain = await approve_action(
+            db, chain_id=chain_id, approver=payload.actor, notes=payload.notes
+        )
+        await record_control_event(
+            db,
+            action="compliance_approval_approved",
+            status=chain.status,
+            payload={"chain_id": str(chain_id), "actor": payload.actor},
+            result={"status": chain.status},
+        )
         await db.commit()
         await db.refresh(chain)
         return chain
@@ -219,8 +237,19 @@ async def post_approval_chain_reject(
     db: AsyncSession = Depends(get_db_session),
 ):
     try:
-        chain = await reject_action(db, chain_id=chain_id, approver=payload.actor, reason=payload.reason or payload.notes or "rejected")
-        await record_control_event(db, action="compliance_approval_rejected", status=chain.status, payload={"chain_id": str(chain_id), "actor": payload.actor}, result={"status": chain.status})
+        chain = await reject_action(
+            db,
+            chain_id=chain_id,
+            approver=payload.actor,
+            reason=payload.reason or payload.notes or "rejected",
+        )
+        await record_control_event(
+            db,
+            action="compliance_approval_rejected",
+            status=chain.status,
+            payload={"chain_id": str(chain_id), "actor": payload.actor},
+            result={"status": chain.status},
+        )
         await db.commit()
         await db.refresh(chain)
         return chain
@@ -233,7 +262,11 @@ async def get_evidence_packages(
     limit: int = Query(default=100, ge=1, le=500),
     db: AsyncSession = Depends(get_db_session),
 ):
-    stmt = select(CommercialEvidencePackage).order_by(desc(CommercialEvidencePackage.created_at)).limit(limit)
+    stmt = (
+        select(CommercialEvidencePackage)
+        .order_by(desc(CommercialEvidencePackage.created_at))
+        .limit(limit)
+    )
     return list((await db.execute(stmt)).scalars().all())
 
 
@@ -242,7 +275,9 @@ async def get_attestations(
     status: str | None = None,
     db: AsyncSession = Depends(get_db_session),
 ):
-    stmt = select(CommercialControlAttestation).order_by(desc(CommercialControlAttestation.created_at))
+    stmt = select(CommercialControlAttestation).order_by(
+        desc(CommercialControlAttestation.created_at)
+    )
     if status:
         stmt = stmt.where(CommercialControlAttestation.status == status)
     return {
@@ -254,7 +289,13 @@ async def get_attestations(
 @router.post("/attestations", status_code=201)
 async def post_attestation(payload: AttestationPayload, db: AsyncSession = Depends(get_db_session)):
     item = await create_attestation(db, **payload.model_dump())
-    await record_control_event(db, action="compliance_attestation_created", status=item.status, payload=payload.model_dump(mode="json"), result={"attestation_id": str(item.id)})
+    await record_control_event(
+        db,
+        action="compliance_attestation_created",
+        status=item.status,
+        payload=payload.model_dump(mode="json"),
+        result={"attestation_id": str(item.id)},
+    )
     await db.commit()
     await db.refresh(item)
     return item
@@ -274,7 +315,13 @@ async def get_exceptions(
 @router.post("/exceptions", status_code=201)
 async def post_exception(payload: ExceptionPayload, db: AsyncSession = Depends(get_db_session)):
     item = await open_exception(db, **payload.model_dump())
-    await record_control_event(db, action="compliance_exception_opened", status=item.status, payload=payload.model_dump(mode="json"), result={"exception_id": str(item.id)})
+    await record_control_event(
+        db,
+        action="compliance_exception_opened",
+        status=item.status,
+        payload=payload.model_dump(mode="json"),
+        result={"exception_id": str(item.id)},
+    )
     await db.commit()
     await db.refresh(item)
     return item
@@ -287,8 +334,19 @@ async def post_exception_accept(
     db: AsyncSession = Depends(get_db_session),
 ):
     try:
-        item = await accept_exception(db, exception_id=exception_id, actor=payload.actor, remediation_plan=payload.remediation_plan)
-        await record_control_event(db, action="compliance_exception_accepted", status=item.status, payload={"exception_id": str(exception_id), "actor": payload.actor}, result={"status": item.status})
+        item = await accept_exception(
+            db,
+            exception_id=exception_id,
+            actor=payload.actor,
+            remediation_plan=payload.remediation_plan,
+        )
+        await record_control_event(
+            db,
+            action="compliance_exception_accepted",
+            status=item.status,
+            payload={"exception_id": str(exception_id), "actor": payload.actor},
+            result={"status": item.status},
+        )
         await db.commit()
         await db.refresh(item)
         return item
@@ -303,8 +361,19 @@ async def post_exception_remediate(
     db: AsyncSession = Depends(get_db_session),
 ):
     try:
-        item = await remediate_exception(db, exception_id=exception_id, actor=payload.actor, remediation_plan=payload.remediation_plan)
-        await record_control_event(db, action="compliance_exception_remediated", status=item.status, payload={"exception_id": str(exception_id), "actor": payload.actor}, result={"status": item.status})
+        item = await remediate_exception(
+            db,
+            exception_id=exception_id,
+            actor=payload.actor,
+            remediation_plan=payload.remediation_plan,
+        )
+        await record_control_event(
+            db,
+            action="compliance_exception_remediated",
+            status=item.status,
+            payload={"exception_id": str(exception_id), "actor": payload.actor},
+            result={"status": item.status},
+        )
         await db.commit()
         await db.refresh(item)
         return item
@@ -321,7 +390,11 @@ async def get_audit_report(
     if format == "json":
         return JSONResponse(report)
     if format == "csv":
-        return Response(render_audit_report_csv(report), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=compliance_audit_report.csv"})
+        return Response(
+            render_audit_report_csv(report),
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=compliance_audit_report.csv"},
+        )
     return HTMLResponse(render_audit_report_html(report))
 
 
@@ -331,7 +404,9 @@ async def get_operational_controls(db: AsyncSession = Depends(get_db_session)):
 
 
 @router.post("/operational-controls", status_code=201)
-async def post_operational_control(payload: OperationalControlPayload, db: AsyncSession = Depends(get_db_session)):
+async def post_operational_control(
+    payload: OperationalControlPayload, db: AsyncSession = Depends(get_db_session)
+):
     item = await create_control(db, **payload.model_dump())
     await db.commit()
     await db.refresh(item)
@@ -355,7 +430,17 @@ async def get_operational_reviews(
     status: str | None = None,
     db: AsyncSession = Depends(get_db_session),
 ):
-    reviews = list((await db.execute(select(CommercialOperationalReview).order_by(desc(CommercialOperationalReview.created_at)))).scalars().all())
+    reviews = list(
+        (
+            await db.execute(
+                select(CommercialOperationalReview).order_by(
+                    desc(CommercialOperationalReview.created_at)
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
     if status:
         reviews = [item for item in reviews if item.status == status]
     return {
@@ -391,7 +476,17 @@ async def get_operational_evidence(
     freshness_status: str | None = None,
     db: AsyncSession = Depends(get_db_session),
 ):
-    items = list((await db.execute(select(CommercialOperationalEvidence).order_by(desc(CommercialOperationalEvidence.created_at)))).scalars().all())
+    items = list(
+        (
+            await db.execute(
+                select(CommercialOperationalEvidence).order_by(
+                    desc(CommercialOperationalEvidence.created_at)
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
     if freshness_status:
         items = [item for item in items if item.freshness_status == freshness_status]
     return {
@@ -401,7 +496,9 @@ async def get_operational_evidence(
 
 
 @router.post("/operational-controls/evidence", status_code=201)
-async def post_operational_evidence(payload: OperationalEvidencePayload, db: AsyncSession = Depends(get_db_session)):
+async def post_operational_evidence(
+    payload: OperationalEvidencePayload, db: AsyncSession = Depends(get_db_session)
+):
     item = await add_operational_evidence(db, **payload.model_dump())
     await db.commit()
     await db.refresh(item)
@@ -413,7 +510,17 @@ async def get_operational_overdue(db: AsyncSession = Depends(get_db_session)):
     stale = await detect_stale_evidence(db)
     overdue_reviews = await detect_overdue_reviews(db)
     ineffective_controls = []
-    controls = list((await db.execute(select(CommercialOperationalControl).where(CommercialOperationalControl.enabled.is_(True)))).scalars().all())
+    controls = list(
+        (
+            await db.execute(
+                select(CommercialOperationalControl).where(
+                    CommercialOperationalControl.enabled.is_(True)
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
     for control in controls:
         control = await evaluate_control_effectiveness(db, control.id)
         if control.effectiveness_status == "ineffective":
@@ -428,7 +535,17 @@ async def get_operational_overdue(db: AsyncSession = Depends(get_db_session)):
 
 @router.get("/operational-controls/effectiveness")
 async def get_operational_effectiveness(db: AsyncSession = Depends(get_db_session)):
-    controls = list((await db.execute(select(CommercialOperationalControl).order_by(CommercialOperationalControl.control_code.asc()))).scalars().all())
+    controls = list(
+        (
+            await db.execute(
+                select(CommercialOperationalControl).order_by(
+                    CommercialOperationalControl.control_code.asc()
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
     items = []
     for control in controls:
         updated = await evaluate_control_effectiveness(db, control.id)
@@ -457,11 +574,11 @@ async def get_audit_pack(
     base_path = Path("compliance/audit-packs") / standard / str(id)
     if not base_path.exists():
         raise HTTPException(status_code=404, detail="Audit pack not found")
-        
+
     # Return manifest and list of evidence files
     manifest_path = base_path / "manifest.json"
-    with open(manifest_path, "r") as f:
+    with open(manifest_path) as f:
         manifest = json.load(f)
-        
+
     files = [f.name for f in base_path.iterdir() if f.is_file()]
     return {"manifest": manifest, "files": files}

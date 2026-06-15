@@ -2,7 +2,7 @@
 import logging
 import uuid
 from datetime import timedelta
-from typing import Any, Dict
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -23,20 +23,27 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class WorkflowEngine:
     """
     Main orchestration engine for stateful workflows.
     Handles run lifecycle, persistence, and execution of workflow steps.
     Supports both legacy state machines and modern DAGs.
     """
-    
+
     def __init__(self, db: AsyncSession, worker_id: str = "default_worker"):
         self.db = db
         self.worker_id = worker_id
         self.settings = get_settings()
         self.locks = WorkflowLockManager(db)
 
-    async def create_run(self, workflow_id: uuid.UUID | None = None, workflow_definition_id: uuid.UUID | None = None, tenant_id: str = "", input_data: Dict[str, Any] = None) -> AgentWorkflowRun:
+    async def create_run(
+        self,
+        workflow_id: uuid.UUID | None = None,
+        workflow_definition_id: uuid.UUID | None = None,
+        tenant_id: str = "",
+        input_data: dict[str, Any] = None,
+    ) -> AgentWorkflowRun:
         run = AgentWorkflowRun(
             workflow_id=workflow_id,
             workflow_definition_id=workflow_definition_id,
@@ -45,13 +52,13 @@ class WorkflowEngine:
             current_state="start",
             state_data={},
             context=input_data or {},
-            next_execution_at=utc_now()
+            next_execution_at=utc_now(),
         )
         self.db.add(run)
         await self.db.commit()
         return run
 
-    def _legacy_state_machine(self, run: AgentWorkflowRun) -> Dict[str, Dict[str, Any]]:
+    def _legacy_state_machine(self, run: AgentWorkflowRun) -> dict[str, dict[str, Any]]:
         context = run.context or {}
         if context.get("requires_approval"):
             return {
@@ -75,7 +82,7 @@ class WorkflowEngine:
             "process": {"action": "complete", "result": "workflow completed"},
         }
 
-    def _resolve_state_machine(self, run: AgentWorkflowRun) -> Dict[str, Dict[str, Any]]:
+    def _resolve_state_machine(self, run: AgentWorkflowRun) -> dict[str, dict[str, Any]]:
         context = run.context or {}
         definition = context.get("state_machine")
         if isinstance(definition, dict) and definition:
@@ -92,11 +99,15 @@ class WorkflowEngine:
 
         migration = migrations.get(f"{current_version}->{target_version}")
         if not migration:
-            raise ValueError(f"No workflow migration defined for {current_version} -> {target_version}")
+            raise ValueError(
+                f"No workflow migration defined for {current_version} -> {target_version}"
+            )
 
         state_mapping = migration.get("state_mapping", {})
         if run.current_state in state_mapping:
-            state_event = WorkflowStateMachine(run).set_current_state(state_mapping[run.current_state])
+            state_event = WorkflowStateMachine(run).set_current_state(
+                state_mapping[run.current_state]
+            )
             self.db.add(state_event)
 
         context_updates = migration.get("context_updates", {})
@@ -145,7 +156,8 @@ class WorkflowEngine:
         expected_signal = (run.state_data or {}).get("expected_signal")
         signal = next(
             (
-                item for item in pending
+                item
+                for item in pending
                 if expected_signal is None or item.signal_name == expected_signal
             ),
             None,
@@ -165,17 +177,21 @@ class WorkflowEngine:
         resume_to_state = (run.state_data or {}).get("resume_to_state")
         if resume_to_state:
             self.db.add(sm.set_current_state(resume_to_state))
-            sm.update_state_data({"resume_to_state": None, "waiting_on": None, "expected_signal": None})
+            sm.update_state_data(
+                {"resume_to_state": None, "waiting_on": None, "expected_signal": None}
+            )
         if run.status in {
             WorkflowStatus.WAITING_SIGNAL.value,
             WorkflowStatus.WAITING_APPROVAL.value,
             WorkflowStatus.SLEEPING.value,
             WorkflowStatus.WAITING_WEBHOOK.value,
         }:
-            self.db.add(await sm.transition_to(
-                WorkflowStatus.RUNNING,
-                payload={"resume_signal": signal.signal_name},
-            ))
+            self.db.add(
+                await sm.transition_to(
+                    WorkflowStatus.RUNNING,
+                    payload={"resume_signal": signal.signal_name},
+                )
+            )
         return True
 
     async def process_ready_runs(self):
@@ -188,21 +204,23 @@ class WorkflowEngine:
         stmt = (
             select(AgentWorkflowRun)
             .where(
-                AgentWorkflowRun.status.in_([
-                    WorkflowStatus.CREATED.value,
-                    WorkflowStatus.RUNNING.value,
-                    WorkflowStatus.RETRY_SCHEDULED.value
-                ]),
-                AgentWorkflowRun.next_execution_at <= utc_now()
+                AgentWorkflowRun.status.in_(
+                    [
+                        WorkflowStatus.CREATED.value,
+                        WorkflowStatus.RUNNING.value,
+                        WorkflowStatus.RETRY_SCHEDULED.value,
+                    ]
+                ),
+                AgentWorkflowRun.next_execution_at <= utc_now(),
             )
             .order_by(AgentWorkflowRun.next_execution_at.asc())
             .limit(10)
             .with_for_update(skip_locked=True)
         )
-        
+
         res = await self.db.execute(stmt)
         runs = res.scalars().all()
-        
+
         for run in runs:
             await self.execute_step(run.id)
 
@@ -229,7 +247,7 @@ class WorkflowEngine:
             await self.db.commit()
 
             await self._execute_workflow_logic(run, sm)
-            
+
             await self.db.commit()
         except Exception as e:
             logger.exception(f"Error executing workflow {run_id}")
@@ -246,8 +264,11 @@ class WorkflowEngine:
         from app.models.agents.agent_workflows import (
             AgentWorkflowNode,  # local import to avoid circular dependency if any
         )
+
         # Load definition
-        stmt = select(AgentWorkflowDefinition).where(AgentWorkflowDefinition.id == run.workflow_definition_id)
+        stmt = select(AgentWorkflowDefinition).where(
+            AgentWorkflowDefinition.id == run.workflow_definition_id
+        )
         res = await self.db.execute(stmt)
         definition = res.scalar_one_or_none()
         if not definition:
@@ -255,7 +276,7 @@ class WorkflowEngine:
 
         dag = WorkflowDAG(definition)
         context = sm.get_context()
-        
+
         # Determine current nodes to process
         if run.current_state == "start":
             current_node_keys = [n for n, d in dag.graph.in_degree() if d == 0]
@@ -287,8 +308,10 @@ class WorkflowEngine:
                 parallel_manager = WorkflowParallelManager(self.db, run)
                 successors = list(dag.graph.successors(node_key))
                 await parallel_manager.create_parallel_group(
-                    node=AgentWorkflowNode(node_key=node_key, node_type=node_type, config=node_config),
-                    branches_count=len(successors)
+                    node=AgentWorkflowNode(
+                        node_key=node_key, node_type=node_type, config=node_config
+                    ),
+                    branches_count=len(successors),
                 )
                 next_active_nodes.extend(successors)
 
@@ -301,7 +324,7 @@ class WorkflowEngine:
                     if pred not in completed_nodes:
                         is_ready = False
                         break
-                
+
                 if is_ready:
                     successors = list(dag.graph.successors(node_key))
                     next_active_nodes.extend(successors)
@@ -321,7 +344,12 @@ class WorkflowEngine:
                     next_active_nodes.extend(successors)
 
             elif node_type == "approval":
-                sm.update_state_data({"waiting_on": f"approval:{node_key}", "expected_signal": f"approval_{node_key}"})
+                sm.update_state_data(
+                    {
+                        "waiting_on": f"approval:{node_key}",
+                        "expected_signal": f"approval_{node_key}",
+                    }
+                )
                 self.db.add(await sm.transition_to(WorkflowStatus.WAITING_APPROVAL))
                 next_active_nodes.append(node_key)
                 break
@@ -341,13 +369,12 @@ class WorkflowEngine:
                 break
 
         next_active_nodes = list(set(next_active_nodes))
-        completed_nodes = list(set((run.state_data or {}).get("completed_nodes", []) + current_node_keys))
+        completed_nodes = list(
+            set((run.state_data or {}).get("completed_nodes", []) + current_node_keys)
+        )
         remaining_active = [n for n in next_active_nodes if n not in completed_nodes]
-        
-        sm.update_state_data({
-            "active_nodes": remaining_active,
-            "completed_nodes": completed_nodes
-        })
+
+        sm.update_state_data({"active_nodes": remaining_active, "completed_nodes": completed_nodes})
 
         if not remaining_active:
             self.db.add(await sm.transition_to(WorkflowStatus.COMPLETED))
@@ -388,10 +415,16 @@ class WorkflowEngine:
                 }
             )
             sm.update_context({"step": context.get("step", 0) + 1})
-            self.db.add(await sm.transition_to(
-                WorkflowStatus.RUNNING,
-                payload={"action": "handoff", "from_state": current_state, "to_state": next_state},
-            ))
+            self.db.add(
+                await sm.transition_to(
+                    WorkflowStatus.RUNNING,
+                    payload={
+                        "action": "handoff",
+                        "from_state": current_state,
+                        "to_state": next_state,
+                    },
+                )
+            )
             return
 
         if action == "sleep":
@@ -399,15 +432,27 @@ class WorkflowEngine:
             if delay_seconds <= 0:
                 raise ValueError(f"State '{current_state}' requires positive seconds for sleep")
             timer_name = state_config.get("timer_name", current_state)
-            next_state = state_config.get("resume_to_state") or state_config.get("next_state") or current_state
+            next_state = (
+                state_config.get("resume_to_state")
+                or state_config.get("next_state")
+                or current_state
+            )
             run.next_execution_at = utc_now() + timedelta(seconds=delay_seconds)
-            sm.update_state_data({"resume_to_state": next_state, "waiting_on": f"timer:{timer_name}"})
+            sm.update_state_data(
+                {"resume_to_state": next_state, "waiting_on": f"timer:{timer_name}"}
+            )
             timers = WorkflowTimerManager(self.db)
             await timers.create_timer(run.id, timer_name, delay_seconds)
-            self.db.add(await sm.transition_to(
-                WorkflowStatus.SLEEPING,
-                payload={"action": "sleep", "seconds": delay_seconds, "resume_to_state": next_state},
-            ))
+            self.db.add(
+                await sm.transition_to(
+                    WorkflowStatus.SLEEPING,
+                    payload={
+                        "action": "sleep",
+                        "seconds": delay_seconds,
+                        "resume_to_state": next_state,
+                    },
+                )
+            )
             return
 
         if action == "wait_signal":
@@ -420,38 +465,50 @@ class WorkflowEngine:
                     "waiting_on": "signal",
                 }
             )
-            self.db.add(await sm.transition_to(
-                WorkflowStatus.WAITING_SIGNAL,
-                payload={"action": "wait_signal", "expected_signal": expected_signal},
-            ))
+            self.db.add(
+                await sm.transition_to(
+                    WorkflowStatus.WAITING_SIGNAL,
+                    payload={"action": "wait_signal", "expected_signal": expected_signal},
+                )
+            )
             return
 
         if action == "wait_approval":
             next_state = state_config.get("resume_to_state") or state_config.get("next_state")
             sm.update_state_data({"resume_to_state": next_state, "waiting_on": "approval"})
-            self.db.add(await sm.transition_to(
-                WorkflowStatus.WAITING_APPROVAL,
-                payload={"action": "wait_approval", "resume_to_state": next_state},
-            ))
+            self.db.add(
+                await sm.transition_to(
+                    WorkflowStatus.WAITING_APPROVAL,
+                    payload={"action": "wait_approval", "resume_to_state": next_state},
+                )
+            )
             return
 
         if action == "complete":
-            result = state_config.get("result") or context.get("result") or f"Workflow completed in state '{current_state}'"
+            result = (
+                state_config.get("result")
+                or context.get("result")
+                or f"Workflow completed in state '{current_state}'"
+            )
             next_state = state_config.get("next_state")
             if next_state:
                 self.db.add(sm.set_current_state(next_state))
             sm.update_state_data({"result": result, "completed_state": current_state})
-            self.db.add(await sm.transition_to(
-                WorkflowStatus.COMPLETED,
-                payload={"action": "complete", "result": result},
-            ))
+            self.db.add(
+                await sm.transition_to(
+                    WorkflowStatus.COMPLETED,
+                    payload={"action": "complete", "result": result},
+                )
+            )
             return
 
         if action == "fail":
-            raise RuntimeError(state_config.get("reason", f"Workflow failed in state '{current_state}'"))
+            raise RuntimeError(
+                state_config.get("reason", f"Workflow failed in state '{current_state}'")
+            )
 
         raise ValueError(f"Unsupported workflow action '{action}'")
-        
+
     async def _handle_failure(self, run_id: uuid.UUID, error: Exception):
         stmt = select(AgentWorkflowRun).where(AgentWorkflowRun.id == run_id)
         res = await self.db.execute(stmt)
@@ -467,8 +524,9 @@ class WorkflowEngine:
                 run.next_execution_at = utc_now() + timedelta(minutes=2**run.retry_count)
             await self.db.commit()
 
-    async def signal_run(self, run_id: uuid.UUID, signal_name: str, payload: Dict[str, Any]):
+    async def signal_run(self, run_id: uuid.UUID, signal_name: str, payload: dict[str, Any]):
         from app.services.agents.workflows.workflow_signals import WorkflowSignalManager
+
         signals = WorkflowSignalManager(self.db)
         await signals.send_signal(run_id, signal_name, payload)
 

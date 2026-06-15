@@ -6,10 +6,14 @@ import pytest
 from app.api.commercial_revenue_protection_admin import router as revenue_protection_router
 from app.core.config import get_settings
 from app.db.session import get_db_session
-from app.models.core.client import Client
 from app.models.commercial.commercial_financial_anomaly import CommercialFinancialAnomaly
-from app.models.commercial.commercial_revenue_protection_action import CommercialRevenueProtectionAction
-from app.models.commercial.commercial_revenue_protection_policy import CommercialRevenueProtectionPolicy
+from app.models.commercial.commercial_revenue_protection_action import (
+    CommercialRevenueProtectionAction,
+)
+from app.models.commercial.commercial_revenue_protection_policy import (
+    CommercialRevenueProtectionPolicy,
+)
+from app.models.core.client import Client
 from app.schemas.routing import CommercialSimulateRequest, TaskType
 from app.services.billing.revenue_protection import (
     evaluate_revenue_protection_policies,
@@ -36,7 +40,12 @@ def revenue_protection_env(monkeypatch: pytest.MonkeyPatch):
     get_settings.cache_clear()
 
 
-async def _seed_client_and_anomaly(session, anomaly_type: str = "cost_spike", severity: str = "critical", model: str | None = "gpt-expensive"):
+async def _seed_client_and_anomaly(
+    session,
+    anomaly_type: str = "cost_spike",
+    severity: str = "critical",
+    model: str | None = "gpt-expensive",
+):
     client = Client(name=f"rp-client-{uuid.uuid4()}")
     session.add(client)
     await session.flush()
@@ -119,7 +128,9 @@ async def test_enforce_blocked_if_allow_enforce_false(session, monkeypatch: pyte
 
 
 @pytest.mark.asyncio
-async def test_safe_mode_generates_constraint_and_revert_removes_it(session, monkeypatch: pytest.MonkeyPatch):
+async def test_safe_mode_generates_constraint_and_revert_removes_it(
+    session, monkeypatch: pytest.MonkeyPatch
+):
     monkeypatch.setenv("COMMERCIAL_REVENUE_PROTECTION_MODE", "enforce")
     monkeypatch.setenv("COMMERCIAL_REVENUE_PROTECTION_ALLOW_ENFORCE", "true")
     get_settings.cache_clear()
@@ -142,16 +153,27 @@ async def test_safe_mode_generates_constraint_and_revert_removes_it(session, mon
 
 
 @pytest.mark.asyncio
-async def test_restrict_expensive_models_generates_constraint(session, monkeypatch: pytest.MonkeyPatch):
+async def test_restrict_expensive_models_generates_constraint(
+    session, monkeypatch: pytest.MonkeyPatch
+):
     monkeypatch.setenv("COMMERCIAL_REVENUE_PROTECTION_MODE", "enforce")
     monkeypatch.setenv("COMMERCIAL_REVENUE_PROTECTION_ALLOW_ENFORCE", "true")
     get_settings.cache_clear()
     client, anomaly = await _seed_client_and_anomaly(session, model="gpt-expensive")
-    session.add(_policy(scope_identifier="gpt-expensive", scope_type="model", mode="enforce", action_type="restrict_expensive_models"))
+    session.add(
+        _policy(
+            scope_identifier="gpt-expensive",
+            scope_type="model",
+            mode="enforce",
+            action_type="restrict_expensive_models",
+        )
+    )
     await session.commit()
 
     await evaluate_revenue_protection_policies(session)
-    constraints = get_active_revenue_protection_constraints(client_id=client.id, model="gpt-expensive")
+    constraints = get_active_revenue_protection_constraints(
+        client_id=client.id, model="gpt-expensive"
+    )
     assert "gpt-expensive" in constraints["restricted_models"]
 
 
@@ -162,7 +184,9 @@ async def test_force_local_only_feeds_routing_helper(session, monkeypatch: pytes
     monkeypatch.setenv("CLOUD_PROVIDERS_ENABLED", "true")
     get_settings.cache_clear()
     client, anomaly = await _seed_client_and_anomaly(session)
-    session.add(_policy(scope_identifier=str(client.id), mode="enforce", action_type="force_local_only"))
+    session.add(
+        _policy(scope_identifier=str(client.id), mode="enforce", action_type="force_local_only")
+    )
     await session.commit()
 
     await evaluate_revenue_protection_policies(session)
@@ -176,7 +200,11 @@ async def test_force_local_only_feeds_routing_helper(session, monkeypatch: pytes
         )
     )
     assert "force_local_only" in result.explanation
-    assert result.selected_route is None or result.selected_route.provider in {"local", "lmstudio", "mock"}
+    assert result.selected_route is None or result.selected_route.provider in {
+        "local",
+        "lmstudio",
+        "mock",
+    }
 
 
 @pytest.mark.asyncio
@@ -216,14 +244,20 @@ async def test_endpoints_require_admin_auth(session, app_client_factory):
     client = await app_client_factory(app)
     try:
         assert (await client.get("/admin/billing/revenue-protection/policies")).status_code == 401
-        assert (await client.post("/admin/billing/revenue-protection/evaluate", json={"anomaly_ids": []})).status_code == 401
+        assert (
+            await client.post(
+                "/admin/billing/revenue-protection/evaluate", json={"anomaly_ids": []}
+            )
+        ).status_code == 401
         assert (await client.get("/admin/billing/revenue-protection/status")).status_code == 401
     finally:
         await client.aclose()
 
 
 @pytest.mark.asyncio
-async def test_admin_endpoints_and_sanitized_payload(session, app_client_factory, admin_token_headers):
+async def test_admin_endpoints_and_sanitized_payload(
+    session, app_client_factory, admin_token_headers
+):
     app = FastAPI()
     app.include_router(revenue_protection_router)
 
@@ -251,7 +285,9 @@ async def test_admin_endpoints_and_sanitized_payload(session, app_client_factory
     assert create_resp.status_code == 201
     assert "sk-secret" not in create_resp.text
 
-    list_resp = await client.get("/admin/billing/revenue-protection/policies", headers=admin_token_headers)
+    list_resp = await client.get(
+        "/admin/billing/revenue-protection/policies", headers=admin_token_headers
+    )
     try:
         assert list_resp.status_code == 200
         assert "sk-secret" not in list_resp.text

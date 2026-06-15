@@ -42,7 +42,16 @@ def test_report_is_valid_json():
     report_json = report_dir / "demo-e2e-report.json"
     data = json.loads(report_json.read_text(encoding="utf-8"))
 
-    required = ["tool", "timestamp", "version", "base_url", "status", "counts", "results", "limitations"]
+    required = [
+        "tool",
+        "timestamp",
+        "version",
+        "base_url",
+        "status",
+        "counts",
+        "results",
+        "limitations",
+    ]
     for field in required:
         assert field in data, f"Missing required field: {field}"
 

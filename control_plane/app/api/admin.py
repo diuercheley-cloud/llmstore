@@ -1,18 +1,14 @@
 # Owner: platform-ops
 import json
 import os
-import uuid
-from datetime import date
-from pathlib import Path
 
 from app.core.config import get_settings
-from app.core.time import utc_now
-from app.services.runtime_dependencies import get_db_session
 from app.models.core.request_log import RequestLog
 from app.schemas.admin import CapabilityRead
 from app.services.auth import require_admin
+from app.services.runtime_dependencies import get_db_session
 from app.services.security_monitor import list_security_events
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -29,7 +25,7 @@ async def get_capabilities():
             "backend_support": "llama.cpp, ollama, vllm, mock",
             "production_ready": True,
             "limitations": None,
-            "validator_script": "scripts/test-chat.sh"
+            "validator_script": "scripts/test-chat.sh",
         },
         {
             "feature": "streaming",
@@ -37,7 +33,7 @@ async def get_capabilities():
             "backend_support": "llama.cpp, ollama, vllm, mock",
             "production_ready": True,
             "limitations": None,
-            "validator_script": "scripts/test-stream.sh"
+            "validator_script": "scripts/test-stream.sh",
         },
         {
             "feature": "/v1/models",
@@ -45,7 +41,7 @@ async def get_capabilities():
             "backend_support": "control-plane",
             "production_ready": True,
             "limitations": None,
-            "validator_script": None
+            "validator_script": None,
         },
         {
             "feature": "/v1/embeddings",
@@ -53,7 +49,7 @@ async def get_capabilities():
             "backend_support": "local-transformers, mock",
             "production_ready": True,
             "limitations": "Local transformer model (sentence-transformers) or mock",
-            "validator_script": "scripts/validate-embeddings-local.sh"
+            "validator_script": "scripts/validate-embeddings-local.sh",
         },
         {
             "feature": "/v1/responses",
@@ -61,7 +57,7 @@ async def get_capabilities():
             "backend_support": "control-plane-proxy",
             "production_ready": True,
             "limitations": "Streaming ainda não suportado; tools dependem da capability do provider/modelo",
-            "validator_script": "scripts/test-responses.sh"
+            "validator_script": "scripts/test-responses.sh",
         },
         {
             "feature": "tools/function calling",
@@ -69,7 +65,7 @@ async def get_capabilities():
             "backend_support": "Native for supported cloud and local backends",
             "production_ready": True,
             "limitations": "Schemas passam por validação e argumentos sensíveis são sanitizados nos logs",
-            "validator_script": None
+            "validator_script": None,
         },
         {
             "feature": "RAG",
@@ -77,7 +73,7 @@ async def get_capabilities():
             "backend_support": "local-rag-engine",
             "production_ready": True,
             "limitations": "Requer embeddings (mesmo que mock)",
-            "validator_script": "scripts/test-rag.sh"
+            "validator_script": "scripts/test-rag.sh",
         },
         {
             "feature": "TTS",
@@ -85,7 +81,7 @@ async def get_capabilities():
             "backend_support": "pocket-tts",
             "production_ready": True,
             "limitations": "Local only",
-            "validator_script": "scripts/pocket-tts.sh"
+            "validator_script": "scripts/pocket-tts.sh",
         },
         {
             "feature": "billing manual/local",
@@ -93,7 +89,7 @@ async def get_capabilities():
             "backend_support": "control-plane",
             "production_ready": True,
             "limitations": None,
-            "validator_script": "scripts/run-billing-cycle.sh"
+            "validator_script": "scripts/run-billing-cycle.sh",
         },
         {
             "feature": "PSP/PIX real",
@@ -101,7 +97,7 @@ async def get_capabilities():
             "backend_support": "None",
             "production_ready": False,
             "limitations": "Não implementado",
-            "validator_script": None
+            "validator_script": None,
         },
         {
             "feature": "Client Portal",
@@ -109,7 +105,7 @@ async def get_capabilities():
             "backend_support": "static-frontend",
             "production_ready": True,
             "limitations": None,
-            "validator_script": "scripts/ui-health.sh"
+            "validator_script": "scripts/ui-health.sh",
         },
         {
             "feature": "Admin Dashboard",
@@ -117,7 +113,7 @@ async def get_capabilities():
             "backend_support": "static-frontend",
             "production_ready": True,
             "limitations": None,
-            "validator_script": "scripts/ui-health.sh"
+            "validator_script": "scripts/ui-health.sh",
         },
         {
             "feature": "Admin Lab",
@@ -125,7 +121,7 @@ async def get_capabilities():
             "backend_support": "static-frontend",
             "production_ready": True,
             "limitations": None,
-            "validator_script": "scripts/ui-health.sh"
+            "validator_script": "scripts/ui-health.sh",
         },
         {
             "feature": "DR/backup/restore",
@@ -133,7 +129,7 @@ async def get_capabilities():
             "backend_support": "scripts",
             "production_ready": True,
             "limitations": None,
-            "validator_script": "scripts/dr-test-local.sh"
+            "validator_script": "scripts/dr-test-local.sh",
         },
         {
             "feature": "upgrade/rollback",
@@ -141,7 +137,7 @@ async def get_capabilities():
             "backend_support": "scripts",
             "production_ready": True,
             "limitations": None,
-            "validator_script": "scripts/upgrade-test.sh"
+            "validator_script": "scripts/upgrade-test.sh",
         },
         {
             "feature": "tenant export/delete",
@@ -149,7 +145,7 @@ async def get_capabilities():
             "backend_support": "control-plane",
             "production_ready": True,
             "limitations": None,
-            "validator_script": "scripts/export-client-local.sh"
+            "validator_script": "scripts/export-client-local.sh",
         },
         {
             "feature": "security report",
@@ -157,7 +153,7 @@ async def get_capabilities():
             "backend_support": "scripts",
             "production_ready": True,
             "limitations": None,
-            "validator_script": "scripts/security-report-local.sh"
+            "validator_script": "scripts/security-report-local.sh",
         },
         {
             "feature": "readiness report",
@@ -165,7 +161,7 @@ async def get_capabilities():
             "backend_support": "scripts",
             "production_ready": True,
             "limitations": None,
-            "validator_script": "scripts/production-readiness-local.sh"
+            "validator_script": "scripts/production-readiness-local.sh",
         },
         {
             "feature": "Confidential Computing & Tenant Encryption",
@@ -173,14 +169,16 @@ async def get_capabilities():
             "backend_support": "AES-256-GCM local envelope encryption",
             "production_ready": True,
             "limitations": "Sem suporte nativo a HSM/KMS externo nesta versão",
-            "validator_script": "scripts/validate-tenant-encryption.sh"
-        }
+            "validator_script": "scripts/validate-tenant-encryption.sh",
+        },
     ]
 
 
 @router.get("/requests")
 async def get_requests(session: AsyncSession = Depends(get_db_session)):
-    result = await session.execute(select(RequestLog).order_by(desc(RequestLog.created_at)).limit(200))
+    result = await session.execute(
+        select(RequestLog).order_by(desc(RequestLog.created_at)).limit(200)
+    )
     rows = result.scalars().all()
     return [
         {
@@ -200,7 +198,9 @@ async def get_requests(session: AsyncSession = Depends(get_db_session)):
             "tool_call_count": row.tool_call_count,
             "had_tool_call": row.tool_call_count > 0,
             "tool_calls": json.loads(row.tool_calls_json) if row.tool_calls_json else [],
-            "backend_errors": json.loads(row.backend_errors_json) if row.backend_errors_json else [],
+            "backend_errors": json.loads(row.backend_errors_json)
+            if row.backend_errors_json
+            else [],
             "error": row.error_message,
             "correlation_id": row.correlation_id,
             "source_ip": row.source_ip,
@@ -218,12 +218,13 @@ async def get_security_events(session: AsyncSession = Depends(get_db_session)):
 @router.get("/system/api-surface", response_model=list[dict])
 async def get_system_api_surface():
     import yaml
+
     current_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.abspath(os.path.join(current_dir, "../../../config/api-surface.yaml"))
     if not os.path.exists(config_path):
         raise HTTPException(status_code=404, detail="API Surface registry config not found.")
     try:
-        with open(config_path, "r", encoding="utf-8") as f:
+        with open(config_path, encoding="utf-8") as f:
             data = yaml.safe_load(f) or []
         return data
     except Exception as e:

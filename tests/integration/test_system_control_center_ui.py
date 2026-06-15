@@ -4,10 +4,10 @@ import os
 def test_ui_contains_control_center():
     ui_path = "control_plane/app/static/admin/index.html"
     assert os.path.exists(ui_path)
-    
-    with open(ui_path, 'r') as f:
+
+    with open(ui_path) as f:
         content = f.read()
-        
+
     assert "System Control Center" in content
     assert "systemControlCenterSection" in content
     assert "renderControlCenter" in content

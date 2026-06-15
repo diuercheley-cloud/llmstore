@@ -11,13 +11,13 @@ from app.core.config import get_settings
 from app.core.security import hash_secret, short_prefix
 from app.db.session import get_db_session, get_redis
 from app.main import app
-from app.models.core.api_key import ApiKey
 from app.models.billing.billing_invoice import BillingInvoice
-from app.models.core.client import Client
 from app.models.commercial.commercial_billing_dispute import CommercialBillingDispute
 from app.models.commercial.commercial_compliance import CommercialControlPolicy
 from app.models.commercial.commercial_financial_audit_event import CommercialFinancialAuditEvent
 from app.models.commercial.commercial_qos_billing_record import CommercialQoSBillingRecord
+from app.models.core.api_key import ApiKey
+from app.models.core.client import Client
 from app.services.compliance.financial_controls import (
     create_attestation,
     create_evidence_package,
@@ -48,12 +48,16 @@ async def portal_http_client(session, fake_redis) -> AsyncIterator[httpx.AsyncCl
 
     app.dependency_overrides[get_db_session] = override_get_db_session
     app.dependency_overrides[get_redis] = lambda: fake_redis
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         yield client
     app.dependency_overrides.clear()
 
 
-async def _create_client_and_key(session, *, name: str, scopes: list[str], metadata: dict | None = None) -> tuple[Client, str]:
+async def _create_client_and_key(
+    session, *, name: str, scopes: list[str], metadata: dict | None = None
+) -> tuple[Client, str]:
     client = Client(
         name=name,
         billing_status="active",
@@ -209,14 +213,22 @@ async def _seed_portal_data(session, client: Client) -> None:
 
 @pytest.mark.asyncio
 async def test_enterprise_audit_portal_flow_and_sanitized_download(portal_http_client, session):
-    client_a, key_a = await _create_client_and_key(session, name="Client A", scopes=["enterprise_auditor"])
-    client_b, key_b = await _create_client_and_key(session, name="Client B", scopes=["enterprise_auditor"])
+    client_a, key_a = await _create_client_and_key(
+        session, name="Client A", scopes=["enterprise_auditor"]
+    )
+    client_b, key_b = await _create_client_and_key(
+        session, name="Client B", scopes=["enterprise_auditor"]
+    )
     await _seed_portal_data(session, client_a)
     await _seed_portal_data(session, client_b)
 
     approval_resp = await portal_http_client.get(
         "/portal/audit/approval-chains",
-        headers={"Authorization": f"Bearer {key_a}", "User-Agent": "audit-agent secret=sk-unsafe", "X-Portal-Actor-Email": "alice@example.com"},
+        headers={
+            "Authorization": f"Bearer {key_a}",
+            "User-Agent": "audit-agent secret=sk-unsafe",
+            "X-Portal-Actor-Email": "alice@example.com",
+        },
     )
     assert approval_resp.status_code == 200
     approval_items = approval_resp.json()["items"]
@@ -296,7 +308,10 @@ async def test_enterprise_audit_portal_flow_and_sanitized_download(portal_http_c
     actions = {item["action"] for item in logs_resp.json()["items"]}
     assert {"view", "export", "download"}.issubset(actions)
     assert any(item["ip_masked"] for item in logs_resp.json()["items"])
-    assert all("sk-unsafe" not in (item["user_agent_sanitized"] or "") for item in logs_resp.json()["items"])
+    assert all(
+        "sk-unsafe" not in (item["user_agent_sanitized"] or "")
+        for item in logs_resp.json()["items"]
+    )
 
 
 @pytest.mark.asyncio

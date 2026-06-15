@@ -3,7 +3,7 @@ import hashlib
 import secrets
 import uuid
 from datetime import timedelta
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.core.config import Settings
 from app.core.time import utc_now
@@ -27,22 +27,19 @@ class TenantEncryptionService:
         return hashlib.sha256(key_str.encode()).digest()
 
     async def create_tenant_key(
-        self, 
-        db: AsyncSession, 
-        client_id: uuid.UUID, 
-        purpose: str = "general"
+        self, db: AsyncSession, client_id: uuid.UUID, purpose: str = "general"
     ) -> CommercialTenantEncryptionKey:
         # Generate a new DEK
         dek = secrets.token_bytes(32)
-        
+
         # Wrap DEK with Master Key
         aesgcm = AESGCM(self.master_key)
         nonce = secrets.token_bytes(12)
         wrapped_bytes = aesgcm.encrypt(nonce, dek, None)
         wrapped_key_b64 = base64.b64encode(nonce + wrapped_bytes).decode()
-        
+
         fingerprint = hashlib.sha256(dek).hexdigest()
-        
+
         key = CommercialTenantEncryptionKey(
             client_id=client_id,
             key_version="1.0",
@@ -50,11 +47,12 @@ class TenantEncryptionService:
             key_status="active",
             wrapped_key=wrapped_key_b64,
             key_fingerprint=fingerprint,
-            rotation_due_at=utc_now() + timedelta(days=self.settings.commercial_tenant_encryption_auto_rotation_days),
+            rotation_due_at=utc_now()
+            + timedelta(days=self.settings.commercial_tenant_encryption_auto_rotation_days),
         )
         db.add(key)
-        await db.flush() # Flush to get ID without committing if in a larger transaction
-        
+        await db.flush()  # Flush to get ID without committing if in a larger transaction
+
         await self._log_event(db, client_id, "create_key", "key", str(key.id), fingerprint)
         return key
 
@@ -68,12 +66,12 @@ class TenantEncryptionService:
     async def encrypt_payload(
         self,
         db: AsyncSession,
-        client_id: Optional[uuid.UUID],
+        client_id: uuid.UUID | None,
         payload: str,
         artifact_type: str,
         resource_type: str,
-        resource_id: Optional[str] = None,
-        key_purpose: str = "general"
+        resource_id: str | None = None,
+        key_purpose: str = "general",
     ) -> CommercialEncryptedArtifact:
         if not self.settings.commercial_tenant_encryption_enabled:
             artifact = CommercialEncryptedArtifact(
@@ -91,15 +89,20 @@ class TenantEncryptionService:
 
         # Find active key for client and purpose
         if client_id:
-            stmt = select(CommercialTenantEncryptionKey).where(
-                CommercialTenantEncryptionKey.client_id == client_id,
-                CommercialTenantEncryptionKey.key_purpose == key_purpose,
-                CommercialTenantEncryptionKey.key_status == "active"
-            ).order_by(desc(CommercialTenantEncryptionKey.created_at)).limit(1)
-            
+            stmt = (
+                select(CommercialTenantEncryptionKey)
+                .where(
+                    CommercialTenantEncryptionKey.client_id == client_id,
+                    CommercialTenantEncryptionKey.key_purpose == key_purpose,
+                    CommercialTenantEncryptionKey.key_status == "active",
+                )
+                .order_by(desc(CommercialTenantEncryptionKey.created_at))
+                .limit(1)
+            )
+
             result = await db.execute(stmt)
             key = result.scalar_one_or_none()
-            
+
             if not key:
                 key = await self.create_tenant_key(db, client_id, key_purpose)
         else:
@@ -108,7 +111,7 @@ class TenantEncryptionService:
             key = None
 
         if not key:
-             # Fallback to plaintext if no key and no client_id (should be rare in commercial)
+            # Fallback to plaintext if no key and no client_id (should be rare in commercial)
             artifact = CommercialEncryptedArtifact(
                 client_id=client_id,
                 artifact_type=artifact_type,
@@ -121,15 +124,15 @@ class TenantEncryptionService:
             )
             db.add(artifact)
             return artifact
-            
+
         dek = await self._unwrap_dek(key.wrapped_key)
         aesgcm = AESGCM(dek)
         nonce = secrets.token_bytes(12)
         encrypted_bytes = aesgcm.encrypt(nonce, payload.encode(), None)
         encrypted_payload_b64 = base64.b64encode(nonce + encrypted_bytes).decode()
-        
+
         payload_hash = hashlib.sha256(payload.encode()).hexdigest()
-        
+
         artifact = CommercialEncryptedArtifact(
             client_id=client_id,
             artifact_type=artifact_type,
@@ -141,56 +144,77 @@ class TenantEncryptionService:
             key_id=key.id,
         )
         db.add(artifact)
-        
-        await self._log_event(db, client_id, "encrypt", resource_type, resource_id, key.key_fingerprint)
+
+        await self._log_event(
+            db, client_id, "encrypt", resource_type, resource_id, key.key_fingerprint
+        )
         return artifact
 
-    async def decrypt_payload(
-        self,
-        db: AsyncSession,
-        artifact: CommercialEncryptedArtifact
-    ) -> str:
+    async def decrypt_payload(self, db: AsyncSession, artifact: CommercialEncryptedArtifact) -> str:
         if artifact.encryption_mode == "plaintext":
             return artifact.encrypted_payload
-            
+
         if not artifact.key_id:
             raise ValueError("Artifact is encrypted but has no key_id")
-            
+
         key = await db.get(CommercialTenantEncryptionKey, artifact.key_id)
         if not key:
             raise ValueError(f"Key {artifact.key_id} not found")
-            
+
         if key.key_status == "revoked":
-            await self._log_event(db, artifact.client_id, "decrypt_failed_revoked", artifact.resource_type, artifact.resource_id, key.key_fingerprint, success=False)
+            await self._log_event(
+                db,
+                artifact.client_id,
+                "decrypt_failed_revoked",
+                artifact.resource_type,
+                artifact.resource_id,
+                key.key_fingerprint,
+                success=False,
+            )
             raise ValueError("Key is revoked")
-            
+
         dek = await self._unwrap_dek(key.wrapped_key)
         data = base64.b64decode(artifact.encrypted_payload)
         nonce = data[:12]
         ciphertext = data[12:]
-        
+
         aesgcm = AESGCM(dek)
         decrypted_bytes = aesgcm.decrypt(nonce, ciphertext, None)
         payload = decrypted_bytes.decode()
-        
+
         # Verify hash
         if hashlib.sha256(decrypted_bytes).hexdigest() != artifact.payload_hash:
-            await self._log_event(db, artifact.client_id, "decrypt_failed_hash", artifact.resource_type, artifact.resource_id, key.key_fingerprint, success=False)
+            await self._log_event(
+                db,
+                artifact.client_id,
+                "decrypt_failed_hash",
+                artifact.resource_type,
+                artifact.resource_id,
+                key.key_fingerprint,
+                success=False,
+            )
             raise ValueError("Payload hash mismatch")
-            
-        await self._log_event(db, artifact.client_id, "decrypt", artifact.resource_type, artifact.resource_id, key.key_fingerprint)
+
+        await self._log_event(
+            db,
+            artifact.client_id,
+            "decrypt",
+            artifact.resource_type,
+            artifact.resource_id,
+            key.key_fingerprint,
+        )
         return payload
 
     async def _log_event(
         self,
         db: AsyncSession,
-        client_id: Optional[uuid.UUID],
+        client_id: uuid.UUID | None,
         event_type: str,
         resource_type: str,
-        resource_id: Optional[str],
-        key_fingerprint: Optional[str] = None,
+        resource_id: str | None,
+        key_fingerprint: str | None = None,
         success: bool = True,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: dict[str, Any] | None = None,
     ):
         event = CommercialEncryptionAuditEvent(
             client_id=client_id,
@@ -203,15 +227,39 @@ class TenantEncryptionService:
         )
         db.add(event)
 
-    async def classify_sensitive_payload(self, value: str, key: Optional[str] = None) -> str:
+    async def classify_sensitive_payload(self, value: str, key: str | None = None) -> str:
         # public|internal|confidential|restricted|sovereign_restricted
         lower_val = str(value).lower()
         lower_key = str(key or "").lower()
-        
-        sovereign_patterns = ["sovereign_restricted", "classified_export", "national_security", "citizen_registry", "state_secret"]
-        restricted_patterns = ["api_key", "secret_key", "password", "smtp_password", "private_key", "token\": \"", "sk-", "key-"]
-        confidential_patterns = ["email", "prompt", "response", "pii", "user_id", "phone", "address", "@"]
-        
+
+        sovereign_patterns = [
+            "sovereign_restricted",
+            "classified_export",
+            "national_security",
+            "citizen_registry",
+            "state_secret",
+        ]
+        restricted_patterns = [
+            "api_key",
+            "secret_key",
+            "password",
+            "smtp_password",
+            "private_key",
+            'token": "',
+            "sk-",
+            "key-",
+        ]
+        confidential_patterns = [
+            "email",
+            "prompt",
+            "response",
+            "pii",
+            "user_id",
+            "phone",
+            "address",
+            "@",
+        ]
+
         # Check key name
         for p in sovereign_patterns:
             if p in lower_key:
@@ -230,69 +278,99 @@ class TenantEncryptionService:
         for p in restricted_patterns:
             if p in lower_val:
                 return "restricted"
-                
+
         for p in confidential_patterns:
             if p in lower_val:
                 return "confidential"
-                
+
         return "internal"
 
-    async def rotate_tenant_key(self, db: AsyncSession, key_id: uuid.UUID) -> CommercialTenantEncryptionKey:
+    async def rotate_tenant_key(
+        self, db: AsyncSession, key_id: uuid.UUID
+    ) -> CommercialTenantEncryptionKey:
         old_key = await db.get(CommercialTenantEncryptionKey, key_id)
         if not old_key:
             raise ValueError("Key not found")
-            
+
         # Create new key
         new_key = await self.create_tenant_key(db, old_key.client_id, old_key.key_purpose)
-        
+
         # Mark old key as deprecated
         old_key.key_status = "deprecated"
         old_key.rotated_at = utc_now()
-        
+
         await db.flush()
-        await self._log_event(db, old_key.client_id, "rotate", "key", str(key_id), old_key.key_fingerprint)
+        await self._log_event(
+            db, old_key.client_id, "rotate", "key", str(key_id), old_key.key_fingerprint
+        )
         return new_key
 
     async def revoke_tenant_key(self, db: AsyncSession, key_id: uuid.UUID):
         key = await db.get(CommercialTenantEncryptionKey, key_id)
         if not key:
             raise ValueError("Key not found")
-            
+
         key.key_status = "revoked"
         await db.flush()
         await self._log_event(db, key.client_id, "revoke", "key", str(key_id), key.key_fingerprint)
 
     async def confidential_export_control(
-        self, 
-        db: AsyncSession, 
-        client_id: uuid.UUID, 
-        data: Dict[str, Any], 
-        dry_run: bool = False
-    ) -> Dict[str, Any]:
+        self, db: AsyncSession, client_id: uuid.UUID, data: dict[str, Any], dry_run: bool = False
+    ) -> dict[str, Any]:
         result = {}
         for key, value in data.items():
             str_val = str(value)
             classification = await self.classify_sensitive_payload(str_val, key)
-            
+
             if classification == "sovereign_restricted":
                 result[key] = "[AIRGAP ONLY: SOVEREIGN RESTRICTED]"
-                await self._log_event(db, client_id, "export_blocked", "field", key, metadata={"classification": "sovereign_restricted"})
+                await self._log_event(
+                    db,
+                    client_id,
+                    "export_blocked",
+                    "field",
+                    key,
+                    metadata={"classification": "sovereign_restricted"},
+                )
             elif classification == "restricted":
                 if self.settings.commercial_tenant_encryption_block_restricted_exports:
                     if not dry_run:
                         result[key] = "[BLOCK: RESTRICTED]"
-                        await self._log_event(db, client_id, "export_blocked", "field", key, metadata={"classification": "restricted"})
+                        await self._log_event(
+                            db,
+                            client_id,
+                            "export_blocked",
+                            "field",
+                            key,
+                            metadata={"classification": "restricted"},
+                        )
                     else:
                         result[key] = f"[DRY_RUN: WOULD BLOCK RESTRICTED] {value}"
                 else:
                     result[key] = f"[REDACTED: RESTRICTED] {'*' * 8}"
-                    await self._log_event(db, client_id, "export_redacted", "field", key, metadata={"classification": "restricted"})
+                    await self._log_event(
+                        db,
+                        client_id,
+                        "export_redacted",
+                        "field",
+                        key,
+                        metadata={"classification": "restricted"},
+                    )
             elif classification == "confidential":
                 if self.settings.commercial_tenant_encryption_require_encrypted_exports:
                     # Logic to encrypt field in export
                     # For simplicity in CSV/JSON exports, we might just base64 or similar if we can't provide a way to decrypt
-                    result[key] = f"[ENCRYPTED: CONFIDENTIAL] {base64.b64encode(str_val.encode()).decode()[:16]}..."
-                    await self._log_event(db, client_id, "export_encrypted", "field", key, metadata={"classification": "confidential"})
+                    result[key] = (
+                        f"[ENCRYPTED: CONFIDENTIAL] {base64.b64encode(str_val.encode()).decode()[:16]}..."
+                    )
+                    await self._log_event(
+                        db,
+                        client_id,
+                        "export_encrypted",
+                        "field",
+                        key,
+                        metadata={"classification": "confidential"},
+                    )
                 else:
                     result[key] = value
             else:

@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import yaml
-
 from app.core.config import get_settings
-
 
 _SURFACE_AREA_MAP = {
     "production_core": "core",
@@ -19,31 +17,31 @@ _SURFACE_AREA_MAP = {
 
 
 class FeatureRegistry:
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: str | None = None):
         if config_path is None:
             base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
             config_path = os.path.join(base_dir, "config/supported-surface.yaml")
         self._config_path = config_path
-        self._capabilities: Optional[List[Dict[str, Any]]] = None
+        self._capabilities: list[dict[str, Any]] | None = None
 
-    def _load(self) -> List[Dict[str, Any]]:
+    def _load(self) -> list[dict[str, Any]]:
         if self._capabilities is not None:
             return self._capabilities
         if not os.path.exists(self._config_path):
             self._capabilities = []
             return self._capabilities
         try:
-            with open(self._config_path, "r", encoding="utf-8") as f:
+            with open(self._config_path, encoding="utf-8") as f:
                 data = yaml.safe_load(f) or {}
                 self._capabilities = data.get("capabilities", [])
         except Exception:
             self._capabilities = []
         return self._capabilities or []
 
-    def get_public_capabilities(self) -> List[Dict[str, Any]]:
+    def get_public_capabilities(self) -> list[dict[str, Any]]:
         settings = get_settings()
         capabilities = self._load()
-        result: List[Dict[str, Any]] = []
+        result: list[dict[str, Any]] = []
 
         for cap in capabilities:
             cap_status = cap.get("status", "internal")
@@ -85,7 +83,7 @@ class FeatureRegistry:
         }
         return mapping.get(surface_status, "experimental")
 
-    def _resolve_flag(self, settings: Any, flag_name: str) -> Optional[bool]:
+    def _resolve_flag(self, settings: Any, flag_name: str) -> bool | None:
         if not flag_name:
             return None
         candidates = [flag_name, flag_name.upper(), flag_name.lower()]
@@ -111,7 +109,7 @@ class FeatureRegistry:
         return None
 
 
-_registry_instance: Optional[FeatureRegistry] = None
+_registry_instance: FeatureRegistry | None = None
 
 
 def get_feature_registry() -> FeatureRegistry:
@@ -121,5 +119,5 @@ def get_feature_registry() -> FeatureRegistry:
     return _registry_instance
 
 
-def get_public_capabilities() -> List[Dict[str, Any]]:
+def get_public_capabilities() -> list[dict[str, Any]]:
     return get_feature_registry().get_public_capabilities()

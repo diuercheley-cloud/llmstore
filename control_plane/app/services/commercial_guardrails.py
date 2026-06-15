@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import logging
 from collections import Counter, deque
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from datetime import time as dt_time
 from typing import Any
 from uuid import UUID
 
 from app.core.config import get_settings
-from app.models.core.client import Client
 from app.models.billing.request_financial import RequestFinancial
+from app.models.core.client import Client
 from app.services.billing.pricing_engine import calculate_customer_price, estimate_provider_cost
 from app.services.billing.revenue_protection import get_active_revenue_protection_constraints
 from app.services.provider_classification import (
@@ -27,8 +27,8 @@ _RUNTIME_EVENTS: deque[dict[str, Any]] = deque(maxlen=5000)
 
 
 def _today_start_utc(now_utc: datetime | None = None) -> datetime:
-    current = now_utc or datetime.now(timezone.utc)
-    return datetime.combine(current.date(), dt_time.min, tzinfo=timezone.utc)
+    current = now_utc or datetime.now(UTC)
+    return datetime.combine(current.date(), dt_time.min, tzinfo=UTC)
 
 
 def _margin_percent(profit_brl: float, revenue_brl: float) -> float:
@@ -58,7 +58,7 @@ def _append_unique(target: list[str], message: str) -> None:
 
 
 def _now_utc() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _sanitize_reason_code(value: str) -> str:
@@ -116,15 +116,34 @@ def get_commercial_guardrails_runtime_status() -> dict[str, Any]:
     settings = get_settings()
     mode = _build_mode(settings)
     today_prefix = _now_utc().date().isoformat()
-    todays_events = [event for event in _RUNTIME_EVENTS if str(event.get("timestamp", "")).startswith(today_prefix)]
+    todays_events = [
+        event
+        for event in _RUNTIME_EVENTS
+        if str(event.get("timestamp", "")).startswith(today_prefix)
+    ]
 
-    blocked = [event for event in todays_events if event["event_type"] == "commercial_guardrail_blocked"]
-    fallbacks = [event for event in todays_events if event["event_type"] == "commercial_guardrail_fallback"]
-    report_only = [event for event in todays_events if event["event_type"] == "commercial_guardrail_triggered" and event["enforcement_mode"] == "report_only"]
+    blocked = [
+        event for event in todays_events if event["event_type"] == "commercial_guardrail_blocked"
+    ]
+    fallbacks = [
+        event for event in todays_events if event["event_type"] == "commercial_guardrail_fallback"
+    ]
+    report_only = [
+        event
+        for event in todays_events
+        if event["event_type"] == "commercial_guardrail_triggered"
+        and event["enforcement_mode"] == "report_only"
+    ]
 
-    fallback_counter = Counter(event.get("fallback_provider") for event in fallbacks if event.get("fallback_provider"))
-    providers_blocked = sorted({event.get("provider") for event in blocked if event.get("provider")})
-    clients_affected = sorted({event.get("client_id") for event in todays_events if event.get("client_id")})
+    fallback_counter = Counter(
+        event.get("fallback_provider") for event in fallbacks if event.get("fallback_provider")
+    )
+    providers_blocked = sorted(
+        {event.get("provider") for event in blocked if event.get("provider")}
+    )
+    clients_affected = sorted(
+        {event.get("client_id") for event in todays_events if event.get("client_id")}
+    )
 
     return {
         "enforcement_mode": mode,
@@ -188,10 +207,14 @@ async def build_runtime_enforcement_context(
     ).where(RequestFinancial.created_at >= today_start)
     row_global = (await session.execute(stmt_global)).first()
 
-    stmt_provider = select(
-        RequestFinancial.provider,
-        func.coalesce(func.sum(RequestFinancial.provider_cost_brl), 0).label("provider_cost"),
-    ).where(RequestFinancial.created_at >= today_start).group_by(RequestFinancial.provider)
+    stmt_provider = (
+        select(
+            RequestFinancial.provider,
+            func.coalesce(func.sum(RequestFinancial.provider_cost_brl), 0).label("provider_cost"),
+        )
+        .where(RequestFinancial.created_at >= today_start)
+        .group_by(RequestFinancial.provider)
+    )
     provider_rows = (await session.execute(stmt_provider)).all()
 
     stmt_client = select(
@@ -214,15 +237,18 @@ async def build_runtime_enforcement_context(
         "completion_tokens": completion_tokens,
         "global_provider_cost_today_brl": float(row_global.provider_cost or 0.0),
         "provider_costs_today_brl": {
-            row.provider or "unknown": float(row.provider_cost or 0.0)
-            for row in provider_rows
+            row.provider or "unknown": float(row.provider_cost or 0.0) for row in provider_rows
         },
         "client_cost_today_brl": float(row_client.provider_cost or 0.0),
         "client_revenue_today_brl": float(row_client.revenue or 0.0),
         "client_margin_today_brl": float(row_client.profit or 0.0),
-        "max_global_provider_cost_per_day_brl": float(settings.max_global_provider_cost_per_day_brl),
+        "max_global_provider_cost_per_day_brl": float(
+            settings.max_global_provider_cost_per_day_brl
+        ),
         "max_provider_cost_per_day_brl": float(settings.max_provider_cost_per_day_brl),
-        "max_client_provider_cost_per_day_brl": float(settings.max_client_provider_cost_per_day_brl),
+        "max_client_provider_cost_per_day_brl": float(
+            settings.max_client_provider_cost_per_day_brl
+        ),
         "margin_warning_percent": float(settings.margin_warning_percent),
         "estimated_by_provider": {},
         "report_only_candidates": [],
@@ -231,7 +257,9 @@ async def build_runtime_enforcement_context(
         "guardrail_fallback_active": False,
         "blocked_without_fallback": False,
         "local_fallback_enabled": True,
-        "revenue_protection_constraints": get_active_revenue_protection_constraints(client_id=client_id),
+        "revenue_protection_constraints": get_active_revenue_protection_constraints(
+            client_id=client_id
+        ),
     }
 
 
@@ -241,7 +269,12 @@ def evaluate_provider_candidate_against_guardrails(
 ) -> dict[str, Any]:
     provider_name = normalize_provider_name(provider or "unknown")
     if not context or not is_cloud_provider(provider_name):
-        return {"blocked": False, "reasons": [], "estimated_cost_brl": 0.0, "estimated_revenue_brl": 0.0}
+        return {
+            "blocked": False,
+            "reasons": [],
+            "estimated_cost_brl": 0.0,
+            "estimated_revenue_brl": 0.0,
+        }
 
     estimates = context.setdefault("estimated_by_provider", {})
     if provider_name not in estimates:
@@ -254,20 +287,36 @@ def evaluate_provider_candidate_against_guardrails(
     estimated = estimates[provider_name]
 
     reasons: list[str] = []
-    projected_global_cost = float(context.get("global_provider_cost_today_brl", 0.0)) + float(estimated["estimated_cost_brl"])
-    projected_provider_cost = float(context.get("provider_costs_today_brl", {}).get(provider_name, 0.0)) + float(estimated["estimated_cost_brl"])
-    projected_client_cost = float(context.get("client_cost_today_brl", 0.0)) + float(estimated["estimated_cost_brl"])
-    projected_client_revenue = float(context.get("client_revenue_today_brl", 0.0)) + float(estimated["estimated_revenue_brl"])
-    projected_client_margin = float(context.get("client_margin_today_brl", 0.0)) + (float(estimated["estimated_revenue_brl"]) - float(estimated["estimated_cost_brl"]))
+    projected_global_cost = float(context.get("global_provider_cost_today_brl", 0.0)) + float(
+        estimated["estimated_cost_brl"]
+    )
+    projected_provider_cost = float(
+        context.get("provider_costs_today_brl", {}).get(provider_name, 0.0)
+    ) + float(estimated["estimated_cost_brl"])
+    projected_client_cost = float(context.get("client_cost_today_brl", 0.0)) + float(
+        estimated["estimated_cost_brl"]
+    )
+    projected_client_revenue = float(context.get("client_revenue_today_brl", 0.0)) + float(
+        estimated["estimated_revenue_brl"]
+    )
+    projected_client_margin = float(context.get("client_margin_today_brl", 0.0)) + (
+        float(estimated["estimated_revenue_brl"]) - float(estimated["estimated_cost_brl"])
+    )
     projected_margin_percent = _margin_percent(projected_client_margin, projected_client_revenue)
 
     if context.get("cloud_kill_switch"):
         reasons.append("global_cloud_kill_switch")
-    if float(context.get("max_global_provider_cost_per_day_brl", 0.0)) > 0 and projected_global_cost >= float(context["max_global_provider_cost_per_day_brl"]):
+    if float(
+        context.get("max_global_provider_cost_per_day_brl", 0.0)
+    ) > 0 and projected_global_cost >= float(context["max_global_provider_cost_per_day_brl"]):
         reasons.append("global_daily_cost_limit_exceeded")
-    if float(context.get("max_provider_cost_per_day_brl", 0.0)) > 0 and projected_provider_cost >= float(context["max_provider_cost_per_day_brl"]):
+    if float(
+        context.get("max_provider_cost_per_day_brl", 0.0)
+    ) > 0 and projected_provider_cost >= float(context["max_provider_cost_per_day_brl"]):
         reasons.append("provider_daily_cost_limit_exceeded")
-    if float(context.get("max_client_provider_cost_per_day_brl", 0.0)) > 0 and projected_client_cost >= float(context["max_client_provider_cost_per_day_brl"]):
+    if float(
+        context.get("max_client_provider_cost_per_day_brl", 0.0)
+    ) > 0 and projected_client_cost >= float(context["max_client_provider_cost_per_day_brl"]):
         reasons.append("client_daily_cost_limit_exceeded")
     if projected_client_margin < 0:
         reasons.append("negative_margin")
@@ -276,7 +325,8 @@ def evaluate_provider_candidate_against_guardrails(
 
     return {
         "blocked": any(
-            reason in {
+            reason
+            in {
                 "global_cloud_kill_switch",
                 "global_daily_cost_limit_exceeded",
                 "provider_daily_cost_limit_exceeded",
@@ -293,7 +343,9 @@ def evaluate_provider_candidate_against_guardrails(
     }
 
 
-def filter_routes_by_commercial_guardrails(routes: list[Any], context: dict[str, Any] | None) -> list[Any]:
+def filter_routes_by_commercial_guardrails(
+    routes: list[Any], context: dict[str, Any] | None
+) -> list[Any]:
     if not context:
         return routes
     mode = context.get("enforcement_mode", "disabled")
@@ -338,7 +390,9 @@ def filter_routes_by_commercial_guardrails(routes: list[Any], context: dict[str,
     context["report_only_candidates"] = report_only_candidates
     context["blocked_candidates"] = blocked_candidates
     context["blocked_cloud_providers"] = [item["provider"] for item in blocked_candidates]
-    context["local_routes_available"] = _local_routes_available(filtered) or _local_routes_available(routes)
+    context["local_routes_available"] = _local_routes_available(
+        filtered
+    ) or _local_routes_available(routes)
     context["cloud_routes_available_after_filter"] = any(
         is_cloud_provider(getattr(getattr(route, "inference_backend", None), "provider", None))
         for route in filtered
@@ -352,7 +406,9 @@ def filter_routes_by_commercial_guardrails(routes: list[Any], context: dict[str,
         }
         for item in blocked_candidates
     ]
-    context["guardrail_fallback_active"] = bool(blocked_candidates and context["local_routes_available"])
+    context["guardrail_fallback_active"] = bool(
+        blocked_candidates and context["local_routes_available"]
+    )
     context["blocked_without_fallback"] = bool(blocked_candidates and not filtered)
     return filtered
 
@@ -401,7 +457,11 @@ def record_enforcement_outcome(
             )
         return
 
-    if mode == "enforce_cloud_only" and context.get("guardrail_fallback_active") and is_local_provider(selected_provider_name):
+    if (
+        mode == "enforce_cloud_only"
+        and context.get("guardrail_fallback_active")
+        and is_local_provider(selected_provider_name)
+    ):
         for item in context.get("blocked_candidates") or []:
             reasons = item.get("reasons") or ["fallback"]
             record_commercial_guardrail_event(
@@ -417,7 +477,7 @@ def record_enforcement_outcome(
 
 async def build_commercial_guardrails_overview(session: AsyncSession) -> dict[str, Any]:
     settings = get_settings()
-    now_utc = datetime.now(timezone.utc)
+    now_utc = datetime.now(UTC)
     today_start = _today_start_utc(now_utc)
     mode = _build_mode(settings)
 
@@ -449,13 +509,17 @@ async def build_commercial_guardrails_overview(session: AsyncSession) -> dict[st
     global_margin_today_brl = float(row_global.profit or 0.0)
     global_margin_percent_today = _margin_percent(global_margin_today_brl, global_revenue_today_brl)
 
-    stmt_provider = select(
-        RequestFinancial.provider,
-        func.count(RequestFinancial.id).label("requests"),
-        func.coalesce(func.sum(RequestFinancial.provider_cost_brl), 0).label("cost"),
-        func.coalesce(func.sum(RequestFinancial.customer_price_brl), 0).label("revenue"),
-        func.coalesce(func.sum(RequestFinancial.gross_profit_brl), 0).label("profit"),
-    ).where(RequestFinancial.created_at >= today_start).group_by(RequestFinancial.provider)
+    stmt_provider = (
+        select(
+            RequestFinancial.provider,
+            func.count(RequestFinancial.id).label("requests"),
+            func.coalesce(func.sum(RequestFinancial.provider_cost_brl), 0).label("cost"),
+            func.coalesce(func.sum(RequestFinancial.customer_price_brl), 0).label("revenue"),
+            func.coalesce(func.sum(RequestFinancial.gross_profit_brl), 0).label("profit"),
+        )
+        .where(RequestFinancial.created_at >= today_start)
+        .group_by(RequestFinancial.provider)
+    )
     provider_rows = (await session.execute(stmt_provider)).all()
 
     providers: list[dict[str, Any]] = []
@@ -474,7 +538,9 @@ async def build_commercial_guardrails_overview(session: AsyncSession) -> dict[st
         if provider_is_cloud:
             global_cloud_provider_cost_today_brl += cost_brl
 
-        over_warning = bool(provider_warning_limit is not None and cost_brl >= provider_warning_limit)
+        over_warning = bool(
+            provider_warning_limit is not None and cost_brl >= provider_warning_limit
+        )
         over_block = bool(provider_limit > 0 and cost_brl >= provider_limit)
         status = "ok"
         if over_block:
@@ -485,7 +551,9 @@ async def build_commercial_guardrails_overview(session: AsyncSession) -> dict[st
         if over_warning:
             providers_over_warning_threshold.append(provider)
             _append_unique(warnings, f"Provider '{provider}' acima do threshold de alerta diário.")
-            _append_unique(recommendations, f"Revisar pricing e roteamento do provider '{provider}'.")
+            _append_unique(
+                recommendations, f"Revisar pricing e roteamento do provider '{provider}'."
+            )
         if over_block:
             providers_over_block_threshold.append(provider)
             would_block.append(
@@ -494,7 +562,9 @@ async def build_commercial_guardrails_overview(session: AsyncSession) -> dict[st
                     "provider": provider,
                     "current_cost_brl": round(cost_brl, 2),
                     "limit_brl": round(provider_limit, 2),
-                    "action": "would_block_cloud_provider" if provider_is_cloud else "would_block_provider",
+                    "action": "would_block_cloud_provider"
+                    if provider_is_cloud
+                    else "would_block_provider",
                 }
             )
 
@@ -506,7 +576,9 @@ async def build_commercial_guardrails_overview(session: AsyncSession) -> dict[st
                 "provider_revenue_today_brl": round(revenue_brl, 2),
                 "provider_margin_today_brl": round(margin_brl, 2),
                 "provider_margin_percent_today": round(margin_percent, 2),
-                "warning_limit_brl": round(provider_warning_limit, 2) if provider_warning_limit is not None else None,
+                "warning_limit_brl": round(provider_warning_limit, 2)
+                if provider_warning_limit is not None
+                else None,
                 "block_limit_brl": round(provider_limit, 2) if provider_limit > 0 else None,
                 "is_cloud_provider": provider_is_cloud,
                 "over_warning_threshold": over_warning,
@@ -517,7 +589,9 @@ async def build_commercial_guardrails_overview(session: AsyncSession) -> dict[st
 
     if global_warning_limit is not None and global_provider_cost_today_brl >= global_warning_limit:
         _append_unique(warnings, "Custo global diário de providers acima do threshold de alerta.")
-        _append_unique(recommendations, "Reduzir fallback cloud e revisar tenants com maior consumo.")
+        _append_unique(
+            recommendations, "Reduzir fallback cloud e revisar tenants com maior consumo."
+        )
     if global_limit > 0 and global_provider_cost_today_brl >= global_limit:
         would_block.append(
             {
@@ -529,16 +603,19 @@ async def build_commercial_guardrails_overview(session: AsyncSession) -> dict[st
             }
         )
 
-    stmt_client = select(
-        RequestFinancial.client_id,
-        Client.name,
-        func.count(RequestFinancial.id).label("requests"),
-        func.coalesce(func.sum(RequestFinancial.provider_cost_brl), 0).label("cost"),
-        func.coalesce(func.sum(RequestFinancial.customer_price_brl), 0).label("revenue"),
-        func.coalesce(func.sum(RequestFinancial.gross_profit_brl), 0).label("profit"),
-    ).outerjoin(Client, Client.id == RequestFinancial.client_id).where(
-        RequestFinancial.created_at >= today_start
-    ).group_by(RequestFinancial.client_id, Client.name)
+    stmt_client = (
+        select(
+            RequestFinancial.client_id,
+            Client.name,
+            func.count(RequestFinancial.id).label("requests"),
+            func.coalesce(func.sum(RequestFinancial.provider_cost_brl), 0).label("cost"),
+            func.coalesce(func.sum(RequestFinancial.customer_price_brl), 0).label("revenue"),
+            func.coalesce(func.sum(RequestFinancial.gross_profit_brl), 0).label("profit"),
+        )
+        .outerjoin(Client, Client.id == RequestFinancial.client_id)
+        .where(RequestFinancial.created_at >= today_start)
+        .group_by(RequestFinancial.client_id, Client.name)
+    )
     client_rows = (await session.execute(stmt_client)).all()
 
     clients: list[dict[str, Any]] = []
@@ -565,7 +642,9 @@ async def build_commercial_guardrails_overview(session: AsyncSession) -> dict[st
         if negative_margin:
             clients_with_negative_margin.append(client_id)
             _append_unique(warnings, f"Cliente '{client_name}' opera com margem negativa hoje.")
-            _append_unique(recommendations, f"Revisar preço, cache e fallback do cliente '{client_name}'.")
+            _append_unique(
+                recommendations, f"Revisar preço, cache e fallback do cliente '{client_name}'."
+            )
             would_block.append(
                 {
                     "type": "negative_margin",
@@ -604,7 +683,9 @@ async def build_commercial_guardrails_overview(session: AsyncSession) -> dict[st
                 "client_revenue_today_brl": round(revenue_brl, 2),
                 "client_margin_today_brl": round(margin_brl, 2),
                 "client_margin_percent_today": round(margin_percent, 2),
-                "warning_limit_brl": round(client_warning_limit, 2) if client_warning_limit is not None else None,
+                "warning_limit_brl": round(client_warning_limit, 2)
+                if client_warning_limit is not None
+                else None,
                 "block_limit_brl": round(client_limit, 2) if client_limit > 0 else None,
                 "margin_warning_threshold_percent": round(margin_warning_percent, 2),
                 "is_negative_margin": negative_margin,
@@ -616,10 +697,16 @@ async def build_commercial_guardrails_overview(session: AsyncSession) -> dict[st
         )
 
     if not settings.cloud_providers_enabled:
-        _append_unique(recommendations, "Cloud permanece desabilitada por padrão; usar guardrails como readiness operacional.")
+        _append_unique(
+            recommendations,
+            "Cloud permanece desabilitada por padrão; usar guardrails como readiness operacional.",
+        )
     if getattr(settings, "global_cloud_kill_switch", False):
         _append_unique(warnings, "GLOBAL_CLOUD_KILL_SWITCH ativo: providers cloud indisponíveis.")
-        _append_unique(recommendations, "Desativar o kill switch apenas quando houver janela operacional segura.")
+        _append_unique(
+            recommendations,
+            "Desativar o kill switch apenas quando houver janela operacional segura.",
+        )
         would_block.append(
             {
                 "type": "global_cloud_kill_switch",
@@ -630,11 +717,20 @@ async def build_commercial_guardrails_overview(session: AsyncSession) -> dict[st
             }
         )
     if mode == "disabled":
-        _append_unique(recommendations, "Habilitar COMMERCIAL_GUARDRAILS_ENABLED=true apenas para observabilidade admin-only.")
+        _append_unique(
+            recommendations,
+            "Habilitar COMMERCIAL_GUARDRAILS_ENABLED=true apenas para observabilidade admin-only.",
+        )
     elif mode == "report_only":
-        _append_unique(recommendations, "Acompanhar o relatório por alguns dias antes de ativar enforce_cloud_only.")
+        _append_unique(
+            recommendations,
+            "Acompanhar o relatório por alguns dias antes de ativar enforce_cloud_only.",
+        )
     else:
-        _append_unique(recommendations, "Enforcement ativo apenas para cloud; revisar fallback local-first e kill switch antes de ampliar rollout.")
+        _append_unique(
+            recommendations,
+            "Enforcement ativo apenas para cloud; revisar fallback local-first e kill switch antes de ampliar rollout.",
+        )
 
     providers.sort(key=lambda item: item["provider_cost_today_brl"], reverse=True)
     clients.sort(key=lambda item: item["client_cost_today_brl"], reverse=True)
@@ -687,7 +783,7 @@ async def simulate_commercial_guardrails(
     estimated_revenue_brl: float,
 ) -> dict[str, Any]:
     settings = get_settings()
-    now_utc = datetime.now(timezone.utc)
+    now_utc = datetime.now(UTC)
     today_start = _today_start_utc(now_utc)
     try:
         client_identifier: str | UUID = UUID(client_id)
@@ -725,29 +821,52 @@ async def simulate_commercial_guardrails(
     projected_client_cost = client_cost + estimated_cost_brl
     projected_client_revenue = client_revenue + estimated_revenue_brl
     projected_client_margin = client_profit + (estimated_revenue_brl - estimated_cost_brl)
-    projected_client_margin_percent = _margin_percent(projected_client_margin, projected_client_revenue)
+    projected_client_margin_percent = _margin_percent(
+        projected_client_margin, projected_client_revenue
+    )
 
     reasons: list[str] = []
     recommendations: list[str] = []
 
     if getattr(settings, "global_cloud_kill_switch", False) and is_cloud_provider(provider):
         reasons.append("global_cloud_kill_switch")
-        recommendations.append("Kill switch global cloud ativo; validar fallback local antes de reabrir providers cloud.")
+        recommendations.append(
+            "Kill switch global cloud ativo; validar fallback local antes de reabrir providers cloud."
+        )
 
-    if settings.max_global_provider_cost_per_day_brl > 0 and projected_global_cost >= settings.max_global_provider_cost_per_day_brl:
+    if (
+        settings.max_global_provider_cost_per_day_brl > 0
+        and projected_global_cost >= settings.max_global_provider_cost_per_day_brl
+    ):
         reasons.append("global_daily_cost_limit_exceeded")
-        recommendations.append("Reduzir fallback cloud ou elevar o teto global apenas com aprovação operacional.")
-    if settings.max_provider_cost_per_day_brl > 0 and projected_provider_cost >= settings.max_provider_cost_per_day_brl:
+        recommendations.append(
+            "Reduzir fallback cloud ou elevar o teto global apenas com aprovação operacional."
+        )
+    if (
+        settings.max_provider_cost_per_day_brl > 0
+        and projected_provider_cost >= settings.max_provider_cost_per_day_brl
+    ):
         reasons.append("provider_daily_cost_limit_exceeded")
-        recommendations.append(f"Despriorizar o provider '{provider}' ou revisar sua tabela de preços.")
-    if settings.max_client_provider_cost_per_day_brl > 0 and projected_client_cost >= settings.max_client_provider_cost_per_day_brl:
+        recommendations.append(
+            f"Despriorizar o provider '{provider}' ou revisar sua tabela de preços."
+        )
+    if (
+        settings.max_client_provider_cost_per_day_brl > 0
+        and projected_client_cost >= settings.max_client_provider_cost_per_day_brl
+    ):
         reasons.append("client_daily_cost_limit_exceeded")
-        recommendations.append("Revisar o teto diário por tenant ou ajustar o plano/preço do cliente.")
+        recommendations.append(
+            "Revisar o teto diário por tenant ou ajustar o plano/preço do cliente."
+        )
     if projected_client_margin < 0:
         reasons.append("negative_margin")
-        recommendations.append("Aumentar receita estimada, reduzir custo estimado ou evitar fallback caro para este cliente.")
+        recommendations.append(
+            "Aumentar receita estimada, reduzir custo estimado ou evitar fallback caro para este cliente."
+        )
     elif projected_client_margin_percent < settings.margin_warning_percent:
-        recommendations.append("Margem projetada abaixo do threshold de alerta; monitorar antes de habilitar enforcement.")
+        recommendations.append(
+            "Margem projetada abaixo do threshold de alerta; monitorar antes de habilitar enforcement."
+        )
 
     hard_block_reasons = {
         "global_cloud_kill_switch",
@@ -766,7 +885,9 @@ async def simulate_commercial_guardrails(
         "allowed_in_report_only": True,
         "would_allow_if_enforced": not any(reason in hard_block_reasons for reason in reasons),
         "estimated_margin_brl": round(estimated_revenue_brl - estimated_cost_brl, 2),
-        "estimated_margin_percent": round(_margin_percent(estimated_revenue_brl - estimated_cost_brl, estimated_revenue_brl), 2),
+        "estimated_margin_percent": round(
+            _margin_percent(estimated_revenue_brl - estimated_cost_brl, estimated_revenue_brl), 2
+        ),
         "projected_client_margin_brl": round(projected_client_margin, 2),
         "projected_client_margin_percent": round(projected_client_margin_percent, 2),
         "projected_global_provider_cost_today_brl": round(projected_global_cost, 2),

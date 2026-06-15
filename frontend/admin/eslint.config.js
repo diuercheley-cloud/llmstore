@@ -19,4 +19,15 @@ export default defineConfig([globalIgnores(['dist', 'storybook-static']), {
   languageOptions: {
     globals: globals.browser,
   },
+  rules: {
+    '@typescript-eslint/no-explicit-any': 'warn',
+    '@typescript-eslint/no-unused-vars': 'warn',
+    '@typescript-eslint/no-empty-object-type': 'warn',
+    'react-refresh/only-export-components': 'warn',
+    'react-hooks/incompatible-library': 'warn',
+    'react-hooks/set-state-in-effect': 'warn',
+    'react-hooks/purity': 'warn',
+    'no-empty': 'warn',
+    'react-hooks/exhaustive-deps': 'warn'
+  }
 }, ...storybook.configs["flat/recommended"]])

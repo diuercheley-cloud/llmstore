@@ -1,6 +1,6 @@
 # Owner: agent-platform
 import uuid
-from typing import Any, Dict, List
+from typing import Any
 
 from app.api.deps import get_db_session, require_admin
 from app.services.agents.agent_handoffs import AgentHandoffService
@@ -9,22 +9,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/agents", tags=["agent-handoffs"])
 
+
 @router.post("/handoff-policies")
 async def create_handoff_policy(
     data: dict = Body(...),
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     service = AgentHandoffService(db)
     policy = await service.create_handoff_policy(data)
     return {"id": str(policy.id), "status": "created"}
+
 
 @router.get("/handoff-policies")
 async def list_handoff_policies(
     tenant_id: str,
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     service = AgentHandoffService(db)
     policies = await service.get_handoff_policies(tenant_id)
     return [
@@ -37,12 +39,13 @@ async def list_handoff_policies(
         for p in policies
     ]
 
+
 @router.get("/runs/{run_id}/handoffs")
 async def get_run_handoffs(
     run_id: uuid.UUID,
     db: AsyncSession = Depends(get_db_session),
     admin: Any = Depends(require_admin),
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     service = AgentHandoffService(db)
     events = await service.list_run_handoffs(run_id)
     return [

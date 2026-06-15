@@ -1,6 +1,5 @@
 import asyncio
 import os
-import platform
 import shutil
 import tempfile
 import time
@@ -8,18 +7,19 @@ import uuid
 from pathlib import Path
 
 from app.services.sandbox.base import (
-    SandboxProvider, 
-    SandboxLevel, 
-    SandboxExecutionRequest, 
-    SandboxExecutionResult
+    SandboxExecutionRequest,
+    SandboxExecutionResult,
+    SandboxLevel,
+    SandboxProvider,
 )
 
 
 class NoopSandboxProvider(SandboxProvider):
     """
-    Provider that does not provide isolation. 
+    Provider that does not provide isolation.
     Only used for simulation or local trusted execution.
     """
+
     async def execute(self, request: SandboxExecutionRequest) -> SandboxExecutionResult:
         start_time = time.time()
         return SandboxExecutionResult(
@@ -27,7 +27,7 @@ class NoopSandboxProvider(SandboxProvider):
             exit_code=0,
             stdout=b"Simulation: Command executed successfully in NOOP sandbox.",
             execution_time=time.time() - start_time,
-            provider_name="noop"
+            provider_name="noop",
         )
 
     def get_level(self) -> SandboxLevel:
@@ -44,6 +44,7 @@ class ProcessSandboxProvider(SandboxProvider):
     and workspace confinement. Falls back gracefully if resource limiting
     is not available on the current platform.
     """
+
     def __init__(self, workspace_dir: str | None = None):
         self._workspace_dir = workspace_dir
 
@@ -52,16 +53,20 @@ class ProcessSandboxProvider(SandboxProvider):
         sandbox_id = uuid.uuid4().hex[:12]
 
         try:
-            workspace = Path(self._workspace_dir or tempfile.mkdtemp(prefix=f"sandbox-{sandbox_id}-"))
+            workspace = Path(
+                self._workspace_dir or tempfile.mkdtemp(prefix=f"sandbox-{sandbox_id}-")
+            )
             workspace.mkdir(parents=True, exist_ok=True)
 
             env = os.environ.copy()
             env.update(request.env)
-            env.update({
-                "SANDBOX_ID": sandbox_id,
-                "SANDBOX_WORKSPACE": str(workspace),
-                "HOME": str(workspace),
-            })
+            env.update(
+                {
+                    "SANDBOX_ID": sandbox_id,
+                    "SANDBOX_WORKSPACE": str(workspace),
+                    "HOME": str(workspace),
+                }
+            )
 
             proc = await asyncio.create_subprocess_exec(
                 *request.command,
@@ -70,7 +75,9 @@ class ProcessSandboxProvider(SandboxProvider):
                 stderr=asyncio.subprocess.PIPE,
                 cwd=str(workspace),
                 env=env,
-                limit=request.policy.memory_limit_mb * 1024 * 1024 if hasattr(asyncio, 'limit') else 0,
+                limit=request.policy.memory_limit_mb * 1024 * 1024
+                if hasattr(asyncio, "limit")
+                else 0,
             )
 
             try:
@@ -78,7 +85,7 @@ class ProcessSandboxProvider(SandboxProvider):
                     proc.communicate(input=request.input_data),
                     timeout=request.policy.timeout_seconds,
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 proc.kill()
                 await proc.wait()
                 return SandboxExecutionResult(
@@ -130,6 +137,7 @@ class ProcessSandboxProvider(SandboxProvider):
 
 class WasiSandboxProvider(SandboxProvider):
     """Wasmtime/WASI provider for WebAssembly sandboxing."""
+
     def __init__(self):
         self._wasmtime_path = shutil.which("wasmtime")
 
@@ -151,9 +159,12 @@ class WasiSandboxProvider(SandboxProvider):
             wasmtime_args = [
                 self._wasmtime_path,
                 "run",
-                "--dir", f"{workspace}::/workspace",
-                "--env", f"HOME=/workspace",
-                "--env", f"SANDBOX_ID={sandbox_id}",
+                "--dir",
+                f"{workspace}::/workspace",
+                "--env",
+                "HOME=/workspace",
+                "--env",
+                f"SANDBOX_ID={sandbox_id}",
             ]
 
             if not request.policy.allow_network:
@@ -175,7 +186,7 @@ class WasiSandboxProvider(SandboxProvider):
                     proc.communicate(input=request.input_data),
                     timeout=request.policy.timeout_seconds,
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 proc.kill()
                 await proc.wait()
                 return SandboxExecutionResult(
@@ -219,6 +230,7 @@ class WasiSandboxProvider(SandboxProvider):
 
 class GVisorSandboxProvider(SandboxProvider):
     """gVisor/runsc provider for container-level sandboxing."""
+
     def __init__(self):
         self._runsc_path = shutil.which("runsc")
 
@@ -244,6 +256,7 @@ class GVisorSandboxProvider(SandboxProvider):
 
 class FirecrackerSandboxProvider(SandboxProvider):
     """Firecracker MicroVM provider."""
+
     def __init__(self):
         self._fc_path = shutil.which("firecracker")
 
@@ -251,7 +264,7 @@ class FirecrackerSandboxProvider(SandboxProvider):
         return SandboxExecutionResult(
             status="blocked",
             reason="Firecracker MicroVM provider requires additional configuration. "
-                   "Set FIRECRACKER_ENABLED=true and configure kernel/rootfs paths.",
+            "Set FIRECRACKER_ENABLED=true and configure kernel/rootfs paths.",
             provider_name="firecracker",
         )
 

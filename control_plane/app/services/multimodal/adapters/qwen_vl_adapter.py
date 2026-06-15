@@ -1,20 +1,19 @@
-from typing import Any, Dict, List, Optional
 from app.services.multimodal.base import (
-    MultimodalAdapterBase, 
-    MultimodalCapability, 
-    MultimodalInputType, 
-    MultimodalResult
+    MultimodalAdapterBase,
+    MultimodalCapability,
+    MultimodalInputType,
+    MultimodalResult,
 )
 
 
 class QwenVLAdapter(MultimodalAdapterBase):
     @property
-    def capabilities(self) -> List[MultimodalCapability]:
+    def capabilities(self) -> list[MultimodalCapability]:
         return [
             MultimodalCapability.IMAGE_CAPTIONING,
             MultimodalCapability.VISUAL_QUESTION_ANSWERING,
             MultimodalCapability.OCR,
-            MultimodalCapability.OBJECT_DETECTION
+            MultimodalCapability.OBJECT_DETECTION,
         ]
 
     @property
@@ -22,11 +21,7 @@ class QwenVLAdapter(MultimodalAdapterBase):
         return "Qwen-VL-Chat"
 
     async def analyze(
-        self, 
-        input_type: MultimodalInputType, 
-        file_path: str, 
-        prompt: Optional[str] = None,
-        **kwargs
+        self, input_type: MultimodalInputType, file_path: str, prompt: str | None = None, **kwargs
     ) -> MultimodalResult:
         return MultimodalResult(
             text=f"[Mock Qwen-VL] Analyzing {file_path}. Prompt: {prompt}",
@@ -35,5 +30,5 @@ class QwenVLAdapter(MultimodalAdapterBase):
             confidence=0.92,
             model_used=self.model_name,
             backend_used="mock_backend",
-            audit_metadata={"file": file_path}
+            audit_metadata={"file": file_path},
         )

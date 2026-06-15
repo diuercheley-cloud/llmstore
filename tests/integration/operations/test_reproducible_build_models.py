@@ -48,7 +48,10 @@ async def test_reproducible_build_models_persist(session):
 
 
 def test_phase_81_migration_present():
-    content = open("control_plane/alembic/versions/phase81_reproducible_build_artifact_verification.py", "r", encoding="utf-8").read()
+    content = open(
+        "control_plane/alembic/versions/phase81_reproducible_build_artifact_verification.py",
+        encoding="utf-8",
+    ).read()
     assert "reproducible_build_manifests" in content
     assert "artifact_verification_records" in content
     assert "_uuid_type" in content

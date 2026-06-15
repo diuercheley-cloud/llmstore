@@ -13,6 +13,7 @@ from app.services.rag_enterprise.retrieval import search_chunks
 class TestSecretsNotInLogs:
     def test_parsers_no_secret_leakage(self):
         from app.services.rag_enterprise.parsers import get_parsers_summary
+
         available, skipped = get_parsers_summary()
         for ext in available + skipped:
             assert "sk-" not in ext
@@ -21,6 +22,7 @@ class TestSecretsNotInLogs:
     def test_chunking_no_secret_leakage(self):
         from app.services.rag_enterprise.chunking import chunk_by_fixed
         from app.services.rag_enterprise.schemas import ChunkingConfig
+
         config = ChunkingConfig(chunk_size=100, chunk_overlap=0)
         text = "This is public content"
         chunks = chunk_by_fixed(text, config)
@@ -86,13 +88,16 @@ class TestTenantFilterAlwaysApplied:
                     count_result.scalar = MagicMock(return_value=0)
                     result.mappings = MagicMock()
                     mappings_result = MagicMock()
-                    mappings_result.first = MagicMock(return_value={"doc_count": 0, "storage_bytes": 0})
+                    mappings_result.first = MagicMock(
+                        return_value={"doc_count": 0, "storage_bytes": 0}
+                    )
                     result.mappings.return_value = mappings_result
                 return result
 
             session.execute = AsyncMock(side_effect=fake_execute)
 
             from app.services.rag_enterprise.ingestion import ingest_document
+
             with patch("app.services.rag_enterprise.ingestion.record_rag_event", AsyncMock()):
                 with patch("app.services.rag_enterprise.ingestion.select") as mock_select:
                     mock_client = MagicMock()
@@ -114,11 +119,13 @@ class TestTenantFilterAlwaysApplied:
 class TestNoCloudByDefault:
     def test_local_embedding_default(self):
         from app.services.rag_enterprise.embeddings import get_enterprise_embedding_service
+
         service = get_enterprise_embedding_service()
         assert service.provider in ("local", "mock")
 
     def test_cloud_embeddings_policy_default(self):
         from app.services.rag_enterprise.policies import EnterpriseRagPolicy
+
         policy = EnterpriseRagPolicy()
         assert policy.cloud_embeddings_allowed is False
 

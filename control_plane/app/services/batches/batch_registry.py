@@ -1,6 +1,6 @@
 import logging
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.time import utc_now
 from app.models.core.batches import BatchJob, BatchJobItem
@@ -9,6 +9,7 @@ from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
+
 class BatchRegistry:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -16,9 +17,9 @@ class BatchRegistry:
     async def create_batch(
         self,
         tenant_id: str,
-        input_data: List[Dict[str, Any]],
-        budget_limit: Optional[float] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        input_data: list[dict[str, Any]],
+        budget_limit: float | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> BatchJob:
         batch = BatchJob(
             id=uuid.uuid4(),
@@ -26,35 +27,35 @@ class BatchRegistry:
             status="validating",
             total_items=len(input_data),
             budget_limit=budget_limit,
-            metadata_json=metadata
+            metadata_json=metadata,
         )
         self.db.add(batch)
-        
+
         for item_data in input_data:
             item = BatchJobItem(
                 id=uuid.uuid4(),
                 batch_id=batch.id,
                 custom_id=item_data.get("custom_id"),
                 input_data=item_data,
-                status="pending"
+                status="pending",
             )
             self.db.add(item)
-            
+
         await self.db.flush()
         return batch
 
-    async def get_batch(self, tenant_id: str, batch_id: uuid.UUID) -> Optional[BatchJob]:
-        stmt = select(BatchJob).where(
-            BatchJob.id == batch_id,
-            BatchJob.tenant_id == tenant_id
-        )
+    async def get_batch(self, tenant_id: str, batch_id: uuid.UUID) -> BatchJob | None:
+        stmt = select(BatchJob).where(BatchJob.id == batch_id, BatchJob.tenant_id == tenant_id)
         res = await self.db.execute(stmt)
         return res.scalar_one_or_none()
 
-    async def list_batches(self, tenant_id: str, limit: int = 20) -> List[BatchJob]:
-        stmt = select(BatchJob).where(
-            BatchJob.tenant_id == tenant_id
-        ).order_by(BatchJob.created_at.desc()).limit(limit)
+    async def list_batches(self, tenant_id: str, limit: int = 20) -> list[BatchJob]:
+        stmt = (
+            select(BatchJob)
+            .where(BatchJob.tenant_id == tenant_id)
+            .order_by(BatchJob.created_at.desc())
+            .limit(limit)
+        )
         res = await self.db.execute(stmt)
         return list(res.scalars().all())
 

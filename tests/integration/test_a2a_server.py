@@ -49,14 +49,20 @@ class TestA2AServerReceiveMessage:
             "signature": "valid-signature",
         }
 
-        mock_db.execute = AsyncMock(side_effect=[
-            MagicMock(scalar_one_or_none=lambda: sender_reg),
-            MagicMock(scalar_one_or_none=lambda: recipient_reg),
-        ])
+        mock_db.execute = AsyncMock(
+            side_effect=[
+                MagicMock(scalar_one_or_none=lambda: sender_reg),
+                MagicMock(scalar_one_or_none=lambda: recipient_reg),
+            ]
+        )
 
-        with patch.object(A2ASecurityService, "authenticate_agent", AsyncMock(return_value=sender_reg)):
+        with patch.object(
+            A2ASecurityService, "authenticate_agent", AsyncMock(return_value=sender_reg)
+        ):
             with patch.object(A2ASecurityService, "verify_signature", return_value=True):
-                with patch("app.services.agents.a2a.a2a_server.record_admin_audit_event", AsyncMock()):
+                with patch(
+                    "app.services.agents.a2a.a2a_server.record_admin_audit_event", AsyncMock()
+                ):
                     result = await A2AServerService.receive_message(
                         db=mock_db, message_payload=payload, token=sender_reg.auth_token
                     )
@@ -72,7 +78,9 @@ class TestA2AServerReceiveMessage:
             "recipient_agent_id": str(uuid.uuid4()),
             "payload": {},
         }
-        with patch.object(A2ASecurityService, "authenticate_agent", AsyncMock(return_value=_make_reg())):
+        with patch.object(
+            A2ASecurityService, "authenticate_agent", AsyncMock(return_value=_make_reg())
+        ):
             with pytest.raises(HTTPException) as exc:
                 await A2AServerService.receive_message(
                     db=mock_db, message_payload=payload, token="token"
@@ -89,7 +97,9 @@ class TestA2AServerReceiveMessage:
             "payload": {},
             "signature": "sig",
         }
-        with patch.object(A2ASecurityService, "authenticate_agent", AsyncMock(return_value=_make_reg())):
+        with patch.object(
+            A2ASecurityService, "authenticate_agent", AsyncMock(return_value=_make_reg())
+        ):
             with pytest.raises(HTTPException) as exc:
                 await A2AServerService.receive_message(
                     db=mock_db, message_payload=payload, token="token"
@@ -110,7 +120,9 @@ class TestA2AServerReceiveMessage:
             "signature": "sig",
         }
 
-        with patch.object(A2ASecurityService, "authenticate_agent", AsyncMock(return_value=sender_reg)):
+        with patch.object(
+            A2ASecurityService, "authenticate_agent", AsyncMock(return_value=sender_reg)
+        ):
             with patch.object(A2ASecurityService, "verify_signature", return_value=True):
                 with pytest.raises(HTTPException) as exc:
                     await A2AServerService.receive_message(
@@ -132,7 +144,9 @@ class TestA2AServerReceiveMessage:
             "signature": "invalid",
         }
 
-        with patch.object(A2ASecurityService, "authenticate_agent", AsyncMock(return_value=sender_reg)):
+        with patch.object(
+            A2ASecurityService, "authenticate_agent", AsyncMock(return_value=sender_reg)
+        ):
             with patch.object(A2ASecurityService, "verify_signature", return_value=False):
                 with pytest.raises(HTTPException) as exc:
                     await A2AServerService.receive_message(
@@ -167,14 +181,20 @@ class TestA2AServerReceiveDelegation:
             is_active=True,
         )
 
-        mock_db.execute = AsyncMock(side_effect=[
-            MagicMock(scalar_one_or_none=lambda: delegatee_reg),
-            MagicMock(scalar_one_or_none=lambda: mock_policy),
-        ])
+        mock_db.execute = AsyncMock(
+            side_effect=[
+                MagicMock(scalar_one_or_none=lambda: delegatee_reg),
+                MagicMock(scalar_one_or_none=lambda: mock_policy),
+            ]
+        )
 
-        with patch.object(A2ASecurityService, "authenticate_agent", AsyncMock(return_value=sender_reg)):
+        with patch.object(
+            A2ASecurityService, "authenticate_agent", AsyncMock(return_value=sender_reg)
+        ):
             with patch.object(A2ASecurityService, "verify_signature", return_value=True):
-                with patch("app.services.agents.a2a.a2a_server.record_admin_audit_event", AsyncMock()):
+                with patch(
+                    "app.services.agents.a2a.a2a_server.record_admin_audit_event", AsyncMock()
+                ):
                     result = await A2AServerService.receive_delegation(
                         db=mock_db, delegation_payload=payload, token="token"
                     )
@@ -190,7 +210,9 @@ class TestA2AServerReceiveDelegation:
             "task_description": "Task",
             "input_data": {},
         }
-        with patch.object(A2ASecurityService, "authenticate_agent", AsyncMock(return_value=_make_reg())):
+        with patch.object(
+            A2ASecurityService, "authenticate_agent", AsyncMock(return_value=_make_reg())
+        ):
             with pytest.raises(HTTPException) as exc:
                 await A2AServerService.receive_delegation(
                     db=mock_db, delegation_payload=payload, token="token"
@@ -201,10 +223,12 @@ class TestA2AServerReceiveDelegation:
     @pytest.mark.asyncio
     async def test_receive_delegation_delegatee_not_registered(self, mock_db):
         sender_reg = _make_reg()
-        mock_db.execute = AsyncMock(side_effect=[
-            MagicMock(scalar_one_or_none=lambda: sender_reg),
-            MagicMock(scalar_one_or_none=lambda: None),
-        ])
+        mock_db.execute = AsyncMock(
+            side_effect=[
+                MagicMock(scalar_one_or_none=lambda: sender_reg),
+                MagicMock(scalar_one_or_none=lambda: None),
+            ]
+        )
 
         payload = {
             "task_id": str(uuid.uuid4()),
@@ -215,7 +239,9 @@ class TestA2AServerReceiveDelegation:
             "signature": "sig",
         }
 
-        with patch.object(A2ASecurityService, "authenticate_agent", AsyncMock(return_value=sender_reg)):
+        with patch.object(
+            A2ASecurityService, "authenticate_agent", AsyncMock(return_value=sender_reg)
+        ):
             with patch.object(A2ASecurityService, "verify_signature", return_value=True):
                 with pytest.raises(HTTPException) as exc:
                     await A2AServerService.receive_delegation(
@@ -239,12 +265,16 @@ class TestA2AServerReceiveDelegation:
             "signature": "sig",
         }
 
-        mock_db.execute = AsyncMock(side_effect=[
-            MagicMock(scalar_one_or_none=lambda: delegatee_reg),
-            MagicMock(scalar_one_or_none=lambda: None),
-        ])
+        mock_db.execute = AsyncMock(
+            side_effect=[
+                MagicMock(scalar_one_or_none=lambda: delegatee_reg),
+                MagicMock(scalar_one_or_none=lambda: None),
+            ]
+        )
 
-        with patch.object(A2ASecurityService, "authenticate_agent", AsyncMock(return_value=sender_reg)):
+        with patch.object(
+            A2ASecurityService, "authenticate_agent", AsyncMock(return_value=sender_reg)
+        ):
             with patch.object(A2ASecurityService, "verify_signature", return_value=True):
                 with pytest.raises(HTTPException) as exc:
                     await A2AServerService.receive_delegation(

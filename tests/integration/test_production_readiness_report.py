@@ -88,7 +88,16 @@ def test_production_readiness_script_and_report(tmp_path: Path):
     assert isinstance(checks, list)
     assert checks, "checks list is empty"
     for check in checks:
-        for field in ("id", "category", "title", "status", "severity", "details", "remediation", "evidence"):
+        for field in (
+            "id",
+            "category",
+            "title",
+            "status",
+            "severity",
+            "details",
+            "remediation",
+            "evidence",
+        ):
             assert field in check
         assert check["status"] in {"pass", "warn", "fail", "skip"}
         assert check["severity"] in {"critical", "high", "medium", "low"}
@@ -108,4 +117,3 @@ def test_production_readiness_script_and_report(tmp_path: Path):
     artifact_text = "\n".join(combined_artifacts)
     for pattern in SECRET_PATTERNS:
         assert not pattern.search(artifact_text), f"secret pattern leaked: {pattern.pattern}"
-

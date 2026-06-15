@@ -17,6 +17,7 @@ from app.services.agents.provider_validation import (
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(autouse=True)
 def enable_validation(monkeypatch):
     monkeypatch.setenv("AGENT_REAL_PROVIDER_VALIDATION_ENABLED", "true")
@@ -34,10 +35,13 @@ def validator():
 # Mock provider tests
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_mock_provider_basic_call_passes(validator):
     result = await validator.validate_basic_model_call("mock")
-    assert result.status == ValidationStatus.PASSED, f"Expected PASSED, got {result.status}: {result.error_message}"
+    assert result.status == ValidationStatus.PASSED, (
+        f"Expected PASSED, got {result.status}: {result.error_message}"
+    )
     assert result.tokens_used > 0
     assert result.duration_ms >= 0
 
@@ -45,27 +49,35 @@ async def test_mock_provider_basic_call_passes(validator):
 @pytest.mark.asyncio
 async def test_mock_provider_structured_output_passes(validator):
     result = await validator.validate_structured_output("mock")
-    assert result.status == ValidationStatus.PASSED, f"Expected PASSED, got {result.status}: {result.error_message}"
+    assert result.status == ValidationStatus.PASSED, (
+        f"Expected PASSED, got {result.status}: {result.error_message}"
+    )
     assert result.retries >= 0
 
 
 @pytest.mark.asyncio
 async def test_mock_provider_tool_call_passes(validator):
     result = await validator.validate_tool_call_format("mock")
-    assert result.status == ValidationStatus.PASSED, f"Expected PASSED, got {result.status}: {result.error_message}"
+    assert result.status == ValidationStatus.PASSED, (
+        f"Expected PASSED, got {result.status}: {result.error_message}"
+    )
     assert "tool_name" in result.details
 
 
 @pytest.mark.asyncio
 async def test_mock_provider_memory_injection_passes(validator):
     result = await validator.validate_memory_injection("mock")
-    assert result.status == ValidationStatus.PASSED, f"Expected PASSED, got {result.status}: {result.error_message}"
+    assert result.status == ValidationStatus.PASSED, (
+        f"Expected PASSED, got {result.status}: {result.error_message}"
+    )
 
 
 @pytest.mark.asyncio
 async def test_mock_provider_context_compression_passes(validator):
     result = await validator.validate_context_compression("mock")
-    assert result.status == ValidationStatus.PASSED, f"Expected PASSED, got {result.status}: {result.error_message}"
+    assert result.status == ValidationStatus.PASSED, (
+        f"Expected PASSED, got {result.status}: {result.error_message}"
+    )
 
 
 @pytest.mark.asyncio
@@ -99,17 +111,21 @@ async def test_mock_full_suite_passes(validator):
 # Local gateway unavailable -> degraded, not crash
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_local_gateway_unavailable_is_degraded(validator, monkeypatch):
     monkeypatch.setenv("AGENT_LOCAL_GATEWAY_ENDPOINT", "http://127.0.0.1:1/v1/chat/completions")
     monkeypatch.setenv("AGENT_REAL_PROVIDER_VALIDATION_TIMEOUT_SECONDS", "2")
     result = await validator.validate_basic_model_call("local_gateway")
-    assert result.status in (ValidationStatus.DEGRADED, ValidationStatus.FAILED), f"Expected DEGRADED/FAILED, got {result.status}"
+    assert result.status in (ValidationStatus.DEGRADED, ValidationStatus.FAILED), (
+        f"Expected DEGRADED/FAILED, got {result.status}"
+    )
 
 
 # ---------------------------------------------------------------------------
 # Paid provider blocked without flag
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_paid_provider_blocked_without_flag(validator, monkeypatch):
@@ -124,6 +140,7 @@ async def test_paid_provider_blocked_without_flag(validator, monkeypatch):
 # Budget exceeded stops suite
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_budget_exceeded_interrupts_suite(validator, monkeypatch):
     monkeypatch.setenv("AGENT_REAL_PROVIDER_VALIDATION_BUDGET_BRL", "0.00")
@@ -136,6 +153,7 @@ async def test_budget_exceeded_interrupts_suite(validator, monkeypatch):
 # Malformed JSON triggers retry
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_malformed_json_retry(validator):
     result = await validator.validate_structured_output("mock")
@@ -145,6 +163,7 @@ async def test_malformed_json_retry(validator):
 # ---------------------------------------------------------------------------
 # Artifact does not contain API keys
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_artifacts_no_api_keys(validator, monkeypatch, tmp_path):
@@ -163,6 +182,7 @@ async def test_artifacts_no_api_keys(validator, monkeypatch, tmp_path):
 # Disabled by default
 # ---------------------------------------------------------------------------
 
+
 def test_disabled_by_default(monkeypatch):
     monkeypatch.delenv("AGENT_REAL_PROVIDER_VALIDATION_ENABLED", raising=False)
     v = RealProviderValidator()
@@ -172,6 +192,7 @@ def test_disabled_by_default(monkeypatch):
 # ---------------------------------------------------------------------------
 # Provider matrix
 # ---------------------------------------------------------------------------
+
 
 def test_provider_matrix_returns_valid_data():
     matrix = get_provider_matrix()
@@ -186,6 +207,7 @@ def test_provider_matrix_returns_valid_data():
 # Suite-level tests
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_full_suite_with_mock_only(validator):
     reports = await validator.execute_suite(providers=["mock"])
@@ -195,9 +217,14 @@ async def test_full_suite_with_mock_only(validator):
 
     # Verify all 8 validations ran
     expected_features = [
-        "basic_model_call", "structured_output", "tool_call_format",
-        "memory_injection", "context_compression", "fallback",
-        "budget_guard", "timeout_guard",
+        "basic_model_call",
+        "structured_output",
+        "tool_call_format",
+        "memory_injection",
+        "context_compression",
+        "fallback",
+        "budget_guard",
+        "timeout_guard",
     ]
     for feat in expected_features:
         assert feat in report.results, f"Missing feature: {feat}"
@@ -233,6 +260,7 @@ async def test_report_generation_writes_artifacts(validator, tmp_path):
 # Integration-level: run_validation_suite
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_run_validation_suite_returns_sanitized():
     result = await run_validation_suite(providers=["mock"])
@@ -245,6 +273,7 @@ async def test_run_validation_suite_returns_sanitized():
 # ---------------------------------------------------------------------------
 # Edge cases
 # ---------------------------------------------------------------------------
+
 
 def test_unknown_provider_returns_skipped(monkeypatch):
     monkeypatch.setenv("AGENT_REAL_PROVIDER_VALIDATION_ENABLED", "true")
@@ -263,6 +292,7 @@ async def test_disabled_suite_skips_all(monkeypatch, validator):
 # ---------------------------------------------------------------------------
 # Artifact sanitization helper
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_artifact_sanitization_removes_key_patterns(validator):

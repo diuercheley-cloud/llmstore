@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class WorkflowTimerManager:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -17,10 +18,7 @@ class WorkflowTimerManager:
     async def create_timer(self, run_id: uuid.UUID, timer_name: str, delay_seconds: int):
         fire_at = utc_now() + timedelta(seconds=delay_seconds)
         timer = AgentWorkflowTimer(
-            run_id=run_id,
-            timer_name=timer_name,
-            fire_at=fire_at,
-            status="pending"
+            run_id=run_id, timer_name=timer_name, fire_at=fire_at, status="pending"
         )
         self.db.add(timer)
         await self.db.commit()
@@ -29,10 +27,7 @@ class WorkflowTimerManager:
     async def get_fired_timers(self):
         stmt = (
             select(AgentWorkflowTimer)
-            .where(
-                AgentWorkflowTimer.status == "pending",
-                AgentWorkflowTimer.fire_at <= utc_now()
-            )
+            .where(AgentWorkflowTimer.status == "pending", AgentWorkflowTimer.fire_at <= utc_now())
             .with_for_update(skip_locked=True)
         )
         res = await self.db.execute(stmt)

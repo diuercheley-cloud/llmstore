@@ -5,10 +5,10 @@ from app.models.governance.data_governance import (
     SovereignDataZone,
 )
 from app.models.governance.human_governance import (
+    CriticalApproval,
     GovernanceApprovalQuorum,
     GovernanceEscalation,
     GovernanceReviewWorkflow,
-    CriticalApproval,
 )
 from app.models.governance.policy_engine import (
     DeterministicPolicy,
@@ -16,4 +16,3 @@ from app.models.governance.policy_engine import (
     PolicyConflict,
     PolicyEvaluationResult,
 )
-

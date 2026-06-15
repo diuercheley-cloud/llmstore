@@ -1,6 +1,5 @@
 """Tests for fallback billing — cost estimation, financial tracking, wallet debit."""
 
-
 import pytest
 from app.schemas.routing import EndpointType, RoutingStrategy, SmartRouterInput
 from app.services.routing.smart_router import SmartRouter, _estimate_cost
@@ -9,6 +8,7 @@ from app.services.routing.smart_router import SmartRouter, _estimate_cost
 @pytest.fixture(autouse=True)
 def clear_settings_cache():
     from app.core.config import get_settings
+
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()
@@ -97,8 +97,12 @@ def test_fallback_chain_records_cost_context(router):
 
 
 def test_cloud_used_flag_in_decision(router, monkeypatch):
-    monkeypatch.setattr("app.services.routing.smart_router._is_provider_available", lambda pid: True)
-    monkeypatch.setattr("app.services.routing.smart_router._get_cloud_providers_enabled", lambda: True)
+    monkeypatch.setattr(
+        "app.services.routing.smart_router._is_provider_available", lambda pid: True
+    )
+    monkeypatch.setattr(
+        "app.services.routing.smart_router._get_cloud_providers_enabled", lambda: True
+    )
     inp = SmartRouterInput(
         endpoint_type=EndpointType.chat,
         cloud_allowed=True,
@@ -109,8 +113,13 @@ def test_cloud_used_flag_in_decision(router, monkeypatch):
 
 
 def test_financials_calculated_on_fallback_to_cloud(router, monkeypatch):
-    monkeypatch.setattr("app.services.routing.smart_router._is_provider_available", lambda pid: pid not in ("local", "lmstudio"))
-    monkeypatch.setattr("app.services.routing.smart_router._get_cloud_providers_enabled", lambda: True)
+    monkeypatch.setattr(
+        "app.services.routing.smart_router._is_provider_available",
+        lambda pid: pid not in ("local", "lmstudio"),
+    )
+    monkeypatch.setattr(
+        "app.services.routing.smart_router._get_cloud_providers_enabled", lambda: True
+    )
     inp = SmartRouterInput(
         endpoint_type=EndpointType.chat,
         cloud_allowed=True,
@@ -125,8 +134,12 @@ def test_financials_calculated_on_fallback_to_cloud(router, monkeypatch):
 
 
 def test_wallet_debit_context_no_negative_balance(router, monkeypatch):
-    monkeypatch.setattr("app.services.routing.smart_router._is_provider_available", lambda pid: True)
-    monkeypatch.setattr("app.services.routing.smart_router._get_cloud_providers_enabled", lambda: True)
+    monkeypatch.setattr(
+        "app.services.routing.smart_router._is_provider_available", lambda pid: True
+    )
+    monkeypatch.setattr(
+        "app.services.routing.smart_router._get_cloud_providers_enabled", lambda: True
+    )
     inp = SmartRouterInput(
         endpoint_type=EndpointType.chat,
         cloud_allowed=True,

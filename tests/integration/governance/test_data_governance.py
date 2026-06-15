@@ -12,4 +12,3 @@ def test_data_governance_export_hash_is_deterministic():
     first = build_export_hash("tenant-1", "reports", True, "advisory")
     second = build_export_hash("tenant-1", "reports", True, "advisory")
     assert first == second
-

@@ -61,7 +61,7 @@ async def test_high_risk_tool_triggers_approval_and_approves(
             "max_steps": 10,
             "max_runtime_seconds": 300,
             "risk_level": "high",
-        }
+        },
     )
 
     # 2. Register the high risk tool in DB
@@ -89,15 +89,16 @@ async def test_high_risk_tool_triggers_approval_and_approves(
             "tool_input": {
                 "password": "my_password_123",
                 "prompt": "delete root",
-                "safe_param": "hello"
-            }
+                "safe_param": "hello",
+            },
         },
-        {"type": "final", "output": "Job successfully completed after approval"}
+        {"type": "final", "output": "Job successfully completed after approval"},
     ]
     mock_llm = MockLLMProvider(responses=llm_responses)
 
     # Mock tool execution return
     tool_calls = []
+
     async def mock_tool_runner(name, tool_input):
         tool_calls.append((name, tool_input))
         return {"status": "ok"}
@@ -124,7 +125,7 @@ async def test_high_risk_tool_triggers_approval_and_approves(
     assert approval_req.status == "pending"
     assert approval_req.risk_level == "high"
     assert approval_req.reviewer_role == "admin_write"
-    
+
     # 6. Verify Context Sanitization (password and prompt redacted, safe_param preserved)
     ctx = approval_req.sanitized_context
     assert ctx["tool_name"] == "destructive_tool"
@@ -141,7 +142,7 @@ async def test_high_risk_tool_triggers_approval_and_approves(
     resp = await admin_client.post(
         f"/admin/agent-approvals/{approval_req.id}/approve",
         json={"decision_reason": "Approved by security team"},
-        headers=headers
+        headers=headers,
     )
     assert resp.status_code == 200
     data = resp.json()
@@ -177,7 +178,7 @@ async def test_high_risk_tool_rejection_terminates_run(
             "max_steps": 10,
             "max_runtime_seconds": 300,
             "risk_level": "high",
-        }
+        },
     )
 
     # 2. Register tool
@@ -199,11 +200,7 @@ async def test_high_risk_tool_rejection_terminates_run(
 
     # 3. Setup mock responses
     llm_responses = [
-        {
-            "type": "tool_call",
-            "tool_name": "destructive_tool",
-            "tool_input": {"data": "delete_all"}
-        }
+        {"type": "tool_call", "tool_name": "destructive_tool", "tool_input": {"data": "delete_all"}}
     ]
     mock_llm = MockLLMProvider(responses=llm_responses)
 
@@ -228,7 +225,7 @@ async def test_high_risk_tool_rejection_terminates_run(
     resp = await admin_client.post(
         f"/admin/agent-approvals/{approval_req.id}/reject",
         json={"decision_reason": "Dangerous operation, block"},
-        headers=headers
+        headers=headers,
     )
     assert resp.status_code == 200
     assert resp.json()["status"] == "rejected"
@@ -240,9 +237,7 @@ async def test_high_risk_tool_rejection_terminates_run(
 
 
 @pytest.mark.asyncio
-async def test_request_changes_pauses_run(
-    admin_client: AsyncClient, session: AsyncSession
-):
+async def test_request_changes_pauses_run(admin_client: AsyncClient, session: AsyncSession):
     # 1. Create agent
     agent_def = await agent_state.create_agent_definition(
         session,
@@ -258,7 +253,7 @@ async def test_request_changes_pauses_run(
             "max_steps": 10,
             "max_runtime_seconds": 300,
             "risk_level": "high",
-        }
+        },
     )
 
     # 2. Register tool
@@ -278,11 +273,15 @@ async def test_request_changes_pauses_run(
     session.add(tool)
     await session.commit()
 
-    mock_llm = MockLLMProvider(responses=[{
-        "type": "tool_call",
-        "tool_name": "destructive_tool",
-        "tool_input": {"data": "delete_all"}
-    }])
+    mock_llm = MockLLMProvider(
+        responses=[
+            {
+                "type": "tool_call",
+                "tool_name": "destructive_tool",
+                "tool_input": {"data": "delete_all"},
+            }
+        ]
+    )
 
     # 3. Start the run
     run = await agent_runtime.start_run(
@@ -304,7 +303,7 @@ async def test_request_changes_pauses_run(
     resp = await admin_client.post(
         f"/admin/agent-approvals/{approval_req.id}/request-changes",
         json={"decision_reason": "Provide more details"},
-        headers=headers
+        headers=headers,
     )
     assert resp.status_code == 200
     assert resp.json()["status"] == "cancelled"
@@ -315,15 +314,10 @@ async def test_request_changes_pauses_run(
 
 
 @pytest.mark.asyncio
-async def test_rbac_reviewer_permission_check(
-    admin_client: AsyncClient, session: AsyncSession
-):
+async def test_rbac_reviewer_permission_check(admin_client: AsyncClient, session: AsyncSession):
     # 1. Create policy that requires super_admin
     policy = AgentApprovalPolicy(
-        name="Super Admin Policy",
-        trigger_type="always",
-        required_role="super_admin",
-        enabled=True
+        name="Super Admin Policy", trigger_type="always", required_role="super_admin", enabled=True
     )
     session.add(policy)
 
@@ -341,15 +335,13 @@ async def test_rbac_reviewer_permission_check(
             "max_steps": 10,
             "max_runtime_seconds": 300,
             "risk_level": "low",
-        }
+        },
     )
     await session.commit()
 
-    mock_llm = MockLLMProvider(responses=[{
-        "type": "tool_call",
-        "tool_name": "simple_tool",
-        "tool_input": {"val": 1}
-    }])
+    mock_llm = MockLLMProvider(
+        responses=[{"type": "tool_call", "tool_name": "simple_tool", "tool_input": {"val": 1}}]
+    )
 
     # 2. Run triggering always-policy
     run = await agent_runtime.start_run(
@@ -373,7 +365,7 @@ async def test_rbac_reviewer_permission_check(
     resp = await admin_client.post(
         f"/admin/agent-approvals/{approval_req.id}/approve",
         json={"decision_reason": "Low role"},
-        headers={"X-Admin-Token": "read-token"}
+        headers={"X-Admin-Token": "read-token"},
     )
     assert resp.status_code == 403
 
@@ -381,7 +373,7 @@ async def test_rbac_reviewer_permission_check(
     resp = await admin_client.post(
         f"/admin/agent-approvals/{approval_req.id}/approve",
         json={"decision_reason": "Medium role"},
-        headers={"X-Admin-Token": "write-token"}
+        headers={"X-Admin-Token": "write-token"},
     )
     assert resp.status_code == 403
 
@@ -389,7 +381,7 @@ async def test_rbac_reviewer_permission_check(
     resp = await admin_client.post(
         f"/admin/agent-approvals/{approval_req.id}/approve",
         json={"decision_reason": "Super role ok"},
-        headers={"X-Admin-Token": "super-token"}
+        headers={"X-Admin-Token": "super-token"},
     )
     assert resp.status_code == 200
     assert resp.json()["status"] == "approved"
@@ -405,7 +397,7 @@ async def test_failsafe_expiration(session: AsyncSession):
         requested_by="test",
         reviewer_role="admin_read",
         status="pending",
-        expires_at=utc_now() - timedelta(seconds=10), # Expired 10s ago
+        expires_at=utc_now() - timedelta(seconds=10),  # Expired 10s ago
         sanitized_context={},
         raw_tool_input={},
     )
@@ -440,11 +432,8 @@ def test_sanitize_value():
         "user_prompt": "Sensitive instruction",
         "api_key": "secret_abc123",
         "normal_field": "public",
-        "nested": {
-            "token": "sensitive_token",
-            "nested_ok": 42
-        },
-        "long_field": "a" * 600
+        "nested": {"token": "sensitive_token", "nested_ok": 42},
+        "long_field": "a" * 600,
     }
     sanitized = sanitize_value(sensitive_dict)
 

@@ -1,7 +1,6 @@
 import logging
 import os
 import uuid
-from typing import Optional
 
 from app.core.config import get_settings
 from app.models.agents.agent_iam import AgentIdentityBinding, AgentServicePrincipal
@@ -12,6 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
+
 
 class CredentialBroker:
     def __init__(self, db: AsyncSession):
@@ -31,7 +31,7 @@ class CredentialBroker:
         agent_id: uuid.UUID,
         connector_name: str,
         action: str,
-        token_string: Optional[str] = None,
+        token_string: str | None = None,
     ) -> bool:
         """
         Main access control broker for connector executions.
@@ -52,7 +52,6 @@ class CredentialBroker:
         # 1. Production service principal enforcement
         is_prod = os.getenv("ENV") == "production" or os.getenv("FASTAPI_ENV") == "production"
 
-        
         # Check if service principal exists
         stmt = select(AgentServicePrincipal).where(
             AgentServicePrincipal.tenant_id == tenant_id,
@@ -80,7 +79,7 @@ class CredentialBroker:
             if env_token and (not is_prod or not settings.agent_iam_enabled):
                 # Allow manual environment token in dev/test
                 return True
-            
+
             await self.audit.log_event(
                 tenant_id=tenant_id,
                 event_type="access_denied_no_token",
@@ -161,7 +160,11 @@ class CredentialBroker:
                     tenant_id=tenant_id,
                     event_type="access_denied_write_no_delegation",
                     agent_id=agent_id,
-                    details={"connector": connector_name, "action": action, "token_type": token.token_type},
+                    details={
+                        "connector": connector_name,
+                        "action": action,
+                        "token_type": token.token_type,
+                    },
                 )
                 raise PermissionError(
                     "Write actions require a user delegated grant or explicit approval."

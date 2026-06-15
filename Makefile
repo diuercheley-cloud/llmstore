@@ -4,6 +4,9 @@ export PATH := $(CURDIR)/venv/bin:$(CURDIR)/.venv/bin:$(PATH)
 # Default target
 .DEFAULT_GOAL := help
 
+validate-release-readiness: ## Validate that all mandatory files and hygiene standards for release are met
+	@python3 scripts/validate_release_readiness.py
+
 # --- Standardized Commands ---
 
 # Backend (Python)
@@ -584,6 +587,9 @@ validate-security: ## Run security validation targets in deterministic order
 		$(MAKE) --no-print-directory $$target; \
 	done
 	@echo "Security validation group passed"
+
+security-scan: ## Run automated security scanning (Bandit & Semgrep)
+	@python3 scripts/validators/validate_security_scan.py
 
 # Compatibility alias for older automation that expects a single Makefile
 # governance checker target instead of the documentation/runtime split.

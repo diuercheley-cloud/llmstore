@@ -1,10 +1,9 @@
 import uuid
-from datetime import datetime, UTC
-
-from sqlalchemy import JSON, Column, DateTime, String
-from sqlalchemy.dialects.postgresql import UUID
+from datetime import UTC, datetime
 
 from app.db.base import Base
+from sqlalchemy import JSON, Column, DateTime, String
+from sqlalchemy.dialects.postgresql import UUID
 
 
 class CommercialOperationsCenterEvent(Base):
@@ -14,8 +13,9 @@ class CommercialOperationsCenterEvent(Base):
     event_type = Column(String(100), nullable=False, index=True)
     payload_json = Column(JSON, nullable=True)
     hash = Column(String(128), nullable=False, index=True)
-    parent_hash = Column(String(128), nullable=True, index=True) # For hash chaining
+    parent_hash = Column(String(128), nullable=True, index=True)  # For hash chaining
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+
 
 class CommercialCryptographicTrustSnapshot(Base):
     __tablename__ = "commercial_cryptographic_trust_snapshots"

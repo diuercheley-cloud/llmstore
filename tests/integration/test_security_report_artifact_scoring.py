@@ -13,6 +13,7 @@ def init_repo(path: Path) -> None:
     subprocess.run(["git", "config", "user.name", "Test User"], cwd=path, check=True)
     subprocess.run(["git", "checkout", "-b", "feature/test-artifact-scoring"], cwd=path, check=True)
 
+
 def test_security_report_artifact_scoring(tmp_path):
     repo_root = tmp_path / "repo"
     repo_root.mkdir()
@@ -21,12 +22,19 @@ def test_security_report_artifact_scoring(tmp_path):
     scripts_dir = repo_root / "scripts"
     scripts_dir.mkdir()
     shutil.copy2("scripts/validators/check-secrets.sh", scripts_dir / "check-secrets.sh")
-    shutil.copy2("scripts/validators/security-report-local.sh", scripts_dir / "security-report-local.sh")
-    shutil.copy2("scripts/backup/redact-local-sensitive-artifacts.sh", scripts_dir / "redact-local-sensitive-artifacts.sh")
-    
+    shutil.copy2(
+        "scripts/validators/security-report-local.sh", scripts_dir / "security-report-local.sh"
+    )
+    shutil.copy2(
+        "scripts/backup/redact-local-sensitive-artifacts.sh",
+        scripts_dir / "redact-local-sensitive-artifacts.sh",
+    )
+
     # Ensure redact script exists or mock it
     if not (scripts_dir / "redact-local-sensitive-artifacts.sh").exists():
-        (scripts_dir / "redact-local-sensitive-artifacts.sh").write_text("#!/bin/bash\necho 'mock redact'")
+        (scripts_dir / "redact-local-sensitive-artifacts.sh").write_text(
+            "#!/bin/bash\necho 'mock redact'"
+        )
         (scripts_dir / "redact-local-sensitive-artifacts.sh").chmod(0o755)
 
     (repo_root / "docker-compose.yml").write_text("services:\n  app:\n    image: busybox\n")
@@ -37,18 +45,31 @@ def test_security_report_artifact_scoring(tmp_path):
 
     # 1. Real secret in tracked file (FAIL)
     (repo_root / "config.py").write_text("ADMIN_TOKEN=sk-real-secret-12345678901234567890\n")
-    
+
     # 2. Redacted token in ignored artifact (PASS/INFO)
     (repo_root / "artifacts" / "scan_log.txt").write_text("Found sk-***masked*** in some file\n")
-    
+
     # 3. Authorized fixture (PASS/INFO)
-    (repo_root / "tests" / "fixtures" / "fake_key.pem").write_text("FAKE TEST KEY - DO NOT USE\n-----BEGIN PRIVATE KEY-----\n...\n")
+    (repo_root / "tests" / "fixtures" / "fake_key.pem").write_text(
+        "FAKE TEST KEY - DO NOT USE\n-----BEGIN PRIVATE KEY-----\n...\n"
+    )
 
     # 4. Secret in ignored artifact (WARN/PASS_WITH_WARNINGS)
-    (repo_root / "artifacts" / "old_artifact.txt").write_text("ADMIN_TOKEN=sk-should-be-warn-but-ignored-123\n")
+    (repo_root / "artifacts" / "old_artifact.txt").write_text(
+        "ADMIN_TOKEN=sk-should-be-warn-but-ignored-123\n"
+    )
 
     subprocess.run(["git", "add", "."], cwd=repo_root, check=True)
-    subprocess.run(["chmod", "+x", "scripts/validators/check-secrets.sh", "scripts/validators/security-report-local.sh"], cwd=repo_root, check=True)
+    subprocess.run(
+        [
+            "chmod",
+            "+x",
+            "scripts/validators/check-secrets.sh",
+            "scripts/validators/security-report-local.sh",
+        ],
+        cwd=repo_root,
+        check=True,
+    )
 
     output_dir = repo_root / "report_out"
     # Run first time with real secret in tracked file -> should FAIL
@@ -59,11 +80,11 @@ def test_security_report_artifact_scoring(tmp_path):
         text=True,
     )
     assert "Security Report Generated: FAIL" in result.stdout
-    
+
     report_files = list(output_dir.glob("*/security-report.json"))
     data = json.loads(report_files[0].read_text())
     assert data["score"] == "FAIL"
-    
+
     # Now remove the real secret from tracked file
     (repo_root / "config.py").write_text("ADMIN_TOKEN=os.environ.get('ADMIN_TOKEN')\n")
     subprocess.run(["git", "add", "config.py"], cwd=repo_root, check=True)
@@ -82,14 +103,14 @@ def test_security_report_artifact_scoring(tmp_path):
         print("--- DEBUG: JSON REPORT ---")
         report_json = list(output_dir.glob("*/security-report.json"))[0]
         print(report_json.read_text())
-        
+
     assert "Security Report Generated: PASS_WITH_WARNINGS" in result.stdout
     data = json.loads(list(output_dir.glob("*/security-report.json"))[0].read_text())
     assert data["score"] == "PASS_WITH_WARNINGS"
-    
+
     # Now redact old_artifact.txt
     (repo_root / "artifacts" / "old_artifact.txt").write_text("ADMIN_TOKEN=***masked***\n")
-    
+
     # Run again -> should be PASS
     shutil.rmtree(output_dir)
     result = subprocess.run(
@@ -101,7 +122,7 @@ def test_security_report_artifact_scoring(tmp_path):
     assert "Security Report Generated: PASS" in result.stdout
     data = json.loads(list(output_dir.glob("*/security-report.json"))[0].read_text())
     assert data["score"] == "PASS"
-    
+
     # Verify MD report structure
     md_file = list(output_dir.glob("*/security-report.md"))[0]
     md_content = md_file.read_text()

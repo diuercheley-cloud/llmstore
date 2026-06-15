@@ -97,7 +97,9 @@ class MLExperiment(Base):
         sa.DateTime(timezone=True), default=utc_now, nullable=False, index=True
     )
 
-    runs = relationship("MLExperimentRun", back_populates="experiment", cascade="all, delete-orphan")
+    runs = relationship(
+        "MLExperimentRun", back_populates="experiment", cascade="all, delete-orphan"
+    )
 
 
 class MLExperimentRun(Base):
@@ -127,7 +129,9 @@ class MLExperimentRun(Base):
 
     experiment = relationship("MLExperiment", back_populates="runs")
     training_job = relationship("MLTrainingJob", back_populates="experiment_runs")
-    eval_artifacts = relationship("MLEvalArtifact", back_populates="run", cascade="all, delete-orphan")
+    eval_artifacts = relationship(
+        "MLEvalArtifact", back_populates="run", cascade="all, delete-orphan"
+    )
 
 
 class MLModelLineage(Base):

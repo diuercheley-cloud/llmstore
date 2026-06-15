@@ -51,9 +51,7 @@ def parse_pytest_output(output: str, returncode: int) -> ParsedOutput:
             )
     error_count = len(failures)
     summary = (
-        "pytest passed"
-        if returncode == 0
-        else f"pytest reported {error_count or 1} failure(s)"
+        "pytest passed" if returncode == 0 else f"pytest reported {error_count or 1} failure(s)"
     )
     return ParsedOutput(
         kind="pytest",
@@ -118,8 +116,10 @@ def parse_generic_failure(output: str, returncode: int) -> ParsedOutput:
     for line in output.splitlines():
         if re.search(r"\b(error|failed|exception)\b", line, re.IGNORECASE):
             failures.append(ParsedFailure(message=line.strip()))
-    summary = "command passed" if returncode == 0 else (
-        f"command failed with {len(failures) or 1} detected error line(s)"
+    summary = (
+        "command passed"
+        if returncode == 0
+        else (f"command failed with {len(failures) or 1} detected error line(s)")
     )
     return ParsedOutput(
         kind="generic",

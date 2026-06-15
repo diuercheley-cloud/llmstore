@@ -2,7 +2,6 @@ import socket
 from unittest.mock import patch
 
 import pytest
-
 from app.services.agents.browser.browser_policy import check_browser_url_policy
 
 
@@ -11,7 +10,11 @@ def enable_external_browser(monkeypatch):
     settings = type(
         "Settings",
         (),
-        {"agent_browser_tool_enabled": True, "agent_browser_external_network_enabled": True, "agent_browser_allowlist": ""},
+        {
+            "agent_browser_tool_enabled": True,
+            "agent_browser_external_network_enabled": True,
+            "agent_browser_allowlist": "",
+        },
     )()
     monkeypatch.setattr("app.services.agents.browser.browser_policy.get_settings", lambda: settings)
 

@@ -2,8 +2,9 @@ import hashlib
 import logging
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,11 +15,11 @@ logger = logging.getLogger(__name__)
 class RegressionTest:
     name: str
     input_text: str
-    expected_output_contains: Optional[List[str]] = None
-    expected_output_not_contains: Optional[List[str]] = None
-    max_latency_ms: Optional[int] = None
-    expected_decision: Optional[str] = None
-    tags: List[str] = field(default_factory=list)
+    expected_output_contains: list[str] | None = None
+    expected_output_not_contains: list[str] | None = None
+    max_latency_ms: int | None = None
+    expected_decision: str | None = None
+    tags: list[str] = field(default_factory=list)
 
     def id(self) -> str:
         raw = f"{self.name}:{self.input_text}"
@@ -31,9 +32,9 @@ class RegressionResult:
     name: str
     passed: bool
     latency_ms: float
-    error: Optional[str] = None
-    actual_output: Optional[str] = None
-    details: Dict[str, Any] = field(default_factory=dict)
+    error: str | None = None
+    actual_output: str | None = None
+    details: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -41,7 +42,7 @@ class SuiteResult:
     suite_name: str
     agent_id: uuid.UUID
     version_id: str
-    results: List[RegressionResult]
+    results: list[RegressionResult]
     total: int
     passed: int
     failed: int
@@ -50,7 +51,7 @@ class SuiteResult:
     completed_at: float
 
 
-BUILTIN_SUITES: Dict[str, List[RegressionTest]] = {
+BUILTIN_SUITES: dict[str, list[RegressionTest]] = {
     "basic_sanity": [
         RegressionTest(
             name="empty_input",
@@ -123,18 +124,18 @@ class AgentRegressionSuite:
         self.db = db
         self.run_agent_fn = run_agent_fn
 
-    def list_suites(self) -> Dict[str, int]:
+    def list_suites(self) -> dict[str, int]:
         return {name: len(tests) for name, tests in BUILTIN_SUITES.items()}
 
-    def get_suite(self, name: str) -> List[RegressionTest]:
+    def get_suite(self, name: str) -> list[RegressionTest]:
         return BUILTIN_SUITES.get(name, [])
 
     async def run_suite(
         self,
         agent_id: uuid.UUID,
         agent_version_tag: str,
-        suite_names: Optional[List[str]] = None,
-        guardrail_policy: Optional[Callable] = None,
+        suite_names: list[str] | None = None,
+        guardrail_policy: Callable | None = None,
     ) -> SuiteResult:
         suites_to_run = suite_names or list(BUILTIN_SUITES.keys())
         tests = []
@@ -144,10 +145,16 @@ class AgentRegressionSuite:
         if not tests:
             logger.warning(f"No tests found for suites: {suites_to_run}")
             return SuiteResult(
-                suite_name="+".join(suites_to_run), agent_id=agent_id,
-                version_id=agent_version_tag, results=[], total=0,
-                passed=0, failed=0, avg_latency_ms=0,
-                started_at=time.time(), completed_at=time.time(),
+                suite_name="+".join(suites_to_run),
+                agent_id=agent_id,
+                version_id=agent_version_tag,
+                results=[],
+                total=0,
+                passed=0,
+                failed=0,
+                avg_latency_ms=0,
+                started_at=time.time(),
+                completed_at=time.time(),
             )
 
         started = time.time()
@@ -180,7 +187,7 @@ class AgentRegressionSuite:
         self,
         agent_id: uuid.UUID,
         test: RegressionTest,
-        guardrail_policy: Optional[Callable] = None,
+        guardrail_policy: Callable | None = None,
     ) -> RegressionResult:
         start = time.time()
         try:
@@ -190,7 +197,9 @@ class AgentRegressionSuite:
                 elapsed = (time.time() - start) * 1000
                 if test.expected_decision and actual_decision != test.expected_decision:
                     return RegressionResult(
-                        test_id=test.id(), name=test.name, passed=False,
+                        test_id=test.id(),
+                        name=test.name,
+                        passed=False,
                         latency_ms=elapsed,
                         error=f"Expected decision '{test.expected_decision}', got '{actual_decision}'",
                     )
@@ -200,8 +209,11 @@ class AgentRegressionSuite:
 
             if test.max_latency_ms and elapsed > test.max_latency_ms:
                 return RegressionResult(
-                    test_id=test.id(), name=test.name, passed=False,
-                    latency_ms=elapsed, actual_output=output,
+                    test_id=test.id(),
+                    name=test.name,
+                    passed=False,
+                    latency_ms=elapsed,
+                    actual_output=output,
                     error=f"Latency {elapsed:.0f}ms > {test.max_latency_ms}ms",
                 )
 
@@ -209,8 +221,11 @@ class AgentRegressionSuite:
                 for expected in test.expected_output_contains:
                     if expected not in (output or ""):
                         return RegressionResult(
-                            test_id=test.id(), name=test.name, passed=False,
-                            latency_ms=elapsed, actual_output=output,
+                            test_id=test.id(),
+                            name=test.name,
+                            passed=False,
+                            latency_ms=elapsed,
+                            actual_output=output,
                             error=f"Expected '{expected}' in output",
                         )
 
@@ -218,21 +233,30 @@ class AgentRegressionSuite:
                 for forbidden in test.expected_output_not_contains:
                     if forbidden in (output or ""):
                         return RegressionResult(
-                            test_id=test.id(), name=test.name, passed=False,
-                            latency_ms=elapsed, actual_output=output,
+                            test_id=test.id(),
+                            name=test.name,
+                            passed=False,
+                            latency_ms=elapsed,
+                            actual_output=output,
                             error=f"Forbidden '{forbidden}' found in output",
                         )
 
             return RegressionResult(
-                test_id=test.id(), name=test.name, passed=True,
-                latency_ms=elapsed, actual_output=output,
+                test_id=test.id(),
+                name=test.name,
+                passed=True,
+                latency_ms=elapsed,
+                actual_output=output,
             )
 
         except Exception as e:
             elapsed = (time.time() - start) * 1000
             return RegressionResult(
-                test_id=test.id(), name=test.name, passed=False,
-                latency_ms=elapsed, error=str(e),
+                test_id=test.id(),
+                name=test.name,
+                passed=False,
+                latency_ms=elapsed,
+                error=str(e),
             )
 
     async def check_promotion_gate(
@@ -240,8 +264,8 @@ class AgentRegressionSuite:
         agent_id: uuid.UUID,
         current_version: str,
         candidate_version: str,
-        required_suites: Optional[List[str]] = None,
-    ) -> Tuple[bool, SuiteResult]:
+        required_suites: list[str] | None = None,
+    ) -> tuple[bool, SuiteResult]:
         required = required_suites or ["basic_sanity", "guardrails"]
         result = await self.run_suite(agent_id, candidate_version, suite_names=required)
 

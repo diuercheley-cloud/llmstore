@@ -4,7 +4,7 @@ from control_plane.app.services.config_service import BaseAppConfig
 
 
 def _get_directly_declared_fields(cls):
-    annotations = cls.__dict__.get('__annotations__', {})
+    annotations = cls.__dict__.get("__annotations__", {})
     return {name for name in annotations if name in cls.model_fields}
 
 

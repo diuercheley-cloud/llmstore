@@ -2,16 +2,16 @@ import json
 import os
 import re
 from glob import glob
-from typing import Any, Dict, Optional
+from typing import Any
 
 from ..sanitizer import Sanitizer
 
 
-def load_json_file(file_path: str) -> Optional[Any]:
+def load_json_file(file_path: str) -> Any | None:
     if not os.path.exists(file_path):
         return None
     try:
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(file_path, encoding="utf-8", errors="ignore") as f:
             content = f.read()
         # strip comments (both single line and multi-line comments)
         content = re.sub(r"//.*$", "", content, flags=re.MULTILINE)
@@ -21,7 +21,8 @@ def load_json_file(file_path: str) -> Optional[Any]:
     except Exception:
         return None
 
-def import_vscode_config(path: str, workspace_root: str = ".") -> Dict[str, Any]:
+
+def import_vscode_config(path: str, workspace_root: str = ".") -> dict[str, Any]:
     settings = None
     keybindings = None
     extensions = None
@@ -39,17 +40,17 @@ def import_vscode_config(path: str, workspace_root: str = ".") -> Dict[str, Any]
     for d in search_dirs:
         if not os.path.isdir(d):
             continue
-        
+
         # settings.json
         s_path = os.path.join(d, "settings.json")
         if os.path.isfile(s_path) and settings is None:
             settings = load_json_file(s_path)
-            
+
         # keybindings.json
         k_path = os.path.join(d, "keybindings.json")
         if os.path.isfile(k_path) and keybindings is None:
             keybindings = load_json_file(k_path)
-            
+
         # extensions.json
         e_path = os.path.join(d, "extensions.json")
         if os.path.isfile(e_path) and extensions is None:
@@ -67,7 +68,7 @@ def import_vscode_config(path: str, workspace_root: str = ".") -> Dict[str, Any]
 
     if os.path.isfile(cursorrules_path):
         try:
-            with open(cursorrules_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(cursorrules_path, encoding="utf-8", errors="ignore") as f:
                 cursor_rules_parts.append(f.read())
         except Exception:
             pass
@@ -77,7 +78,7 @@ def import_vscode_config(path: str, workspace_root: str = ".") -> Dict[str, Any]
     if os.path.isdir(cursor_rules_dir):
         for rule_path in sorted(glob(os.path.join(cursor_rules_dir, "*.md"))):
             try:
-                with open(rule_path, "r", encoding="utf-8", errors="ignore") as f:
+                with open(rule_path, encoding="utf-8", errors="ignore") as f:
                     cursor_rules_parts.append(f.read())
             except Exception:
                 pass
@@ -103,11 +104,12 @@ def import_vscode_config(path: str, workspace_root: str = ".") -> Dict[str, Any]
 
     return config_data
 
-def get_ide_config(workspace_root: str = ".") -> Dict[str, Any]:
+
+def get_ide_config(workspace_root: str = ".") -> dict[str, Any]:
     cfg_path = os.path.join(workspace_root, ".llm_harness_ide_config.json")
     if os.path.exists(cfg_path):
         try:
-            with open(cfg_path, "r", encoding="utf-8") as f:
+            with open(cfg_path, encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
             pass

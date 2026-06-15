@@ -7,10 +7,14 @@ from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
-from app.models.core.admin_action_log import AdminActionLog
 from app.models.commercial.commercial_financial_anomaly import CommercialFinancialAnomaly
-from app.models.commercial.commercial_revenue_protection_action import CommercialRevenueProtectionAction
-from app.models.commercial.commercial_revenue_protection_policy import CommercialRevenueProtectionPolicy
+from app.models.commercial.commercial_revenue_protection_action import (
+    CommercialRevenueProtectionAction,
+)
+from app.models.commercial.commercial_revenue_protection_policy import (
+    CommercialRevenueProtectionPolicy,
+)
+from app.models.core.admin_action_log import AdminActionLog
 from app.services.notifications.revenue_alerts import send_revenue_alert
 from app.services.notifications.revenue_escalations import evaluate_escalation_policies
 from app.services.routing.commercial_report_export import sanitize_report_payload
@@ -46,7 +50,9 @@ def _sanitize_text(value: str | None, limit: int = 1000) -> str | None:
     return value.replace("\n", " ").replace("\r", " ")[:limit]
 
 
-def _scope_matches(policy: CommercialRevenueProtectionPolicy, anomaly: CommercialFinancialAnomaly) -> bool:
+def _scope_matches(
+    policy: CommercialRevenueProtectionPolicy, anomaly: CommercialFinancialAnomaly
+) -> bool:
     scope_identifier = (policy.scope_identifier or "").strip()
     if policy.scope_type == "global":
         return True
@@ -69,7 +75,11 @@ def _build_constraint_delta(
     action: CommercialRevenueProtectionAction | None = None,
 ) -> dict[str, Any]:
     scope_identifier = policy.scope_identifier
-    target_model = (action.model if action else None) or (anomaly.model if anomaly else None) or scope_identifier
+    target_model = (
+        (action.model if action else None)
+        or (anomaly.model if anomaly else None)
+        or scope_identifier
+    )
     metadata = sanitize_report_payload(policy.metadata_json or {})
     delta: dict[str, Any] = {
         "_policy_scope_type": policy.scope_type,
@@ -86,7 +96,9 @@ def _build_constraint_delta(
     if policy.action_type == "safe_mode":
         delta["safe_mode"] = True
         delta["force_local_only"] = True
-        delta["max_cost_override"] = 0.0 if delta["max_cost_override"] is None else delta["max_cost_override"]
+        delta["max_cost_override"] = (
+            0.0 if delta["max_cost_override"] is None else delta["max_cost_override"]
+        )
     elif policy.action_type == "restrict_expensive_models":
         if target_model:
             delta["restricted_models"] = [target_model]
@@ -99,7 +111,14 @@ def _build_constraint_delta(
     return sanitize_report_payload(delta)
 
 
-def _matches_scope_descriptor(descriptor: dict[str, Any], *, client_id: str | None, provider: str | None, model: str | None, qos_tier: str | None) -> bool:
+def _matches_scope_descriptor(
+    descriptor: dict[str, Any],
+    *,
+    client_id: str | None,
+    provider: str | None,
+    model: str | None,
+    qos_tier: str | None,
+) -> bool:
     scope_type = descriptor.get("_policy_scope_type")
     scope_identifier = descriptor.get("_policy_scope_identifier")
     if scope_type == "global":
@@ -127,11 +146,20 @@ def _merge_constraints(base: dict[str, Any], delta: dict[str, Any]) -> dict[str,
     max_cost = delta.get("max_cost_override")
     if max_cost is not None:
         current = base.get("max_cost_override")
-        base["max_cost_override"] = max_cost if current is None else min(float(current), float(max_cost))
+        base["max_cost_override"] = (
+            max_cost if current is None else min(float(current), float(max_cost))
+        )
     return base
 
 
-async def _audit_event(session: AsyncSession, *, action: str, status: str, payload: dict[str, Any] | None = None, result: dict[str, Any] | None = None) -> None:
+async def _audit_event(
+    session: AsyncSession,
+    *,
+    action: str,
+    status: str,
+    payload: dict[str, Any] | None = None,
+    result: dict[str, Any] | None = None,
+) -> None:
     session.add(
         AdminActionLog(
             action=action,
@@ -162,7 +190,12 @@ async def rebuild_revenue_protection_runtime_constraints(session: AsyncSession) 
         policy = action.policy
         if policy is None:
             continue
-        cache.append(sanitize_report_payload(action.after_state_json or _build_constraint_delta(policy=policy, anomaly=None, action=action)))
+        cache.append(
+            sanitize_report_payload(
+                action.after_state_json
+                or _build_constraint_delta(policy=policy, anomaly=None, action=action)
+            )
+        )
     _ACTIVE_CONSTRAINT_ACTIONS = cache
 
 
@@ -182,7 +215,13 @@ def get_active_revenue_protection_constraints(
         "safe_mode": False,
     }
     for descriptor in _ACTIVE_CONSTRAINT_ACTIONS:
-        if _matches_scope_descriptor(descriptor, client_id=normalized_client_id, provider=provider, model=model, qos_tier=qos_tier):
+        if _matches_scope_descriptor(
+            descriptor,
+            client_id=normalized_client_id,
+            provider=provider,
+            model=model,
+            qos_tier=qos_tier,
+        ):
             constraints = _merge_constraints(constraints, descriptor)
     return sanitize_report_payload(constraints)
 
@@ -193,7 +232,9 @@ async def enforce_cooldown(
     policy: CommercialRevenueProtectionPolicy,
     anomaly: CommercialFinancialAnomaly | None,
 ) -> bool:
-    cooldown_minutes = policy.cooldown_minutes or get_settings().commercial_revenue_protection_cooldown_minutes
+    cooldown_minutes = (
+        policy.cooldown_minutes or get_settings().commercial_revenue_protection_cooldown_minutes
+    )
     if cooldown_minutes <= 0:
         return False
     since = utc_now() - timedelta(minutes=cooldown_minutes)
@@ -213,7 +254,9 @@ async def enforce_cooldown(
     return result.scalar_one_or_none() is not None
 
 
-def match_anomaly_to_policy(anomaly: CommercialFinancialAnomaly, policy: CommercialRevenueProtectionPolicy) -> bool:
+def match_anomaly_to_policy(
+    anomaly: CommercialFinancialAnomaly, policy: CommercialRevenueProtectionPolicy
+) -> bool:
     if not policy.enabled:
         return False
     if anomaly.anomaly_type != policy.trigger_type:
@@ -271,7 +314,9 @@ async def propose_action(
     return action
 
 
-async def apply_action(session: AsyncSession, action: CommercialRevenueProtectionAction) -> CommercialRevenueProtectionAction:
+async def apply_action(
+    session: AsyncSession, action: CommercialRevenueProtectionAction
+) -> CommercialRevenueProtectionAction:
     settings = get_settings()
     policy = action.policy
     if policy is None:
@@ -293,25 +338,53 @@ async def apply_action(session: AsyncSession, action: CommercialRevenueProtectio
 
     if _normalize_mode(action.mode) == "disabled":
         action.status = "blocked"
-        await _audit_event(session, action="revenue_protection_apply", status="blocked", payload={"action_id": str(action.id)}, result={"reason": "mode_disabled"})
+        await _audit_event(
+            session,
+            action="revenue_protection_apply",
+            status="blocked",
+            payload={"action_id": str(action.id)},
+            result={"reason": "mode_disabled"},
+        )
         await session.commit()
         return action
 
     if not settings.commercial_revenue_protection_allow_enforce:
         action.status = "blocked"
-        await _audit_event(session, action="revenue_protection_apply", status="blocked", payload={"action_id": str(action.id)}, result={"reason": "allow_enforce_false"})
+        await _audit_event(
+            session,
+            action="revenue_protection_apply",
+            status="blocked",
+            payload={"action_id": str(action.id)},
+            result={"reason": "allow_enforce_false"},
+        )
         await session.commit()
         return action
 
     if action.action_type not in NON_DESTRUCTIVE_ACTIONS:
         action.status = "blocked"
-        await _audit_event(session, action="revenue_protection_apply", status="blocked", payload={"action_id": str(action.id)}, result={"reason": "action_not_allowed"})
+        await _audit_event(
+            session,
+            action="revenue_protection_apply",
+            status="blocked",
+            payload={"action_id": str(action.id)},
+            result={"reason": "action_not_allowed"},
+        )
         await session.commit()
         return action
 
-    if policy.scope_type == "global" and action.action_type not in {"notify", "require_manual_approval", "reduce_qos_priority"}:
+    if policy.scope_type == "global" and action.action_type not in {
+        "notify",
+        "require_manual_approval",
+        "reduce_qos_priority",
+    }:
         action.status = "blocked"
-        await _audit_event(session, action="revenue_protection_apply", status="blocked", payload={"action_id": str(action.id)}, result={"reason": "global_block_not_allowed"})
+        await _audit_event(
+            session,
+            action="revenue_protection_apply",
+            status="blocked",
+            payload={"action_id": str(action.id)},
+            result={"reason": "global_block_not_allowed"},
+        )
         await session.commit()
         return action
 
@@ -358,13 +431,18 @@ async def apply_action(session: AsyncSession, action: CommercialRevenueProtectio
                 severity="high",
                 summary=f"Repeated safe_mode activations detected for client {action.client_id}",
                 recommendation="Investigate repeated safe_mode activations and revenue protection triggers.",
-                metadata={"client_id": str(action.client_id), "safe_mode_count_24h": safe_mode_count},
+                metadata={
+                    "client_id": str(action.client_id),
+                    "safe_mode_count_24h": safe_mode_count,
+                },
                 trigger_type="repeated_safe_mode_activations",
             )
     return action
 
 
-async def revert_action(session: AsyncSession, action: CommercialRevenueProtectionAction) -> CommercialRevenueProtectionAction:
+async def revert_action(
+    session: AsyncSession, action: CommercialRevenueProtectionAction
+) -> CommercialRevenueProtectionAction:
     action.reverted_at = utc_now()
     action.status = "reverted"
     await _audit_event(
@@ -385,14 +463,37 @@ async def evaluate_revenue_protection_policies(
     anomaly_ids: list[uuid.UUID] | None = None,
 ) -> dict[str, Any]:
     settings = get_settings()
-    if not settings.commercial_revenue_protection_enabled or settings.commercial_revenue_protection_mode == "disabled":
+    if (
+        not settings.commercial_revenue_protection_enabled
+        or settings.commercial_revenue_protection_mode == "disabled"
+    ):
         return {"enabled": False, "evaluated": 0, "proposed": 0, "applied": 0, "blocked": 0}
 
-    anomalies_stmt = select(CommercialFinancialAnomaly).where(CommercialFinancialAnomaly.status == "open")
+    anomalies_stmt = select(CommercialFinancialAnomaly).where(
+        CommercialFinancialAnomaly.status == "open"
+    )
     if anomaly_ids:
         anomalies_stmt = anomalies_stmt.where(CommercialFinancialAnomaly.id.in_(anomaly_ids))
-    anomalies = (await session.execute(anomalies_stmt.order_by(desc(CommercialFinancialAnomaly.detected_at)))).scalars().all()
-    policies = (await session.execute(select(CommercialRevenueProtectionPolicy).where(CommercialRevenueProtectionPolicy.enabled.is_(True)))).scalars().all()
+    anomalies = (
+        (
+            await session.execute(
+                anomalies_stmt.order_by(desc(CommercialFinancialAnomaly.detected_at))
+            )
+        )
+        .scalars()
+        .all()
+    )
+    policies = (
+        (
+            await session.execute(
+                select(CommercialRevenueProtectionPolicy).where(
+                    CommercialRevenueProtectionPolicy.enabled.is_(True)
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
 
     evaluated = 0
     proposed = 0
@@ -418,7 +519,13 @@ async def evaluate_revenue_protection_policies(
                 )
                 session.add(skipped)
                 blocked += 1
-                await _audit_event(session, action="revenue_protection_cooldown", status="skipped", payload={"policy_id": str(policy.id), "anomaly_id": str(anomaly.id)}, result={"cooldown_minutes": policy.cooldown_minutes})
+                await _audit_event(
+                    session,
+                    action="revenue_protection_cooldown",
+                    status="skipped",
+                    payload={"policy_id": str(policy.id), "anomaly_id": str(anomaly.id)},
+                    result={"cooldown_minutes": policy.cooldown_minutes},
+                )
                 continue
 
             action = await propose_action(session, policy=policy, anomaly=anomaly)
@@ -444,23 +551,41 @@ async def evaluate_revenue_protection_policies(
 
 async def summarize_protection_status(session: AsyncSession) -> dict[str, Any]:
     await rebuild_revenue_protection_runtime_constraints(session)
-    policies = (await session.execute(select(CommercialRevenueProtectionPolicy).order_by(CommercialRevenueProtectionPolicy.created_at.desc()))).scalars().all()
-    actions = (
-        await session.execute(
-            select(CommercialRevenueProtectionAction)
-            .options(selectinload(CommercialRevenueProtectionAction.policy))
-            .order_by(desc(CommercialRevenueProtectionAction.created_at))
-            .limit(100)
+    policies = (
+        (
+            await session.execute(
+                select(CommercialRevenueProtectionPolicy).order_by(
+                    CommercialRevenueProtectionPolicy.created_at.desc()
+                )
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
+    actions = (
+        (
+            await session.execute(
+                select(CommercialRevenueProtectionAction)
+                .options(selectinload(CommercialRevenueProtectionAction.policy))
+                .order_by(desc(CommercialRevenueProtectionAction.created_at))
+                .limit(100)
+            )
+        )
+        .scalars()
+        .all()
+    )
 
     applied = [a for a in actions if a.status == "applied" and a.reverted_at is None]
-    safe_mode_clients = sorted({str(a.client_id) for a in applied if a.action_type == "safe_mode" and a.client_id})
+    safe_mode_clients = sorted(
+        {str(a.client_id) for a in applied if a.action_type == "safe_mode" and a.client_id}
+    )
     restricted_models: list[str] = []
     for item in applied:
         if item.action_type != "restrict_expensive_models":
             continue
-        restricted_models.extend([m for m in (item.after_state_json or {}).get("restricted_models", []) if m])
+        restricted_models.extend(
+            [m for m in (item.after_state_json or {}).get("restricted_models", []) if m]
+        )
         if item.model:
             restricted_models.append(item.model)
     restricted_models = sorted(set(restricted_models))
@@ -481,8 +606,12 @@ async def summarize_protection_status(session: AsyncSession) -> dict[str, Any]:
             "cooldowns_active": len(cooldowns),
             "constraints_cache": _ACTIVE_CONSTRAINT_ACTIONS,
             "badges": [
-                "REPORT_ONLY" if get_settings().commercial_revenue_protection_mode == "report_only" else None,
-                "APPROVAL_REQUIRED" if get_settings().commercial_revenue_protection_mode == "approval_required" else None,
+                "REPORT_ONLY"
+                if get_settings().commercial_revenue_protection_mode == "report_only"
+                else None,
+                "APPROVAL_REQUIRED"
+                if get_settings().commercial_revenue_protection_mode == "approval_required"
+                else None,
                 "ENFORCED" if applied else None,
                 "COOLDOWN" if cooldowns else None,
                 "SAFE_MODE" if safe_mode_clients else None,

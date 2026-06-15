@@ -1,0 +1,1 @@
+../validators/validate-first-run-local.sh

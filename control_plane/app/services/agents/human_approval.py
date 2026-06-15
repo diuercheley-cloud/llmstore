@@ -1,8 +1,8 @@
 # Owner: agent-platform
 import logging
 import uuid
-from datetime import datetime, timedelta, timezone
-from typing import Any, Optional, Tuple
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -26,7 +26,7 @@ def _as_utc_aware(value: datetime | None) -> datetime | None:
     if value is None:
         return None
     if value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc)
+        return value.replace(tzinfo=UTC)
     return value
 
 
@@ -35,7 +35,21 @@ def sanitize_value(val: Any) -> Any:
     if isinstance(val, dict):
         return {
             k: sanitize_value(v)
-            if not any(x in k.lower() for x in ("prompt", "secret", "token", "password", "key", "auth", "instructions", "credential", "signature", "private"))
+            if not any(
+                x in k.lower()
+                for x in (
+                    "prompt",
+                    "secret",
+                    "token",
+                    "password",
+                    "key",
+                    "auth",
+                    "instructions",
+                    "credential",
+                    "signature",
+                    "private",
+                )
+            )
             else "<redacted>"
             for k, v in val.items()
         }
@@ -61,11 +75,8 @@ def has_sufficient_role(caller_role: AdminRole, required_role_str: str) -> bool:
 
 
 async def check_approval_required(
-    db: AsyncSession,
-    run_id: uuid.UUID,
-    tool_name: str,
-    tool_input: dict
-) -> Tuple[bool, str, str, str]:
+    db: AsyncSession, run_id: uuid.UUID, tool_name: str, tool_input: dict
+) -> tuple[bool, str, str, str]:
     """
     Evaluates policies, registry status, and feature flags to check if approval is required.
     Returns:
@@ -130,9 +141,11 @@ async def check_approval_required(
 
     for policy in policies:
         triggered = False
-        if policy.trigger_type == "always":
-            triggered = True
-        elif policy.trigger_type == "tool_call" and policy.tool_name == tool_name:
+        if (
+            policy.trigger_type == "always"
+            or policy.trigger_type == "tool_call"
+            and policy.tool_name == tool_name
+        ):
             triggered = True
         elif policy.trigger_type == "risk_level" and policy.risk_level_threshold:
             thresh_val = RISK_ORDER.get(policy.risk_level_threshold.lower(), 1)
@@ -140,7 +153,12 @@ async def check_approval_required(
                 triggered = True
 
         if triggered:
-            return True, max_risk_str, f"Policy match: {policy.name}", policy.required_role or "admin_write"
+            return (
+                True,
+                max_risk_str,
+                f"Policy match: {policy.name}",
+                policy.required_role or "admin_write",
+            )
 
     # 2. Check registry lifecycle and explicit tool overrides
     if registry_approval_required:
@@ -152,10 +170,16 @@ async def check_approval_required(
     # Notification sensitive keywords approval policy
     if tool_name in ("notify_email", "notify_push"):
         from app.services.notifications.notification_policy import has_sensitive_keywords
+
         title = tool_input.get("title", "")
         body = tool_input.get("body", "")
         if has_sensitive_keywords(title, body):
-            return True, "medium", f"Notification tool '{tool_name}' has sensitive keywords", "admin_write"
+            return (
+                True,
+                "medium",
+                f"Notification tool '{tool_name}' has sensitive keywords",
+                "admin_write",
+            )
 
     # 3. High risk threshold rule
     if settings.agent_approval_required_for_high_risk:
@@ -175,8 +199,8 @@ async def create_approval_request(
     reason: str,
     required_role: str,
     step_number: int,
-    task_id: Optional[str] = None,
-    tool_invocation_id: Optional[uuid.UUID] = None
+    task_id: str | None = None,
+    tool_invocation_id: uuid.UUID | None = None,
 ) -> AgentApprovalRequest:
     """Creates a pending AgentApprovalRequest in the database."""
     settings = get_settings()
@@ -207,6 +231,7 @@ async def create_approval_request(
     logger.info(f"Created AgentApprovalRequest: {req.id} for run {run_id}")
     return req
 
+
 async def check_and_apply_expiration(db: AsyncSession, request: AgentApprovalRequest) -> bool:
     """Fails safe if a request is expired."""
     expires_at = _as_utc_aware(request.expires_at)
@@ -220,7 +245,7 @@ async def check_and_apply_expiration(db: AsyncSession, request: AgentApprovalReq
             decision="expired",
             reason="Approval request timed out / expired",
             decided_by="system",
-            decided_at=utc_now()
+            decided_at=utc_now(),
         )
         db.add(decision)
 
@@ -232,13 +257,18 @@ async def check_and_apply_expiration(db: AsyncSession, request: AgentApprovalReq
             run.status = "failed"
             run.failure_reason = "Approval request expired"
             run.completed_at = utc_now()
-            
+
             # Log run event
             from app.services.agents import agent_state
-            await agent_state.log_run_event(db, run.id, "run_failed", {"reason": "approval_expired"})
+
+            await agent_state.log_run_event(
+                db, run.id, "run_failed", {"reason": "approval_expired"}
+            )
 
         await db.commit()
-        logger.info(f"AgentApprovalRequest {request.id} expired. Associated run {request.agent_run_id} marked as failed.")
+        logger.info(
+            f"AgentApprovalRequest {request.id} expired. Associated run {request.agent_run_id} marked as failed."
+        )
         return True
     return False
 
@@ -246,8 +276,7 @@ async def check_and_apply_expiration(db: AsyncSession, request: AgentApprovalReq
 async def check_all_expired_requests(db: AsyncSession) -> None:
     """Scans and updates all pending expired requests in the database."""
     stmt = select(AgentApprovalRequest).where(
-        AgentApprovalRequest.status == "pending",
-        AgentApprovalRequest.expires_at < utc_now()
+        AgentApprovalRequest.status == "pending", AgentApprovalRequest.expires_at < utc_now()
     )
     res = await db.execute(stmt)
     expired_reqs = res.scalars().all()
@@ -260,7 +289,7 @@ async def approve_approval_request(
     request_id: uuid.UUID,
     decided_by: str,
     caller_role: AdminRole,
-    reason: Optional[str] = None
+    reason: str | None = None,
 ) -> AgentApprovalRequest:
     """Approves request, logs decision and audit, and resumes execution."""
     stmt = select(AgentApprovalRequest).where(AgentApprovalRequest.id == request_id)
@@ -291,18 +320,20 @@ async def approve_approval_request(
         decision="approved",
         reason=reason,
         decided_by=decided_by,
-        decided_at=utc_now()
+        decided_at=utc_now(),
     )
     db.add(decision)
 
     # 4.5 Resolve associated run before metrics/resume.
     from app.services.agents import agent_state
+
     run = await agent_state.get_agent_run(db, req.agent_run_id)
     if not run:
         raise ValueError(f"Agent run {req.agent_run_id} not found")
 
     # Record metrics
     from app.services.agents.agent_observability import AgentObservabilityService
+
     obs = AgentObservabilityService(db)
     wait_time = (utc_now() - _as_utc_aware(req.created_at)).total_seconds()
     tool_name = (req.sanitized_context or {}).get("tool_name")
@@ -316,20 +347,21 @@ async def approve_approval_request(
         actor_identifier=decided_by,
         target_type="agent_approval_request",
         target_id=str(req.id),
-        metadata={"agent_run_id": str(run.id), "reason": reason}
+        metadata={"agent_run_id": str(run.id), "reason": reason},
     )
 
     from app.services.agents.telemetry.agent_trace_service import AgentTraceService
+
     await AgentTraceService.create_trace(
         db=db,
         run_id=req.agent_run_id,
         trace_type="review",
-        name=f"human_approval_approved",
+        name="human_approval_approved",
         input_data={"decision": "approved", "decided_by": decided_by, "reason": reason},
         output_data={"status": "approved"},
         status="success",
         start_time=req.created_at,
-        end_time=utc_now()
+        end_time=utc_now(),
     )
 
     await db.commit()
@@ -337,6 +369,7 @@ async def approve_approval_request(
 
     # We resume the run using the runtime executor orchestration
     from app.services.agents.agent_runtime import resume_run_internal
+
     await resume_run_internal(db, run.id)
 
     return req
@@ -347,7 +380,7 @@ async def reject_approval_request(
     request_id: uuid.UUID,
     decided_by: str,
     caller_role: AdminRole,
-    reason: Optional[str] = None
+    reason: str | None = None,
 ) -> AgentApprovalRequest:
     """Rejects request, logs decision and audit, and terminates run execution."""
     stmt = select(AgentApprovalRequest).where(AgentApprovalRequest.id == request_id)
@@ -378,16 +411,18 @@ async def reject_approval_request(
         decision="rejected",
         reason=reason,
         decided_by=decided_by,
-        decided_at=utc_now()
+        decided_at=utc_now(),
     )
     db.add(decision)
 
     # 4.5 Resolve associated run before metrics/termination.
     from app.services.agents import agent_state
+
     run = await agent_state.get_agent_run(db, req.agent_run_id)
 
     # Record metrics
     from app.services.agents.agent_observability import AgentObservabilityService
+
     obs = AgentObservabilityService(db)
     wait_time = (utc_now() - _as_utc_aware(req.created_at)).total_seconds()
     tool_name = (req.sanitized_context or {}).get("tool_name")
@@ -399,7 +434,9 @@ async def reject_approval_request(
         run.status = "failed"
         run.failure_reason = f"Approval request rejected: {reason or 'No reason provided'}"
         run.completed_at = utc_now()
-        await agent_state.log_run_event(db, run.id, "run_failed", {"reason": "approval_rejected", "details": reason})
+        await agent_state.log_run_event(
+            db, run.id, "run_failed", {"reason": "approval_rejected", "details": reason}
+        )
 
     # Audit log
     await record_admin_audit_event(
@@ -409,20 +446,21 @@ async def reject_approval_request(
         actor_identifier=decided_by,
         target_type="agent_approval_request",
         target_id=str(req.id),
-        metadata={"agent_run_id": str(req.agent_run_id), "reason": reason}
+        metadata={"agent_run_id": str(req.agent_run_id), "reason": reason},
     )
 
     from app.services.agents.telemetry.agent_trace_service import AgentTraceService
+
     await AgentTraceService.create_trace(
         db=db,
         run_id=req.agent_run_id,
         trace_type="review",
-        name=f"human_approval_rejected",
+        name="human_approval_rejected",
         input_data={"decision": "rejected", "decided_by": decided_by, "reason": reason},
         output_data={"status": "rejected"},
         status="success",
         start_time=req.created_at,
-        end_time=utc_now()
+        end_time=utc_now(),
     )
 
     await db.commit()
@@ -435,7 +473,7 @@ async def request_changes_for_approval_request(
     request_id: uuid.UUID,
     decided_by: str,
     caller_role: AdminRole,
-    reason: Optional[str] = None
+    reason: str | None = None,
 ) -> AgentApprovalRequest:
     """Requests changes, transitions request to cancelled, and pauses run execution."""
     stmt = select(AgentApprovalRequest).where(AgentApprovalRequest.id == request_id)
@@ -466,16 +504,19 @@ async def request_changes_for_approval_request(
         decision="request_changes",
         reason=reason,
         decided_by=decided_by,
-        decided_at=utc_now()
+        decided_at=utc_now(),
     )
     db.add(decision)
 
     # 5. Pause the run
     from app.services.agents import agent_state
+
     run = await agent_state.get_agent_run(db, req.agent_run_id)
     if run:
         run.status = "paused"
-        await agent_state.log_run_event(db, run.id, "run_paused", {"reason": "changes_requested", "details": reason})
+        await agent_state.log_run_event(
+            db, run.id, "run_paused", {"reason": "changes_requested", "details": reason}
+        )
 
     # Audit log
     await record_admin_audit_event(
@@ -485,7 +526,7 @@ async def request_changes_for_approval_request(
         actor_identifier=decided_by,
         target_type="agent_approval_request",
         target_id=str(req.id),
-        metadata={"agent_run_id": str(req.agent_run_id), "reason": reason}
+        metadata={"agent_run_id": str(req.agent_run_id), "reason": reason},
     )
 
     await db.commit()

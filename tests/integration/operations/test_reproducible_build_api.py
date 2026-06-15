@@ -38,12 +38,18 @@ async def test_reproducible_build_api_flow(session):
         assert created.status_code == 200
         manifest_id = created.json()["manifest"]["id"]
 
-        listed = await ac.get(f"/admin/operations/reproducible-builds/manifests?client_id={client.id}")
+        listed = await ac.get(
+            f"/admin/operations/reproducible-builds/manifests?client_id={client.id}"
+        )
         assert listed.status_code == 200
         assert len(listed.json()) == 1
 
-        detail = await ac.get(f"/admin/operations/reproducible-builds/manifests/{manifest_id}?client_id={client.id}")
-        blocked_detail = await ac.get(f"/admin/operations/reproducible-builds/manifests/{manifest_id}?client_id={other.id}")
+        detail = await ac.get(
+            f"/admin/operations/reproducible-builds/manifests/{manifest_id}?client_id={client.id}"
+        )
+        blocked_detail = await ac.get(
+            f"/admin/operations/reproducible-builds/manifests/{manifest_id}?client_id={other.id}"
+        )
         assert detail.status_code == 200
         assert blocked_detail.status_code == 404
 
@@ -108,7 +114,9 @@ async def test_reproducible_build_api_flow(session):
         )
         assert receipt.status_code == 200
 
-        dashboard = await ac.get(f"/admin/operations/reproducible-builds/dashboard?client_id={client.id}")
+        dashboard = await ac.get(
+            f"/admin/operations/reproducible-builds/dashboard?client_id={client.id}"
+        )
         assert dashboard.status_code == 200
         assert dashboard.json()["section"] == "Reproducible Build & Artifact Verification Framework"
 

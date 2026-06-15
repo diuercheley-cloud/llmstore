@@ -15,10 +15,30 @@ class FakeProxy:
         self.queue_manager = SimpleNamespace(
             get_snapshot=lambda: {
                 "queues": {
-                    "inference_admin": {"waiting": 0, "active": 1, "max_active": 10, "max_waiting": 20},
-                    "inference_premium": {"waiting": 2, "active": 3, "max_active": 5, "max_waiting": 15},
-                    "inference_basic": {"waiting": 1, "active": 2, "max_active": 2, "max_waiting": 10},
-                    "inference_free": {"waiting": 4, "active": 1, "max_active": 1, "max_waiting": 5},
+                    "inference_admin": {
+                        "waiting": 0,
+                        "active": 1,
+                        "max_active": 10,
+                        "max_waiting": 20,
+                    },
+                    "inference_premium": {
+                        "waiting": 2,
+                        "active": 3,
+                        "max_active": 5,
+                        "max_waiting": 15,
+                    },
+                    "inference_basic": {
+                        "waiting": 1,
+                        "active": 2,
+                        "max_active": 2,
+                        "max_waiting": 10,
+                    },
+                    "inference_free": {
+                        "waiting": 4,
+                        "active": 1,
+                        "max_active": 1,
+                        "max_waiting": 5,
+                    },
                 },
                 "total_pending": 8,
             }
@@ -203,11 +223,15 @@ def usage_payloads(monkeypatch):
     monkeypatch.setattr(reporting, "build_usage_summary", fake_build_usage_summary)
     monkeypatch.setattr(reporting, "build_usage_by_client", fake_build_usage_by_client)
     monkeypatch.setattr(reporting, "build_usage_by_model", fake_build_usage_by_model)
-    monkeypatch.setattr(security_monitor, "observe_billing_status_metrics", fake_observe_billing_status_metrics)
+    monkeypatch.setattr(
+        security_monitor, "observe_billing_status_metrics", fake_observe_billing_status_metrics
+    )
     monkeypatch.setattr(admin_api, "build_usage_summary", fake_build_usage_summary)
     monkeypatch.setattr(admin_api, "build_usage_by_client", fake_build_usage_by_client)
     monkeypatch.setattr(admin_api, "build_usage_by_model", fake_build_usage_by_model)
-    monkeypatch.setattr(admin_api, "observe_billing_status_metrics", fake_observe_billing_status_metrics)
+    monkeypatch.setattr(
+        admin_api, "observe_billing_status_metrics", fake_observe_billing_status_metrics
+    )
     return summary_payload, by_client_payload, by_model_payload
 
 

@@ -1,5 +1,5 @@
-import json
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 
 from scripts.llm_harness.models import ExecutionResult
@@ -24,7 +24,9 @@ class TestSafeParseJson:
         assert result == {"status": "rejected", "feedback": "fix it"}
 
     def test_json_with_text_before(self):
-        result = _safe_parse_json('Here is my decision:\n```json\n{"next_agent": "developer"}\n```\nGood luck!')
+        result = _safe_parse_json(
+            'Here is my decision:\n```json\n{"next_agent": "developer"}\n```\nGood luck!'
+        )
         assert result == {"next_agent": "developer"}
 
     def test_json_single_quotes(self):
@@ -47,7 +49,9 @@ class TestSafeParseJson:
         assert _safe_parse_json("Just some random text without JSON") is None
 
     def test_nested_json_extraction(self):
-        content = 'I think {"type": "read_file", "payload": {"path": "src/main.py"}} is the right action'
+        content = (
+            'I think {"type": "read_file", "payload": {"path": "src/main.py"}} is the right action'
+        )
         result = _safe_parse_json(content)
         assert result == {"type": "read_file", "payload": {"path": "src/main.py"}}
 
@@ -58,7 +62,7 @@ class TestSafeParseJson:
 
 def _make_mock_registry():
     registry = MagicMock()
-    
+
     def create_agent(role, prompt):
         agent = MagicMock()
         agent.role = role
@@ -89,9 +93,11 @@ async def test_multi_agent_orchestrator_success(mock_load):
     orchestrator = MultiAgentOrchestrator(coding_loop)
 
     orchestrator._call_planner = AsyncMock(return_value=[{"action_type": "plan", "message": "Go!"}])
-    coding_loop.run = AsyncMock(return_value=ExecutionResult(
-        success=True, message="Done", metrics={"changed_files": ["f1.py"]}
-    ))
+    coding_loop.run = AsyncMock(
+        return_value=ExecutionResult(
+            success=True, message="Done", metrics={"changed_files": ["f1.py"]}
+        )
+    )
     orchestrator._call_reviewer = AsyncMock(return_value={"status": "approved", "feedback": "Good"})
 
     result = await orchestrator.run_planner_coder_reviewer("Task X")
@@ -114,13 +120,17 @@ async def test_multi_agent_orchestrator_revision(mock_load):
     orchestrator = MultiAgentOrchestrator(coding_loop)
 
     orchestrator._call_planner = AsyncMock(return_value=[{"action_type": "plan", "message": "Go!"}])
-    coding_loop.run = AsyncMock(return_value=ExecutionResult(
-        success=True, message="Done", metrics={"changed_files": ["f1.py"]}
-    ))
-    orchestrator._call_reviewer = AsyncMock(side_effect=[
-        {"status": "rejected", "feedback": "Fix Y"},
-        {"status": "approved", "feedback": "Fixed"}
-    ])
+    coding_loop.run = AsyncMock(
+        return_value=ExecutionResult(
+            success=True, message="Done", metrics={"changed_files": ["f1.py"]}
+        )
+    )
+    orchestrator._call_reviewer = AsyncMock(
+        side_effect=[
+            {"status": "rejected", "feedback": "Fix Y"},
+            {"status": "approved", "feedback": "Fixed"},
+        ]
+    )
 
     result = await orchestrator.run_planner_coder_reviewer("Task X")
 
@@ -143,20 +153,45 @@ async def test_multi_agent_blackboard_and_routing(mock_load):
 
     assert orchestrator.router is not None
 
-    orchestrator.router.chat_completion_with_fallback = AsyncMock(side_effect=[
-        {"choices": [{"message": {"content": '[{"type": "write_file", "path": "x.txt", "content": "hello"}]'}}]},
-        {"choices": [{"message": {"content": '{"status": "rejected", "feedback": "please fix x"}'}}]},
-        {"choices": [{"message": {"content": '[{"type": "write_file", "path": "x.txt", "content": "hello fixed"}]'}}]},
-        {"choices": [{"message": {"content": '{"status": "approved", "feedback": "approved!"}'}}]},
-    ])
+    orchestrator.router.chat_completion_with_fallback = AsyncMock(
+        side_effect=[
+            {
+                "choices": [
+                    {
+                        "message": {
+                            "content": '[{"type": "write_file", "path": "x.txt", "content": "hello"}]'
+                        }
+                    }
+                ]
+            },
+            {
+                "choices": [
+                    {"message": {"content": '{"status": "rejected", "feedback": "please fix x"}'}}
+                ]
+            },
+            {
+                "choices": [
+                    {
+                        "message": {
+                            "content": '[{"type": "write_file", "path": "x.txt", "content": "hello fixed"}]'
+                        }
+                    }
+                ]
+            },
+            {
+                "choices": [
+                    {"message": {"content": '{"status": "approved", "feedback": "approved!"}'}}
+                ]
+            },
+        ]
+    )
 
     mock_events = []
-    coding_loop.run = AsyncMock(return_value=ExecutionResult(
-        success=True,
-        message="Done",
-        metrics={"changed_files": ["x.txt"]},
-        events=mock_events
-    ))
+    coding_loop.run = AsyncMock(
+        return_value=ExecutionResult(
+            success=True, message="Done", metrics={"changed_files": ["x.txt"]}, events=mock_events
+        )
+    )
 
     result = await orchestrator.run_planner_coder_reviewer("Task X", max_iterations=2)
 
@@ -190,9 +225,9 @@ async def test_supervisor_cycle_detection(mock_load):
         return {"next_agent": "developer", "instruction": "keep working", "type": "action"}
 
     orchestrator._call_supervisor = _always_developer
-    coding_loop.run = AsyncMock(return_value=ExecutionResult(
-        success=True, message="Done", metrics={"changed_files": []}
-    ))
+    coding_loop.run = AsyncMock(
+        return_value=ExecutionResult(success=True, message="Done", metrics={"changed_files": []})
+    )
 
     result = await orchestrator.run_supervisor("Test task", max_steps=10)
 
@@ -217,9 +252,9 @@ async def test_supervisor_invalid_decision_fallback(mock_load):
         return None
 
     orchestrator._call_supervisor = _always_none
-    coding_loop.run = AsyncMock(return_value=ExecutionResult(
-        success=True, message="Done", metrics={"changed_files": []}
-    ))
+    coding_loop.run = AsyncMock(
+        return_value=ExecutionResult(success=True, message="Done", metrics={"changed_files": []})
+    )
 
     result = await orchestrator.run_supervisor("Test task", max_steps=2)
     assert result is not None
@@ -246,7 +281,12 @@ async def test_supervisor_subtask_status_update(mock_load):
         if call_count == 1:
             return {
                 "sub_tasks": [
-                    {"id": "task1", "description": "Do something", "status": "in_progress", "assigned_to": "developer"}
+                    {
+                        "id": "task1",
+                        "description": "Do something",
+                        "status": "in_progress",
+                        "assigned_to": "developer",
+                    }
                 ],
                 "next_agent": "developer",
                 "instruction": "Do the thing",
@@ -255,9 +295,11 @@ async def test_supervisor_subtask_status_update(mock_load):
         return {"type": "final", "message": "All done", "next_agent": "final"}
 
     orchestrator._call_supervisor = _supervisor_decision
-    coding_loop.run = AsyncMock(return_value=ExecutionResult(
-        success=True, message="Completed task", metrics={"changed_files": ["output.txt"]}
-    ))
+    coding_loop.run = AsyncMock(
+        return_value=ExecutionResult(
+            success=True, message="Completed task", metrics={"changed_files": ["output.txt"]}
+        )
+    )
 
     result = await orchestrator.run_supervisor("Test task", max_steps=5)
 
@@ -281,9 +323,9 @@ async def test_planner_empty_plan_fallback(mock_load):
 
     # Planner returns empty list -> fallback to default plan
     orchestrator._call_planner = AsyncMock(return_value=[])
-    coding_loop.run = AsyncMock(return_value=ExecutionResult(
-        success=True, message="Done", metrics={"changed_files": []}
-    ))
+    coding_loop.run = AsyncMock(
+        return_value=ExecutionResult(success=True, message="Done", metrics={"changed_files": []})
+    )
     orchestrator._call_reviewer = AsyncMock(return_value={"status": "approved", "feedback": "ok"})
 
     result = await orchestrator.run_planner_coder_reviewer("Task X", max_iterations=1)
@@ -302,14 +344,16 @@ async def test_reviewer_invalid_response_fallback(mock_load):
     orchestrator = MultiAgentOrchestrator(coding_loop)
 
     orchestrator._call_planner = AsyncMock(return_value=[{"type": "plan", "message": "Go!"}])
-    coding_loop.run = AsyncMock(return_value=ExecutionResult(
-        success=True, message="Done", metrics={"changed_files": []}
-    ))
+    coding_loop.run = AsyncMock(
+        return_value=ExecutionResult(success=True, message="Done", metrics={"changed_files": []})
+    )
     # Reviewer returns None (invalid) -> orchestrator should continue with retry
-    orchestrator._call_reviewer = AsyncMock(side_effect=[
-        None,
-        {"status": "approved", "feedback": "ok"},
-    ])
+    orchestrator._call_reviewer = AsyncMock(
+        side_effect=[
+            None,
+            {"status": "approved", "feedback": "ok"},
+        ]
+    )
 
     result = await orchestrator.run_planner_coder_reviewer("Task X", max_iterations=2)
     assert result.success is True
@@ -338,9 +382,11 @@ async def test_supervisor_enriches_blackboard(mock_load):
         return {"type": "final", "message": "Done", "next_agent": "final"}
 
     orchestrator._call_supervisor = _supervisor_decider
-    coding_loop.run = AsyncMock(return_value=ExecutionResult(
-        success=True, message="File written", metrics={"changed_files": ["test.txt"]}
-    ))
+    coding_loop.run = AsyncMock(
+        return_value=ExecutionResult(
+            success=True, message="File written", metrics={"changed_files": ["test.txt"]}
+        )
+    )
 
     result = await orchestrator.run_supervisor("Test enrichment", max_steps=5)
 

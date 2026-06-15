@@ -59,8 +59,8 @@ from app.services.models.model_provenance import summarize_model_provenance
 from app.services.models.signed_model_registry import latest_registry_map
 from app.services.security_monitor import log_security_event
 from app.utils.tool_calling import model_supports_native_tools
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import delete, func, or_, select
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -96,14 +96,29 @@ def _serialize_model_admin(model: ModelRegistry, health_map: dict[str, dict] | N
     metadata = parse_metadata(model.metadata_json)
     architecture = architecture_for_model(model)
     reasoning = reasoning_defaults_for_model(model)
-    backend_health = health_map.get(str(model.inference_backend_id)) if health_map and model.inference_backend_id else None
-    is_chat = model.provider in {"llama.cpp", "ollama", "vllm", "openai_compatible", "openrouter", "openai", "anthropic", "deepseek"}
+    backend_health = (
+        health_map.get(str(model.inference_backend_id))
+        if health_map and model.inference_backend_id
+        else None
+    )
+    is_chat = model.provider in {
+        "llama.cpp",
+        "ollama",
+        "vllm",
+        "openai_compatible",
+        "openrouter",
+        "openai",
+        "anthropic",
+        "deepseek",
+    }
     capabilities = {
         "supports_chat": is_chat,
         "supports_streaming": is_chat,
-        "supports_embeddings": "embedding" in model.model_id.lower() or metadata.get("type") == "embedding",
+        "supports_embeddings": "embedding" in model.model_id.lower()
+        or metadata.get("type") == "embedding",
         "supports_responses": is_chat,
-        "supports_tools": is_chat and model_supports_native_tools(model.provider, model.metadata_json),
+        "supports_tools": is_chat
+        and model_supports_native_tools(model.provider, model.metadata_json),
     }
 
     return {
@@ -111,7 +126,9 @@ def _serialize_model_admin(model: ModelRegistry, health_map: dict[str, dict] | N
         "display_name": display_name_for_model(model),
         "model_id": model.model_id,
         "model_alias": model.model_alias,
-        "inference_backend_id": str(model.inference_backend_id) if model.inference_backend_id else None,
+        "inference_backend_id": str(model.inference_backend_id)
+        if model.inference_backend_id
+        else None,
         "backend_name": model.inference_backend.name if model.inference_backend else None,
         "backend_url": model.inference_backend.backend_url if model.inference_backend else None,
         "provider": model.provider,
@@ -135,14 +152,18 @@ def _serialize_model_admin(model: ModelRegistry, health_map: dict[str, dict] | N
     }
 
 
-async def _sync_model_backend_routes(session: AsyncSession, model: ModelRegistry, routes_payload: list[dict]) -> None:
+async def _sync_model_backend_routes(
+    session: AsyncSession, model: ModelRegistry, routes_payload: list[dict]
+) -> None:
     existing = {
         item.inference_backend_id: item
         for item in (
             await session.execute(
                 select(ModelBackendRoute).where(ModelBackendRoute.model_registry_id == model.id)
             )
-        ).scalars().all()
+        )
+        .scalars()
+        .all()
     }
     keep_backend_ids = set()
     for route_data in routes_payload:
@@ -178,25 +199,41 @@ async def get_models(
     )
     registry = result.scalars().all()
     backends = (
-        await session.execute(select(InferenceBackend).order_by(InferenceBackend.created_at.asc()))
-    ).scalars().all()
+        (
+            await session.execute(
+                select(InferenceBackend).order_by(InferenceBackend.created_at.asc())
+            )
+        )
+        .scalars()
+        .all()
+    )
     backend_health = await asyncio.gather(*[proxy.health_backend(item) for item in backends])
     health_map = {item["backend_id"]: item for item in backend_health}
     supply_chain_map = await latest_registry_map(session)
-    plans = (await session.execute(select(BillingPlan).order_by(BillingPlan.created_at.asc()))).scalars().all()
+    plans = (
+        (await session.execute(select(BillingPlan).order_by(BillingPlan.created_at.asc())))
+        .scalars()
+        .all()
+    )
     registry_payload = []
     for item in registry:
         payload = _serialize_model_admin(item, health_map)
-        trust_entry = supply_chain_map.get(item.model_alias or item.model_id) or supply_chain_map.get(item.model_id)
+        trust_entry = supply_chain_map.get(
+            item.model_alias or item.model_id
+        ) or supply_chain_map.get(item.model_id)
         if trust_entry is not None:
             payload["supply_chain"] = {
                 "registry_entry_id": str(trust_entry.id),
                 "trust_state": trust_entry.trust_state,
                 "checksum_sha256": trust_entry.checksum_sha256,
                 "manifest_hash": trust_entry.manifest_hash,
-                "approved_at": trust_entry.approved_at.isoformat() if trust_entry.approved_at else None,
+                "approved_at": trust_entry.approved_at.isoformat()
+                if trust_entry.approved_at
+                else None,
                 "approved_by": trust_entry.approved_by,
-                "provenance_summary": await summarize_model_provenance(session, trust_entry.provenance_id),
+                "provenance_summary": await summarize_model_provenance(
+                    session, trust_entry.provenance_id
+                ),
             }
         else:
             payload["supply_chain"] = {
@@ -219,7 +256,9 @@ async def get_models(
             }
             for plan in plans
         ],
-        "backends": [_serialize_backend_admin(item, health_map.get(str(item.id))) for item in backends],
+        "backends": [
+            _serialize_backend_admin(item, health_map.get(str(item.id))) for item in backends
+        ],
     }
 
 
@@ -244,10 +283,14 @@ async def get_model_files(session: AsyncSession = Depends(get_db_session)):
 
 
 @router.post("/models", status_code=201)
-async def create_model(payload: ModelRegistryCreate, session: AsyncSession = Depends(get_db_session)):
+async def create_model(
+    payload: ModelRegistryCreate, session: AsyncSession = Depends(get_db_session)
+):
     backend_id = payload.inference_backend_id
     if backend_id is not None and payload.create_backend is not None:
-        raise HTTPException(status_code=409, detail="choose an existing backend or create a new one")
+        raise HTTPException(
+            status_code=409, detail="choose an existing backend or create a new one"
+        )
     if payload.create_backend is not None:
         existing_backend = await session.execute(
             select(InferenceBackend).where(InferenceBackend.name == payload.create_backend.name)
@@ -291,7 +334,11 @@ async def create_model(payload: ModelRegistryCreate, session: AsyncSession = Dep
         metadata_json=metadata_json,
     )
     if payload.is_default:
-        defaults = (await session.execute(select(ModelRegistry).where(ModelRegistry.is_default.is_(True)))).scalars().all()
+        defaults = (
+            (await session.execute(select(ModelRegistry).where(ModelRegistry.is_default.is_(True))))
+            .scalars()
+            .all()
+        )
         for item in defaults:
             item.is_default = False
     model = ModelRegistry(
@@ -311,11 +358,15 @@ async def create_model(payload: ModelRegistryCreate, session: AsyncSession = Dep
     await session.flush()
     routes_payload = [item.model_dump() for item in payload.backend_routes]
     if not routes_payload and backend_id is not None:
-        routes_payload = [{"inference_backend_id": backend_id, "priority": 1, "weight": 100, "state": "healthy"}]
+        routes_payload = [
+            {"inference_backend_id": backend_id, "priority": 1, "weight": 100, "state": "healthy"}
+        ]
     if routes_payload:
         await _sync_model_backend_routes(session, model, routes_payload)
     try:
-        await sync_allowed_plans(session, model=model, allowed_plan_codes=payload.allowed_plan_codes)
+        await sync_allowed_plans(
+            session, model=model, allowed_plan_codes=payload.allowed_plan_codes
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     await log_security_event(
@@ -323,7 +374,11 @@ async def create_model(payload: ModelRegistryCreate, session: AsyncSession = Dep
         event_type="admin_model_created",
         severity="medium",
         title="Model created via Admin Lab",
-        details={"model_id": model.model_id, "model_alias": model.model_alias, "provider": model.provider},
+        details={
+            "model_id": model.model_id,
+            "model_alias": model.model_alias,
+            "provider": model.provider,
+        },
     )
     await session.commit()
     loaded_model = await get_model_by_id(session, model.id)
@@ -351,21 +406,37 @@ async def patch_model(
     routes_payload = patch_data.pop("backend_routes", None)
     allowed_plan_codes = patch_data.pop("allowed_plan_codes", None)
     display_name = patch_data.pop("display_name", None) if "display_name" in patch_data else None
-    allow_reasoning = patch_data.pop("allow_reasoning", None) if "allow_reasoning" in patch_data else None
-    include_reasoning_default = patch_data.pop("include_reasoning_default", None) if "include_reasoning_default" in patch_data else None
+    allow_reasoning = (
+        patch_data.pop("allow_reasoning", None) if "allow_reasoning" in patch_data else None
+    )
+    include_reasoning_default = (
+        patch_data.pop("include_reasoning_default", None)
+        if "include_reasoning_default" in patch_data
+        else None
+    )
     if "inference_backend_id" in patch_data and patch_data["inference_backend_id"] is not None:
         if await session.get(InferenceBackend, patch_data["inference_backend_id"]) is None:
             raise HTTPException(status_code=404, detail="backend not found")
     if "model_alias" in patch_data and patch_data["model_alias"] is not None:
         existing = await session.execute(
-            select(ModelRegistry).where(ModelRegistry.model_alias == patch_data["model_alias"], ModelRegistry.id != model_id)
+            select(ModelRegistry).where(
+                ModelRegistry.model_alias == patch_data["model_alias"], ModelRegistry.id != model_id
+            )
         )
         if existing.scalar_one_or_none() is not None:
             raise HTTPException(status_code=409, detail="model alias already exists")
     if patch_data.get("is_default") is True:
         defaults = (
-            await session.execute(select(ModelRegistry).where(ModelRegistry.is_default.is_(True), ModelRegistry.id != model_id))
-        ).scalars().all()
+            (
+                await session.execute(
+                    select(ModelRegistry).where(
+                        ModelRegistry.is_default.is_(True), ModelRegistry.id != model_id
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
         for item in defaults:
             item.is_default = False
     if patch_data.get("is_active") is False and model.is_default:
@@ -373,7 +444,9 @@ async def patch_model(
     provider = patch_data.get("provider", model.provider)
     if "model_file" in patch_data:
         try:
-            patch_data["model_file"] = sanitize_model_filename(patch_data["model_file"], provider=provider)
+            patch_data["model_file"] = sanitize_model_filename(
+                patch_data["model_file"], provider=provider
+            )
             if provider == "llama.cpp":
                 ensure_model_file_exists(patch_data["model_file"], provider=provider)
         except ValueError as exc:
@@ -391,7 +464,12 @@ async def patch_model(
         metadata_updates["include_reasoning_default"] = include_reasoning_default
     if metadata_updates:
         model.metadata_json = merge_metadata(model.metadata_json, metadata_updates)
-    if "prompt_template" in patch_data or "model_file" in patch_data or "provider" in patch_data or "model_alias" in patch_data:
+    if (
+        "prompt_template" in patch_data
+        or "model_file" in patch_data
+        or "provider" in patch_data
+        or "model_alias" in patch_data
+    ):
         model.prompt_template = prompt_template_for_payload(
             prompt_template=model.prompt_template,
             model_id=model.model_id,
@@ -403,7 +481,11 @@ async def patch_model(
         await _sync_model_backend_routes(session, model, routes_payload)
     elif patch_data.get("inference_backend_id") is not None:
         existing_route = next(
-            (item for item in model.backend_routes if item.inference_backend_id == patch_data["inference_backend_id"]),
+            (
+                item
+                for item in model.backend_routes
+                if item.inference_backend_id == patch_data["inference_backend_id"]
+            ),
             None,
         )
         if existing_route is None:
@@ -411,8 +493,21 @@ async def patch_model(
                 session,
                 model,
                 [
-                    *[{"inference_backend_id": route.inference_backend_id, "priority": route.priority, "weight": route.weight, "state": route.state} for route in model.backend_routes],
-                    {"inference_backend_id": patch_data["inference_backend_id"], "priority": 1, "weight": 100, "state": "healthy"},
+                    *[
+                        {
+                            "inference_backend_id": route.inference_backend_id,
+                            "priority": route.priority,
+                            "weight": route.weight,
+                            "state": route.state,
+                        }
+                        for route in model.backend_routes
+                    ],
+                    {
+                        "inference_backend_id": patch_data["inference_backend_id"],
+                        "priority": 1,
+                        "weight": 100,
+                        "state": "healthy",
+                    },
                 ],
             )
     try:
@@ -440,8 +535,16 @@ async def set_default_model(model_id: uuid.UUID, session: AsyncSession = Depends
     if model is None:
         raise HTTPException(status_code=404, detail="model not found")
     defaults = (
-        await session.execute(select(ModelRegistry).where(ModelRegistry.is_default.is_(True), ModelRegistry.id != model_id))
-    ).scalars().all()
+        (
+            await session.execute(
+                select(ModelRegistry).where(
+                    ModelRegistry.is_default.is_(True), ModelRegistry.id != model_id
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
     for item in defaults:
         item.is_default = False
     model.is_default = True
@@ -469,10 +572,17 @@ async def create_model_route(
         raise HTTPException(status_code=404, detail="model not found")
     if await session.get(InferenceBackend, payload.inference_backend_id) is None:
         raise HTTPException(status_code=404, detail="backend not found")
-    if any(route.inference_backend_id == payload.inference_backend_id for route in model.backend_routes):
+    if any(
+        route.inference_backend_id == payload.inference_backend_id for route in model.backend_routes
+    ):
         raise HTTPException(status_code=409, detail="route already exists for this backend")
     routes_payload = [
-        {"inference_backend_id": route.inference_backend_id, "priority": route.priority, "weight": route.weight, "state": route.state}
+        {
+            "inference_backend_id": route.inference_backend_id,
+            "priority": route.priority,
+            "weight": route.weight,
+            "state": route.state,
+        }
         for route in model.backend_routes
     ]
     routes_payload.append(payload.model_dump())
@@ -550,7 +660,9 @@ async def patch_model_backend_route(
 async def enable_model(model_id: uuid.UUID, session: AsyncSession = Depends(get_db_session)):
     model = (
         await session.execute(
-            select(ModelRegistry).options(selectinload(ModelRegistry.inference_backend)).where(ModelRegistry.id == model_id)
+            select(ModelRegistry)
+            .options(selectinload(ModelRegistry.inference_backend))
+            .where(ModelRegistry.id == model_id)
         )
     ).scalar_one_or_none()
     if model is None:
@@ -597,7 +709,9 @@ async def delete_model(
         raise HTTPException(status_code=409, detail="default model cannot be removed")
     route_count = len(model.backend_routes)
     if route_count and not payload.confirm_route_removal:
-        raise HTTPException(status_code=409, detail="model still has active backend routes; confirm route removal")
+        raise HTTPException(
+            status_code=409, detail="model still has active backend routes; confirm route removal"
+        )
     request_count = (
         await session.execute(
             select(func.count(RequestLog.id)).where(
@@ -609,7 +723,9 @@ async def delete_model(
         )
     ).scalar_one()
     if payload.mode in {"hard", "register-only"} and request_count:
-        raise HTTPException(status_code=409, detail="model has request history; use soft delete or disable it")
+        raise HTTPException(
+            status_code=409, detail="model has request history; use soft delete or disable it"
+        )
     removed_routes = await remove_model_routes(session, model)
     result_status = "deleted"
     if payload.mode == "soft" or (payload.mode == "auto" and request_count):
@@ -652,7 +768,9 @@ async def test_model_prompt(
             select(ModelRegistry)
             .options(
                 selectinload(ModelRegistry.inference_backend),
-                selectinload(ModelRegistry.backend_routes).selectinload(ModelBackendRoute.inference_backend),
+                selectinload(ModelRegistry.backend_routes).selectinload(
+                    ModelBackendRoute.inference_backend
+                ),
             )
             .where(ModelRegistry.id == model_id)
         )
@@ -732,7 +850,9 @@ async def explain_routing(
     """
     Explains the routing decision for a given model and client.
     """
-    client = await session.get(Client, payload.client_id, options=[selectinload(Client.billing_plan)])
+    client = await session.get(
+        Client, payload.client_id, options=[selectinload(Client.billing_plan)]
+    )
     if not client:
         raise HTTPException(status_code=404, detail="client not found")
 

@@ -18,11 +18,23 @@ async def test_hybrid_summary_returns_valid_json(admin_client: AsyncClient):
     data = resp.json()
 
     expected_fields = [
-        "total_requests", "local_requests", "cloud_requests",
-        "cache_hit_rate", "provider_cost_brl", "customer_revenue_brl",
-        "gross_profit_brl", "margin_percent", "active_wallets",
-        "low_balance_clients", "providers_enabled", "providers_configured",
-        "warnings", "critical_failures", "cloud_enabled", "local_first", "timestamp",
+        "total_requests",
+        "local_requests",
+        "cloud_requests",
+        "cache_hit_rate",
+        "provider_cost_brl",
+        "customer_revenue_brl",
+        "gross_profit_brl",
+        "margin_percent",
+        "active_wallets",
+        "low_balance_clients",
+        "providers_enabled",
+        "providers_configured",
+        "warnings",
+        "critical_failures",
+        "cloud_enabled",
+        "local_first",
+        "timestamp",
     ]
     for field in expected_fields:
         assert field in data, f"Field '{field}' missing in hybrid summary"

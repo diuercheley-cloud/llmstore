@@ -11,25 +11,28 @@ except ImportError as e:
     print(f"Error: Could not import app modules. {e}")
     sys.exit(1)
 
+
 def main():
     service = FeatureFlagAuditService()
     audit_results = service.perform_audit()
-    
+
     failed = False
-    
+
     # 1. Duplicates
     if audit_results["duplicates"]:
         print(f"FAIL: Duplicated flags found: {audit_results['duplicates']}")
         failed = True
-        
+
     # 2. Missing Owner
     if audit_results["sem_owner"]:
         print(f"FAIL: Flags missing owner team: {audit_results['sem_owner']}")
         failed = True
-        
+
     # 3. Missing Safe Default Reason
     if audit_results["sem_safe_default_reason"]:
-        print(f"FAIL: Flags missing safe default reason: {audit_results['sem_safe_default_reason']}")
+        print(
+            f"FAIL: Flags missing safe default reason: {audit_results['sem_safe_default_reason']}"
+        )
         failed = True
 
     # 4. Missing Docs
@@ -48,9 +51,10 @@ def main():
 
     if failed:
         sys.exit(1)
-    
+
     print("PASS: Feature Flag Integrity verified successfully.")
     sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

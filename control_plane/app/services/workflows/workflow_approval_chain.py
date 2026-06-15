@@ -23,12 +23,17 @@ class WorkflowApprovalChainService:
     def __init__(self) -> None:
         self.ledger = WorkflowGovernanceLedgerService()
 
-    async def _last_chain_event(self, db: AsyncSession, *, chain_id: str) -> CommercialWorkflowApproval | None:
+    async def _last_chain_event(
+        self, db: AsyncSession, *, chain_id: str
+    ) -> CommercialWorkflowApproval | None:
         return (
             await db.execute(
                 select(CommercialWorkflowApproval)
                 .where(CommercialWorkflowApproval.chain_id == chain_id)
-                .order_by(desc(CommercialWorkflowApproval.created_at), desc(CommercialWorkflowApproval.step_index))
+                .order_by(
+                    desc(CommercialWorkflowApproval.created_at),
+                    desc(CommercialWorkflowApproval.step_index),
+                )
                 .limit(1)
             )
         ).scalar_one_or_none()
@@ -49,17 +54,21 @@ class WorkflowApprovalChainService:
     ) -> list[CommercialWorkflowApproval]:
         chain_id = sha256_hex(f"{execution.id}:{stage.id}:{requested_by}:{len(approvers)}")[:48]
         existing = (
-            await db.execute(
-                select(CommercialWorkflowApproval)
-                .where(
-                    CommercialWorkflowApproval.execution_id == execution.id,
-                    CommercialWorkflowApproval.stage_id == stage.id,
-                    CommercialWorkflowApproval.chain_id == chain_id,
-                    CommercialWorkflowApproval.event_type == "approval_requested",
+            (
+                await db.execute(
+                    select(CommercialWorkflowApproval)
+                    .where(
+                        CommercialWorkflowApproval.execution_id == execution.id,
+                        CommercialWorkflowApproval.stage_id == stage.id,
+                        CommercialWorkflowApproval.chain_id == chain_id,
+                        CommercialWorkflowApproval.event_type == "approval_requested",
+                    )
+                    .order_by(CommercialWorkflowApproval.step_index.asc())
                 )
-                .order_by(CommercialWorkflowApproval.step_index.asc())
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         if existing:
             return existing
         expires_at = utc_now() + timedelta(seconds=max(1, ttl_seconds))
@@ -94,7 +103,9 @@ class WorkflowApprovalChainService:
                 replay_safe=replay_safe,
                 previous_decision_hash=previous_decision_hash,
                 decision_hash=decision_hash,
-                detached_signature=sign_governance_payload(decision_payload, scope="workflow_approval_request"),
+                detached_signature=sign_governance_payload(
+                    decision_payload, scope="workflow_approval_request"
+                ),
                 signature_algorithm="ed25519",
                 metadata_json=redact_sensitive_payload(metadata or {}),
             )
@@ -112,7 +123,11 @@ class WorkflowApprovalChainService:
             actor_id=requested_by,
             actor_metadata={"chain_id": chain_id},
             event_summary=f"Approval requested for stage {stage.stage_key}",
-            event_payload={"chain_id": chain_id, "approver_count": len(approvers), "expires_at": expires_at.isoformat()},
+            event_payload={
+                "chain_id": chain_id,
+                "approver_count": len(approvers),
+                "expires_at": expires_at.isoformat(),
+            },
         )
         return rows
 
@@ -199,7 +214,9 @@ class WorkflowApprovalChainService:
             replay_safe=pending.replay_safe,
             previous_decision_hash=last.decision_hash if last else None,
             decision_hash=sha256_hex(decision_payload),
-            detached_signature=sign_governance_payload(decision_payload, scope="workflow_approval_decision"),
+            detached_signature=sign_governance_payload(
+                decision_payload, scope="workflow_approval_decision"
+            ),
             signature_algorithm="ed25519",
             metadata_json=redact_sensitive_payload(actor_metadata or {}),
         )
@@ -207,15 +224,19 @@ class WorkflowApprovalChainService:
         pending.status = status
         await db.flush()
         chain_rows = (
-            await db.execute(
-                select(CommercialWorkflowApproval)
-                .where(
-                    CommercialWorkflowApproval.chain_id == chain_id,
-                    CommercialWorkflowApproval.event_type == "approval_requested",
+            (
+                await db.execute(
+                    select(CommercialWorkflowApproval)
+                    .where(
+                        CommercialWorkflowApproval.chain_id == chain_id,
+                        CommercialWorkflowApproval.event_type == "approval_requested",
+                    )
+                    .order_by(CommercialWorkflowApproval.step_index.asc())
                 )
-                .order_by(CommercialWorkflowApproval.step_index.asc())
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         granted = [row for row in chain_rows if row.status == "approved"]
         rejected = [row for row in chain_rows if row.status == "rejected"]
         if rejected:
@@ -232,7 +253,11 @@ class WorkflowApprovalChainService:
             actor_id=approver,
             actor_metadata=actor_metadata,
             event_summary=f"Approval {status} for stage {stage.stage_key}",
-            event_payload={"chain_id": chain_id, "status": status, "step_index": pending.step_index},
+            event_payload={
+                "chain_id": chain_id,
+                "status": status,
+                "step_index": pending.step_index,
+            },
         )
         return decision
 
@@ -243,12 +268,19 @@ class WorkflowApprovalChainService:
         chain_id: str,
     ) -> dict[str, Any]:
         rows = (
-            await db.execute(
-                select(CommercialWorkflowApproval)
-                .where(CommercialWorkflowApproval.chain_id == chain_id)
-                .order_by(CommercialWorkflowApproval.created_at.asc(), CommercialWorkflowApproval.step_index.asc())
+            (
+                await db.execute(
+                    select(CommercialWorkflowApproval)
+                    .where(CommercialWorkflowApproval.chain_id == chain_id)
+                    .order_by(
+                        CommercialWorkflowApproval.created_at.asc(),
+                        CommercialWorkflowApproval.step_index.asc(),
+                    )
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return {
             "chain_id": chain_id,
             "items": [

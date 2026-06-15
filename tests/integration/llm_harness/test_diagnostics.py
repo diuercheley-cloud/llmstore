@@ -45,8 +45,7 @@ tests/integration/llm_harness/test_indexing.py:217: AssertionError: Some asserti
 def test_parse_ruff_and_mypy_output():
     ruff_out = "scripts/llm_harness/cli.py:1:1: I001 [*] Import block is un-sorted or un-formatted"
     mypy_out = (
-        "scripts/llm_harness/indexing/symbol_index.py:13: "
-        'error: Need type annotation for "classes"'
+        'scripts/llm_harness/indexing/symbol_index.py:13: error: Need type annotation for "classes"'
     )
 
     ruff_diagnostics = parse_ruff_output(ruff_out)

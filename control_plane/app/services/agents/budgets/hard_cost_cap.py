@@ -11,10 +11,7 @@ logger = logging.getLogger("hard_cost_cap")
 class HardCostCapService:
     @classmethod
     async def check_cost_cap(
-        cls,
-        db: AsyncSession,
-        agent_def: AgentDefinition,
-        run: AgentRun
+        cls, db: AsyncSession, agent_def: AgentDefinition, run: AgentRun
     ) -> bool:
         """
         Validates if the run has exceeded the agent definition's hard cost cap (max_cost_brl).
@@ -36,23 +33,14 @@ class HardCostCapService:
             logger.warning(f"Run {run.id} halted. {reason}")
 
             # Transition run to failed (fail-safe)
-            await update_run(
-                db=db,
-                run_id=run.id,
-                status="failed",
-                failure_reason=reason
-            )
+            await update_run(db=db, run_id=run.id, status="failed", failure_reason=reason)
 
             # Generate run event
             await log_run_event(
                 db=db,
                 run_id=run.id,
                 event_type="budget.exceeded",
-                payload={
-                    "current_cost": current_cost,
-                    "max_cost": max_cost,
-                    "reason": reason
-                }
+                payload={"current_cost": current_cost, "max_cost": max_cost, "reason": reason},
             )
 
             return False

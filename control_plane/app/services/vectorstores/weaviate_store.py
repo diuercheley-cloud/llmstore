@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import httpx
 from app.core.config import get_settings
@@ -8,6 +8,7 @@ from .base import VectorStoreBase
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
+
 
 class WeaviateStore(VectorStoreBase):
     """
@@ -33,22 +34,17 @@ class WeaviateStore(VectorStoreBase):
         self,
         collection_name: str,
         id: str,
-        vector: List[float],
-        metadata: Optional[Dict[str, Any]] = None,
-        namespace: Optional[str] = None,
+        vector: list[float],
+        metadata: dict[str, Any] | None = None,
+        namespace: str | None = None,
     ) -> None:
         # Weaviate uses "Class" instead of "Collection"
-        data = {
-            "class": collection_name,
-            "id": id,
-            "vector": vector,
-            "properties": metadata or {}
-        }
+        data = {"class": collection_name, "id": id, "vector": vector, "properties": metadata or {}}
         # Try to update if exists, otherwise create
         try:
             await self._request("POST", "/objects", data)
         except httpx.HTTPStatusError as e:
-            if e.response.status_code == 422: # Already exists or validation error
+            if e.response.status_code == 422:  # Already exists or validation error
                 await self._request("PUT", f"/objects/{collection_name}/{id}", data)
             else:
                 raise
@@ -56,40 +52,37 @@ class WeaviateStore(VectorStoreBase):
     async def search(
         self,
         collection_name: str,
-        vector: List[float],
+        vector: list[float],
         limit: int = 5,
-        filters: Optional[Dict[str, Any]] = None,
-        namespace: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        filters: dict[str, Any] | None = None,
+        namespace: str | None = None,
+    ) -> list[dict[str, Any]]:
         # Weaviate search uses GraphQL /v1/graphql
         # This is a bit more complex for a raw REST implementation
         # But we can use the /v1/objects with nearVector
-        
-        query = {
-            "nearVector": {
-                "vector": vector
-            },
-            "limit": limit
-        }
+
+        query = {"nearVector": {"vector": vector}, "limit": limit}
         # Filtering in Weaviate REST is limited, GraphQL is preferred
         # For simplicity in this mock-like implementation:
         path = f"/objects?class={collection_name}&limit={limit}"
         res = await self._request("GET", path)
-        
+
         hits = []
         for obj in res.get("objects", []):
-            hits.append({
-                "id": obj["id"],
-                "metadata": obj.get("properties", {}),
-                "score": 1.0 # Score calculation would need GraphQL
-            })
+            hits.append(
+                {
+                    "id": obj["id"],
+                    "metadata": obj.get("properties", {}),
+                    "score": 1.0,  # Score calculation would need GraphQL
+                }
+            )
         return hits
 
     async def delete(
         self,
         collection_name: str,
-        ids: List[str],
-        namespace: Optional[str] = None,
+        ids: list[str],
+        namespace: str | None = None,
     ) -> None:
         for obj_id in ids:
             await self._request("DELETE", f"/objects/{collection_name}/{obj_id}")
@@ -98,11 +91,11 @@ class WeaviateStore(VectorStoreBase):
         self,
         collection_name: str,
         dimension: int,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         schema = {
             "class": collection_name,
-            "vectorizer": "none" # We provide vectors
+            "vectorizer": "none",  # We provide vectors
         }
         await self._request("POST", "/schema", schema)
 
@@ -112,7 +105,7 @@ class WeaviateStore(VectorStoreBase):
     ) -> None:
         await self._request("DELETE", f"/schema/{collection_name}")
 
-    async def healthcheck(self) -> Dict[str, Any]:
+    async def healthcheck(self) -> dict[str, Any]:
         if not settings.weaviate_enabled:
             return {"status": "disabled", "provider": "weaviate"}
         try:

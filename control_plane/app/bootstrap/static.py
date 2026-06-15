@@ -26,7 +26,9 @@ def mount_static_files(app: FastAPI, enable_legacy_static: bool = False) -> None
     for path_name in modern_static_paths:
         path = static_dir / path_name
         if path.exists():
-            app.mount(f"/static/{path_name}", StaticFiles(directory=path), name=f"static-{path_name}")
+            app.mount(
+                f"/static/{path_name}", StaticFiles(directory=path), name=f"static-{path_name}"
+            )
 
     if enable_legacy_static:
         app.mount("/static", StaticFiles(directory=static_dir), name="static")

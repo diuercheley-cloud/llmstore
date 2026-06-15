@@ -2,20 +2,24 @@
 import hashlib
 import logging
 import uuid
-from typing import Any, Dict, List
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class CanaryRunner:
     """
     Manages controlled traffic distribution for candidate agent definitions.
     """
+
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def decide_definition(self, agent_id: uuid.UUID, tenant_id: str, candidates: List[Dict[str, Any]]) -> uuid.UUID:
+    async def decide_definition(
+        self, agent_id: uuid.UUID, tenant_id: str, candidates: list[dict[str, Any]]
+    ) -> uuid.UUID:
         """
         Determines which agent definition ID to use based on canary traffic rules.
         """
@@ -41,7 +45,7 @@ class CanaryRunner:
 
         return agent_id
 
-    async def collect_canary_metrics(self, candidate_id: uuid.UUID) -> Dict[str, Any]:
+    async def collect_canary_metrics(self, candidate_id: uuid.UUID) -> dict[str, Any]:
         """
         Aggregates metrics for a candidate during the canary phase.
         """
@@ -50,9 +54,9 @@ class CanaryRunner:
             "avg_latency_ms": 1200,
             "avg_cost_brl": 0.004,
             "policy_denials": 0,
-            "safety_failures": 0
+            "safety_failures": 0,
         }
 
     def _stable_bucket(self, agent_id: uuid.UUID, tenant_id: str) -> int:
-        digest = hashlib.sha256(f"{agent_id}:{tenant_id}".encode("utf-8")).hexdigest()
+        digest = hashlib.sha256(f"{agent_id}:{tenant_id}".encode()).hexdigest()
         return int(digest[:8], 16) % 100

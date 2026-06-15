@@ -1,37 +1,38 @@
 # Owner: agent-platform
 # Surface: client
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.core.config import get_settings
-from app.services.runtime_dependencies import get_db_session
 from app.services.agents import agent_api_facade, agent_runtime, agent_state
 from app.services.auth import require_admin
+from app.services.runtime_dependencies import get_db_session
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(
-    prefix="/agents",
-    tags=["client", "agent-runtime"],
-    dependencies=[Depends(require_admin)]
+    prefix="/agents", tags=["client", "agent-runtime"], dependencies=[Depends(require_admin)]
 )
+
 
 def verify_runtime_active():
     settings = get_settings()
     if not settings.agent_runtime_enabled:
         raise HTTPException(
             status_code=400,
-            detail="Agent runtime is disabled. Set AGENT_RUNTIME_ENABLED=true to enable it."
+            detail="Agent runtime is disabled. Set AGENT_RUNTIME_ENABLED=true to enable it.",
         )
+
 
 # Pydantic Schemas
 class AgentRunCreate(BaseModel):
     tenant_id: str = Field(..., max_length=128)
     input_text: str
-    user_id: Optional[str] = Field(None, max_length=128)
-    correlation_id: Optional[str] = Field(None, max_length=128)
+    user_id: str | None = Field(None, max_length=128)
+    correlation_id: str | None = Field(None, max_length=128)
     is_simulation: bool = False
+
 
 class AgentRunResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -39,19 +40,20 @@ class AgentRunResponse(BaseModel):
     id: uuid.UUID
     agent_id: uuid.UUID
     tenant_id: str
-    user_id: Optional[str] = None
+    user_id: str | None = None
     status: str
-    input_hash: Optional[str] = None
-    output_hash: Optional[str] = None
+    input_hash: str | None = None
+    output_hash: str | None = None
     total_steps: int
     total_tokens: int
     estimated_cost_brl: float
     started_at: str
-    completed_at: Optional[str] = None
-    failure_reason: Optional[str] = None
-    correlation_id: Optional[str] = None
+    completed_at: str | None = None
+    failure_reason: str | None = None
+    correlation_id: str | None = None
     is_simulation: bool = False
-    simulation_report: Optional[dict] = None
+    simulation_report: dict | None = None
+
 
 class AgentRunStepResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -63,13 +65,15 @@ class AgentRunStepResponse(BaseModel):
     input_hash: str
     output_hash: str
     status: str
-    latency_ms: Optional[int] = None
-    policy_result: Optional[dict] = None
-    error: Optional[str] = None
+    latency_ms: int | None = None
+    policy_result: dict | None = None
+    error: str | None = None
     created_at: str
+
 
 def format_datetime(dt) -> str:
     return dt.isoformat() if dt else ""
+
 
 def to_run_response(run) -> AgentRunResponse:
     return AgentRunResponse(
@@ -91,6 +95,7 @@ def to_run_response(run) -> AgentRunResponse:
         simulation_report=getattr(run, "simulation_report", None),
     )
 
+
 def to_step_response(step) -> AgentRunStepResponse:
     return AgentRunStepResponse(
         id=step.id,
@@ -106,11 +111,15 @@ def to_step_response(step) -> AgentRunStepResponse:
         created_at=format_datetime(step.created_at),
     )
 
-@router.post("/{agent_id}/runs", response_model=AgentRunResponse, dependencies=[Depends(verify_runtime_active)], deprecated=True)
+
+@router.post(
+    "/{agent_id}/runs",
+    response_model=AgentRunResponse,
+    dependencies=[Depends(verify_runtime_active)],
+    deprecated=True,
+)
 async def create_run(
-    agent_id: uuid.UUID,
-    payload: AgentRunCreate,
-    db: AsyncSession = Depends(get_db_session)
+    agent_id: uuid.UUID, payload: AgentRunCreate, db: AsyncSession = Depends(get_db_session)
 ):
     try:
         run = await agent_api_facade.validate_and_start_run(
@@ -125,42 +134,53 @@ async def create_run(
         )
         return to_run_response(run)
     except ValueError as e:
-        raise HTTPException(status_code=404 if "not found" in str(e).lower() else 400, detail=str(e))
+        raise HTTPException(
+            status_code=404 if "not found" in str(e).lower() else 400, detail=str(e)
+        )
     except agent_runtime.RuntimeDisabledError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/runs", response_model=List[AgentRunResponse], dependencies=[Depends(verify_runtime_active)], deprecated=True)
-async def list_runs(
-    tenant_id: Optional[str] = None,
-    db: AsyncSession = Depends(get_db_session)
-):
+
+@router.get(
+    "/runs",
+    response_model=list[AgentRunResponse],
+    dependencies=[Depends(verify_runtime_active)],
+    deprecated=True,
+)
+async def list_runs(tenant_id: str | None = None, db: AsyncSession = Depends(get_db_session)):
     from app.models.agents.agents import AgentRun
     from sqlalchemy.future import select
-    
+
     stmt = select(AgentRun)
     if tenant_id:
         stmt = stmt.where(AgentRun.tenant_id == tenant_id)
     stmt = stmt.order_by(AgentRun.started_at.desc())
-    
+
     res = await db.execute(stmt)
     runs = res.scalars().all()
     return [to_run_response(r) for r in runs]
 
-@router.get("/runs/{run_id}", response_model=AgentRunResponse, dependencies=[Depends(verify_runtime_active)], deprecated=True)
-async def get_run(
-    run_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session)
-):
+
+@router.get(
+    "/runs/{run_id}",
+    response_model=AgentRunResponse,
+    dependencies=[Depends(verify_runtime_active)],
+    deprecated=True,
+)
+async def get_run(run_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
     run = await agent_state.get_agent_run(db, run_id)
     if not run:
         raise HTTPException(status_code=404, detail="Agent run not found")
     return to_run_response(run)
 
-@router.post("/runs/{run_id}/cancel", response_model=AgentRunResponse, dependencies=[Depends(verify_runtime_active)], deprecated=True)
-async def cancel_run(
-    run_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session)
-):
+
+@router.post(
+    "/runs/{run_id}/cancel",
+    response_model=AgentRunResponse,
+    dependencies=[Depends(verify_runtime_active)],
+    deprecated=True,
+)
+async def cancel_run(run_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
     try:
         run = await agent_api_facade.validate_and_cancel_run(
             db=db,
@@ -169,13 +189,18 @@ async def cancel_run(
         )
         return to_run_response(run)
     except ValueError as e:
-        raise HTTPException(status_code=404 if "not found" in str(e).lower() else 400, detail=str(e))
+        raise HTTPException(
+            status_code=404 if "not found" in str(e).lower() else 400, detail=str(e)
+        )
 
-@router.post("/runs/{run_id}/pause", response_model=AgentRunResponse, dependencies=[Depends(verify_runtime_active)], deprecated=True)
-async def pause_run(
-    run_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session)
-):
+
+@router.post(
+    "/runs/{run_id}/pause",
+    response_model=AgentRunResponse,
+    dependencies=[Depends(verify_runtime_active)],
+    deprecated=True,
+)
+async def pause_run(run_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
     try:
         run = await agent_api_facade.validate_and_pause_run(
             db=db,
@@ -184,13 +209,18 @@ async def pause_run(
         )
         return to_run_response(run)
     except ValueError as e:
-        raise HTTPException(status_code=404 if "not found" in str(e).lower() else 400, detail=str(e))
+        raise HTTPException(
+            status_code=404 if "not found" in str(e).lower() else 400, detail=str(e)
+        )
 
-@router.post("/runs/{run_id}/resume", response_model=AgentRunResponse, dependencies=[Depends(verify_runtime_active)], deprecated=True)
-async def resume_run(
-    run_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session)
-):
+
+@router.post(
+    "/runs/{run_id}/resume",
+    response_model=AgentRunResponse,
+    dependencies=[Depends(verify_runtime_active)],
+    deprecated=True,
+)
+async def resume_run(run_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
     try:
         run = await agent_api_facade.validate_and_resume_run(
             db=db,
@@ -199,25 +229,33 @@ async def resume_run(
         )
         return to_run_response(run)
     except ValueError as e:
-        raise HTTPException(status_code=404 if "not found" in str(e).lower() else 400, detail=str(e))
+        raise HTTPException(
+            status_code=404 if "not found" in str(e).lower() else 400, detail=str(e)
+        )
 
-@router.get("/runs/{run_id}/steps", response_model=List[AgentRunStepResponse], dependencies=[Depends(verify_runtime_active)], deprecated=True)
-async def get_run_steps(
-    run_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session)
-):
+
+@router.get(
+    "/runs/{run_id}/steps",
+    response_model=list[AgentRunStepResponse],
+    dependencies=[Depends(verify_runtime_active)],
+    deprecated=True,
+)
+async def get_run_steps(run_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
     run = await agent_state.get_agent_run(db, run_id)
     if not run:
         raise HTTPException(status_code=404, detail="Agent run not found")
-        
+
     steps = await agent_state.get_run_steps(db, run_id)
     return [to_step_response(s) for s in steps]
 
-@router.post("/runs/{run_id}/replay", response_model=Dict[str, Any], dependencies=[Depends(verify_runtime_active)], deprecated=True)
-async def replay_run(
-    run_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session)
-):
+
+@router.post(
+    "/runs/{run_id}/replay",
+    response_model=dict[str, Any],
+    dependencies=[Depends(verify_runtime_active)],
+    deprecated=True,
+)
+async def replay_run(run_id: uuid.UUID, db: AsyncSession = Depends(get_db_session)):
     try:
         result = await agent_api_facade.validate_and_replay_run(
             db=db,
@@ -229,8 +267,10 @@ async def replay_run(
         result["agent_id"] = str(result["agent_id"])
         return result
     except ValueError as e:
-        raise HTTPException(status_code=404 if "not found" in str(e).lower() else 400, detail=str(e))
+        raise HTTPException(
+            status_code=404 if "not found" in str(e).lower() else 400, detail=str(e)
+        )
     except Exception as e:
         if "replay" in str(e).lower() and "disabled" in str(e).lower():
-             raise HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=400, detail=str(e))
         raise

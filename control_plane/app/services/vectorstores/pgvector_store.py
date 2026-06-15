@@ -1,7 +1,7 @@
 import json
 import logging
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.models.agents.agents import AgentMemoryIndex
 from app.models.rag.rag_document_chunk import RAGDocumentChunk
@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .base import VectorStoreBase
 
 logger = logging.getLogger(__name__)
+
 
 class PGVectorStore(VectorStoreBase):
     """
@@ -27,7 +28,7 @@ class PGVectorStore(VectorStoreBase):
         return bind.dialect.name == "postgresql"
 
     @staticmethod
-    def _cosine_similarity(a: List[float], b: List[float]) -> float:
+    def _cosine_similarity(a: list[float], b: list[float]) -> float:
         if not a or not b or len(a) != len(b):
             return 0.0
         dot = sum(x * y for x, y in zip(a, b))
@@ -38,7 +39,7 @@ class PGVectorStore(VectorStoreBase):
         return dot / (norm_a * norm_b)
 
     @staticmethod
-    def _decode_embedding(raw: Any) -> List[float]:
+    def _decode_embedding(raw: Any) -> list[float]:
         if raw is None:
             return []
         if isinstance(raw, list):
@@ -62,9 +63,9 @@ class PGVectorStore(VectorStoreBase):
         self,
         collection_name: str,
         id: str,
-        vector: List[float],
-        metadata: Optional[Dict[str, Any]] = None,
-        namespace: Optional[str] = None,
+        vector: list[float],
+        metadata: dict[str, Any] | None = None,
+        namespace: str | None = None,
     ) -> None:
         # Map collection_name to table_name
         if collection_name == "agent_memory":
@@ -75,7 +76,7 @@ class PGVectorStore(VectorStoreBase):
             table_name = "rag_document_chunks"
             id_col = "id"
             vector_col = "embedding"
-        
+
         metadata = metadata or {}
         vector_str = json.dumps(vector)
         meta_str = json.dumps(metadata)
@@ -86,7 +87,9 @@ class PGVectorStore(VectorStoreBase):
 
         if not self._supports_pgvector():
             if table_name == "agent_memory_indexes":
-                stmt = select(AgentMemoryIndex).where(AgentMemoryIndex.memory_item_id == uuid.UUID(id))
+                stmt = select(AgentMemoryIndex).where(
+                    AgentMemoryIndex.memory_item_id == uuid.UUID(id)
+                )
                 result = await self.session.execute(stmt)
                 row = result.scalar_one_or_none()
                 if row is None:
@@ -122,7 +125,7 @@ class PGVectorStore(VectorStoreBase):
                 chunk.content = content
             await self.session.flush()
             return
-        
+
         # We handle both cases with a single logic if possible
         if table_name == "agent_memory_indexes":
             sql = text(f"""
@@ -142,19 +145,22 @@ class PGVectorStore(VectorStoreBase):
                     metadata_json = :metadata,
                     content = :content
             """)
-        
+
         try:
-            await self.session.execute(sql, {
-                "id": id,
-                "uuid": uuid.uuid4(),
-                "content": content,
-                "embedding": vector_str,
-                "metadata": meta_str,
-                "client_id": client_id,
-                "tenant_id": client_id,
-                "doc_id": doc_id,
-                "agent_id": agent_id
-            })
+            await self.session.execute(
+                sql,
+                {
+                    "id": id,
+                    "uuid": uuid.uuid4(),
+                    "content": content,
+                    "embedding": vector_str,
+                    "metadata": meta_str,
+                    "client_id": client_id,
+                    "tenant_id": client_id,
+                    "doc_id": doc_id,
+                    "agent_id": agent_id,
+                },
+            )
             await self.session.flush()
         except Exception as e:
             logger.error(f"PGVector upsert failed on table {table_name}: {e}")
@@ -163,11 +169,11 @@ class PGVectorStore(VectorStoreBase):
     async def search(
         self,
         collection_name: str,
-        vector: List[float],
+        vector: list[float],
         limit: int = 5,
-        filters: Optional[Dict[str, Any]] = None,
-        namespace: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        filters: dict[str, Any] | None = None,
+        namespace: str | None = None,
+    ) -> list[dict[str, Any]]:
         if collection_name == "agent_memory":
             table_name = "agent_memory_indexes"
             id_col = "memory_item_id"
@@ -182,7 +188,7 @@ class PGVectorStore(VectorStoreBase):
         vector_str = json.dumps(vector)
         filter_sql = ""
         params = {"embedding": vector_str, "limit": limit}
-        
+
         if filters:
             if "client_id" in filters or "tenant_id" in filters:
                 val = filters.get("client_id") or filters.get("tenant_id")
@@ -242,10 +248,7 @@ class PGVectorStore(VectorStoreBase):
             result = await self.session.execute(sql, params)
             hits = []
             for row in result:
-                hits.append({
-                    "id": str(row[0]),
-                    "score": float(row[1])
-                })
+                hits.append({"id": str(row[0]), "score": float(row[1])})
             return hits
         except Exception as e:
             logger.error(f"PGVector search failed on table {table_name}: {e}")
@@ -254,8 +257,8 @@ class PGVectorStore(VectorStoreBase):
     async def delete(
         self,
         collection_name: str,
-        ids: List[str],
-        namespace: Optional[str] = None,
+        ids: list[str],
+        namespace: str | None = None,
     ) -> None:
         if collection_name == "agent_memory":
             table_name = "agent_memory_indexes"
@@ -263,7 +266,7 @@ class PGVectorStore(VectorStoreBase):
         else:
             table_name = "rag_document_chunks"
             id_col = "id"
-            
+
         sql = text(f"DELETE FROM {table_name} WHERE {id_col} IN :ids")
         await self.session.execute(sql, {"ids": tuple(ids)})
         await self.session.flush()
@@ -272,7 +275,7 @@ class PGVectorStore(VectorStoreBase):
         self,
         collection_name: str,
         dimension: int,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         if not self._supports_pgvector():
             logger.info(
@@ -303,21 +306,29 @@ class PGVectorStore(VectorStoreBase):
                 dimension = EXCLUDED.dimension,
                 metadata = EXCLUDED.metadata
         """)
-        await self.session.execute(collection_sql, {
-            "name": collection_name,
-            "table_name": table_name,
-            "dimension": dimension,
-            "metadata": json.dumps(metadata or {}),
-        })
+        await self.session.execute(
+            collection_sql,
+            {
+                "name": collection_name,
+                "table_name": table_name,
+                "dimension": dimension,
+                "metadata": json.dumps(metadata or {}),
+            },
+        )
         await self.session.flush()
-        logger.info(f"Created collection '{collection_name}' (table: {table_name}, dimension: {dimension})")
+        logger.info(
+            f"Created collection '{collection_name}' (table: {table_name}, dimension: {dimension})"
+        )
 
     async def collection_delete(
         self,
         collection_name: str,
     ) -> None:
         if not self._supports_pgvector():
-            logger.info("Skipping pgvector collection_delete for '%s' on non-PostgreSQL backend", collection_name)
+            logger.info(
+                "Skipping pgvector collection_delete for '%s' on non-PostgreSQL backend",
+                collection_name,
+            )
             return
         safe_name = collection_name.replace(" ", "_").replace("-", "_").lower()
         table_name = f"vec_{safe_name}"
@@ -330,7 +341,7 @@ class PGVectorStore(VectorStoreBase):
         await self.session.flush()
         logger.info(f"Deleted collection '{collection_name}'")
 
-    async def healthcheck(self) -> Dict[str, Any]:
+    async def healthcheck(self) -> dict[str, Any]:
         if not self._supports_pgvector():
             return {
                 "status": "degraded",
@@ -339,12 +350,14 @@ class PGVectorStore(VectorStoreBase):
                 "reason": "non_postgresql_backend",
             }
         try:
-            res = await self.session.execute(text("SELECT 1 FROM pg_extension WHERE extname = 'vector'"))
+            res = await self.session.execute(
+                text("SELECT 1 FROM pg_extension WHERE extname = 'vector'")
+            )
             has_extension = res.scalar() is not None
             return {
                 "status": "healthy" if has_extension else "degraded",
                 "provider": "pgvector",
-                "extension_installed": has_extension
+                "extension_installed": has_extension,
             }
         except Exception as e:
             return {"status": "unhealthy", "error": str(e), "provider": "pgvector"}

@@ -121,13 +121,20 @@ def require_portal_permission(
 ) -> list[str]:
     settings = get_settings()
     if not settings.commercial_enterprise_audit_portal_enabled:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="enterprise audit portal disabled")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="enterprise audit portal disabled"
+        )
 
     roles = get_portal_roles(client, request)
     if not settings.commercial_enterprise_audit_require_rbac:
         return roles
     if not roles:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="enterprise portal role required")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="enterprise portal role required"
+        )
     if not _check_permission(roles, permission):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="insufficient enterprise portal permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="insufficient enterprise portal permissions",
+        )
     return roles

@@ -73,9 +73,7 @@ def test_generated_at_timestamp():
         ts = data.get("generated_at", "")
         assert ts, f"{name} missing generated_at"
         assert "T" in ts, f"{name} generated_at not ISO format: {ts}"
-        assert ts.endswith("Z") or "+" in ts, (
-            f"{name} generated_at missing timezone: {ts}"
-        )
+        assert ts.endswith("Z") or "+" in ts, f"{name} generated_at missing timezone: {ts}"
 
 
 def test_release_manifest_validation_path():
@@ -88,7 +86,9 @@ def test_release_manifest_validation_path():
     assert vpath, "validation_artifact_path is empty"
     vpath_obj = Path(vpath)
     if not vpath_obj.exists():
-        pytest.skip(f"validation_artifact_path '{vpath}' does not exist locally (may have been cleaned)")
+        pytest.skip(
+            f"validation_artifact_path '{vpath}' does not exist locally (may have been cleaned)"
+        )
 
 
 def test_release_manifest_scripts_count():

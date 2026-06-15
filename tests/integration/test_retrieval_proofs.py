@@ -4,8 +4,11 @@ from pathlib import Path
 import pytest
 import pytest_asyncio
 from app.db.base import Base
+from app.models.commercial.commercial_rag_vault_vault import (
+    CommercialRAGRetrievalAudit,
+    CommercialRAGVault,
+)
 from app.models.core.client import Client
-from app.models.commercial.commercial_rag_vault_vault import CommercialRAGRetrievalAudit, CommercialRAGVault
 from app.services.rag.retrieval_proofs import (
     export_retrieval_proof,
     generate_retrieval_proof,
@@ -37,7 +40,13 @@ async def _build_proof(session: AsyncSession):
     client = Client(name="tenant")
     session.add(client)
     await session.flush()
-    vault = CommercialRAGVault(client_id=client.id, vault_name="regulated", vault_mode="confidential", encryption_required=True, retrieval_mode="hybrid")
+    vault = CommercialRAGVault(
+        client_id=client.id,
+        vault_name="regulated",
+        vault_mode="confidential",
+        encryption_required=True,
+        retrieval_mode="hybrid",
+    )
     session.add(vault)
     await session.flush()
     audit = CommercialRAGRetrievalAudit(
@@ -54,15 +63,34 @@ async def _build_proof(session: AsyncSession):
     session.add(audit)
     await session.flush()
     sources = [
-        EnterpriseSource(document_id=audit.id, filename="a.txt", page=1, chunk_index=0, text="alpha context", score=0.9),
-        EnterpriseSource(document_id=vault.id, filename="b.txt", page=2, chunk_index=1, text="beta context", score=0.8),
+        EnterpriseSource(
+            document_id=audit.id,
+            filename="a.txt",
+            page=1,
+            chunk_index=0,
+            text="alpha context",
+            score=0.9,
+        ),
+        EnterpriseSource(
+            document_id=vault.id,
+            filename="b.txt",
+            page=2,
+            chunk_index=1,
+            text="beta context",
+            score=0.8,
+        ),
     ]
     proof = await generate_retrieval_proof(
         session,
         vault=vault,
         audit=audit,
         sources=sources,
-        retrieval_metadata={"policy_result": "allow", "violations": [], "governed": True, "max_context_chunks": 5},
+        retrieval_metadata={
+            "policy_result": "allow",
+            "violations": [],
+            "governed": True,
+            "max_context_chunks": 5,
+        },
         model_id="local-model",
     )
     await session.commit()
@@ -85,7 +113,11 @@ async def test_retrieval_replay_detects_drift(session: AsyncSession):
         session,
         proof=proof,
         replay_sources=[
-            {"document_id": proof.proof_json["chunk_participants"][0]["document_id"], "chunk_index": 0, "text_hash": proof.proof_json["chunk_participants"][0]["text_hash"]},
+            {
+                "document_id": proof.proof_json["chunk_participants"][0]["document_id"],
+                "chunk_index": 0,
+                "text_hash": proof.proof_json["chunk_participants"][0]["text_hash"],
+            },
             {"document_id": "drift-doc", "chunk_index": 99, "text_hash": "deadbeef"},
         ],
     )

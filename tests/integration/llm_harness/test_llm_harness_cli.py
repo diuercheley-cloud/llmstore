@@ -3,10 +3,10 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from scripts.llm_harness.completions import CompletionSuggestion
 from scripts.llm_harness.agent_client import AgentClient
 from scripts.llm_harness.cli import _resolve_code_agent, main
 from scripts.llm_harness.cli_commands import _validate_provider_settings
+from scripts.llm_harness.completions import CompletionSuggestion
 from scripts.llm_harness.config import HarnessConfig
 
 
@@ -37,9 +37,11 @@ def test_cli_subcommand_help(argv):
             main()
         assert e.value.code == 0
 
+
 def test_cli_health_local():
     with patch("sys.argv", ["cli.py", "health", "--local-only"]):
         main()
+
 
 def test_cli_code_no_config_fail():
     with patch("sys.argv", ["cli.py", "code", "--task", "fix"]):
@@ -47,6 +49,7 @@ def test_cli_code_no_config_fail():
             with pytest.raises(SystemExit) as e:
                 main()
             assert e.value.code == 1
+
 
 def test_cli_code_allow_stub():
     with patch("sys.argv", ["cli.py", "code", "--task", "fix", "--allow-stub-code-agent"]):
@@ -62,6 +65,7 @@ def test_cli_code_prints_progress(capsys):
     captured = capsys.readouterr()
     assert "run.started" in captured.out
     assert "run.completed" in captured.out
+
 
 def test_cli_code_with_config_auto_select():
     with patch(
@@ -90,6 +94,7 @@ def test_cli_code_with_config_auto_select():
                 ),
             ):
                 main()
+
 
 def test_cli_code_explicit_provider():
     with patch(
@@ -153,20 +158,20 @@ def test_cli_complete_command_prints_suggestion(tmp_path, capsys):
             "--model",
             "test-model",
         ],
+    ):
+        with patch(
+            "scripts.llm_harness.completions.get_completion_suggestions",
+            AsyncMock(
+                return_value=[
+                    CompletionSuggestion(
+                        text="42",
+                        confidence=0.9,
+                        explanation="Insert a literal return value.",
+                    )
+                ]
+            ),
         ):
-            with patch(
-                "scripts.llm_harness.completions.get_completion_suggestions",
-                AsyncMock(
-                    return_value=[
-                        CompletionSuggestion(
-                            text="42",
-                            confidence=0.9,
-                            explanation="Insert a literal return value.",
-                        )
-                    ]
-                ),
-            ):
-                main()
+            main()
 
     captured = capsys.readouterr()
     assert "Completion Suggestions:" in captured.out

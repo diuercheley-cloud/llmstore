@@ -1,13 +1,13 @@
 import pytest
 from app.api.deps import get_inference_proxy
 from app.models.commercial.commercial_qos_tier import CommercialQoSTier
-from sqlalchemy import select
 from app.models.core.inference_backend import InferenceBackend
 from app.models.core.model_backend_route import ModelBackendRoute
 from app.models.core.model_registry import ModelRegistry
 from app.services.commercial_guardrails import clear_commercial_guardrail_runtime_events
 from app.services.inference_proxy import ForwardResult
 from httpx import AsyncClient
+from sqlalchemy import select
 from starlette.responses import JSONResponse
 
 
@@ -15,7 +15,9 @@ class FakeProxy:
     def __init__(self) -> None:
         self.calls: list[dict] = []
 
-    async def chat(self, payload, stream, include_reasoning, backend, backend_url, backend_name, **kwargs):
+    async def chat(
+        self, payload, stream, include_reasoning, backend, backend_url, backend_name, **kwargs
+    ):
         self.calls.append(
             {
                 "backend": backend,
@@ -70,7 +72,13 @@ class FakeProxy:
                     "object": "text_completion",
                     "created": 1677652288,
                     "model": payload.get("model", "default"),
-                    "choices": [{"index": 0, "text": f"response-via-{backend_name}", "finish_reason": "stop"}],
+                    "choices": [
+                        {
+                            "index": 0,
+                            "text": f"response-via-{backend_name}",
+                            "finish_reason": "stop",
+                        }
+                    ],
                 }
             ),
             backend_name=backend_name,
@@ -103,6 +111,7 @@ def enforcement_env(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-ant-mock-key-for-testing")
     get_settings.cache_clear()
     import app.services.providers.registry as registry
+
     registry._registry_initialized = False
     registry._providers = {}
     clear_commercial_guardrail_runtime_events()
@@ -140,7 +149,11 @@ async def _seed_routable_model(
 
     create_client = await admin_client.post(
         "/admin/clients",
-        json={"name": f"cg-client-{suffix}", "description": "guardrail enforcement", "rate_limit_per_minute": 100},
+        json={
+            "name": f"cg-client-{suffix}",
+            "description": "guardrail enforcement",
+            "rate_limit_per_minute": 100,
+        },
         headers={"X-Admin-Token": "test-admin-token"},
     )
     assert create_client.status_code == 201
@@ -172,16 +185,18 @@ async def _seed_routable_model(
         # Seed default QoS tier so cloud providers are not filtered out
         result = await session.execute(select(CommercialQoSTier).limit(1))
         if not result.scalar_one_or_none():
-            session.add(CommercialQoSTier(
-                name="Basic",
-                enabled=True,
-                priority=10,
-                target_latency_ms=1000,
-                max_p95_latency_ms=3000,
-                min_margin_percent=5.0,
-                allow_cloud=True,
-                degradation_policy="best_effort"
-            ))
+            session.add(
+                CommercialQoSTier(
+                    name="Basic",
+                    enabled=True,
+                    priority=10,
+                    target_latency_ms=1000,
+                    max_p95_latency_ms=3000,
+                    min_margin_percent=5.0,
+                    allow_cloud=True,
+                    degradation_policy="best_effort",
+                )
+            )
 
         model = ModelRegistry(
             model_id=f"default-{suffix}",
@@ -228,7 +243,9 @@ async def _chat_request(admin_client: AsyncClient, api_key: str, model: str = "d
 
 
 @pytest.mark.asyncio
-async def test_feature_disabled_preserves_previous_cloud_routing(admin_client: AsyncClient, mock_proxy: FakeProxy):
+async def test_feature_disabled_preserves_previous_cloud_routing(
+    admin_client: AsyncClient, mock_proxy: FakeProxy
+):
     suffix = "disabled"
     api_key, _ = await _seed_routable_model(
         admin_client,
@@ -248,7 +265,9 @@ async def test_feature_disabled_preserves_previous_cloud_routing(admin_client: A
 
 
 @pytest.mark.asyncio
-async def test_report_only_records_event_without_blocking(monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient, mock_proxy: FakeProxy):
+async def test_report_only_records_event_without_blocking(
+    monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient, mock_proxy: FakeProxy
+):
     suffix = "report-only"
     _apply_guardrail_env(
         monkeypatch,
@@ -263,7 +282,9 @@ async def test_report_only_records_event_without_blocking(monkeypatch: pytest.Mo
     )
 
     response = await _chat_request(admin_client, api_key, model=f"default-{suffix}")
-    runtime = await admin_client.get("/admin/commercial-guardrails/runtime-status", headers={"X-Admin-Token": "test-admin-token"})
+    runtime = await admin_client.get(
+        "/admin/commercial-guardrails/runtime-status", headers={"X-Admin-Token": "test-admin-token"}
+    )
 
     print(f"DEBUG: Calls: {mock_proxy.calls}")
     print(f"DEBUG: Headers: {response.headers}")
@@ -277,7 +298,9 @@ async def test_report_only_records_event_without_blocking(monkeypatch: pytest.Mo
 
 
 @pytest.mark.asyncio
-async def test_enforce_cloud_only_uses_local_fallback(monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient, mock_proxy: FakeProxy):
+async def test_enforce_cloud_only_uses_local_fallback(
+    monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient, mock_proxy: FakeProxy
+):
     suffix = "fallback"
     _apply_guardrail_env(
         monkeypatch,
@@ -292,7 +315,9 @@ async def test_enforce_cloud_only_uses_local_fallback(monkeypatch: pytest.Monkey
     )
 
     response = await _chat_request(admin_client, api_key, model=f"default-{suffix}")
-    runtime = await admin_client.get("/admin/commercial-guardrails/runtime-status", headers={"X-Admin-Token": "test-admin-token"})
+    runtime = await admin_client.get(
+        "/admin/commercial-guardrails/runtime-status", headers={"X-Admin-Token": "test-admin-token"}
+    )
 
     assert response.status_code == 200
     assert response.headers["X-Fallback-Used"] in ["true", "false"]
@@ -303,7 +328,9 @@ async def test_enforce_cloud_only_uses_local_fallback(monkeypatch: pytest.Monkey
 
 
 @pytest.mark.asyncio
-async def test_enforce_cloud_only_without_fallback_returns_openai_compatible_error(monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient):
+async def test_enforce_cloud_only_without_fallback_returns_openai_compatible_error(
+    monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient
+):
     suffix = "blocked"
     _apply_guardrail_env(
         monkeypatch,
@@ -318,14 +345,16 @@ async def test_enforce_cloud_only_without_fallback_returns_openai_compatible_err
     )
 
     response = await _chat_request(admin_client, api_key, model=f"default-{suffix}")
-    runtime = await admin_client.get("/admin/commercial-guardrails/runtime-status", headers={"X-Admin-Token": "test-admin-token"})
+    runtime = await admin_client.get(
+        "/admin/commercial-guardrails/runtime-status", headers={"X-Admin-Token": "test-admin-token"}
+    )
     payload = response.text.lower()
 
     assert response.status_code == 503
     data = response.json()
     error_msg = data.get("error", {}).get("message", "")
     assert "blocked" in error_msg.lower() or "unavailable" in error_msg.lower()
-        
+
     assert "authorization" not in payload
     assert "prompt" not in payload
     assert "sk-" not in payload
@@ -333,7 +362,9 @@ async def test_enforce_cloud_only_without_fallback_returns_openai_compatible_err
 
 
 @pytest.mark.asyncio
-async def test_kill_switch_blocks_cloud_but_not_local(monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient, mock_proxy: FakeProxy):
+async def test_kill_switch_blocks_cloud_but_not_local(
+    monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient, mock_proxy: FakeProxy
+):
     suffix = "kill-switch"
     _apply_guardrail_env(
         monkeypatch,
@@ -355,7 +386,9 @@ async def test_kill_switch_blocks_cloud_but_not_local(monkeypatch: pytest.Monkey
 
 
 @pytest.mark.asyncio
-async def test_mock_provider_never_blocked(monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient, mock_proxy: FakeProxy):
+async def test_mock_provider_never_blocked(
+    monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient, mock_proxy: FakeProxy
+):
     suffix = "mock"
     _apply_guardrail_env(
         monkeypatch,
@@ -377,7 +410,9 @@ async def test_mock_provider_never_blocked(monkeypatch: pytest.MonkeyPatch, admi
 
 
 @pytest.mark.asyncio
-async def test_runtime_status_payload_is_sanitized(monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient, mock_proxy: FakeProxy):
+async def test_runtime_status_payload_is_sanitized(
+    monkeypatch: pytest.MonkeyPatch, admin_client: AsyncClient, mock_proxy: FakeProxy
+):
     suffix = "sanitize"
     _apply_guardrail_env(
         monkeypatch,
@@ -392,7 +427,9 @@ async def test_runtime_status_payload_is_sanitized(monkeypatch: pytest.MonkeyPat
     )
 
     response = await _chat_request(admin_client, api_key, model=f"default-{suffix}")
-    runtime = await admin_client.get("/admin/commercial-guardrails/runtime-status", headers={"X-Admin-Token": "test-admin-token"})
+    runtime = await admin_client.get(
+        "/admin/commercial-guardrails/runtime-status", headers={"X-Admin-Token": "test-admin-token"}
+    )
     combined = response.text.lower() + runtime.text.lower()
 
     assert response.status_code == 200

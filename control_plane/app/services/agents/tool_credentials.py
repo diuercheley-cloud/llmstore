@@ -2,12 +2,13 @@
 Owner: agent-platform
 Status: beta
 """
+
 import base64
 import hashlib
 import logging
 import secrets
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -31,7 +32,9 @@ def mask_secret(secret: str) -> str:
 
 def _get_aesgcm() -> AESGCM:
     settings = get_settings()
-    master_key = hashlib.sha256(settings.commercial_tenant_encryption_master_key.encode("utf-8")).digest()
+    master_key = hashlib.sha256(
+        settings.commercial_tenant_encryption_master_key.encode("utf-8")
+    ).digest()
     return AESGCM(master_key)
 
 
@@ -57,7 +60,7 @@ async def register_credential(
     name: str,
     credential_type: str,
     raw_secret: str,
-    expires_at: Optional[datetime] = None,
+    expires_at: datetime | None = None,
 ) -> AgentToolCredential:
     encrypted = encrypt_secret(raw_secret)
     masked = mask_secret(raw_secret)
@@ -81,8 +84,8 @@ async def grant_credential(
     tenant_id: str,
     credential_id: Any,
     agent_tool_id: Any,
-    agent_id: Optional[Any] = None,
-    expires_at: Optional[datetime] = None,
+    agent_id: Any | None = None,
+    expires_at: datetime | None = None,
 ) -> AgentToolCredentialGrant:
     grant = AgentToolCredentialGrant(
         credential_id=credential_id,
@@ -102,8 +105,7 @@ async def revoke_credential(
     credential_id: Any,
 ) -> bool:
     stmt = select(AgentToolCredential).where(
-        AgentToolCredential.id == credential_id,
-        AgentToolCredential.tenant_id == tenant_id
+        AgentToolCredential.id == credential_id, AgentToolCredential.tenant_id == tenant_id
     )
     res = await db.execute(stmt)
     cred = res.scalar_one_or_none()
@@ -118,10 +120,10 @@ async def resolve_credential(
     db: AsyncSession,
     tenant_id: str,
     agent_tool_id: Any,
-    agent_id: Optional[Any] = None,
-) -> Optional[str]:
+    agent_id: Any | None = None,
+) -> str | None:
     """Resolves appropriate active credential grant and returns decrypted raw secret.
-    
+
     If delegation feature flag is disabled, returns None.
     """
     settings = get_settings()
@@ -133,11 +135,14 @@ async def resolve_credential(
     # Query grants for this tool and tenant (and optionally agent if specific)
     stmt = select(AgentToolCredentialGrant).where(
         AgentToolCredentialGrant.tenant_id == tenant_id,
-        AgentToolCredentialGrant.agent_tool_id == agent_tool_id
+        AgentToolCredentialGrant.agent_tool_id == agent_tool_id,
     )
     if agent_id:
         # Match either agent specific grant or general tool grant
-        stmt = stmt.where((AgentToolCredentialGrant.agent_id == agent_id) | (AgentToolCredentialGrant.agent_id == None))
+        stmt = stmt.where(
+            (AgentToolCredentialGrant.agent_id == agent_id)
+            | (AgentToolCredentialGrant.agent_id == None)
+        )
     else:
         stmt = stmt.where(AgentToolCredentialGrant.agent_id == None)
 
@@ -147,21 +152,21 @@ async def resolve_credential(
     for grant in grants:
         if grant.expires_at and grant.expires_at < now:
             continue
-        
+
         # Load credential
         cred_stmt = select(AgentToolCredential).where(
             AgentToolCredential.id == grant.credential_id,
             AgentToolCredential.tenant_id == tenant_id,
-            AgentToolCredential.revoked == False
+            AgentToolCredential.revoked == False,
         )
         cred_res = await db.execute(cred_stmt)
         cred = cred_res.scalar_one_or_none()
         if not cred:
             continue
-        
+
         if cred.expires_at and cred.expires_at < now:
             continue
-        
+
         # Found valid unexpired credential
         try:
             return decrypt_secret(cred.encrypted_secret)

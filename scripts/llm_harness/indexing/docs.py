@@ -1,7 +1,7 @@
 import json
 import os
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 from urllib.parse import urlparse
 
 import httpx
@@ -12,31 +12,31 @@ from ..sanitizer import Sanitizer
 
 
 class DocsManager:
-    def __init__(self, workspace_root: str = ".", policy_engine: Optional[PolicyEngine] = None):
+    def __init__(self, workspace_root: str = ".", policy_engine: PolicyEngine | None = None):
         self.workspace_root = workspace_root
         self.policy_engine = policy_engine or PolicyEngine()
         self.docs_dir = os.path.join(workspace_root, ".llm_harness_index", "docs")
         os.makedirs(self.docs_dir, exist_ok=True)
 
-    def load_config(self) -> List[Dict[str, str]]:
+    def load_config(self) -> list[dict[str, str]]:
         config_path = os.path.join(self.workspace_root, ".harness.yaml")
         if not os.path.exists(config_path):
             config_path = os.path.join(self.workspace_root, ".harness.yml")
         if not os.path.exists(config_path):
             return []
         try:
-            with open(config_path, "r", encoding="utf-8") as f:
+            with open(config_path, encoding="utf-8") as f:
                 data = yaml.safe_load(f) or {}
                 return data.get("external_docs", [])
         except Exception:
             return []
 
-    def save_config(self, external_docs: List[Dict[str, str]]) -> None:
+    def save_config(self, external_docs: list[dict[str, str]]) -> None:
         config_path = os.path.join(self.workspace_root, ".harness.yaml")
         try:
             data: dict[str, Any] = {}
             if os.path.exists(config_path):
-                with open(config_path, "r", encoding="utf-8") as f:
+                with open(config_path, encoding="utf-8") as f:
                     data = yaml.safe_load(f) or {}
             data["external_docs"] = external_docs
             with open(config_path, "w", encoding="utf-8") as f:
@@ -44,7 +44,7 @@ class DocsManager:
         except Exception:
             pass
 
-    def add_doc(self, name: str, url: str, allowlist_domain: Optional[str] = None) -> None:
+    def add_doc(self, name: str, url: str, allowlist_domain: str | None = None) -> None:
         configs = self.load_config()
         found = False
         for doc in configs:
@@ -98,12 +98,12 @@ class DocsManager:
             raise Exception(f"Failed to fetch doc from {url}: status {response.status_code}")
 
         raw_html = response.text
-        
+
         # Simple HTML stripping
-        cleaned_text = re.sub(r'<(script|style)\b[^>]*>([\s\S]*?)<\/\1>', '', raw_html, flags=re.I)
-        cleaned_text = re.sub(r'<[^>]+>', ' ', cleaned_text)
-        cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
-        
+        cleaned_text = re.sub(r"<(script|style)\b[^>]*>([\s\S]*?)<\/\1>", "", raw_html, flags=re.I)
+        cleaned_text = re.sub(r"<[^>]+>", " ", cleaned_text)
+        cleaned_text = re.sub(r"\s+", " ", cleaned_text).strip()
+
         sanitized_text = Sanitizer.sanitize_text(cleaned_text)
 
         # Save to cache
@@ -113,11 +113,11 @@ class DocsManager:
 
         return sanitized_text
 
-    def get_cached_doc(self, name: str) -> Optional[str]:
+    def get_cached_doc(self, name: str) -> str | None:
         cache_file = os.path.join(self.docs_dir, f"{name}.json")
         if os.path.exists(cache_file):
             try:
-                with open(cache_file, "r", encoding="utf-8") as f:
+                with open(cache_file, encoding="utf-8") as f:
                     data = json.load(f)
                     return data.get("content")
             except Exception:
@@ -126,7 +126,7 @@ class DocsManager:
 
     def build_prompt_context(
         self,
-        names: Optional[List[str]] = None,
+        names: list[str] | None = None,
         max_chars: int = 8000,
     ) -> str:
         configs = self.load_config()

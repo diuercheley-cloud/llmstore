@@ -1,7 +1,6 @@
 import pytest
-from pydantic import ValidationError
-
 from app.schemas.public import PublicSignupRequest
+from pydantic import ValidationError
 
 
 def valid_payload(**overrides):
@@ -36,6 +35,8 @@ def test_signup_rejects_unknown_fields():
 
 
 def test_signup_normalizes_bounded_fields():
-    payload = PublicSignupRequest(**valid_payload(full_name="  Jane Doe  ", email="  JANE@EXAMPLE.COM  "))
+    payload = PublicSignupRequest(
+        **valid_payload(full_name="  Jane Doe  ", email="  JANE@EXAMPLE.COM  ")
+    )
     assert payload.full_name == "Jane Doe"
     assert payload.email == "jane@example.com"

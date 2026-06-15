@@ -68,18 +68,22 @@ class TestRedisMemoryStore:
         agent_b = uuid.uuid4()
 
         items = {
-            str(uuid.uuid4()): json.dumps({
-                "agent_id": str(agent_a),
-                "memory_id": str(uuid.uuid4()),
-                "embedding": json.dumps([0.1, 0.2]),
-                "metadata": "{}",
-            }),
-            str(uuid.uuid4()): json.dumps({
-                "agent_id": str(agent_b),
-                "memory_id": str(uuid.uuid4()),
-                "embedding": json.dumps([0.3, 0.4]),
-                "metadata": "{}",
-            }),
+            str(uuid.uuid4()): json.dumps(
+                {
+                    "agent_id": str(agent_a),
+                    "memory_id": str(uuid.uuid4()),
+                    "embedding": json.dumps([0.1, 0.2]),
+                    "metadata": "{}",
+                }
+            ),
+            str(uuid.uuid4()): json.dumps(
+                {
+                    "agent_id": str(agent_b),
+                    "memory_id": str(uuid.uuid4()),
+                    "embedding": json.dumps([0.3, 0.4]),
+                    "metadata": "{}",
+                }
+            ),
         }
         mock_redis.hgetall.return_value = items
 
@@ -91,12 +95,14 @@ class TestRedisMemoryStore:
         agent_id = uuid.uuid4()
 
         items = {
-            str(uuid.uuid4()): json.dumps({
-                "agent_id": str(agent_id),
-                "memory_id": str(uuid.uuid4()),
-                "embedding": json.dumps([1.0, 0.0]),
-                "metadata": "{}",
-            }),
+            str(uuid.uuid4()): json.dumps(
+                {
+                    "agent_id": str(agent_id),
+                    "memory_id": str(uuid.uuid4()),
+                    "embedding": json.dumps([1.0, 0.0]),
+                    "metadata": "{}",
+                }
+            ),
         }
         mock_redis.hgetall.return_value = items
 
@@ -109,12 +115,14 @@ class TestRedisMemoryStore:
         items = {}
         for i in range(10):
             mid = uuid.uuid4()
-            items[str(mid)] = json.dumps({
-                "agent_id": str(agent_id),
-                "memory_id": str(mid),
-                "embedding": json.dumps([0.1, float(i) / 10.0]),
-                "metadata": "{}",
-            })
+            items[str(mid)] = json.dumps(
+                {
+                    "agent_id": str(agent_id),
+                    "memory_id": str(mid),
+                    "embedding": json.dumps([0.1, float(i) / 10.0]),
+                    "metadata": "{}",
+                }
+            )
         mock_redis.hgetall.return_value = items
 
         results = await store.search("t1", agent_id, [0.1, 0.5], top_k=3)

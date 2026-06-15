@@ -8,4 +8,4 @@ def test_sanitization_performance():
     start = time.time()
     SecurityManager.sanitize_output(large_content)
     duration = time.time() - start
-    assert duration < 0.1 # Should be fast
+    assert duration < 0.1  # Should be fast

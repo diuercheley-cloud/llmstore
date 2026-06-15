@@ -6,7 +6,12 @@ import pytest
 from app.models.core.admin_rbac import AdminAuditEvent
 from app.models.core.client import Client
 from app.models.rag.rag_document import RAGDocument
-from app.storage import AdminAuditRecord, RAGChunkRecord, describe_storage_backend, resolve_storage_backend
+from app.storage import (
+    AdminAuditRecord,
+    RAGChunkRecord,
+    describe_storage_backend,
+    resolve_storage_backend,
+)
 from sqlalchemy import select
 
 
@@ -99,7 +104,9 @@ async def test_sqlite_storage_backend_document_vector_and_audit_contract(session
     )
     await session.commit()
 
-    usage = await backend.document_store.summarize_rag_usage_events(client.id, since=document.created_at)
+    usage = await backend.document_store.summarize_rag_usage_events(
+        client.id, since=document.created_at
+    )
     assert usage["rag_query"] == 2
     assert usage["pages_processed"] == 3
 
@@ -113,8 +120,14 @@ async def test_sqlite_storage_backend_document_vector_and_audit_contract(session
         ),
         auto_commit=True,
     )
-    audit_event = (await session.execute(select(AdminAuditEvent).where(AdminAuditEvent.event_type == "storage.test"))).scalar_one()
+    audit_event = (
+        await session.execute(
+            select(AdminAuditEvent).where(AdminAuditEvent.event_type == "storage.test")
+        )
+    ).scalar_one()
     assert audit_event.actor_identifier == "pytest"
 
-    stored_document = await backend.document_store.get_rag_document(document.id, client_id=client.id)
+    stored_document = await backend.document_store.get_rag_document(
+        document.id, client_id=client.id
+    )
     assert stored_document is not None

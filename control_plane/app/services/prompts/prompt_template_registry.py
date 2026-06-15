@@ -1,7 +1,7 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from app.models.agents.prompts import (
     PromptTemplate,
@@ -25,7 +25,7 @@ class PromptTemplateRegistryService:
         self,
         tenant_id: str,
         name: str,
-        description: Optional[str] = None,
+        description: str | None = None,
     ) -> PromptTemplate:
         template = PromptTemplate(
             tenant_id=tenant_id,
@@ -39,18 +39,20 @@ class PromptTemplateRegistryService:
         return template
 
     async def get_template(
-        self, template_id: uuid.UUID, tenant_id: Optional[str] = None
-    ) -> Optional[PromptTemplate]:
+        self, template_id: uuid.UUID, tenant_id: str | None = None
+    ) -> PromptTemplate | None:
         stmt = select(PromptTemplate).where(PromptTemplate.id == template_id)
         if tenant_id:
             stmt = stmt.where(PromptTemplate.tenant_id == tenant_id)
         res = await self.db.execute(stmt)
         return res.scalar_one_or_none()
 
-    async def list_templates(self, tenant_id: str) -> List[PromptTemplate]:
-        stmt = select(PromptTemplate).where(
-            PromptTemplate.tenant_id == tenant_id
-        ).order_by(PromptTemplate.updated_at.desc())
+    async def list_templates(self, tenant_id: str) -> list[PromptTemplate]:
+        stmt = (
+            select(PromptTemplate)
+            .where(PromptTemplate.tenant_id == tenant_id)
+            .order_by(PromptTemplate.updated_at.desc())
+        )
         res = await self.db.execute(stmt)
         return list(res.scalars().all())
 
@@ -60,8 +62,8 @@ class PromptTemplateRegistryService:
         name: str,
         var_type: str = "string",
         required: bool = True,
-        default: Optional[str] = None,
-        description: Optional[str] = None,
+        default: str | None = None,
+        description: str | None = None,
     ) -> PromptTemplateVariable:
         validation = self.validator.validate_variable_declaration(name, var_type)
         if not validation.valid:
@@ -79,9 +81,7 @@ class PromptTemplateRegistryService:
         await self.db.flush()
         return var
 
-    async def get_declared_variables(
-        self, template_id: uuid.UUID
-    ) -> List[PromptTemplateVariable]:
+    async def get_declared_variables(self, template_id: uuid.UUID) -> list[PromptTemplateVariable]:
         stmt = (
             select(PromptTemplateVariable)
             .where(PromptTemplateVariable.template_id == template_id)
@@ -96,7 +96,7 @@ class PromptTemplateRegistryService:
         content: str,
         created_by: str,
         version_tag: str,
-        provider_settings: Optional[Dict[str, Any]] = None,
+        provider_settings: dict[str, Any] | None = None,
     ) -> PromptTemplateVersion:
         content_validation = self.validator.validate_template_content(content)
         if not content_validation.valid:
@@ -109,9 +109,7 @@ class PromptTemplateRegistryService:
             )
         )
         if existing.scalar_one_or_none():
-            raise ValueError(
-                f"Version tag '{version_tag}' already exists for this template"
-            )
+            raise ValueError(f"Version tag '{version_tag}' already exists for this template")
 
         version = PromptTemplateVersion(
             template_id=template_id,
@@ -125,18 +123,12 @@ class PromptTemplateRegistryService:
         await self.db.flush()
         return version
 
-    async def get_version(
-        self, version_id: uuid.UUID
-    ) -> Optional[PromptTemplateVersion]:
-        stmt = select(PromptTemplateVersion).where(
-            PromptTemplateVersion.id == version_id
-        )
+    async def get_version(self, version_id: uuid.UUID) -> PromptTemplateVersion | None:
+        stmt = select(PromptTemplateVersion).where(PromptTemplateVersion.id == version_id)
         res = await self.db.execute(stmt)
         return res.scalar_one_or_none()
 
-    async def list_versions(
-        self, template_id: uuid.UUID
-    ) -> List[PromptTemplateVersion]:
+    async def list_versions(self, template_id: uuid.UUID) -> list[PromptTemplateVersion]:
         stmt = (
             select(PromptTemplateVersion)
             .where(PromptTemplateVersion.template_id == template_id)
@@ -160,14 +152,14 @@ class PromptTemplateRegistryService:
 
     async def record_render_event(
         self,
-        template_id: Optional[uuid.UUID],
+        template_id: uuid.UUID | None,
         version_id: uuid.UUID,
         tenant_id: str,
         variables_hash: str,
         output_hash: str,
         rendered_content_hash: str,
-        agent_run_id: Optional[uuid.UUID] = None,
-        agent_id: Optional[uuid.UUID] = None,
+        agent_run_id: uuid.UUID | None = None,
+        agent_id: uuid.UUID | None = None,
     ) -> PromptTemplateRenderEvent:
         event = PromptTemplateRenderEvent(
             template_id=template_id,
@@ -183,9 +175,7 @@ class PromptTemplateRegistryService:
         await self.db.flush()
         return event
 
-    async def count_render_events(
-        self, template_id: uuid.UUID, limit: int = 100
-    ) -> list:
+    async def count_render_events(self, template_id: uuid.UUID, limit: int = 100) -> list:
         stmt = (
             select(PromptTemplateRenderEvent)
             .where(PromptTemplateRenderEvent.template_id == template_id)

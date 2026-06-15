@@ -5,6 +5,7 @@ Revises: phase66_predictive_aiops
 Create Date: 2026-05-15 18:07:00.000000
 
 """
+
 import sqlalchemy as sa
 from alembic import op
 

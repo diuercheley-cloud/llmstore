@@ -20,7 +20,9 @@ class ValidationTarget:
 
 
 VALIDATION_TARGETS = (
-    ValidationTarget("Architecture Boundaries", REPO_ROOT / "scripts" / "validate_architecture_boundaries.py"),
+    ValidationTarget(
+        "Architecture Boundaries", REPO_ROOT / "scripts" / "validate_architecture_boundaries.py"
+    ),
     ValidationTarget("Runtime Contracts", REPO_ROOT / "scripts" / "validate_runtime_contracts.py"),
     ValidationTarget("Domain Contracts", REPO_ROOT / "scripts" / "validate_domain_contracts.py"),
     ValidationTarget("ADRs", REPO_ROOT / "scripts" / "validate_adrs.py"),
@@ -71,4 +73,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

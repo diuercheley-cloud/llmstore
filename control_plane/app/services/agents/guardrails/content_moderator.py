@@ -1,6 +1,5 @@
 import logging
 import re
-from typing import Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +45,7 @@ class ContentModerator:
         self.injection_patterns = [re.compile(p, re.I) for p in PROMPT_INJECTION_PATTERNS]
         self.output_patterns = [re.compile(p, re.I) for p in OUTPUT_VALIDATION_PATTERNS]
 
-    def check_toxicity(self, text: str) -> Tuple[float, List[str]]:
+    def check_toxicity(self, text: str) -> tuple[float, list[str]]:
         score = 0.0
         flags = []
         for pattern, weight in self.toxicity_patterns:
@@ -55,20 +54,20 @@ class ContentModerator:
                 flags.append(pattern)
         return min(score, 1.0), flags
 
-    def detect_injection(self, text: str) -> Tuple[bool, List[str]]:
+    def detect_injection(self, text: str) -> tuple[bool, list[str]]:
         detected = []
         for pattern in self.injection_patterns:
             if pattern.search(text):
                 detected.append(pattern.pattern)
         return len(detected) > 0, detected
 
-    def check_refusal(self, text: str) -> Tuple[bool, str]:
+    def check_refusal(self, text: str) -> tuple[bool, str]:
         for pattern in self.output_patterns[2:4]:
             if pattern.search(text):
                 return True, "refusal_detected"
         return False, ""
 
-    def validate_output(self, text: str) -> List[Dict]:
+    def validate_output(self, text: str) -> list[dict]:
         issues = []
         for pattern in self.output_patterns[:2]:
             if pattern.search(text):
@@ -77,7 +76,7 @@ class ContentModerator:
             issues.append({"type": "refusal", "detail": "Model refused to answer"})
         return issues
 
-    async def moderate_input(self, text: str, threshold: float = 0.7) -> Dict:
+    async def moderate_input(self, text: str, threshold: float = 0.7) -> dict:
         toxicity_score, toxicity_flags = self.check_toxicity(text)
         is_injection, injection_patterns = self.detect_injection(text)
 
@@ -104,7 +103,7 @@ class ContentModerator:
             "reasons": reasons,
         }
 
-    async def moderate_output(self, text: str) -> Dict:
+    async def moderate_output(self, text: str) -> dict:
         toxicity_score, _ = self.check_toxicity(text)
         issues = self.validate_output(text)
         is_refusal, refusal_type = self.check_refusal(text)

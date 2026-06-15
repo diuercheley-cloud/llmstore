@@ -5,7 +5,9 @@ from app.core.config import get_settings
 from app.services.auth import require_admin
 from fastapi import APIRouter, Depends, HTTPException
 
-router = APIRouter(prefix="/admin", tags=["admin-benchmarks"], dependencies=[Depends(require_admin)])
+router = APIRouter(
+    prefix="/admin", tags=["admin-benchmarks"], dependencies=[Depends(require_admin)]
+)
 
 
 @router.get("/benchmarks")
@@ -33,7 +35,7 @@ async def list_benchmarks():
 
             if bench_file.exists():
                 try:
-                    with open(bench_file, "r") as f:
+                    with open(bench_file) as f:
                         data = json.load(f)
                         results.append(data)
                 except Exception:
@@ -65,10 +67,12 @@ async def get_model_benchmark(model: str):
     bench_file = latest_run / "benchmark.json"
 
     if not bench_file.exists():
-        raise HTTPException(status_code=404, detail=f"Benchmark file not found for latest run of {model}")
+        raise HTTPException(
+            status_code=404, detail=f"Benchmark file not found for latest run of {model}"
+        )
 
     try:
-        with open(bench_file, "r") as f:
+        with open(bench_file) as f:
             return json.load(f)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reading benchmark: {str(e)}")

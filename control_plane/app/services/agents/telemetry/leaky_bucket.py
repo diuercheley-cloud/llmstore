@@ -1,7 +1,6 @@
 # Owner: agent-platform
 import time
 from threading import Lock
-from typing import Dict
 
 
 class LeakyBucket:
@@ -38,7 +37,7 @@ class LeakyBucket:
 
 class LeakyBucketManager:
     def __init__(self):
-        self._buckets: Dict[str, LeakyBucket] = {}
+        self._buckets: dict[str, LeakyBucket] = {}
         self._lock = Lock()
 
     def get_or_create(
@@ -81,9 +80,11 @@ class LeakyBucketManager:
         type_bucket = self.get_or_create(type_key, capacity, leak_rate)
         exporter_bucket = self.get_or_create(exporter_key, capacity * 4, leak_rate * 4)
 
-        return all([
-            tenant_bucket.try_consume(),
-            agent_bucket.try_consume(),
-            type_bucket.try_consume(),
-            exporter_bucket.try_consume(),
-        ])
+        return all(
+            [
+                tenant_bucket.try_consume(),
+                agent_bucket.try_consume(),
+                type_bucket.try_consume(),
+                exporter_bucket.try_consume(),
+            ]
+        )

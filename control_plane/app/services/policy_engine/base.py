@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -16,17 +17,17 @@ class DecisionResult(str, Enum):
 
 class PolicyContext(BaseModel):
     tenant_id: str
-    user_id: Optional[str] = None
-    agent_id: Optional[str] = None
+    user_id: str | None = None
+    agent_id: str | None = None
     action_type: str  # tool_call, inference, memory_access, etc.
-    tool_name: Optional[str] = None
-    model: Optional[str] = None
-    backend: Optional[str] = None
-    data_classification: Optional[str] = "unclassified"
+    tool_name: str | None = None
+    model: str | None = None
+    backend: str | None = None
+    data_classification: str | None = "unclassified"
     risk_score: float = 0.0
-    attestation_status: Optional[str] = "none"
+    attestation_status: str | None = "none"
     sandbox_level: int = 0
-    extra: Dict[str, Any] = Field(default_factory=dict)
+    extra: dict[str, Any] = Field(default_factory=dict)
 
 
 class PolicyDecision(BaseModel):
@@ -34,14 +35,14 @@ class PolicyDecision(BaseModel):
     reason: str
     engine: str
     decision_id: str
-    explanation: Optional[str] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    explanation: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class PolicyBundle(BaseModel):
     name: str
     version: str
-    rules: List[Dict[str, Any]]
+    rules: list[dict[str, Any]]
     engine_type: str  # builtin, opa, cedar
 
 

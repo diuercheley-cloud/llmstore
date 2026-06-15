@@ -6,20 +6,18 @@ import pytest
 import pytest_asyncio
 from app.core.time import utc_now
 from app.models.billing.ai_wallet import AiWallet
-from app.models.core.client import Client
-from app.models.commercial.commercial_financial_reconciliation import CommercialFinancialReconciliation
+from app.models.commercial.commercial_financial_reconciliation import (
+    CommercialFinancialReconciliation,
+)
 from app.models.commercial.commercial_qos_billing_record import CommercialQoSBillingRecord
 from app.models.commercial.commercial_queue_chargeback import CommercialQueueChargeback
+from app.models.core.client import Client
 from app.services.billing.financial_reconciliation import FinancialReconciliationService
 
 
 @pytest_asyncio.fixture
 async def sample_client(session):
-    client = Client(
-        id=uuid.uuid4(),
-        name="Test Reconciliation Client",
-        billing_status="active"
-    )
+    client = Client(id=uuid.uuid4(), name="Test Reconciliation Client", billing_status="active")
     session.add(client)
     wallet = AiWallet(client_id=client.id, balance_brl=Decimal("100.0000"))
     session.add(wallet)
@@ -30,7 +28,7 @@ async def sample_client(session):
 @pytest.mark.asyncio
 async def test_reconcile_qos_billing_matched(session, sample_client, settings):
     settings.commercial_qos_billing_include_opportunity_cost = False
-    
+
     cb = CommercialQueueChargeback(
         client_id=sample_client.id,
         qos_tier="Premium",
@@ -41,11 +39,11 @@ async def test_reconcile_qos_billing_matched(session, sample_client, settings):
         priority_slots_consumed=10.0,
         estimated_internal_cost_brl=Decimal("1.000000"),
         estimated_opportunity_cost_brl=Decimal("0.500000"),
-        chargeback_amount_brl=Decimal("1.000000")
+        chargeback_amount_brl=Decimal("1.000000"),
     )
     session.add(cb)
     await session.flush()
-    
+
     record = CommercialQoSBillingRecord(
         client_id=sample_client.id,
         qos_tier="Premium",
@@ -57,22 +55,22 @@ async def test_reconcile_qos_billing_matched(session, sample_client, settings):
         billing_mode="report_only",
         status="calculated",
         idempotency_key=str(uuid.uuid4()),
-        created_at=utc_now()
+        created_at=utc_now(),
     )
     session.add(record)
     await session.commit()
-    
+
     recons = await FinancialReconciliationService.reconcile_qos_billing(
         session, utc_now() - timedelta(hours=24), utc_now() + timedelta(hours=1)
     )
-    assert len(recons) == 0 # No mismatches
+    assert len(recons) == 0  # No mismatches
 
 
 @pytest.mark.asyncio
 async def test_reconcile_qos_billing_mismatch(session, sample_client, settings):
     settings.commercial_qos_billing_include_opportunity_cost = False
     settings.commercial_financial_reconciliation_threshold_percent = 2.0
-    
+
     cb = CommercialQueueChargeback(
         client_id=sample_client.id,
         qos_tier="Premium",
@@ -83,11 +81,11 @@ async def test_reconcile_qos_billing_mismatch(session, sample_client, settings):
         priority_slots_consumed=10.0,
         estimated_internal_cost_brl=Decimal("1.000000"),
         estimated_opportunity_cost_brl=Decimal("0.500000"),
-        chargeback_amount_brl=Decimal("1.000000")
+        chargeback_amount_brl=Decimal("1.000000"),
     )
     session.add(cb)
     await session.flush()
-    
+
     # Intentionally create mismatch: billable_amount_brl is 1.5 but CB says 1.0
     record = CommercialQoSBillingRecord(
         client_id=sample_client.id,
@@ -100,11 +98,11 @@ async def test_reconcile_qos_billing_mismatch(session, sample_client, settings):
         billing_mode="report_only",
         status="calculated",
         idempotency_key=str(uuid.uuid4()),
-        created_at=utc_now()
+        created_at=utc_now(),
     )
     session.add(record)
     await session.commit()
-    
+
     recons = await FinancialReconciliationService.reconcile_qos_billing(
         session, utc_now() - timedelta(hours=24), utc_now() + timedelta(hours=1)
     )
@@ -126,11 +124,11 @@ async def test_reconcile_wallet_debits_mismatch(session, sample_client, settings
         status="debited",
         idempotency_key=str(uuid.uuid4()),
         created_at=utc_now() - timedelta(minutes=10),
-        processed_at=utc_now() - timedelta(minutes=5)
+        processed_at=utc_now() - timedelta(minutes=5),
     )
     session.add(record)
     await session.flush()
-    
+
     # Transaction missing
     recons = await FinancialReconciliationService.reconcile_wallet_debits(
         session, utc_now() - timedelta(hours=24), utc_now() + timedelta(hours=1)
@@ -150,11 +148,11 @@ async def test_summarize_reconciliation(session, sample_client):
         actual_amount_brl=Decimal("110"),
         delta_amount_brl=Decimal("10"),
         period_start=utc_now(),
-        period_end=utc_now()
+        period_end=utc_now(),
     )
     session.add(recon)
     await session.commit()
-    
+
     summary = await FinancialReconciliationService.summarize_reconciliation(session)
     assert "mismatch" in summary
     assert summary["mismatch"]["count"] == 1

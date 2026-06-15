@@ -26,7 +26,7 @@ class SandboxArtifactService:
         self.policy.validate_artifact_content(content)
         self.base_path.mkdir(parents=True, exist_ok=True)
         digest = hashlib.sha256(content).hexdigest()
-        safe_name = hashlib.sha256(f"{session_id}:{filename}".encode("utf-8")).hexdigest()
+        safe_name = hashlib.sha256(f"{session_id}:{filename}".encode()).hexdigest()
         storage_path = self.base_path / safe_name
         storage_path.write_bytes(content)
 

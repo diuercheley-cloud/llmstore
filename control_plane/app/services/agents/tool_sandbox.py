@@ -2,10 +2,12 @@
 Owner: agent-platform
 Status: beta
 """
+
 import asyncio
 import logging
 import time
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.time import utc_now
@@ -22,15 +24,15 @@ async def execute_in_sandbox(
     invocation_id: Any,
     tool_name: str,
     tool_category: str,
-    parameters: Dict[str, Any],
-    allowed_commands: List[str],
+    parameters: dict[str, Any],
+    allowed_commands: list[str],
     timeout_seconds: int,
     output_limit_bytes: int = 50000,  # 50KB default limit
-    tool_callable: Optional[Callable[..., Any]] = None,
+    tool_callable: Callable[..., Any] | None = None,
     sandbox_type: str = "mock",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Executes a tool within a sandbox configuration.
-    
+
     Checks command allowlists, enforces timeouts, handles output limit truncation,
     blocks unauthorized shell commands, and registers execution records.
     """
@@ -51,16 +53,26 @@ async def execute_in_sandbox(
     # 2. Policy Check: Block simulation in production
     if not settings.agent_sandbox_allow_simulated_provider and sandbox_type in ["mock", "dry_run"]:
         logger.error(f"Simulated sandbox type '{sandbox_type}' is blocked in production.")
-        raise ValueError(f"Security Policy Violation: Simulated execution mode '{sandbox_type}' is not allowed.")
-    
-    if settings.agent_code_sandbox_microvm_required and sandbox_type not in ["gvisor", "firecracker"]:
+        raise ValueError(
+            f"Security Policy Violation: Simulated execution mode '{sandbox_type}' is not allowed."
+        )
+
+    if settings.agent_code_sandbox_microvm_required and sandbox_type not in [
+        "gvisor",
+        "firecracker",
+    ]:
         # If microvm is required, tool_sandbox must also use a secure provider if available,
         # or block if it's falling back to something weak.
         if sandbox_type == "mock":
-             raise ValueError("MicroVM isolation is required; mock sandbox is insufficient.")
+            raise ValueError("MicroVM isolation is required; mock sandbox is insufficient.")
 
     # Resolve the command/operation name to check against allowlist
-    command_to_run = parameters.get("command") or parameters.get("cmd") or parameters.get("operation") or tool_name
+    command_to_run = (
+        parameters.get("command")
+        or parameters.get("cmd")
+        or parameters.get("operation")
+        or tool_name
+    )
     if allowed_commands and "*" not in allowed_commands:
         if command_to_run not in allowed_commands:
             raise ValueError(
@@ -92,15 +104,15 @@ async def execute_in_sandbox(
             # Enforce timeout and run
             if asyncio.iscoroutinefunction(tool_callable):
                 output = await asyncio.wait_for(
-                    tool_callable(**parameters),
-                    timeout=float(timeout_seconds)
+                    tool_callable(**parameters), timeout=float(timeout_seconds)
                 )
             else:
+
                 def sync_wrapper():
                     return tool_callable(**parameters)
+
                 output = await asyncio.wait_for(
-                    asyncio.to_thread(sync_wrapper),
-                    timeout=float(timeout_seconds)
+                    asyncio.to_thread(sync_wrapper), timeout=float(timeout_seconds)
                 )
         else:
             if sandbox_type == "mock":
@@ -125,6 +137,7 @@ async def execute_in_sandbox(
 
         # Handle output serialization and truncation
         import json
+
         try:
             output_str = json.dumps(output)
         except Exception:
@@ -137,10 +150,10 @@ async def execute_in_sandbox(
             output = {
                 "status": "truncated",
                 "message": "Output exceeded size limit and was truncated.",
-                "data": output_str[:output_limit_bytes]
+                "data": output_str[:output_limit_bytes],
             }
 
-    except asyncio.TimeoutError as te:
+    except TimeoutError as te:
         status = "timeout"
         output_log = "Execution timed out."
         logger.error(f"Sandbox execution timed out after {timeout_seconds} seconds.")

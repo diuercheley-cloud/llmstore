@@ -1,7 +1,7 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import Any, Dict, Tuple
+from typing import Any
 
 from app.core.config import get_settings
 from app.models.agents.agent_uncertainty import (
@@ -15,6 +15,7 @@ from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
+
 class UncertaintyPolicyEngine:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -24,38 +25,43 @@ class UncertaintyPolicyEngine:
         stmt = select(AgentUncertaintyPolicy).where(AgentUncertaintyPolicy.agent_id == agent_id)
         res = await self.db.execute(stmt)
         policy = res.scalar_one_or_none()
-        
+
         if not policy:
             # Default threshold based on agent class
             agent = await self.db.get(AgentDefinition, agent_id)
             threshold = 0.7
             if agent:
-                if agent.agent_class in ["compliance", "security"]: threshold = 0.9
-                elif agent.agent_class == "support": threshold = 0.7
-                elif agent.agent_class == "creative": threshold = 0.4
-            
+                if agent.agent_class in ["compliance", "security"]:
+                    threshold = 0.9
+                elif agent.agent_class == "support":
+                    threshold = 0.7
+                elif agent.agent_class == "creative":
+                    threshold = 0.4
+
             policy = AgentUncertaintyPolicy(
                 agent_id=agent_id,
                 min_confidence_threshold=threshold,
                 auto_research_enabled=self.settings.agent_uncertainty_auto_research_enabled,
-                hitl_on_low_confidence=self.settings.agent_uncertainty_hitl_enabled
+                hitl_on_low_confidence=self.settings.agent_uncertainty_hitl_enabled,
             )
             self.db.add(policy)
             await self.db.commit()
             await self.db.refresh(policy)
-            
+
         return policy
 
-    async def apply_policy(self, agent_id: uuid.UUID, run_id: uuid.UUID, estimation: Dict[str, Any]) -> Tuple[str, str]:
+    async def apply_policy(
+        self, agent_id: uuid.UUID, run_id: uuid.UUID, estimation: dict[str, Any]
+    ) -> tuple[str, str]:
         """
         Decides the action to take based on confidence score and policy.
         """
         policy = await self.get_policy(agent_id)
         confidence = estimation["confidence_score"]
-        
+
         action = "none"
         reason = "Confidence above threshold"
-        
+
         if confidence < policy.min_confidence_threshold:
             if policy.auto_research_enabled:
                 action = "research"
@@ -80,9 +86,9 @@ class UncertaintyPolicyEngine:
             confidence_score=confidence,
             action_taken=action,
             policy_triggered=str(policy.id),
-            metrics=estimation["metrics"]
+            metrics=estimation["metrics"],
         )
         self.db.add(event)
-        
+
         await self.db.commit()
         return action, reason

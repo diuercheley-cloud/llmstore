@@ -1,6 +1,5 @@
 import uuid
 from dataclasses import dataclass, field
-from typing import List
 
 
 @dataclass(frozen=True)
@@ -8,14 +7,15 @@ class AdapterSandboxContext:
     """
     Immutable execution context for a sandbox run.
     """
+
     client_id: uuid.UUID
     manifest_id: uuid.UUID
     sandbox_mode: str
     dry_run: bool = True
     approval_verified: bool = False
     gates_verified: bool = False
-    allowed_capabilities: List[str] = field(default_factory=list)
-    denied_capabilities: List[str] = field(default_factory=list)
+    allowed_capabilities: list[str] = field(default_factory=list)
+    denied_capabilities: list[str] = field(default_factory=list)
     approval_required: bool = True
     gates_required: bool = True
     deterministic_version: str = "v1"

@@ -4,8 +4,8 @@
 import hashlib
 import logging
 import uuid
-from datetime import datetime, UTC
-from typing import Any, Dict
+from datetime import UTC, datetime
+from typing import Any
 
 from app.core.config import get_settings
 from app.models.plugins.marketplace import (
@@ -23,16 +23,15 @@ from sqlalchemy.future import select
 
 logger = logging.getLogger(__name__)
 
+
 class PluginRuntimeService:
     def __init__(self, db):
         self.db = db
         self.settings = get_settings()
 
-    async def verify_plugin(self, plugin_id: uuid.UUID) -> Dict[str, Any]:
+    async def verify_plugin(self, plugin_id: uuid.UUID) -> dict[str, Any]:
         # 1. Fetch plugin installation
-        res = await self.db.execute(
-            select(PluginInstall).where(PluginInstall.id == plugin_id)
-        )
+        res = await self.db.execute(select(PluginInstall).where(PluginInstall.id == plugin_id))
         install = res.scalar_one_or_none()
         if not install:
             raise ValueError(f"Plugin install with ID {plugin_id} not found.")
@@ -60,10 +59,12 @@ class PluginRuntimeService:
 
         # Real verification logic
         checksum_valid = bool(checksum and len(checksum) == 64)
-        signature_valid = bool(signature and "invalid" not in signature.lower() )
+        signature_valid = bool(signature and "invalid" not in signature.lower())
         manifest_valid = "name" in manifest and "version" in manifest
 
-        is_verified = checksum_valid and (signature_valid or not signature_required) and manifest_valid
+        is_verified = (
+            checksum_valid and (signature_valid or not signature_required) and manifest_valid
+        )
 
         verification = PluginVerificationResult(
             id=uuid.uuid4(),
@@ -76,8 +77,8 @@ class PluginRuntimeService:
             details={
                 "checksum": checksum,
                 "signature": signature,
-                "manifest_name": manifest.get("name")
-            }
+                "manifest_name": manifest.get("name"),
+            },
         )
         self.db.add(verification)
         await self.db.commit()
@@ -90,15 +91,17 @@ class PluginRuntimeService:
             "is_verified": is_verified,
             "checksum_valid": checksum_valid,
             "signature_valid": signature_valid,
-            "manifest_valid": manifest_valid
+            "manifest_valid": manifest_valid,
         }
 
-    async def dry_run_plugin(self, plugin_id: uuid.UUID, code: str, parameters: dict) -> Dict[str, Any]:
+    async def dry_run_plugin(
+        self, plugin_id: uuid.UUID, code: str, parameters: dict
+    ) -> dict[str, Any]:
         # Perform real sandbox execution under dry-run mode
         sandbox_type = "dry_run"
-        
+
         # Static check
-        if "eval(" in code or "subprocess" in code: # nosec
+        if "eval(" in code or "subprocess" in code:  # nosec
             is_success = False
             logs = "Dry-run failed: Security block for unsafe code execution."
             output = {"error": "Security violation"}
@@ -114,7 +117,7 @@ class PluginRuntimeService:
             is_success=is_success,
             sandbox_type=sandbox_type,
             output=output,
-            logs=logs
+            logs=logs,
         )
         self.db.add(dry_run)
         await self.db.commit()
@@ -123,20 +126,20 @@ class PluginRuntimeService:
             "status": "dry_run_success" if is_success else "dry_run_failed",
             "is_success": is_success,
             "output": output,
-            "logs": logs
+            "logs": logs,
         }
 
-    async def run_plugin(self, plugin_id: uuid.UUID, code: str, parameters: dict, tenant_id: str) -> Dict[str, Any]:
+    async def run_plugin(
+        self, plugin_id: uuid.UUID, code: str, parameters: dict, tenant_id: str
+    ) -> dict[str, Any]:
         if not self.settings.plugin_runtime_enabled:
-             raise RuntimeError("Plugin runtime is disabled")
+            raise RuntimeError("Plugin runtime is disabled")
 
         if not tenant_id or tenant_id == "plugin-runtime":
-             raise ValueError("tenant_id must be a real tenant, placeholder tenant_id is forbidden.")
+            raise ValueError("tenant_id must be a real tenant, placeholder tenant_id is forbidden.")
 
         # 1. Fetch plugin installation
-        res = await self.db.execute(
-            select(PluginInstall).where(PluginInstall.id == plugin_id)
-        )
+        res = await self.db.execute(select(PluginInstall).where(PluginInstall.id == plugin_id))
         install = res.scalar_one_or_none()
         if not install:
             raise ValueError(f"Plugin install with ID {plugin_id} not found.")
@@ -150,7 +153,7 @@ class PluginRuntimeService:
             raise ValueError("Plugin version not found.")
 
         manifest = version_entry.manifest_json or {}
-        
+
         # 3. Check explicit permissions
         required_perms = manifest.get("permissions", [])
         for perm in required_perms:
@@ -159,11 +162,13 @@ class PluginRuntimeService:
                     PluginPermissionGrant.plugin_id == plugin_id,
                     PluginPermissionGrant.tenant_id == tenant_id,
                     PluginPermissionGrant.permission_name == perm,
-                    PluginPermissionGrant.is_granted == True
+                    PluginPermissionGrant.is_granted == True,
                 )
             )
             if not res_grant.scalar_one_or_none():
-                raise ValueError(f"Tenant {tenant_id} does not have explicit permission grant for {perm}")
+                raise ValueError(
+                    f"Tenant {tenant_id} does not have explicit permission grant for {perm}"
+                )
 
         # 4. Command allowlist restriction
         allowed_commands = manifest.get("allowed_commands", [])
@@ -184,7 +189,7 @@ class PluginRuntimeService:
                 parameters=parameters,
                 allowed_commands=allowed_commands,
                 timeout_seconds=30,
-                sandbox_type=self.settings.agent_code_sandbox_provider
+                sandbox_type=self.settings.agent_code_sandbox_provider,
             )
             status = "success"
             error_message = None
@@ -203,7 +208,7 @@ class PluginRuntimeService:
             parameters=parameters,
             status=status,
             output=output,
-            error_message=error_message
+            error_message=error_message,
         )
         self.db.add(execution)
         await self.db.commit()
@@ -214,7 +219,7 @@ class PluginRuntimeService:
             "plugin_id": str(plugin_id),
             "tenant_id": tenant_id,
             "status": status,
-            "timestamp": datetime.now(UTC).isoformat()
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         payload_str = json_canonical_str(receipt_payload)
         receipt_hash = hashlib.sha256(payload_str.encode("utf-8")).hexdigest()
@@ -225,7 +230,7 @@ class PluginRuntimeService:
             receipt_hash=receipt_hash,
             signature=f"sig_{receipt_hash[:16]}",
             signed_at=datetime.now(UTC),
-            payload_json=receipt_payload
+            payload_json=receipt_payload,
         )
         self.db.add(receipt)
         await self.db.commit()
@@ -235,10 +240,8 @@ class PluginRuntimeService:
 
         return output
 
-    async def get_trust_report(self, plugin_id: uuid.UUID) -> Dict[str, Any]:
-        res = await self.db.execute(
-            select(PluginInstall).where(PluginInstall.id == plugin_id)
-        )
+    async def get_trust_report(self, plugin_id: uuid.UUID) -> dict[str, Any]:
+        res = await self.db.execute(select(PluginInstall).where(PluginInstall.id == plugin_id))
         install = res.scalar_one_or_none()
         if not install:
             raise ValueError(f"Plugin install with ID {plugin_id} not found.")
@@ -260,7 +263,7 @@ class PluginRuntimeService:
         dry_run = res_dry.scalars().first()
 
         is_trusted = bool(verification and verification.is_verified)
-        
+
         report_details = {
             "plugin_id": str(plugin_id),
             "verified": is_trusted,
@@ -268,12 +271,16 @@ class PluginRuntimeService:
                 "checksum_valid": verification.checksum_valid if verification else False,
                 "signature_valid": verification.signature_valid if verification else False,
                 "manifest_valid": verification.manifest_valid if verification else False,
-            } if verification else None,
+            }
+            if verification
+            else None,
             "dry_run_details": {
                 "is_success": dry_run.is_success,
                 "sandbox_type": dry_run.sandbox_type,
-            } if dry_run else None,
-            "generated_at": datetime.now(UTC).isoformat()
+            }
+            if dry_run
+            else None,
+            "generated_at": datetime.now(UTC).isoformat(),
         }
 
         # Store to DB PluginTrustReport
@@ -287,13 +294,15 @@ class PluginRuntimeService:
             trust_score=1.0 if is_trusted else 0.5,
             report_details=report_details,
             is_signed=is_trusted,
-            signer_identity="governed-platform-signer"
+            signer_identity="governed-platform-signer",
         )
         self.db.add(trust_report)
         await self.db.commit()
 
         return report_details
 
+
 def json_canonical_str(obj: dict) -> str:
     import json
-    return json.dumps(obj, sort_keys=True, separators=(',', ':'))
+
+    return json.dumps(obj, sort_keys=True, separators=(",", ":"))

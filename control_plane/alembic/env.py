@@ -1,11 +1,20 @@
 from logging.config import fileConfig
 
+import app.models  # noqa
 from alembic import context
 from alembic.ddl.impl import DefaultImpl
 from app.core.config import get_settings
 from app.db.base import Base
-import app.models  # noqa
-from sqlalchemy import Column, MetaData, PrimaryKeyConstraint, String, Table, engine_from_config, pool, text
+from sqlalchemy import (
+    Column,
+    MetaData,
+    PrimaryKeyConstraint,
+    String,
+    Table,
+    engine_from_config,
+    pool,
+    text,
+)
 
 config = context.config
 settings = get_settings()
@@ -53,7 +62,9 @@ def ensure_alembic_version_width(connection) -> None:
         )
     ).scalar_one_or_none()
     if result is not None and result < 128:
-        connection.execute(text("ALTER TABLE alembic_version ALTER COLUMN version_num TYPE VARCHAR(128)"))
+        connection.execute(
+            text("ALTER TABLE alembic_version ALTER COLUMN version_num TYPE VARCHAR(128)")
+        )
         connection.commit()
 
 
@@ -64,7 +75,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         compare_type=True,
-        version_table_col_width=128
+        version_table_col_width=128,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -82,7 +93,7 @@ def run_migrations_online() -> None:
             connection=connection,
             target_metadata=target_metadata,
             compare_type=True,
-            version_table_col_width=128
+            version_table_col_width=128,
         )
         with context.begin_transaction():
             context.run_migrations()

@@ -29,7 +29,9 @@ def _enable_federation(monkeypatch: pytest.MonkeyPatch) -> None:
     get_settings.cache_clear()
 
 
-async def _seed_local_aggregate(session, *, provider: str = "openai", model: str = "gpt-4o-mini", margin: float = 2.5):
+async def _seed_local_aggregate(
+    session, *, provider: str = "openai", model: str = "gpt-4o-mini", margin: float = 2.5
+):
     session.add(
         CommercialClusterAggregate(
             bucket_start=utc_now() - timedelta(minutes=5),
@@ -74,7 +76,9 @@ async def test_register_cluster(session, monkeypatch):
 @pytest.mark.asyncio
 async def test_list_clusters(session, monkeypatch):
     _enable_federation(monkeypatch)
-    await register_cluster(session, cluster_id="remote-b", name="Remote B", region="eu-west-1", environment="staging")
+    await register_cluster(
+        session, cluster_id="remote-b", name="Remote B", region="eu-west-1", environment="staging"
+    )
     rows = await list_clusters(session)
     await session.commit()
 
@@ -136,7 +140,12 @@ async def test_ingest_aggregate_valido(admin_client, admin_token_headers, sessio
 @pytest.mark.asyncio
 async def test_ingest_duplicado(admin_client, session, monkeypatch):
     _enable_federation(monkeypatch)
-    await register_cluster(session, cluster_id="remote-dup", name="Remote Dup", tenant_scope_json={"tenants": ["tenant-1"]})
+    await register_cluster(
+        session,
+        cluster_id="remote-dup",
+        name="Remote Dup",
+        tenant_scope_json={"tenants": ["tenant-1"]},
+    )
     await session.commit()
     payload = {
         "source_cluster_id": "remote-dup",
@@ -152,8 +161,16 @@ async def test_ingest_duplicado(admin_client, session, monkeypatch):
             }
         ],
     }
-    first = await admin_client.post("/admin/routing/federation/ingest", headers={"X-Federation-Token": "shared-fed-token"}, json=payload)
-    second = await admin_client.post("/admin/routing/federation/ingest", headers={"X-Federation-Token": "shared-fed-token"}, json=payload)
+    first = await admin_client.post(
+        "/admin/routing/federation/ingest",
+        headers={"X-Federation-Token": "shared-fed-token"},
+        json=payload,
+    )
+    second = await admin_client.post(
+        "/admin/routing/federation/ingest",
+        headers={"X-Federation-Token": "shared-fed-token"},
+        json=payload,
+    )
 
     assert first.status_code == 200
     assert second.status_code == 200
@@ -163,7 +180,9 @@ async def test_ingest_duplicado(admin_client, session, monkeypatch):
 @pytest.mark.asyncio
 async def test_ingest_sem_token_rejeitado(admin_client, monkeypatch):
     _enable_federation(monkeypatch)
-    response = await admin_client.post("/admin/routing/federation/ingest", json={"source_cluster_id": "remote-x", "aggregates": []})
+    response = await admin_client.post(
+        "/admin/routing/federation/ingest", json={"source_cluster_id": "remote-x", "aggregates": []}
+    )
     assert response.status_code == 401
 
 
@@ -213,7 +232,9 @@ async def test_tenant_fora_do_escopo_rejeitado(admin_client, session, monkeypatc
 @pytest.mark.asyncio
 async def test_overview_federado_vazio(admin_client, admin_token_headers, monkeypatch):
     _enable_federation(monkeypatch)
-    response = await admin_client.get("/admin/routing/federation/overview", headers=admin_token_headers)
+    response = await admin_client.get(
+        "/admin/routing/federation/overview", headers=admin_token_headers
+    )
     payload = response.json()
 
     assert response.status_code == 200
@@ -225,7 +246,12 @@ async def test_overview_federado_vazio(admin_client, admin_token_headers, monkey
 async def test_overview_federado_populado(admin_client, admin_token_headers, session, monkeypatch):
     _enable_federation(monkeypatch)
     await _seed_local_aggregate(session)
-    await register_cluster(session, cluster_id="remote-overview", name="Remote Overview", tenant_scope_json={"tenants": ["tenant-1"]})
+    await register_cluster(
+        session,
+        cluster_id="remote-overview",
+        name="Remote Overview",
+        tenant_scope_json={"tenants": ["tenant-1"]},
+    )
     session.add(
         CommercialFederatedAggregate(
             source_cluster_id="remote-overview",
@@ -245,7 +271,9 @@ async def test_overview_federado_populado(admin_client, admin_token_headers, ses
     )
     await session.commit()
 
-    response = await admin_client.get("/admin/routing/federation/overview", headers=admin_token_headers)
+    response = await admin_client.get(
+        "/admin/routing/federation/overview", headers=admin_token_headers
+    )
     payload = response.json()
 
     assert response.status_code == 200
@@ -257,7 +285,12 @@ async def test_overview_federado_populado(admin_client, admin_token_headers, ses
 async def test_compare_clusters(admin_client, admin_token_headers, session, monkeypatch):
     _enable_federation(monkeypatch)
     await _seed_local_aggregate(session, margin=3.0)
-    await register_cluster(session, cluster_id="remote-compare", name="Remote Compare", tenant_scope_json={"tenants": ["tenant-1"]})
+    await register_cluster(
+        session,
+        cluster_id="remote-compare",
+        name="Remote Compare",
+        tenant_scope_json={"tenants": ["tenant-1"]},
+    )
     session.add(
         CommercialFederatedAggregate(
             source_cluster_id="remote-compare",
@@ -277,12 +310,16 @@ async def test_compare_clusters(admin_client, admin_token_headers, session, monk
     )
     await session.commit()
 
-    response = await admin_client.get("/admin/routing/federation/compare", headers=admin_token_headers)
+    response = await admin_client.get(
+        "/admin/routing/federation/compare", headers=admin_token_headers
+    )
     payload = response.json()
 
     assert response.status_code == 200
     assert len(payload["comparisons"]) >= 2
-    assert any(item["type"] in {"negative_margin", "latency_regression"} for item in payload["anomalies"])
+    assert any(
+        item["type"] in {"negative_margin", "latency_regression"} for item in payload["anomalies"]
+    )
 
 
 @pytest.mark.asyncio
@@ -291,9 +328,15 @@ async def test_export_json_csv_html(admin_client, admin_token_headers, session, 
     await _seed_local_aggregate(session)
     await session.commit()
 
-    json_resp = await admin_client.get("/admin/routing/federation/export?format=json", headers=admin_token_headers)
-    csv_resp = await admin_client.get("/admin/routing/federation/export?format=csv", headers=admin_token_headers)
-    html_resp = await admin_client.get("/admin/routing/federation/export?format=html", headers=admin_token_headers)
+    json_resp = await admin_client.get(
+        "/admin/routing/federation/export?format=json", headers=admin_token_headers
+    )
+    csv_resp = await admin_client.get(
+        "/admin/routing/federation/export?format=csv", headers=admin_token_headers
+    )
+    html_resp = await admin_client.get(
+        "/admin/routing/federation/export?format=html", headers=admin_token_headers
+    )
 
     assert json_resp.status_code == 200
     assert "overview" in json_resp.json()
@@ -323,7 +366,9 @@ async def test_cleanup_retention(admin_client, admin_token_headers, session, mon
     )
     await session.commit()
 
-    response = await admin_client.post("/admin/routing/federation/cleanup", headers=admin_token_headers)
+    response = await admin_client.post(
+        "/admin/routing/federation/cleanup", headers=admin_token_headers
+    )
     remaining = (await session.execute(select(CommercialFederatedAggregate))).scalars().all()
 
     assert response.status_code == 200
@@ -343,21 +388,29 @@ async def test_payload_sanitizado(admin_client, admin_token_headers, session, mo
             "metadata_json": {"token": "secret-token", "nested": {"password": "x", "note": "ok"}},
         },
     )
-    listing = await admin_client.get("/admin/routing/federation/clusters", headers=admin_token_headers)
+    listing = await admin_client.get(
+        "/admin/routing/federation/clusters", headers=admin_token_headers
+    )
 
     assert response.status_code == 200
-    cluster = next(item for item in listing.json()["clusters"] if item["cluster_id"] == "remote-safe")
+    cluster = next(
+        item for item in listing.json()["clusters"] if item["cluster_id"] == "remote-safe"
+    )
     assert cluster["metadata_json"]["token"] == "[REDACTED]"
     assert cluster["metadata_json"]["nested"]["password"] == "[REDACTED]"
 
 
 @pytest.mark.asyncio
-async def test_single_cluster_continua_funcionando(admin_client, admin_token_headers, session, monkeypatch):
+async def test_single_cluster_continua_funcionando(
+    admin_client, admin_token_headers, session, monkeypatch
+):
     _enable_federation(monkeypatch)
     await _seed_local_aggregate(session, provider="lmstudio", model="local-model", margin=4.0)
     await session.commit()
 
-    response = await admin_client.get("/admin/routing/federation/overview", headers=admin_token_headers)
+    response = await admin_client.get(
+        "/admin/routing/federation/overview", headers=admin_token_headers
+    )
     payload = response.json()
 
     assert response.status_code == 200

@@ -30,26 +30,38 @@ async def authed_client(test_app):
 
 
 async def _authed_post(client, path, json_data):
-    return await client.post(path, json=json_data, headers={"X-Admin-Token": os.environ.get("ADMIN_TOKEN", "test-admin-token")})
+    return await client.post(
+        path,
+        json=json_data,
+        headers={"X-Admin-Token": os.environ.get("ADMIN_TOKEN", "test-admin-token")},
+    )
 
 
 async def _authed_get(client, path):
-    return await client.get(path, headers={"X-Admin-Token": os.environ.get("ADMIN_TOKEN", "test-admin-token")})
+    return await client.get(
+        path, headers={"X-Admin-Token": os.environ.get("ADMIN_TOKEN", "test-admin-token")}
+    )
 
 
 @pytest.mark.asyncio
 async def test_simulate_requires_auth(authed_client):
-    resp = await authed_client.post("/admin/routing/simulate", json={"endpoint_type": "chat", "cloud_allowed": False})
+    resp = await authed_client.post(
+        "/admin/routing/simulate", json={"endpoint_type": "chat", "cloud_allowed": False}
+    )
     assert resp.status_code in (401, 403)
 
 
 @pytest.mark.asyncio
 async def test_simulate_with_auth(authed_client):
-    resp = await _authed_post(authed_client, "/admin/routing/simulate", {
-        "endpoint_type": "chat",
-        "cloud_allowed": False,
-        "strategy": "local_first",
-    })
+    resp = await _authed_post(
+        authed_client,
+        "/admin/routing/simulate",
+        {
+            "endpoint_type": "chat",
+            "cloud_allowed": False,
+            "strategy": "local_first",
+        },
+    )
     assert resp.status_code in (200, 422)
     if resp.status_code == 200:
         data = resp.json()
@@ -61,11 +73,15 @@ async def test_simulate_with_auth(authed_client):
 
 @pytest.mark.asyncio
 async def test_simulate_returns_decision_fields(authed_client):
-    resp = await _authed_post(authed_client, "/admin/routing/simulate", {
-        "endpoint_type": "chat",
-        "cloud_allowed": False,
-        "strategy": "local_first",
-    })
+    resp = await _authed_post(
+        authed_client,
+        "/admin/routing/simulate",
+        {
+            "endpoint_type": "chat",
+            "cloud_allowed": False,
+            "strategy": "local_first",
+        },
+    )
     if resp.status_code == 200:
         dec = resp.json()["decision"]
         assert "selected_provider" in dec
@@ -111,22 +127,38 @@ async def test_get_last_decisions(authed_client):
 
 @pytest.mark.asyncio
 async def test_simulate_all_strategies(authed_client):
-    for strategy in ["local_first", "lowest_cost", "premium_quality", "coding", "embeddings_optimized", "rag_optimized", "fallback_only"]:
-        resp = await _authed_post(authed_client, "/admin/routing/simulate", {
-            "endpoint_type": "chat",
-            "cloud_allowed": False,
-            "strategy": strategy,
-        })
+    for strategy in [
+        "local_first",
+        "lowest_cost",
+        "premium_quality",
+        "coding",
+        "embeddings_optimized",
+        "rag_optimized",
+        "fallback_only",
+    ]:
+        resp = await _authed_post(
+            authed_client,
+            "/admin/routing/simulate",
+            {
+                "endpoint_type": "chat",
+                "cloud_allowed": False,
+                "strategy": strategy,
+            },
+        )
         assert resp.status_code in (200, 422), f"strategy {strategy} failed: {resp.status_code}"
 
 
 @pytest.mark.asyncio
 async def test_simulate_with_cloud_allowed(authed_client):
-    resp = await _authed_post(authed_client, "/admin/routing/simulate", {
-        "endpoint_type": "chat",
-        "cloud_allowed": True,
-        "strategy": "premium_quality",
-    })
+    resp = await _authed_post(
+        authed_client,
+        "/admin/routing/simulate",
+        {
+            "endpoint_type": "chat",
+            "cloud_allowed": True,
+            "strategy": "premium_quality",
+        },
+    )
     assert resp.status_code in (200, 422)
 
 

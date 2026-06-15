@@ -7,10 +7,11 @@ import tarfile
 import uuid
 import zipfile
 from pathlib import Path
-from typing import Dict, List, Optional, Set
 
 from app.contracts.plugin import ManifestV1
 from app.core.config import get_settings
+from app.models.core.security_event import SecurityEvent
+from app.models.core.security_pki import PluginRegistry
 from app.models.plugins.marketplace import (
     PluginInstall,
     PluginMarketplaceEntry,
@@ -19,8 +20,6 @@ from app.models.plugins.marketplace import (
     PluginTrustReport,
     PluginVersion,
 )
-from app.models.core.security_event import SecurityEvent
-from app.models.core.security_pki import PluginRegistry
 from app.services.security.pki_service import PKIService
 from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -39,13 +38,13 @@ class PluginMarketplaceService:
         self.pki_service = PKIService(db)
         self._data_dir = Path(self.settings.pki_storage_path).parent / "plugins"
 
-    async def list_marketplace(self) -> List[PluginMarketplaceEntry]:
+    async def list_marketplace(self) -> list[PluginMarketplaceEntry]:
         result = await self.db.execute(
             select(PluginMarketplaceEntry).order_by(PluginMarketplaceEntry.name)
         )
         return list(result.scalars().all())
 
-    async def list_versions(self, plugin_entry_id: uuid.UUID) -> List[PluginVersion]:
+    async def list_versions(self, plugin_entry_id: uuid.UUID) -> list[PluginVersion]:
         result = await self.db.execute(
             select(PluginVersion)
             .where(PluginVersion.plugin_entry_id == plugin_entry_id)
@@ -53,19 +52,19 @@ class PluginMarketplaceService:
         )
         return list(result.scalars().all())
 
-    async def list_installs(self) -> List[PluginInstall]:
+    async def list_installs(self) -> list[PluginInstall]:
         result = await self.db.execute(
             select(PluginInstall).order_by(PluginInstall.created_at.desc())
         )
         return list(result.scalars().all())
 
-    async def get_plugin_entry(self, plugin_entry_id: uuid.UUID) -> Optional[PluginMarketplaceEntry]:
+    async def get_plugin_entry(self, plugin_entry_id: uuid.UUID) -> PluginMarketplaceEntry | None:
         result = await self.db.execute(
             select(PluginMarketplaceEntry).where(PluginMarketplaceEntry.id == plugin_entry_id)
         )
         return result.scalars().first()
 
-    async def get_install(self, install_id: uuid.UUID) -> Optional[PluginInstall]:
+    async def get_install(self, install_id: uuid.UUID) -> PluginInstall | None:
         return await self.db.get(PluginInstall, install_id)
 
     async def install_plugin(self, plugin_file: bytes, filename: str) -> PluginInstall:
@@ -82,7 +81,9 @@ class PluginMarketplaceService:
             if archive_sha:
                 actual_sha = hashlib.sha256(plugin_file).hexdigest()
                 if actual_sha != archive_sha:
-                    raise ValueError(f"Archive checksum mismatch: expected {archive_sha}, got {actual_sha}")
+                    raise ValueError(
+                        f"Archive checksum mismatch: expected {archive_sha}, got {actual_sha}"
+                    )
                 sha256 = actual_sha
             else:
                 sha256 = hashlib.sha256(plugin_file).hexdigest()
@@ -185,9 +186,7 @@ class PluginMarketplaceService:
 
         entry = await self.db.get(PluginMarketplaceEntry, install.plugin_entry_id)
         await self.db.execute(
-            update(PluginRegistry)
-            .where(PluginRegistry.name == entry.name)
-            .values(is_active=True)
+            update(PluginRegistry).where(PluginRegistry.name == entry.name).values(is_active=True)
         )
 
         await self._log_security_event(
@@ -208,9 +207,7 @@ class PluginMarketplaceService:
 
         entry = await self.db.get(PluginMarketplaceEntry, install.plugin_entry_id)
         await self.db.execute(
-            update(PluginRegistry)
-            .where(PluginRegistry.name == entry.name)
-            .values(is_active=False)
+            update(PluginRegistry).where(PluginRegistry.name == entry.name).values(is_active=False)
         )
 
         await self._log_security_event(
@@ -235,9 +232,7 @@ class PluginMarketplaceService:
             delete(PluginPermission).where(PluginPermission.plugin_install_id == install.id)
         )
 
-        await self.db.execute(
-            delete(PluginRegistry).where(PluginRegistry.name == entry.name)
-        )
+        await self.db.execute(delete(PluginRegistry).where(PluginRegistry.name == entry.name))
 
         install_path = Path(install.install_path)
         if install_path.exists():
@@ -324,9 +319,14 @@ class PluginMarketplaceService:
         return install
 
     async def create_trust_report(
-        self, version_id: uuid.UUID, *, trust_score: float = 1.0,
-        vulnerabilities: int = 0, details: Optional[Dict] = None,
-        is_signed: bool = False, signer: Optional[str] = None,
+        self,
+        version_id: uuid.UUID,
+        *,
+        trust_score: float = 1.0,
+        vulnerabilities: int = 0,
+        details: dict | None = None,
+        is_signed: bool = False,
+        signer: str | None = None,
     ) -> PluginTrustReport:
         report = PluginTrustReport(
             plugin_version_id=version_id,
@@ -341,7 +341,7 @@ class PluginMarketplaceService:
         await self.db.refresh(report)
         return report
 
-    async def get_trust_report(self, install_id: uuid.UUID) -> Optional[PluginTrustReport]:
+    async def get_trust_report(self, install_id: uuid.UUID) -> PluginTrustReport | None:
         install = await self.db.get(PluginInstall, install_id)
         if not install:
             return None
@@ -354,9 +354,13 @@ class PluginMarketplaceService:
         return result.scalars().first()
 
     async def add_review(
-        self, plugin_entry_id: uuid.UUID, *, version: str,
-        rating: int, review_text: Optional[str] = None,
-        admin_user_id: Optional[uuid.UUID] = None,
+        self,
+        plugin_entry_id: uuid.UUID,
+        *,
+        version: str,
+        rating: int,
+        review_text: str | None = None,
+        admin_user_id: uuid.UUID | None = None,
     ) -> PluginReview:
         if rating < 1 or rating > 5:
             raise ValueError("Rating must be between 1 and 5")
@@ -375,8 +379,7 @@ class PluginMarketplaceService:
         self.db.add(review)
 
         result = await self.db.execute(
-            select(PluginReview)
-            .where(PluginReview.plugin_entry_id == plugin_entry_id)
+            select(PluginReview).where(PluginReview.plugin_entry_id == plugin_entry_id)
         )
         all_reviews = result.scalars().all()
         if all_reviews:
@@ -388,7 +391,7 @@ class PluginMarketplaceService:
         await self.db.refresh(review)
         return review
 
-    async def list_reviews(self, plugin_entry_id: uuid.UUID) -> List[PluginReview]:
+    async def list_reviews(self, plugin_entry_id: uuid.UUID) -> list[PluginReview]:
         result = await self.db.execute(
             select(PluginReview)
             .where(PluginReview.plugin_entry_id == plugin_entry_id)
@@ -396,10 +399,10 @@ class PluginMarketplaceService:
         )
         return list(result.scalars().all())
 
-    def _validate_manifest_v1(self, data: Dict) -> ManifestV1:
+    def _validate_manifest_v1(self, data: dict) -> ManifestV1:
         return ManifestV1(**data)
 
-    def _extract_manifest(self, plugin_file: bytes, filename: str) -> Optional[Dict]:
+    def _extract_manifest(self, plugin_file: bytes, filename: str) -> dict | None:
         if filename.endswith(".zip"):
             with zipfile.ZipFile(io.BytesIO(plugin_file)) as z:
                 if "manifest.json" in z.namelist():
@@ -422,7 +425,7 @@ class PluginMarketplaceService:
                     pass
         return None
 
-    async def _verify_signature(self, manifest: Dict, signature: str, plugin_binary: bytes):
+    async def _verify_signature(self, manifest: dict, signature: str, plugin_binary: bytes):
         cert_chain = manifest.get("certificate_chain", "")
         if self.settings.pki_enabled and cert_chain:
             is_valid = await self.pki_service.verify_certificate(cert_chain)
@@ -436,10 +439,10 @@ class PluginMarketplaceService:
         elif self.settings.attestation_mode == "enforcing":
             raise ValueError("Plugin signature is required but no certificate chain provided")
 
-    def _get_denylist(self) -> Set[str]:
+    def _get_denylist(self) -> set[str]:
         return set()
 
-    def _get_allowlist(self) -> Set[str]:
+    def _get_allowlist(self) -> set[str]:
         return set()
 
     async def _log_security_event(self, event_type: str, title: str, detail: dict):

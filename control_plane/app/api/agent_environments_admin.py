@@ -20,14 +20,12 @@ class PromotePayload(BaseModel):
 async def get_environments(
     agent_id: str,
     db: AsyncSession = Depends(deps.get_db),
-    current_user = Depends(deps.get_current_admin_user)
+    current_user=Depends(deps.get_current_admin_user),
 ):
     """Retrieves deployment version details across dev, staging, and production environments."""
     tenant_id = current_user.tenant_id
     data = await AgentEnvironmentsService.get_environments(
-        db=db,
-        tenant_id=tenant_id,
-        agent_id=agent_id
+        db=db, tenant_id=tenant_id, agent_id=agent_id
     )
     return data
 
@@ -37,7 +35,7 @@ async def promote_agent(
     agent_id: str,
     payload: PromotePayload,
     db: AsyncSession = Depends(deps.get_db),
-    current_user = Depends(deps.get_current_admin_user)
+    current_user=Depends(deps.get_current_admin_user),
 ):
     """Promotes an agent version to staging or production."""
     tenant_id = current_user.tenant_id
@@ -51,30 +49,25 @@ async def promote_agent(
         from_env=payload.from_environment,
         to_env=payload.to_environment,
         version_id=payload.version_id,
-        requested_by=username
+        requested_by=username,
     )
 
     # 2. If to production and approve is true, approve it
     if payload.to_environment.lower().strip() == "production" and payload.approve:
         approve_res = await PromotionWorkflowService.approve_promotion_request(
-            db=db,
-            tenant_id=tenant_id,
-            request_id=str(req.id),
-            approved_by=username
+            db=db, tenant_id=tenant_id, request_id=str(req.id), approved_by=username
         )
         if approve_res["status"] == "error":
             raise HTTPException(status_code=400, detail=approve_res["message"])
 
     # 3. Execute
     res = await PromotionWorkflowService.execute_promotion(
-        db=db,
-        tenant_id=tenant_id,
-        request_id=str(req.id)
+        db=db, tenant_id=tenant_id, request_id=str(req.id)
     )
 
     if res["status"] == "policy_denied":
         raise HTTPException(status_code=400, detail=res["message"])
-        
+
     if res["status"] == "error":
         raise HTTPException(status_code=500, detail=res["message"])
 
@@ -86,15 +79,12 @@ async def rollback_agent(
     agent_id: str,
     environment: str = Query(..., pattern="^(dev|staging|production)$"),
     db: AsyncSession = Depends(deps.get_db),
-    current_user = Depends(deps.get_current_admin_user)
+    current_user=Depends(deps.get_current_admin_user),
 ):
     """Rolls back the specified environment to the previous deployed version."""
     tenant_id = current_user.tenant_id
     res = await AgentEnvironmentsService.rollback_environment(
-        db=db,
-        tenant_id=tenant_id,
-        agent_id=agent_id,
-        environment=environment
+        db=db, tenant_id=tenant_id, agent_id=agent_id, environment=environment
     )
 
     if res["status"] == "error":

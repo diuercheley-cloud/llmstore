@@ -17,13 +17,14 @@ async def session(isolated_db_url):
         yield s
     await engine.dispose()
 
+
 @pytest.mark.asyncio
 async def test_chunk_lineage(session: AsyncSession):
     vault = await confidential_rag_vault.create_vault(session, "tenant-A", "Docs")
     doc = await confidential_rag_vault.add_document_to_vault(session, vault.id, "Test Content")
-    
-    chunk_hash = hashlib.sha256(("Test Content_chunk0").encode()).hexdigest()
-    
+
+    chunk_hash = hashlib.sha256(b"Test Content_chunk0").hexdigest()
+
     lineage = await chunk_lineage.get_chunk_lineage(session, chunk_hash)
     assert lineage is not None
     assert lineage["chunk_hash"] == chunk_hash

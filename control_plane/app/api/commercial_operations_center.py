@@ -31,7 +31,9 @@ async def get_trust_graph(
 @router.post("/snapshot")
 async def create_trust_snapshot(
     tenant_id: str | None = Query(default=None),
-    format: str = Query(default="record", pattern="^(record|json|signed_bundle|offline_audit_package)$"),
+    format: str = Query(
+        default="record", pattern="^(record|json|signed_bundle|offline_audit_package)$"
+    ),
     db: AsyncSession = Depends(get_db),
     admin: Any = Depends(get_current_admin),
 ) -> dict[str, Any]:

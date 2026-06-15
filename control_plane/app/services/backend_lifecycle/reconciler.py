@@ -1,7 +1,6 @@
 import logging
-from datetime import datetime, timezone
-from typing import Callable, List
-from uuid import UUID
+from collections.abc import Callable
+from datetime import UTC, datetime
 
 from app.contracts.backend_lifecycle import (
     BackendDesiredState,
@@ -23,11 +22,17 @@ class DriftType:
 
 
 class BackendReconciler:
-    def __init__(self, provider: BackendLifecycleContract, on_drift: Callable[[DriftRecord], None] | None = None):
+    def __init__(
+        self,
+        provider: BackendLifecycleContract,
+        on_drift: Callable[[DriftRecord], None] | None = None,
+    ):
         self._provider = provider
         self._on_drift = on_drift
 
-    async def reconcile(self, desired: BackendDesiredState) -> tuple[BackendObservedState, list[DriftRecord], LifecycleActionResult | None]:
+    async def reconcile(
+        self, desired: BackendDesiredState
+    ) -> tuple[BackendObservedState, list[DriftRecord], LifecycleActionResult | None]:
         drifts: list[DriftRecord] = []
         action_result: LifecycleActionResult | None = None
 
@@ -40,28 +45,32 @@ class BackendReconciler:
                 observed = await self._provider.get_observed_state(desired.backend_id, desired)
                 drifts = self._detect_drifts(desired, observed)
             else:
-                drifts.append(DriftRecord(
-                    backend_id=desired.backend_id,
-                    backend_name=desired.name,
-                    drift_type=DriftType.NOT_RUNNING,
-                    desired="running",
-                    observed=f"start failed: {action_result.error or action_result.message}",
-                    timestamp=datetime.now(timezone.utc).isoformat(),
-                ))
+                drifts.append(
+                    DriftRecord(
+                        backend_id=desired.backend_id,
+                        backend_name=desired.name,
+                        drift_type=DriftType.NOT_RUNNING,
+                        desired="running",
+                        observed=f"start failed: {action_result.error or action_result.message}",
+                        timestamp=datetime.now(UTC).isoformat(),
+                    )
+                )
         elif drifts and not desired.is_active and observed.running:
             action_result = await self._provider.stop_backend(desired.backend_id, desired)
             if action_result.success:
                 observed = await self._provider.get_observed_state(desired.backend_id, desired)
                 drifts = self._detect_drifts(desired, observed)
             else:
-                drifts.append(DriftRecord(
-                    backend_id=desired.backend_id,
-                    backend_name=desired.name,
-                    drift_type=DriftType.UNEXPECTED_RUNNING,
-                    desired="stopped",
-                    observed=f"stop failed: {action_result.error or action_result.message}",
-                    timestamp=datetime.now(timezone.utc).isoformat(),
-                ))
+                drifts.append(
+                    DriftRecord(
+                        backend_id=desired.backend_id,
+                        backend_name=desired.name,
+                        drift_type=DriftType.UNEXPECTED_RUNNING,
+                        desired="stopped",
+                        observed=f"stop failed: {action_result.error or action_result.message}",
+                        timestamp=datetime.now(UTC).isoformat(),
+                    )
+                )
 
         for d in drifts:
             if self._on_drift:
@@ -69,37 +78,45 @@ class BackendReconciler:
 
         return observed, drifts, action_result
 
-    def _detect_drifts(self, desired: BackendDesiredState, observed: BackendObservedState) -> list[DriftRecord]:
+    def _detect_drifts(
+        self, desired: BackendDesiredState, observed: BackendObservedState
+    ) -> list[DriftRecord]:
         drifts: list[DriftRecord] = []
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
 
         if desired.is_active and not observed.running:
-            drifts.append(DriftRecord(
-                backend_id=desired.backend_id,
-                backend_name=desired.name,
-                drift_type=DriftType.NOT_RUNNING,
-                desired="running",
-                observed=f"not running ({observed.error or 'unknown'})",
-                timestamp=now,
-            ))
+            drifts.append(
+                DriftRecord(
+                    backend_id=desired.backend_id,
+                    backend_name=desired.name,
+                    drift_type=DriftType.NOT_RUNNING,
+                    desired="running",
+                    observed=f"not running ({observed.error or 'unknown'})",
+                    timestamp=now,
+                )
+            )
         elif not desired.is_active and observed.running:
-            drifts.append(DriftRecord(
-                backend_id=desired.backend_id,
-                backend_name=desired.name,
-                drift_type=DriftType.UNEXPECTED_RUNNING,
-                desired="stopped",
-                observed="running",
-                timestamp=now,
-            ))
+            drifts.append(
+                DriftRecord(
+                    backend_id=desired.backend_id,
+                    backend_name=desired.name,
+                    drift_type=DriftType.UNEXPECTED_RUNNING,
+                    desired="stopped",
+                    observed="running",
+                    timestamp=now,
+                )
+            )
 
         if observed.running and not observed.healthy:
-            drifts.append(DriftRecord(
-                backend_id=desired.backend_id,
-                backend_name=desired.name,
-                drift_type=DriftType.HEALTH_MISMATCH,
-                desired="healthy",
-                observed=f"unhealthy ({observed.error or 'unknown'})",
-                timestamp=now,
-            ))
+            drifts.append(
+                DriftRecord(
+                    backend_id=desired.backend_id,
+                    backend_name=desired.name,
+                    drift_type=DriftType.HEALTH_MISMATCH,
+                    desired="healthy",
+                    observed=f"unhealthy ({observed.error or 'unknown'})",
+                    timestamp=now,
+                )
+            )
 
         return drifts

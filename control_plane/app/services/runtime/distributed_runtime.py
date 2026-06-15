@@ -1,7 +1,6 @@
 import logging
 import uuid
 from datetime import timedelta
-from typing import List, Optional
 
 from app.core.metrics import (
     LLM_RUNTIME_FAILOVERS_TOTAL,
@@ -21,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class DistributedRuntimeService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -28,8 +28,8 @@ class DistributedRuntimeService:
     async def register_node(self, node_data: dict) -> RuntimeNode:
         # Check if node already exists by name or base_url
         query = select(RuntimeNode).where(
-            (RuntimeNode.name == node_data["name"]) | 
-            (RuntimeNode.base_url == node_data["base_url"])
+            (RuntimeNode.name == node_data["name"])
+            | (RuntimeNode.base_url == node_data["base_url"])
         )
         result = await self.db.execute(query)
         existing_node = result.scalars().first()
@@ -55,15 +55,15 @@ class DistributedRuntimeService:
             capabilities=node_data.get("capabilities", {}),
             trust_level=node_data.get("trust_level", 1),
             status="ready",
-            last_heartbeat_at=utc_now()
+            last_heartbeat_at=utc_now(),
         )
         self.db.add(new_node)
         await self.db.commit()
         await self.db.refresh(new_node)
-        
+
         # Record metric
         LLM_RUNTIME_NODES_TOTAL.labels(node_type=new_node.node_type).inc()
-        
+
         return new_node
 
     async def record_heartbeat(self, node_id: uuid.UUID, heartbeat_data: dict):
@@ -80,48 +80,52 @@ class DistributedRuntimeService:
             memory_usage_mb=heartbeat_data.get("memory_usage_mb", 0.0),
             gpu_usage_percent=heartbeat_data.get("gpu_usage_percent", {}),
             active_requests=heartbeat_data.get("active_requests", 0),
-            metrics=heartbeat_data.get("metrics", {})
+            metrics=heartbeat_data.get("metrics", {}),
         )
         self.db.add(heartbeat)
         await self.db.commit()
-        
+
         # Record metrics
         LLM_RUNTIME_NODE_HEARTBEATS_TOTAL.labels(node_id=str(node_id)).inc()
 
     async def drain_node(self, node_id: uuid.UUID):
         await self.db.execute(
-            update(RuntimeNode)
-            .where(RuntimeNode.id == node_id)
-            .values(status="draining")
+            update(RuntimeNode).where(RuntimeNode.id == node_id).values(status="draining")
         )
         await self.db.commit()
 
-    async def list_nodes(self, status: Optional[str] = None) -> List[RuntimeNode]:
+    async def list_nodes(self, status: str | None = None) -> list[RuntimeNode]:
         query = select(RuntimeNode)
         if status:
             query = query.where(RuntimeNode.status == status)
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
-    async def get_node(self, node_id: uuid.UUID) -> Optional[RuntimeNode]:
+    async def get_node(self, node_id: uuid.UUID) -> RuntimeNode | None:
         result = await self.db.execute(select(RuntimeNode).where(RuntimeNode.id == node_id))
         return result.scalars().first()
 
-    async def select_node_for_model(self, model_id: uuid.UUID, strategy: str = "least_load") -> Optional[RuntimeNode]:
+    async def select_node_for_model(
+        self, model_id: uuid.UUID, strategy: str = "least_load"
+    ) -> RuntimeNode | None:
         # Get all nodes that have this model ready
-        query = select(RuntimeNode).join(RuntimeModelPlacement).where(
-            RuntimeModelPlacement.model_id == model_id,
-            RuntimeModelPlacement.status == "ready",
-            RuntimeNode.status == "ready"
+        query = (
+            select(RuntimeNode)
+            .join(RuntimeModelPlacement)
+            .where(
+                RuntimeModelPlacement.model_id == model_id,
+                RuntimeModelPlacement.status == "ready",
+                RuntimeNode.status == "ready",
+            )
         )
-        
+
         # Check heartbeats (offline if no heartbeat in last 60s)
         cutoff = utc_now() - timedelta(seconds=60)
         query = query.where(RuntimeNode.last_heartbeat_at >= cutoff)
-        
+
         result = await self.db.execute(query)
         nodes = result.scalars().all()
-        
+
         if not nodes:
             return None
 
@@ -129,19 +133,22 @@ class DistributedRuntimeService:
             # Simple RR based on last selection or ID
             nodes.sort(key=lambda x: x.id)
             # This would need a way to track the last index, e.g. in Redis
-            return nodes[0] 
+            return nodes[0]
 
         if strategy == "least_load":
             # Get latest heartbeat for each node
             node_load = {}
             for node in nodes:
-                hb_query = select(RuntimeNodeHeartbeat).where(
-                    RuntimeNodeHeartbeat.node_id == node.id
-                ).order_by(RuntimeNodeHeartbeat.created_at.desc()).limit(1)
+                hb_query = (
+                    select(RuntimeNodeHeartbeat)
+                    .where(RuntimeNodeHeartbeat.node_id == node.id)
+                    .order_by(RuntimeNodeHeartbeat.created_at.desc())
+                    .limit(1)
+                )
                 hb_result = await self.db.execute(hb_query)
                 hb = hb_result.scalars().first()
                 node_load[node.id] = getattr(hb, "active_requests", 0) if hb else 0
-            
+
             best_node_id = min(node_load, key=node_load.get)
             return next(n for n in nodes if n.id == best_node_id)
 
@@ -151,27 +158,38 @@ class DistributedRuntimeService:
 
         return nodes[0]
 
-    async def record_routing_event(self, request_id: str, model_id: uuid.UUID, node_id: uuid.UUID, strategy: str):
+    async def record_routing_event(
+        self, request_id: str, model_id: uuid.UUID, node_id: uuid.UUID, strategy: str
+    ):
         event = RuntimeRoutingEvent(
             request_id=request_id,
             model_id=model_id,
             selected_node_id=node_id,
-            routing_strategy=strategy
+            routing_strategy=strategy,
         )
         self.db.add(event)
         await self.db.commit()
 
-    async def record_failover_event(self, request_id: str, failed_node_id: uuid.UUID, target_node_id: uuid.UUID, reason: str, model_id: Optional[uuid.UUID] = None):
+    async def record_failover_event(
+        self,
+        request_id: str,
+        failed_node_id: uuid.UUID,
+        target_node_id: uuid.UUID,
+        reason: str,
+        model_id: uuid.UUID | None = None,
+    ):
         event = RuntimeFailoverEvent(
             request_id=request_id,
             failed_node_id=failed_node_id,
             target_node_id=target_node_id,
-            reason=reason
+            reason=reason,
         )
         self.db.add(event)
         await self.db.commit()
-        
-        LLM_RUNTIME_FAILOVERS_TOTAL.labels(model_id=str(model_id) if model_id else "unknown", reason=reason).inc()
+
+        LLM_RUNTIME_FAILOVERS_TOTAL.labels(
+            model_id=str(model_id) if model_id else "unknown", reason=reason
+        ).inc()
 
     async def update_node_statuses(self):
         """Background task to mark nodes as offline if they missed heartbeats"""

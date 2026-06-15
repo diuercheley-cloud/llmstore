@@ -137,7 +137,9 @@ def validate_governance_markers() -> list[dict[str, str]]:
         lowered = path.read_text(encoding="utf-8").lower()
         for marker in REQUIRED_GOVERNANCE_MARKERS:
             if marker not in lowered:
-                failures.append({"path": _rel(path), "issue": f"missing governance marker: {marker}"})
+                failures.append(
+                    {"path": _rel(path), "issue": f"missing governance marker: {marker}"}
+                )
     return failures
 
 
@@ -149,7 +151,9 @@ def validate_plugin_certification_doc() -> list[dict[str, str]]:
     lowered = path.read_text(encoding="utf-8").lower()
     for marker in PLUGIN_CERTIFICATION_MARKERS:
         if marker not in lowered:
-            failures.append({"path": _rel(path), "issue": f"missing plugin certification marker: {marker}"})
+            failures.append(
+                {"path": _rel(path), "issue": f"missing plugin certification marker: {marker}"}
+            )
     return failures
 
 
@@ -160,7 +164,9 @@ def validate_supply_chain_doc() -> list[dict[str, str]]:
         return failures
     lowered = path.read_text(encoding="utf-8").lower()
     if not any(marker in lowered for marker in SUPPLY_CHAIN_MARKERS):
-        failures.append({"path": _rel(path), "issue": "missing prohibition on mandatory SaaS/cloud"})
+        failures.append(
+            {"path": _rel(path), "issue": "missing prohibition on mandatory SaaS/cloud"}
+        )
     return failures
 
 
@@ -172,7 +178,9 @@ def validate_threat_model_doc() -> list[dict[str, str]]:
     lowered = path.read_text(encoding="utf-8").lower()
     for marker in STRIDE_MARKERS:
         if marker not in lowered:
-            failures.append({"path": _rel(path), "issue": f"missing STRIDE-like category: {marker}"})
+            failures.append(
+                {"path": _rel(path), "issue": f"missing STRIDE-like category: {marker}"}
+            )
     return failures
 
 
@@ -186,7 +194,9 @@ def validate_prohibited_claims() -> list[dict[str, str]]:
             lowered = path.read_text(encoding="utf-8").lower()
             for claim in PROHIBITED_CLAIMS:
                 if claim in lowered:
-                    failures.append({"path": _rel(path), "issue": f"contains prohibited claim: {claim}"})
+                    failures.append(
+                        {"path": _rel(path), "issue": f"contains prohibited claim: {claim}"}
+                    )
     return failures
 
 

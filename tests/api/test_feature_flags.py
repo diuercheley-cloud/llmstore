@@ -13,11 +13,12 @@ async def setup_db():
         await conn.run_sync(Base.metadata.create_all)
     yield
 
+
 def test_feature_flags_service_basics():
     service = FeatureFlagRegistryService()
     flags = service.get_all_flags()
     assert len(flags) > 0
-    
+
     # Check specific flag exist
     flag_names = {f["name"].upper() for f in flags}
     assert "ABUSE_DETECTION_ENABLED" in flag_names
@@ -36,6 +37,7 @@ def test_feature_flags_service_basics():
     assert valid is True
     assert len(errors) == 0
 
+
 def test_feature_flags_validation_errors(tmp_path):
     mock_yaml = tmp_path / "mock-flags.yaml"
     mock_data = [
@@ -50,7 +52,7 @@ def test_feature_flags_validation_errors(tmp_path):
             "risk_level": "high",
             "dependencies": [],
             "conflicts": [],
-            "safe_default_reason": "Testing high risk defaults"
+            "safe_default_reason": "Testing high risk defaults",
         },
         {
             # Violation 2: Experimental default true
@@ -63,7 +65,7 @@ def test_feature_flags_validation_errors(tmp_path):
             "risk_level": "low",
             "dependencies": [],
             "conflicts": [],
-            "safe_default_reason": "Testing experimental default"
+            "safe_default_reason": "Testing experimental default",
         },
         {
             # Violation 3: Deprecated with no replacement/remove_after
@@ -76,7 +78,7 @@ def test_feature_flags_validation_errors(tmp_path):
             "risk_level": "low",
             "dependencies": [],
             "conflicts": [],
-            "safe_default_reason": "Testing deprecation rule"
+            "safe_default_reason": "Testing deprecation rule",
         },
         {
             # Violation 4 & 5: Unregistered dependency/conflict
@@ -89,19 +91,19 @@ def test_feature_flags_validation_errors(tmp_path):
             "risk_level": "low",
             "dependencies": ["UNREGISTERED_DEPENDENCY"],
             "conflicts": ["UNREGISTERED_CONFLICT"],
-            "safe_default_reason": "Testing dependencies"
-        }
+            "safe_default_reason": "Testing dependencies",
+        },
     ]
-    
+
     with open(mock_yaml, "w") as f:
         yaml.dump(mock_data, f)
-        
+
     service = FeatureFlagRegistryService(registry_path=str(mock_yaml))
     valid, errors = service.validate_registry()
-    
+
     assert valid is False
     assert len(errors) == 6
-    
+
     err_str = " ".join(errors).lower()
     assert "high_risk_flag" in err_str and "high-risk" in err_str
     assert "experimental_flag" in err_str and "experimental" in err_str
@@ -109,68 +111,61 @@ def test_feature_flags_validation_errors(tmp_path):
     assert "unregistered_dependency" in err_str
     assert "unregistered_conflict" in err_str
 
+
 @pytest.mark.asyncio
 async def test_api_list_feature_flags(async_client: AsyncClient, admin_token_headers: dict):
-    response = await async_client.get(
-        "/admin/feature-flags",
-        headers=admin_token_headers
-    )
+    response = await async_client.get("/admin/feature-flags", headers=admin_token_headers)
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
     assert len(data) > 0
 
+
 @pytest.mark.asyncio
 async def test_api_get_flag_details(async_client: AsyncClient, admin_token_headers: dict):
     response = await async_client.get(
-        "/admin/feature-flags/ABUSE_DETECTION_ENABLED",
-        headers=admin_token_headers
+        "/admin/feature-flags/ABUSE_DETECTION_ENABLED", headers=admin_token_headers
     )
     assert response.status_code == 200
     data = response.json()
     assert data["name"] == "ABUSE_DETECTION_ENABLED"
     assert data["default"] is True
 
+
 @pytest.mark.asyncio
 async def test_api_get_flag_not_found(async_client: AsyncClient, admin_token_headers: dict):
     response = await async_client.get(
-        "/admin/feature-flags/NON_EXISTENT_FLAG_123",
-        headers=admin_token_headers
+        "/admin/feature-flags/NON_EXISTENT_FLAG_123", headers=admin_token_headers
     )
     assert response.status_code == 404
+
 
 @pytest.mark.asyncio
 async def test_api_get_deprecated_flags(async_client: AsyncClient, admin_token_headers: dict):
     response = await async_client.get(
-        "/admin/feature-flags/deprecated",
-        headers=admin_token_headers
+        "/admin/feature-flags/deprecated", headers=admin_token_headers
     )
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
 
+
 @pytest.mark.asyncio
 async def test_api_get_conflicts(async_client: AsyncClient, admin_token_headers: dict):
-    response = await async_client.get(
-        "/admin/feature-flags/conflicts",
-        headers=admin_token_headers
-    )
+    response = await async_client.get("/admin/feature-flags/conflicts", headers=admin_token_headers)
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
+
 
 @pytest.mark.asyncio
 async def test_api_validate_registry(async_client: AsyncClient, admin_token_headers: dict):
     response = await async_client.get(
-        "/admin/feature-flags/deprecated",
-        headers=admin_token_headers
+        "/admin/feature-flags/deprecated", headers=admin_token_headers
     )
     assert response.status_code == 200
-    
-    response = await async_client.post(
-        "/admin/feature-flags/validate",
-        headers=admin_token_headers
-    )
+
+    response = await async_client.post("/admin/feature-flags/validate", headers=admin_token_headers)
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "valid"

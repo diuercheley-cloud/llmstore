@@ -6,8 +6,8 @@ from app.core.security import hash_secret, short_prefix
 from app.db.base import Base
 from app.db.session import get_db_session, get_redis
 from app.main import app
-from app.models.core.api_key import ApiKey
 from app.models.billing.billing_plan import BillingPlan
+from app.models.core.api_key import ApiKey
 from app.models.core.client import Client
 from app.models.core.inference_backend import InferenceBackend
 from app.models.core.model_registry import ModelRegistry
@@ -30,16 +30,21 @@ async def abuse_payload_env(isolated_db_url, fake_redis):
     app.dependency_overrides[get_db_session] = override_get_db_session
     app.dependency_overrides[get_redis] = lambda: fake_redis
 
-    with patch("app.db.session.SessionLocal", testing_session_local), \
-         patch("app.services.backend_slot_manager.SessionLocal", testing_session_local), \
-         patch("app.services.backend_slot_manager.BackendSlotManager.try_acquire", return_value=True), \
-         patch("app.services.backend_slot_manager.BackendSlotManager.release", return_value=None):
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
+    with (
+        patch("app.db.session.SessionLocal", testing_session_local),
+        patch("app.services.backend_slot_manager.SessionLocal", testing_session_local),
+        patch(
+            "app.services.backend_slot_manager.BackendSlotManager.try_acquire", return_value=True
+        ),
+        patch("app.services.backend_slot_manager.BackendSlotManager.release", return_value=None),
+    ):
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://testserver"
+        ) as ac:
             yield ac, testing_session_local
 
     app.dependency_overrides.clear()
     await engine.dispose()
-
 
 
 @pytest_asyncio.fixture
@@ -69,7 +74,9 @@ async def payload_setup(abuse_payload_env):
         await session.flush()
 
         # Add a default model so resolve_requested_model doesn't fail with 503
-        backend = InferenceBackend(name="test-backend", provider="test", backend_url="http://test", is_active=True)
+        backend = InferenceBackend(
+            name="test-backend", provider="test", backend_url="http://test", is_active=True
+        )
         session.add(backend)
         await session.flush()
 
@@ -131,11 +138,18 @@ async def test_giant_prompt_returns_413(mock_verify, abuse_payload_env):
         session.add(plan)
         await session.flush()
 
-        client = Client(name="giant-client", billing_plan_id=plan.id, billing_status="active", max_context_tokens=50)
+        client = Client(
+            name="giant-client",
+            billing_plan_id=plan.id,
+            billing_status="active",
+            max_context_tokens=50,
+        )
         session.add(client)
         await session.flush()
 
-        backend = InferenceBackend(name="giant-backend", provider="test", backend_url="http://test", is_active=True)
+        backend = InferenceBackend(
+            name="giant-backend", provider="test", backend_url="http://test", is_active=True
+        )
         session.add(backend)
         await session.flush()
 
@@ -210,7 +224,9 @@ async def test_streaming_not_allowed_for_plan_returns_403(mock_verify, abuse_pay
         session.add(client)
         await session.flush()
 
-        backend = InferenceBackend(name="no-stream-backend", provider="test", backend_url="http://test", is_active=True)
+        backend = InferenceBackend(
+            name="no-stream-backend", provider="test", backend_url="http://test", is_active=True
+        )
         session.add(backend)
         await session.flush()
 
@@ -246,7 +262,9 @@ async def test_streaming_not_allowed_for_plan_returns_403(mock_verify, abuse_pay
 
 @pytest.mark.asyncio
 @patch("app.services.auth.verify_secret", return_value=True)
-async def test_interrupted_stream_request_is_accepted_or_errors_gracefully(mock_verify, payload_setup):
+async def test_interrupted_stream_request_is_accepted_or_errors_gracefully(
+    mock_verify, payload_setup
+):
     ac = payload_setup["ac"]
     key = payload_setup["key"]
 

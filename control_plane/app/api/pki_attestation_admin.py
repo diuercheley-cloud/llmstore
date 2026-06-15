@@ -1,5 +1,5 @@
 # Owner: platform-ops
-from typing import Any, Dict
+from typing import Any
 
 from app.api.dependencies import get_db, require_admin
 from app.core.config import get_settings
@@ -10,11 +10,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/security", tags=["security-pki-attestation"])
 
+
 @router.get("/attestation/report")
 async def get_attestation_report(
     db: AsyncSession = Depends(get_db),
     admin: Any = Depends(require_admin),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Generate an attestation report for this node.
     """
@@ -25,12 +26,13 @@ async def get_attestation_report(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.post("/attestation/verify")
 async def verify_attestation_report(
-    report: Dict[str, Any],
+    report: dict[str, Any],
     db: AsyncSession = Depends(get_db),
     admin: Any = Depends(require_admin),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Verify an attestation report.
     """
@@ -41,18 +43,19 @@ async def verify_attestation_report(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.post("/pki/init")
 async def init_pki(
     db: AsyncSession = Depends(get_db),
     admin: Any = Depends(require_admin),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Initialize the local PKI CA.
     """
     settings = get_settings()
     if not settings.pki_enabled:
         raise HTTPException(status_code=400, detail="PKI is not enabled")
-    
+
     service = PKIService(db)
     try:
         await service.initialize_ca()

@@ -1,7 +1,9 @@
 import pytest
-from app.models.core.client import Client
-from app.models.commercial.commercial_governance_federation import CommercialGovernanceFederationPeer
+from app.models.commercial.commercial_governance_federation import (
+    CommercialGovernanceFederationPeer,
+)
 from app.models.commercial.commercial_model_supply_chain import CommercialModelIntegrityEvent
+from app.models.core.client import Client
 from app.models.core.inference_backend import InferenceBackend
 from app.models.core.model_backend_route import ModelBackendRoute
 from app.models.core.model_registry import ModelRegistry
@@ -14,7 +16,9 @@ from app.services.models.signed_model_registry import register_model_manifest
 from sqlalchemy import select
 
 
-def _build_runtime_model(path: str, *, alias: str = "runtime-model", model_id: str = "runtime/model") -> ModelRegistry:
+def _build_runtime_model(
+    path: str, *, alias: str = "runtime-model", model_id: str = "runtime/model"
+) -> ModelRegistry:
     model = ModelRegistry(
         model_id=model_id,
         model_alias=alias,
@@ -32,7 +36,9 @@ def _build_runtime_model(path: str, *, alias: str = "runtime-model", model_id: s
         is_active=True,
         status="healthy",
     )
-    model.backend_routes = [ModelBackendRoute(priority=1, weight=100, state="healthy", inference_backend=backend)]
+    model.backend_routes = [
+        ModelBackendRoute(priority=1, weight=100, state="healthy", inference_backend=backend)
+    ]
     return model
 
 
@@ -62,7 +68,9 @@ async def test_runtime_integrity_checksum_mismatch(session, tmp_path, settings):
     settings.commercial_model_integrity_auto_quarantine = False
     model_file = tmp_path / "mismatch.gguf"
     model_file.write_bytes(b"before")
-    model = _build_runtime_model(str(model_file), alias="mismatch-model", model_id="runtime/mismatch")
+    model = _build_runtime_model(
+        str(model_file), alias="mismatch-model", model_id="runtime/mismatch"
+    )
     session.add(model)
     await session.flush()
     entry = await register_model_manifest(
@@ -83,7 +91,9 @@ async def test_runtime_integrity_checksum_mismatch(session, tmp_path, settings):
 @pytest.mark.asyncio
 async def test_runtime_integrity_missing_file_creates_alert(session, tmp_path):
     missing_path = tmp_path / "missing.gguf"
-    model = _build_runtime_model(str(missing_path), alias="missing-model", model_id="runtime/missing")
+    model = _build_runtime_model(
+        str(missing_path), alias="missing-model", model_id="runtime/missing"
+    )
     session.add(model)
     await session.flush()
     await register_model_manifest(
@@ -107,7 +117,9 @@ async def test_runtime_integrity_auto_quarantine(session, tmp_path, settings):
     settings.commercial_model_integrity_auto_quarantine = True
     model_file = tmp_path / "quarantine.gguf"
     model_file.write_bytes(b"before")
-    model = _build_runtime_model(str(model_file), alias="quarantine-model", model_id="runtime/quarantine")
+    model = _build_runtime_model(
+        str(model_file), alias="quarantine-model", model_id="runtime/quarantine"
+    )
     session.add(model)
     await session.flush()
     entry = await register_model_manifest(
@@ -173,17 +185,23 @@ async def test_integrity_payload_sanitized(session, tmp_path):
 async def test_enforce_blocks_quarantined(monkeypatch, session, settings):
     settings.commercial_model_supply_chain_enabled = True
     settings.commercial_model_trust_enforcement_mode = "enforce"
-    model = _build_runtime_model("/tmp/enforce.gguf", alias="enforce-model", model_id="runtime/enforce")
+    model = _build_runtime_model(
+        "/tmp/enforce.gguf", alias="enforce-model", model_id="runtime/enforce"
+    )
 
     async def fake_models(_session):
         return [model]
 
     monkeypatch.setattr("app.services.model_policy.list_active_registry_models", fake_models)
-    entry = await register_model_manifest(session, model_name=model.model_id, model_alias=model.model_alias, model_format="api")
+    entry = await register_model_manifest(
+        session, model_name=model.model_id, model_alias=model.model_alias, model_format="api"
+    )
     entry.trust_state = "quarantined"
 
     with pytest.raises(Exception) as exc:
-        await resolve_requested_model(session, client=Client(name="tenant"), requested_model="default")
+        await resolve_requested_model(
+            session, client=Client(name="tenant"), requested_model="default"
+        )
 
     assert getattr(exc.value, "status_code", 500) == 403
 
@@ -192,16 +210,22 @@ async def test_enforce_blocks_quarantined(monkeypatch, session, settings):
 async def test_report_only_does_not_block_quarantined(monkeypatch, session, settings):
     settings.commercial_model_supply_chain_enabled = True
     settings.commercial_model_trust_enforcement_mode = "report_only"
-    model = _build_runtime_model("/tmp/report.gguf", alias="report-model", model_id="runtime/report")
+    model = _build_runtime_model(
+        "/tmp/report.gguf", alias="report-model", model_id="runtime/report"
+    )
 
     async def fake_models(_session):
         return [model]
 
     monkeypatch.setattr("app.services.model_policy.list_active_registry_models", fake_models)
-    entry = await register_model_manifest(session, model_name=model.model_id, model_alias=model.model_alias, model_format="api")
+    entry = await register_model_manifest(
+        session, model_name=model.model_id, model_alias=model.model_alias, model_format="api"
+    )
     entry.trust_state = "quarantined"
 
-    selected, requested = await resolve_requested_model(session, client=Client(name="tenant"), requested_model="default")
+    selected, requested = await resolve_requested_model(
+        session, client=Client(name="tenant"), requested_model="default"
+    )
 
     assert selected.model_alias == "report-model"
     assert requested == "default"
@@ -212,5 +236,7 @@ async def test_runtime_integrity_endpoints_require_admin_auth(admin_client, admi
     unauthorized = await admin_client.get("/admin/models/integrity/scans")
     assert unauthorized.status_code == 401
 
-    authorized = await admin_client.get("/admin/models/integrity/scans", headers=admin_token_headers)
+    authorized = await admin_client.get(
+        "/admin/models/integrity/scans", headers=admin_token_headers
+    )
     assert authorized.status_code == 200

@@ -24,6 +24,7 @@ Security:
   - StdioTransport subprocess runs without shell=True.
   - Neither transport logs raw response bodies (only method/id metadata).
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -65,7 +66,7 @@ class _BaseTransport:
         return {
             "protocolVersion": _MCP_PROTOCOL_VERSION,
             "capabilities": {
-                "sampling": {},   # we request nothing extra — server will report its own
+                "sampling": {},  # we request nothing extra — server will report its own
             },
             "clientInfo": {
                 "name": _CLIENT_NAME,
@@ -120,7 +121,9 @@ class HttpTransport(_BaseTransport):
             data = resp.json()
             return self._unwrap_result(data, method)
         except httpx.HTTPStatusError as exc:
-            raise MCPTransportError(f"HTTP {exc.response.status_code} calling MCP {method}") from exc
+            raise MCPTransportError(
+                f"HTTP {exc.response.status_code} calling MCP {method}"
+            ) from exc
         except httpx.RequestError as exc:
             raise MCPTransportError(f"Network error calling MCP {method}: {exc}") from exc
 
@@ -182,7 +185,7 @@ class StdioTransport(_BaseTransport):
             )
             data = json.loads(raw.decode())
             return self._unwrap_result(data, method)
-        except asyncio.TimeoutError as exc:
+        except TimeoutError as exc:
             raise MCPTransportError(f"Stdio MCP call '{method}' timed out") from exc
         except json.JSONDecodeError as exc:
             raise MCPTransportError(f"Invalid JSON from stdio MCP server on '{method}'") from exc
@@ -197,7 +200,9 @@ class StdioTransport(_BaseTransport):
             self._proc = None
 
 
-def build_transport(transport_type: str, endpoint: str, timeout_ms: int = 10_000) -> HttpTransport | StdioTransport:
+def build_transport(
+    transport_type: str, endpoint: str, timeout_ms: int = 10_000
+) -> HttpTransport | StdioTransport:
     """
     Factory: choose the transport implementation from the server's config.
 

@@ -1,8 +1,8 @@
 import httpx
-from fastapi import HTTPException
 from app.core.config import get_settings
 from app.services.inference.backends.base import Capability
 from app.services.inference.backends.openai_compatible_backend import OpenAICompatibleBackend
+from fastapi import HTTPException
 
 
 class VLLMBackend(OpenAICompatibleBackend):

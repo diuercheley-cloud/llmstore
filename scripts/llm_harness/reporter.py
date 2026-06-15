@@ -30,6 +30,7 @@ class Reporter:
         policy_info: dict[str, Any] | None = None,
     ):
         from .plugins import plugin_registry
+
         summary = {
             "success": result.success,
             "message": Sanitizer.sanitize_text(result.message),
@@ -82,7 +83,7 @@ class Reporter:
                     "source": plugin.metadata.source,
                 }
                 for name, plugin in plugin_registry.plugins.items()
-            }
+            },
         }
 
         if summary["provider"] == "stub":
@@ -121,20 +122,18 @@ class Reporter:
         ]
         for e in raw_events:
             status_icon = (
-                "✅"
-                if e["status"] == "completed"
-                else "❌"
-                if e["status"] == "failed"
-                else "🚫"
+                "✅" if e["status"] == "completed" else "❌" if e["status"] == "failed" else "🚫"
             )
-            completed_events.append({
-                "step": e["step"],
-                "action_type": e["action_type"],
-                "status_icon": status_icon,
-                "status": e["status"],
-                "duration_ms": e["duration_ms"],
-                "message_short": Sanitizer.sanitize_text(e["message"])[:50],
-            })
+            completed_events.append(
+                {
+                    "step": e["step"],
+                    "action_type": e["action_type"],
+                    "status_icon": status_icon,
+                    "status": e["status"],
+                    "duration_ms": e["duration_ms"],
+                    "message_short": Sanitizer.sanitize_text(e["message"])[:50],
+                }
+            )
             parsed = e.get("metadata", {}).get("parsed")
             if isinstance(parsed, dict) and parsed.get("summary"):
                 parsed_summaries.append(
@@ -148,9 +147,7 @@ class Reporter:
                     }
                 )
 
-        slowest_actions = sorted(
-            completed_events, key=lambda x: x["duration_ms"], reverse=True
-        )[:3]
+        slowest_actions = sorted(completed_events, key=lambda x: x["duration_ms"], reverse=True)[:3]
 
         template = self.jinja_env.get_template("report.md.jinja")
         git_status = ""

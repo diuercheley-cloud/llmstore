@@ -1,8 +1,11 @@
 import logging
+
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from .errors import RestoreRollbackError
 
 logger = logging.getLogger(__name__)
+
 
 class RestoreRollbackService:
     def __init__(self, db: AsyncSession):
@@ -14,6 +17,7 @@ class RestoreRollbackService:
         """
         try:
             from .backup_service import BackupService
+
             service = BackupService(self.db)
             # We use the internal restore logic that doesn't re-acquire locks
             # if we are already inside a restore flow

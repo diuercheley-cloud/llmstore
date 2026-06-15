@@ -16,24 +16,27 @@ def patch_settings(env_dict):
     get_settings.cache_clear()
     return patcher
 
+
 @pytest.mark.asyncio
 async def test_structured_output_validation():
-    content = "Here is the result: ```json\n{\"status\": \"ok\"}\n```"
+    content = 'Here is the result: ```json\n{"status": "ok"}\n```'
     result = StructuredOutputValidator.parse_and_validate(content)
     assert result == {"status": "ok"}
+
 
 @pytest.mark.asyncio
 async def test_output_repair_success():
     llm = MockAgentLLMProvider()
-    llm.generate = AsyncMock(return_value={"output": "{\"status\": \"repaired\"}"})
-    
+    llm.generate = AsyncMock(return_value={"output": '{"status": "repaired"}'})
+
     repair_svc = OutputRepairService(llm)
     agent_def = MagicMock(instructions="test")
     run = MagicMock()
-    
+
     result = await repair_svc.repair_output("bad json", "JSONDecodeError", agent_def, run)
     assert result == {"status": "repaired"}
     llm.generate.assert_called_once()
+
 
 @pytest.mark.asyncio
 async def test_context_compression_triggers():
@@ -41,26 +44,28 @@ async def test_context_compression_triggers():
     try:
         compressor = ContextCompressor(max_tokens_threshold=10)
         history = [{"role": "system", "content": "S"}, {"role": "user", "content": "U" * 100}]
-        
+
         compressed = await compressor.compress_if_needed(history)
         assert len(compressed) >= 2
         assert any("[CONTEXT SUMMARY]" in m["content"] for m in compressed)
     finally:
         p.stop()
 
+
 @pytest.mark.asyncio
 async def test_semantic_fallback_model_selection():
     p = patch_settings({"AGENT_SEMANTIC_MODEL_FALLBACK_ENABLED": "true"})
     try:
         fallback = SemanticModelFallback()
-        
+
         model = await fallback.get_fallback_model("gpt-4o-mini", "json_malformed")
         assert model == "gpt-4o"
-        
+
         model = await fallback.get_fallback_model("gpt-4o", "context_length_exceeded")
         assert model == "gpt-4o-32k"
     finally:
         p.stop()
+
 
 @pytest.mark.asyncio
 async def test_secret_redaction():

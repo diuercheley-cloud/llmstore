@@ -15,6 +15,7 @@ Thread safety: access is not guarded by a lock because FastAPI routes
 run in a single asyncio event loop.  If multi-process deployment is
 needed, replace the dict with a Redis/DB-backed store.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -31,7 +32,7 @@ class MCPServerRecord:
     id: str
     tenant_id: str
     name: str
-    transport: str          # 'streamable_http' | 'http' | 'stdio'
+    transport: str  # 'streamable_http' | 'http' | 'stdio'
     endpoint: str
     trust_level: str = "untrusted"
     approved_tools: set[str] = field(default_factory=set)

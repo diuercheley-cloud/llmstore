@@ -2,7 +2,6 @@
 import logging
 import uuid
 from datetime import timedelta
-from typing import Optional
 
 from app.core.time import utc_now
 from app.models.agents.agent_workflows import (
@@ -15,17 +14,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
+
 class WorkflowParallelManager:
     """
     Handles fan-out and fan-in parallelism for workflows.
     Manages parallel groups, branch tracking, and join conditions.
     """
-    
+
     def __init__(self, db: AsyncSession, run: AgentWorkflowRun):
         self.db = db
         self.run = run
 
-    async def create_parallel_group(self, node: AgentWorkflowNode, branches_count: int) -> AgentWorkflowParallelGroup:
+    async def create_parallel_group(
+        self, node: AgentWorkflowNode, branches_count: int
+    ) -> AgentWorkflowParallelGroup:
         config = node.config
         group = AgentWorkflowParallelGroup(
             run_id=self.run.id,
@@ -34,17 +36,17 @@ class WorkflowParallelManager:
             timeout_seconds=config.get("timeout_seconds"),
             failure_policy=config.get("failure_policy", "fail_fast"),
             branches_count=branches_count,
-            status="active"
+            status="active",
         )
         self.db.add(group)
         await self.db.flush()
         return group
 
-    async def get_active_group(self, fanout_node_key: str) -> Optional[AgentWorkflowParallelGroup]:
+    async def get_active_group(self, fanout_node_key: str) -> AgentWorkflowParallelGroup | None:
         stmt = select(AgentWorkflowParallelGroup).where(
             AgentWorkflowParallelGroup.run_id == self.run.id,
             AgentWorkflowParallelGroup.fanout_node_key == fanout_node_key,
-            AgentWorkflowParallelGroup.status == "active"
+            AgentWorkflowParallelGroup.status == "active",
         )
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
@@ -53,7 +55,7 @@ class WorkflowParallelManager:
         stmt = select(AgentWorkflowParallelGroup).where(AgentWorkflowParallelGroup.id == group_id)
         result = await self.db.execute(stmt)
         group = result.scalar_one_or_none()
-        
+
         if not group:
             return
 
@@ -75,11 +77,11 @@ class WorkflowParallelManager:
             stmt = select(AgentWorkflowParallelGroup).where(
                 AgentWorkflowParallelGroup.run_id == self.run.id,
                 AgentWorkflowParallelGroup.fanout_node_key == fanout_node_key,
-                AgentWorkflowParallelGroup.status == "completed"
+                AgentWorkflowParallelGroup.status == "completed",
             )
             result = await self.db.execute(stmt)
             return result.scalar_one_or_none() is not None
-        
+
         return group.status == "completed"
 
     async def check_timeouts(self):
@@ -87,11 +89,11 @@ class WorkflowParallelManager:
         stmt = select(AgentWorkflowParallelGroup).where(
             AgentWorkflowParallelGroup.run_id == self.run.id,
             AgentWorkflowParallelGroup.status == "active",
-            AgentWorkflowParallelGroup.timeout_seconds.is_not(None)
+            AgentWorkflowParallelGroup.timeout_seconds.is_not(None),
         )
         result = await self.db.execute(stmt)
         active_groups = result.scalars().all()
-        
+
         now = utc_now()
         for group in active_groups:
             if now > group.created_at + timedelta(seconds=group.timeout_seconds):

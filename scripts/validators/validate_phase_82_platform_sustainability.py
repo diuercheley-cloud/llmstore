@@ -83,7 +83,9 @@ def _iter_files(path_str: str) -> list[Path]:
         return sorted(
             item
             for item in path.rglob("*")
-            if item.is_file() and "__pycache__" not in item.parts and item.suffix in {".py", ".md", ".html"}
+            if item.is_file()
+            and "__pycache__" not in item.parts
+            and item.suffix in {".py", ".md", ".html"}
         )
     return []
 
@@ -103,7 +105,11 @@ def validate_presence() -> list[str]:
 
 def validate_api_registration() -> list[str]:
     main_text = (REPO_ROOT / "control_plane/app/main.py").read_text(encoding="utf-8")
-    return [] if "governance_policy_engine_admin_router" in main_text else ["policy engine router not registered in main.py"]
+    return (
+        []
+        if "governance_policy_engine_admin_router" in main_text
+        else ["policy engine router not registered in main.py"]
+    )
 
 
 def validate_dashboards() -> list[str]:
@@ -120,35 +126,35 @@ def validate_dashboards() -> list[str]:
         "no real external execution",
         "no formal certification claims",
     ]
-    
+
     # Admin part: check hub or legacy
     admin_files = [
         "control_plane/app/static/admin/index.html",
-        "control_plane/app/static/admin/index.legacy.html"
+        "control_plane/app/static/admin/index.legacy.html",
     ]
     admin_content = ""
     for f in admin_files:
         if (REPO_ROOT / f).exists():
             admin_content += (REPO_ROOT / f).read_text(encoding="utf-8").lower()
-    
+
     for label in required_labels:
         if label.lower() not in admin_content:
             errors.append(f"admin dashboards missing label '{label}' (checked hub and legacy)")
-            
+
     # Portal part: check hub or legacy
     portal_files = [
         "control_plane/app/static/portal/index.html",
-        "control_plane/app/static/portal/index.legacy.html"
+        "control_plane/app/static/portal/index.legacy.html",
     ]
     portal_content = ""
     for f in portal_files:
         if (REPO_ROOT / f).exists():
             portal_content += (REPO_ROOT / f).read_text(encoding="utf-8").lower()
-    
+
     for label in required_labels:
         if label.lower() not in portal_content:
             errors.append(f"portal dashboards missing label '{label}' (checked hub and legacy)")
-        
+
     return errors
 
 
@@ -160,10 +166,14 @@ def validate_forbidden_patterns() -> list[str]:
             lowered = text.lower()
             for token in PROHIBITED_TOKENS:
                 if token in text:
-                    errors.append(f"prohibited token '{token}' found in {path.relative_to(REPO_ROOT)}")
+                    errors.append(
+                        f"prohibited token '{token}' found in {path.relative_to(REPO_ROOT)}"
+                    )
             for token in SOFT_PROHIBITED_MARKERS:
                 if token in lowered:
-                    errors.append(f"unexpected runtime/network marker '{token}' found in {path.relative_to(REPO_ROOT)}")
+                    errors.append(
+                        f"unexpected runtime/network marker '{token}' found in {path.relative_to(REPO_ROOT)}"
+                    )
     return errors
 
 

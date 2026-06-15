@@ -15,7 +15,9 @@ async def test_policy_engine_denies_unregistered_tool(session):
         allowed_tools=["echo"],
         requires_approval_for_tools=False,
     )
-    execution = CommercialAgentExecution(agent_id=profile.id, tenant_id="tenant-a", status="running")
+    execution = CommercialAgentExecution(
+        agent_id=profile.id, tenant_id="tenant-a", status="running"
+    )
     session.add(profile)
     await session.flush()
     execution.agent_id = profile.id
@@ -50,7 +52,9 @@ async def test_policy_engine_requires_approval_and_enforces_tenant(session):
     )
     session.add_all([profile, tool])
     await session.flush()
-    execution = CommercialAgentExecution(agent_id=profile.id, tenant_id="tenant-a", status="running")
+    execution = CommercialAgentExecution(
+        agent_id=profile.id, tenant_id="tenant-a", status="running"
+    )
     session.add(execution)
     await session.commit()
 
@@ -75,4 +79,8 @@ async def test_policy_engine_requires_approval_and_enforces_tenant(session):
         payload={"value": "x"},
     )
     assert tenant_mismatch.allowed is False
-    assert tenant_mismatch.reason in {"tenant_scope_mismatch", "agent_profile_tenant_mismatch", "tool_not_registered"}
+    assert tenant_mismatch.reason in {
+        "tenant_scope_mismatch",
+        "agent_profile_tenant_mismatch",
+        "tool_not_registered",
+    }

@@ -7,9 +7,9 @@ from typing import Any
 
 from app.core.config import Settings, get_settings
 from app.core.time import utc_now
-from app.models.core.admin_action_log import AdminActionLog
 from app.models.commercial.commercial_leader_lease import CommercialLeaderLease
 from app.models.commercial.commercial_node_heartbeat import CommercialNodeHeartbeat
+from app.models.core.admin_action_log import AdminActionLog
 from app.services.routing.commercial_node_heartbeat import _derive_status
 from app.services.routing.commercial_report_export import sanitize_report_payload
 from sqlalchemy import func, select
@@ -48,7 +48,9 @@ def _sanitize_metadata(metadata_json: dict[str, Any] | None) -> dict[str, Any]:
     return sanitize_report_payload(metadata_json or {})
 
 
-def _serialize_lease(lease: CommercialLeaderLease | None, *, settings: Settings | None = None) -> dict[str, Any] | None:
+def _serialize_lease(
+    lease: CommercialLeaderLease | None, *, settings: Settings | None = None
+) -> dict[str, Any] | None:
     if lease is None:
         return None
     cfg = settings or get_settings()
@@ -155,7 +157,9 @@ async def force_expire_stale_leases(
     for lease in leases:
         heartbeat = heartbeats.get(lease.node_id)
         heartbeat_status = _derive_status(heartbeat.last_seen_at, cfg) if heartbeat else "unknown"
-        stale = _as_utc(lease.lease_expires_at) <= (now - skew_window) or (heartbeat is not None and heartbeat_status == "offline")
+        stale = _as_utc(lease.lease_expires_at) <= (now - skew_window) or (
+            heartbeat is not None and heartbeat_status == "offline"
+        )
         if not stale:
             continue
         lease.status = LEASE_EXPIRED
@@ -233,7 +237,9 @@ async def try_acquire_leader(
             },
             "reason": "leader_election_disabled",
         }
-    expire_result = await force_expire_stale_leases(db, cluster_id=cluster_id, leader_role=role, settings=cfg)
+    expire_result = await force_expire_stale_leases(
+        db, cluster_id=cluster_id, leader_role=role, settings=cfg
+    )
     current = await _active_lease_query(db, cluster_id=cluster_id, leader_role=role)
     if current and current.node_id == node_id and _as_utc(current.lease_expires_at) > _now():
         renewed = await renew_leader_lease(
@@ -271,7 +277,10 @@ async def try_acquire_leader(
         await db.flush()
     except IntegrityError:
         await db.rollback()
-        logger.info("leader lease acquire conflict", extra={"extra_data": {"cluster_id": cluster_id, "leader_role": role}})
+        logger.info(
+            "leader lease acquire conflict",
+            extra={"extra_data": {"cluster_id": cluster_id, "leader_role": role}},
+        )
         fresh = await get_current_leader(db, cluster_id=cluster_id, leader_role=role, settings=cfg)
         return {"acquired": False, "lease": fresh, "reason": "integrity_conflict"}
     action = "failover_promoted" if expire_result["expired_count"] else "leader_acquired"
@@ -315,7 +324,12 @@ async def renew_leader_lease(
         }
     await force_expire_stale_leases(db, cluster_id=cluster_id, leader_role=role, settings=cfg)
     lease = await _active_lease_query(db, cluster_id=cluster_id, leader_role=role)
-    if lease is None or lease.node_id != node_id or int(lease.lease_token) != int(lease_token) or _as_utc(lease.lease_expires_at) <= _now():
+    if (
+        lease is None
+        or lease.node_id != node_id
+        or int(lease.lease_token) != int(lease_token)
+        or _as_utc(lease.lease_expires_at) <= _now()
+    ):
         await _log_audit(
             db,
             action="scheduler_stopped_due_lease_loss",
@@ -327,7 +341,11 @@ async def renew_leader_lease(
                 "lease_token": lease_token,
             },
         )
-        return {"renewed": False, "lease": _serialize_lease(lease, settings=cfg) if lease else None, "reason": "lease_lost"}
+        return {
+            "renewed": False,
+            "lease": _serialize_lease(lease, settings=cfg) if lease else None,
+            "reason": "lease_lost",
+        }
     now = _now()
     lease.last_heartbeat_at = now
     lease.lease_expires_at = now + timedelta(seconds=cfg.commercial_lease_duration_seconds)
@@ -361,8 +379,16 @@ async def release_leader(
     if not cfg.commercial_leader_election_enabled:
         return {"released": True, "reason": "leader_election_disabled"}
     lease = await _active_lease_query(db, cluster_id=cluster_id, leader_role=role)
-    if lease is None or lease.node_id != node_id or (lease_token is not None and int(lease.lease_token) != int(lease_token)):
-        return {"released": False, "reason": "not_current_leader", "lease": _serialize_lease(lease, settings=cfg) if lease else None}
+    if (
+        lease is None
+        or lease.node_id != node_id
+        or (lease_token is not None and int(lease.lease_token) != int(lease_token))
+    ):
+        return {
+            "released": False,
+            "reason": "not_current_leader",
+            "lease": _serialize_lease(lease, settings=cfg) if lease else None,
+        }
     lease.status = LEASE_RELEASED
     lease.lease_expires_at = _now()
     lease.last_heartbeat_at = _now()
@@ -425,7 +451,9 @@ async def is_current_leader(
     lease_token: int | None = None,
     settings: Settings | None = None,
 ) -> bool:
-    current = await get_current_leader(db, cluster_id=cluster_id, leader_role=_normalize_role(leader_role), settings=settings)
+    current = await get_current_leader(
+        db, cluster_id=cluster_id, leader_role=_normalize_role(leader_role), settings=settings
+    )
     if not current:
         return False
     if current["node_id"] != node_id:

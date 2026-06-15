@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -12,7 +11,7 @@ class CostSummary(BaseModel):
 
 
 class CostByAgent(BaseModel):
-    agent_id: Optional[UUID]
+    agent_id: UUID | None
     total_cost: float
     event_count: int
     input_tokens: int
@@ -20,7 +19,7 @@ class CostByAgent(BaseModel):
 
 
 class CostByTool(BaseModel):
-    tool_name: Optional[str]
+    tool_name: str | None
     total_cost: float
     event_count: int
 
@@ -34,15 +33,15 @@ class CostByTenant(BaseModel):
 class CostEventRead(BaseModel):
     id: UUID
     tenant_id: str
-    user_id: Optional[str]
-    agent_id: Optional[UUID]
-    workflow_id: Optional[str]
-    tool_name: Optional[str]
-    model: Optional[str]
-    backend: Optional[str]
+    user_id: str | None
+    agent_id: UUID | None
+    workflow_id: str | None
+    tool_name: str | None
+    model: str | None
+    backend: str | None
     input_tokens: int
     output_tokens: int
-    latency_ms: Optional[int]
+    latency_ms: int | None
     estimated_cost: float
     currency: str
     created_at: datetime

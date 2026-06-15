@@ -1,7 +1,6 @@
 import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from app.models.rag.rag_document_chunk import RAGDocumentChunk
 from app.services.rag_enterprise.retrieval import (
     build_rag_context,
@@ -10,6 +9,7 @@ from app.services.rag_enterprise.retrieval import (
     search_chunks,
 )
 from app.services.rag_enterprise.schemas import EnterpriseSource
+
 
 class TestCosineSimilarity:
     def test_identical_vectors(self):

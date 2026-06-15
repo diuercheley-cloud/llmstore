@@ -5,6 +5,7 @@ import pytest
 
 CONFIG_FILE = "config/agentic.env"
 
+
 @pytest.fixture(autouse=True)
 def setup_teardown():
     # Setup
@@ -16,23 +17,28 @@ def setup_teardown():
     if os.path.exists(CONFIG_FILE):
         os.remove(CONFIG_FILE)
 
+
 def get_flag(key):
     if not os.path.exists(CONFIG_FILE):
         return None
-    with open(CONFIG_FILE, "r") as f:
+    with open(CONFIG_FILE) as f:
         for line in f:
             if line.startswith(f"{key}="):
                 return line.strip().split("=", 1)[1]
     return None
 
+
 def set_flag(key, value):
     with open(CONFIG_FILE, "a") as f:
         f.write(f"{key}={value}\n")
 
+
 def test_pilot_activation_alters_flags():
-    result = subprocess.run(["./scripts/deploy/activate-agentic-pilot.sh"], capture_output=True, text=True)
+    result = subprocess.run(
+        ["./scripts/deploy/activate-agentic-pilot.sh"], capture_output=True, text=True
+    )
     assert result.returncode == 0
-    
+
     assert get_flag("DEPLOYMENT_MODE") == "pilot"
     assert get_flag("AGENT_RUNTIME_ENABLED") == "true"
     assert get_flag("AGENT_STATEFUL_WORKFLOWS_ENABLED") == "true"
@@ -41,22 +47,29 @@ def test_pilot_activation_alters_flags():
     assert get_flag("AGENT_STRICT_BUDGETS") == "true"
     assert get_flag("AGENT_EVALS_ENABLED") == "false"
 
+
 def test_production_activation_requires_readiness():
     # Tenta rodar sem readiness
-    result = subprocess.run(["./scripts/deploy/activate-agentic-production.sh"], capture_output=True, text=True)
+    result = subprocess.run(
+        ["./scripts/deploy/activate-agentic-production.sh"], capture_output=True, text=True
+    )
     assert result.returncode == 1
     assert "Readiness check not passed" in result.stdout
 
     # Habilita readiness mas não SLOs
     set_flag("AGENTIC_READINESS_STATUS", "passed")
-    result = subprocess.run(["./scripts/deploy/activate-agentic-production.sh"], capture_output=True, text=True)
+    result = subprocess.run(
+        ["./scripts/deploy/activate-agentic-production.sh"], capture_output=True, text=True
+    )
     assert result.returncode == 1
     assert "SLO check not passed" in result.stdout
 
     # Habilita tudo e roda
     set_flag("AGENTIC_SLO_STATUS", "passed")
     set_flag("AGENTIC_BUDGET_STATUS", "passed")
-    result = subprocess.run(["./scripts/deploy/activate-agentic-production.sh"], capture_output=True, text=True)
+    result = subprocess.run(
+        ["./scripts/deploy/activate-agentic-production.sh"], capture_output=True, text=True
+    )
     assert result.returncode == 0
     assert get_flag("DEPLOYMENT_MODE") == "production"
     assert get_flag("AGENT_EVALS_ENABLED") == "true"
@@ -64,13 +77,16 @@ def test_production_activation_requires_readiness():
     assert get_flag("AGENT_PROMOTION_REQUIRES_EVALS") == "true"
     assert get_flag("AGENT_EVAL_REGRESSION_GATE_ENABLED") == "true"
 
+
 def test_rollback_drains_queue_and_preserves_workflows():
-    result = subprocess.run(["./scripts/dev/rollback-agentic-runtime.sh"], capture_output=True, text=True)
+    result = subprocess.run(
+        ["./scripts/dev/rollback-agentic-runtime.sh"], capture_output=True, text=True
+    )
     assert result.returncode == 0
-    
+
     # rollback drena queue
     assert get_flag("AGENT_ROLLOUT_QUEUE_STATUS") == "drained"
-    
+
     # rollback preserva stateful workflows
     assert get_flag("AGENT_ROLLOUT_WORKFLOWS_STATE") == "preserved"
     assert get_flag("AGENT_RUNTIME_ENABLED") == "false"

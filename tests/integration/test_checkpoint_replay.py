@@ -41,14 +41,20 @@ async def test_checkpoint_chain_and_rollback(session):
     await session.commit()
 
     checkpoints = (
-        await session.execute(
-            select(CommercialWorkflowCheckpoint)
-            .where(CommercialWorkflowCheckpoint.execution_id == execution.id)
-            .order_by(CommercialWorkflowCheckpoint.step_index.asc())
+        (
+            await session.execute(
+                select(CommercialWorkflowCheckpoint)
+                .where(CommercialWorkflowCheckpoint.execution_id == execution.id)
+                .order_by(CommercialWorkflowCheckpoint.step_index.asc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     validation = await replay.validate_checkpoint_chain(session, execution.id)
-    rollback = await replay.rollback_to_checkpoint(session, execution=execution, checkpoint_id=checkpoints[0].id)
+    rollback = await replay.rollback_to_checkpoint(
+        session, execution=execution, checkpoint_id=checkpoints[0].id
+    )
     await session.commit()
 
     assert validation["valid"] is True

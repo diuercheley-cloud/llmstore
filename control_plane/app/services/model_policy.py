@@ -16,7 +16,17 @@ from sqlalchemy import inspect, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-SUPPORTED_BACKENDS = {"llama.cpp", "ollama", "vllm", "tgi", "openai_compatible", "openai", "anthropic", "deepseek", "openrouter"}
+SUPPORTED_BACKENDS = {
+    "llama.cpp",
+    "ollama",
+    "vllm",
+    "tgi",
+    "openai_compatible",
+    "openai",
+    "anthropic",
+    "deepseek",
+    "openrouter",
+}
 ROUTE_STATE_ORDER = {"healthy": 0, "degraded": 1, "unhealthy": 2, "disabled": 3}
 MODEL_REGISTRY_ROUTING_LOADS = (
     selectinload(ModelRegistry.inference_backend),
@@ -35,17 +45,17 @@ async def get_usable_chat_model(session: AsyncSession) -> tuple[dict | None, str
         return None, "no_models_registered"
 
     cards = [serialize_model_card(m) for m in models]
-    
+
     # Filter for chat models
     chat_models = [c for c in cards if c["capabilities"]["chat"]]
     if not chat_models:
         return None, "no_chat_models_registered"
-        
+
     # Find first ready (prioritizes default due to list_active_registry_models order)
     for card in chat_models:
         if card["local_ready"]:
             return card, None
-            
+
     # None ready, return reason from the first chat model (likely the default one)
     return None, chat_models[0].get("reason") or "no_ready_chat_model"
 
@@ -88,9 +98,7 @@ async def get_effective_allowed_models_for_session(
     if "billing_plan" not in inspect(client).unloaded:
         return get_effective_allowed_models(client)
     refreshed = await session.execute(
-        select(Client)
-        .options(selectinload(Client.billing_plan))
-        .where(Client.id == client.id)
+        select(Client).options(selectinload(Client.billing_plan)).where(Client.id == client.id)
     )
     loaded_client = refreshed.scalar_one_or_none()
     if loaded_client is None:
@@ -132,7 +140,9 @@ async def resolve_requested_model(
         None,
     )
     if selected is None and requested_model in {"", "default"}:
-        selected = next((item for item in active_models if item.is_default), None) or active_models[0]
+        selected = (
+            next((item for item in active_models if item.is_default), None) or active_models[0]
+        )
     if selected is None:
         raise HTTPException(status_code=404, detail="requested model not found")
 
@@ -141,20 +151,22 @@ async def resolve_requested_model(
     if settings.model_experiments_enabled:
         from app.services.model_experiments.context import set_experiment_context
         from app.services.model_experiments.traffic_splitter import TrafficSplitter
+
         splitter = TrafficSplitter(session)
-        variant = await splitter.get_assigned_variant(
-            tenant_id=client.id,
-            user_id=user_id
-        )
+        variant = await splitter.get_assigned_variant(tenant_id=client.id, user_id=user_id)
         if variant:
-            set_experiment_context({
-                "experiment_id": str(variant.experiment_id),
-                "variant_id": str(variant.id),
-                "variant_name": variant.name,
-            })
+            set_experiment_context(
+                {
+                    "experiment_id": str(variant.experiment_id),
+                    "variant_id": str(variant.id),
+                    "variant_name": variant.name,
+                }
+            )
             # If variant overrides model, resolve the new model
             if variant.model_id and variant.model_id != selected.model_id:
-                new_selected = next((m for m in active_models if m.model_id == variant.model_id), None)
+                new_selected = next(
+                    (m for m in active_models if m.model_id == variant.model_id), None
+                )
                 if new_selected:
                     selected = new_selected
 
@@ -163,19 +175,24 @@ async def resolve_requested_model(
         model_name=selected.model_alias or selected.model_id,
         client=client,
     )
-    constraints = get_active_revenue_protection_constraints(client_id=client.id, model=selected.model_id)
+    constraints = get_active_revenue_protection_constraints(
+        client_id=client.id, model=selected.model_id
+    )
     restricted_models = set(constraints.get("restricted_models") or [])
     if selected.model_id in restricted_models or (selected.model_alias or "") in restricted_models:
         fallback = next(
             (
                 item
                 for item in active_models
-                if item.model_id not in restricted_models and (item.model_alias or "") not in restricted_models
+                if item.model_id not in restricted_models
+                and (item.model_alias or "") not in restricted_models
             ),
             None,
         )
         if fallback is None:
-            raise HTTPException(status_code=403, detail="requested model restricted by revenue protection")
+            raise HTTPException(
+                status_code=403, detail="requested model restricted by revenue protection"
+            )
         selected = fallback
     routes = get_routing_candidates(selected)
     if not routes:
@@ -184,12 +201,14 @@ async def resolve_requested_model(
     allowed = await get_effective_allowed_models_for_session(session, client)
     if allowed and selected.model_id not in allowed and (selected.model_alias or "") not in allowed:
         # Rewrite to default model instead of 403
-        selected = next((item for item in active_models if item.is_default), None) or active_models[0]
+        selected = (
+            next((item for item in active_models if item.is_default), None) or active_models[0]
+        )
         # Re-verify that the default model has routes
         routes = get_routing_candidates(selected)
         if not routes:
             raise HTTPException(status_code=503, detail="default model backend is not active")
-            
+
     return selected, requested_model
 
 
@@ -198,7 +217,9 @@ def get_routing_candidates(model: ModelRegistry) -> list[ModelBackendRoute]:
     routes = [
         item
         for item in model.backend_routes
-        if item.inference_backend is not None and item.inference_backend.is_active and item.state != "disabled"
+        if item.inference_backend is not None
+        and item.inference_backend.is_active
+        and item.state != "disabled"
     ]
     if not routes and model.inference_backend is not None and model.inference_backend.is_active:
         synthetic = ModelBackendRoute(
@@ -222,8 +243,8 @@ def get_routing_candidates(model: ModelRegistry) -> list[ModelBackendRoute]:
 
 
 def apply_routing_policy(
-    model: ModelRegistry, 
-    client: Client | None, 
+    model: ModelRegistry,
+    client: Client | None,
     candidates: list[ModelBackendRoute],
     qos_tier: Any | None = None,
 ) -> list[ModelBackendRoute]:
@@ -231,12 +252,14 @@ def apply_routing_policy(
     Applies global routing policies from the client's billing plan to the candidates.
     """
     from app.services.provider_classification import is_cloud_provider
-    
+
     # Phase 20: QoS Tier Enforcement
     if qos_tier:
         if not qos_tier.allow_cloud:
-            candidates = [c for c in candidates if not is_cloud_provider(c.inference_backend.provider)]
-        
+            candidates = [
+                c for c in candidates if not is_cloud_provider(c.inference_backend.provider)
+            ]
+
         # Check if we should allow degraded based on QoS
         if not qos_tier.allow_degraded_cluster:
             candidates = [c for c in candidates if c.state == "healthy"]
@@ -254,20 +277,20 @@ def apply_routing_policy(
 
     if not client or not client.billing_plan or not client.billing_plan.routing_policy_json:
         return candidates
-        
+
     try:
         policy = json.loads(client.billing_plan.routing_policy_json)
     except json.JSONDecodeError:
         return candidates
-        
+
     rules = policy.get("rules", [])
     if not rules:
         return candidates
-        
+
     for rule in rules:
         action = rule.get("action")
         value = rule.get("value")
-        
+
         if action == "exclude_backend_type":
             candidates = [c for c in candidates if c.inference_backend.provider != value]
         elif action == "exclude_backend":
@@ -282,7 +305,7 @@ def apply_routing_policy(
             for c in candidates:
                 if c.inference_backend.name == value:
                     c.priority -= boost
-                    
+
     # Re-sort candidates after applying priority boosts or exclusions
     return sorted(
         candidates,
@@ -296,7 +319,7 @@ def apply_routing_policy(
 
 
 def plan_routing_order(
-    model: ModelRegistry, 
+    model: ModelRegistry,
     rng: random.Random | None = None,
     client: Client | None = None,
     cloud_blocked_by_guardrail: bool = False,
@@ -314,7 +337,7 @@ def plan_routing_order(
         routes = [r for r in routes if not is_cloud_provider(r.inference_backend.provider)]
 
     routes = filter_routes_by_commercial_guardrails(routes, commercial_guardrail_context)
-        
+
     if len(routes) <= 1:
         return routes
 
@@ -366,8 +389,17 @@ def serialize_model_card(item: ModelRegistry) -> dict:
 
     # Derive capabilities
     is_embedding = "embedding" in item.model_id.lower() or metadata.get("type") == "embedding"
-    is_chat = not is_embedding and item.provider in {"llama.cpp", "ollama", "vllm", "openai_compatible", "openrouter", "openai", "anthropic", "deepseek"}
-    
+    is_chat = not is_embedding and item.provider in {
+        "llama.cpp",
+        "ollama",
+        "vllm",
+        "openai_compatible",
+        "openrouter",
+        "openai",
+        "anthropic",
+        "deepseek",
+    }
+
     capabilities = {
         "chat": is_chat,
         "streaming": is_chat,
@@ -383,10 +415,10 @@ def serialize_model_card(item: ModelRegistry) -> dict:
         backend_status = routes[0].state
     elif item.inference_backend_id:
         backend_status = "no_route"
-    
+
     # Readiness logic
     is_ready = backend_status in {"healthy", "degraded"}
-    
+
     # Accept mock if enabled or in local/test environment
     is_mock_env = settings.app_env in {"local", "test"}
     if not is_ready and (settings.mock_backend_enabled or is_mock_env):
@@ -404,6 +436,7 @@ def serialize_model_card(item: ModelRegistry) -> dict:
     provider_info = None
     try:
         from app.services.providers.registry import get_provider
+
         for pid in ("local", "lmstudio", "openai", "anthropic", "deepseek"):
             prov = get_provider(pid)
             if prov and prov.enabled and prov.configured:
@@ -441,7 +474,9 @@ def serialize_model_card(item: ModelRegistry) -> dict:
     }
 
 
-def ensure_model_routing_loaded(model: ModelRegistry, *, require_primary_backend: bool = True) -> None:
+def ensure_model_routing_loaded(
+    model: ModelRegistry, *, require_primary_backend: bool = True
+) -> None:
     state = inspect(model)
     unloaded = set(state.unloaded)
     missing = []
@@ -475,13 +510,13 @@ async def get_model_by_id(session: AsyncSession, model_id) -> ModelRegistry | No
     return result.scalar_one_or_none()
 
 
-async def find_model_by_public_name(session: AsyncSession, public_name: str) -> ModelRegistry | None:
+async def find_model_by_public_name(
+    session: AsyncSession, public_name: str
+) -> ModelRegistry | None:
     result = await session.execute(
         select(ModelRegistry)
         .options(*MODEL_REGISTRY_ROUTING_LOADS)
-        .where(
-            or_(ModelRegistry.model_id == public_name, ModelRegistry.model_alias == public_name)
-        )
+        .where(or_(ModelRegistry.model_id == public_name, ModelRegistry.model_alias == public_name))
     )
     return result.scalar_one_or_none()
 
@@ -493,9 +528,9 @@ async def resolve_effective_backend_url(session: AsyncSession, route: ModelBacke
     """
     from app.models.operations.model_runtime import ModelRuntimeInstance
     from app.services.runtime.distributed_runtime import DistributedRuntimeService
-    
+
     settings = get_settings()
-    
+
     # 1. Check for distributed nodes first only when the feature is explicitly enabled.
     if settings.distributed_runtime_enabled:
         distributed_service = DistributedRuntimeService(session)
@@ -515,5 +550,5 @@ async def resolve_effective_backend_url(session: AsyncSession, route: ModelBacke
         instance = result.scalars().first()
         if instance:
             return f"http://localhost:{instance.port}"
-        
+
     return route.inference_backend.backend_url

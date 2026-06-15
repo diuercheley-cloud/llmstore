@@ -15,6 +15,7 @@ An empty path list is ONLY returned when:
   - status == PathStatus.capability_not_supported (provider does not implement pathfinding)
   - status == PathStatus.mock (mock mode, test only)
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -48,12 +49,17 @@ class GraphStore:
     def _get_provider(self):
         provider_name = self.settings.agent_kg_provider
         if provider_name == "neo4j":
-            return Neo4jGraphProvider(enabled=self.settings.agent_kg_external_provider_enabled, db=self.db)
+            return Neo4jGraphProvider(
+                enabled=self.settings.agent_kg_external_provider_enabled, db=self.db
+            )
         if provider_name == "falkordb":
-            return FalkorDBGraphProvider(enabled=self.settings.agent_kg_external_provider_enabled, db=self.db)
+            return FalkorDBGraphProvider(
+                enabled=self.settings.agent_kg_external_provider_enabled, db=self.db
+            )
         if provider_name == "postgres" or self.settings.agent_kg_postgres_graph_enabled:
             try:
                 from .providers.postgres_graph import PostgresGraphProvider
+
                 return PostgresGraphProvider(self.db)
             except Exception:
                 pass  # fall through to internal_sql
@@ -63,7 +69,9 @@ class GraphStore:
     # Write operations
     # ------------------------------------------------------------------
 
-    async def add_entity(self, tenant_id: str, name: str, entity_type: str, source_id: uuid.UUID | None = None) -> Entity:
+    async def add_entity(
+        self, tenant_id: str, name: str, entity_type: str, source_id: uuid.UUID | None = None
+    ) -> Entity:
         graph_policy.require_writes_enabled(self.settings.agent_kg_write_enabled)
         record = await self.provider.upsert_entity(
             tenant_id=tenant_id,
@@ -116,7 +124,9 @@ class GraphStore:
 
     async def get_relations(self, tenant_id: str, entity_id: str | None = None) -> list[Relation]:
         parsed_entity_id = uuid.UUID(entity_id) if entity_id else None
-        records = await self.provider.list_relations(tenant_id=tenant_id, entity_id=parsed_entity_id)
+        records = await self.provider.list_relations(
+            tenant_id=tenant_id, entity_id=parsed_entity_id
+        )
         return [self._relation_to_model(record) for record in records]
 
     # ------------------------------------------------------------------
@@ -131,7 +141,9 @@ class GraphStore:
         path: PathResult | None = None
 
         if request.query_type == "entity_search":
-            entities = await self.get_entities(request.tenant_id, entity_name=request.entity_name or request.text)
+            entities = await self.get_entities(
+                request.tenant_id, entity_name=request.entity_name or request.text
+            )
 
         elif request.query_type in {"neighborhood", "owners"} and request.entity_id:
             records, record_relations = await self.provider.related_entities(
@@ -221,8 +233,7 @@ class GraphStore:
         edges = [self._relation_to_model(r) for r in path_relations]
         relation_types_found = list({e.type for e in edges})
         provenance = [
-            {"entity_id": n.id, "source_id": n.source_id, "provenance": n.provenance}
-            for n in nodes
+            {"entity_id": n.id, "source_id": n.source_id, "provenance": n.provenance} for n in nodes
         ]
         confidence = min((e.confidence for e in edges), default=1.0)
         reason = "" if status == PathStatus.found else f"status={status.value}"
@@ -240,7 +251,9 @@ class GraphStore:
             reason=reason,
         )
 
-    async def _run_dependency_traversal(self, request: GraphQueryRequest, started_at: float) -> PathResult:
+    async def _run_dependency_traversal(
+        self, request: GraphQueryRequest, started_at: float
+    ) -> PathResult:
         """Directed dependency traversal via provider.dependency_traversal()."""
         if self.settings.agent_kg_mock_mode:
             return PathResult(
@@ -275,8 +288,7 @@ class GraphStore:
         edges = [self._relation_to_model(r) for r in dep_relations]
         relation_types_found = list({e.type for e in edges})
         provenance = [
-            {"entity_id": n.id, "source_id": n.source_id, "provenance": n.provenance}
-            for n in nodes
+            {"entity_id": n.id, "source_id": n.source_id, "provenance": n.provenance} for n in nodes
         ]
 
         return PathResult(

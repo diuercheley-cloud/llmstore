@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, List
+from typing import Any
 
 from ..tokenizer import TokenCounter
 from .storage import IndexStorage
@@ -9,10 +9,11 @@ class VectorStoreInterface:
     def add_document(self, doc_id: str, text: str, metadata: dict) -> None:
         pass
 
-    def similarity_search(self, query: str, k: int = 5) -> List[dict]:
+    def similarity_search(self, query: str, k: int = 5) -> list[dict]:
         return []
 
-def query_index(query_str: str, workspace_root: str = ".") -> List[Dict[str, Any]]:
+
+def query_index(query_str: str, workspace_root: str = ".") -> list[dict[str, Any]]:
     storage = IndexStorage(workspace_root)
     index = storage.load_json("repo_index.json")
     if not index:
@@ -23,7 +24,7 @@ def query_index(query_str: str, workspace_root: str = ".") -> List[Dict[str, Any
     language_filter = None
     for prefix in ("lang:", "language:"):
         if query_lower.startswith(prefix):
-            remainder = query_lower[len(prefix):].strip()
+            remainder = query_lower[len(prefix) :].strip()
             parts = remainder.split(None, 1)
             language_filter = parts[0]
             query_lower = parts[1].strip() if len(parts) > 1 else ""
@@ -54,7 +55,7 @@ def query_index(query_str: str, workspace_root: str = ".") -> List[Dict[str, Any
         full_path = os.path.join(workspace_root, rel_path)
         if os.path.exists(full_path) and os.path.isfile(full_path):
             try:
-                with open(full_path, "r", errors="ignore") as f:
+                with open(full_path, errors="ignore") as f:
                     content = f.read()
                 if query_lower:
                     count = content.lower().count(query_lower)
@@ -63,24 +64,23 @@ def query_index(query_str: str, workspace_root: str = ".") -> List[Dict[str, Any
                 pass
 
         if score > 0:
-            results.append({
-                "path": rel_path,
-                "score": score,
-                "language": meta.get("language", "unknown"),
-                "size": meta.get("size", 0),
-                "modified_time": meta.get("modified_time", 0.0),
-                "imports": meta.get("imports", []),
-                "symbols": symbols
-            })
+            results.append(
+                {
+                    "path": rel_path,
+                    "score": score,
+                    "language": meta.get("language", "unknown"),
+                    "size": meta.get("size", 0),
+                    "modified_time": meta.get("modified_time", 0.0),
+                    "imports": meta.get("imports", []),
+                    "symbols": symbols,
+                }
+            )
 
     results.sort(key=lambda x: (-x["score"], x["path"]))
     return results
 
-def get_retrieved_context(
-    query_str: str,
-    workspace_root: str = ".",
-    max_tokens: int = 2000
-) -> str:
+
+def get_retrieved_context(query_str: str, workspace_root: str = ".", max_tokens: int = 2000) -> str:
     results = query_index(query_str, workspace_root)
     if not results:
         return ""
@@ -97,7 +97,7 @@ def get_retrieved_context(
         full_path = os.path.join(workspace_root, path)
         if os.path.exists(full_path) and os.path.isfile(full_path):
             try:
-                with open(full_path, "r", errors="ignore") as f:
+                with open(full_path, errors="ignore") as f:
                     content = f.read()
             except Exception:
                 continue

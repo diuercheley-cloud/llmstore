@@ -1,5 +1,5 @@
 import re
-from typing import Any, List, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -7,15 +7,15 @@ from .sanitizer import Sanitizer
 
 
 class Diagnostic(BaseModel):
-    file: Optional[str] = None
-    line: Optional[int] = None
+    file: str | None = None
+    line: int | None = None
     severity: str = "error"  # error, warning, info
     message: str
-    suggested_action: Optional[str] = None
-    raw_excerpt: Optional[str] = None
+    suggested_action: str | None = None
+    raw_excerpt: str | None = None
 
 
-def parse_python_traceback(output: str) -> List[Diagnostic]:
+def parse_python_traceback(output: str) -> list[Diagnostic]:
     diagnostics = []
     lines = output.splitlines()
     for i, line in enumerate(lines):
@@ -28,8 +28,8 @@ def parse_python_traceback(output: str) -> List[Diagnostic]:
                 raw_exc = line
                 # Look ahead for exception name and message
                 for j in range(i + 1, min(i + 5, len(lines))):
-                    if re.match(r'^[a-zA-Z0-9._]+Error:', lines[j]) or re.match(
-                        r'^[a-zA-Z0-9._]+Exception:', lines[j]
+                    if re.match(r"^[a-zA-Z0-9._]+Error:", lines[j]) or re.match(
+                        r"^[a-zA-Z0-9._]+Exception:", lines[j]
                     ):
                         err_msg = lines[j]
                         break
@@ -40,8 +40,7 @@ def parse_python_traceback(output: str) -> List[Diagnostic]:
                         severity="error",
                         message=Sanitizer.sanitize_text(err_msg),
                         suggested_action=(
-                            f"Check syntax or logic around line {lineno} "
-                            f"in {filepath}."
+                            f"Check syntax or logic around line {lineno} in {filepath}."
                         ),
                         raw_excerpt=Sanitizer.sanitize_text(raw_exc),
                     )
@@ -49,7 +48,7 @@ def parse_python_traceback(output: str) -> List[Diagnostic]:
     return diagnostics
 
 
-def parse_pytest_failure(output: str) -> List[Diagnostic]:
+def parse_pytest_failure(output: str) -> list[Diagnostic]:
     diagnostics = []
     lines = output.splitlines()
     for line in lines:
@@ -69,8 +68,7 @@ def parse_pytest_failure(output: str) -> List[Diagnostic]:
                     severity="error",
                     message=Sanitizer.sanitize_text(f"{exc_type}: {message}"),
                     suggested_action=(
-                        f"Fix assertion or test failure at line {lineno} "
-                        f"in {filepath}."
+                        f"Fix assertion or test failure at line {lineno} in {filepath}."
                     ),
                     raw_excerpt=Sanitizer.sanitize_text(line),
                 )
@@ -78,7 +76,7 @@ def parse_pytest_failure(output: str) -> List[Diagnostic]:
     return diagnostics
 
 
-def parse_ruff_output(output: str) -> List[Diagnostic]:
+def parse_ruff_output(output: str) -> list[Diagnostic]:
     diagnostics = []
     lines = output.splitlines()
     for line in lines:
@@ -93,9 +91,7 @@ def parse_ruff_output(output: str) -> List[Diagnostic]:
                     file=filepath,
                     line=lineno,
                     severity=(
-                        "error"
-                        if rule_id.startswith("E") or rule_id.startswith("F")
-                        else "warning"
+                        "error" if rule_id.startswith("E") or rule_id.startswith("F") else "warning"
                     ),
                     message=Sanitizer.sanitize_text(f"Ruff {rule_id}: {message}"),
                     suggested_action=f"Resolve ruff linter issue {rule_id} at line {lineno}.",
@@ -105,7 +101,7 @@ def parse_ruff_output(output: str) -> List[Diagnostic]:
     return diagnostics
 
 
-def parse_mypy_output(output: str) -> List[Diagnostic]:
+def parse_mypy_output(output: str) -> list[Diagnostic]:
     diagnostics = []
     lines = output.splitlines()
     for line in lines:
@@ -122,8 +118,7 @@ def parse_mypy_output(output: str) -> List[Diagnostic]:
                     severity=severity,
                     message=Sanitizer.sanitize_text(message),
                     suggested_action=(
-                        f"Fix mypy type error: {message} at line {lineno} "
-                        f"in {filepath}."
+                        f"Fix mypy type error: {message} at line {lineno} in {filepath}."
                     ),
                     raw_excerpt=Sanitizer.sanitize_text(line),
                 )
@@ -131,13 +126,11 @@ def parse_mypy_output(output: str) -> List[Diagnostic]:
     return diagnostics
 
 
-def parse_npm_tsc_output(output: str) -> List[Diagnostic]:
+def parse_npm_tsc_output(output: str) -> list[Diagnostic]:
     diagnostics = []
     lines = output.splitlines()
     for line in lines:
-        m = re.match(
-            r"^([^(]+)\((\d+),(\d+)\):\s*(error|warning)\s+(TS\d+):\s*(.*)$", line
-        )
+        m = re.match(r"^([^(]+)\((\d+),(\d+)\):\s*(error|warning)\s+(TS\d+):\s*(.*)$", line)
         if m:
             filepath = m.group(1)
             lineno = int(m.group(2))
@@ -156,7 +149,7 @@ def parse_npm_tsc_output(output: str) -> List[Diagnostic]:
     return diagnostics
 
 
-def parse_java_stacktrace(output: str) -> List[Diagnostic]:
+def parse_java_stacktrace(output: str) -> list[Diagnostic]:
     diagnostics = []
     lines = output.splitlines()
     for i, line in enumerate(lines):
@@ -181,8 +174,7 @@ def parse_java_stacktrace(output: str) -> List[Diagnostic]:
                         severity="error",
                         message=Sanitizer.sanitize_text(message),
                         suggested_action=(
-                            f"Fix exception in Java class {class_name} "
-                            f"at line {lineno}."
+                            f"Fix exception in Java class {class_name} at line {lineno}."
                         ),
                         raw_excerpt=Sanitizer.sanitize_text(line),
                     )
@@ -191,7 +183,7 @@ def parse_java_stacktrace(output: str) -> List[Diagnostic]:
     return diagnostics
 
 
-def parse_csharp_dotnet_test(output: str) -> List[Diagnostic]:
+def parse_csharp_dotnet_test(output: str) -> list[Diagnostic]:
     diagnostics = []
     lines = output.splitlines()
     for line in lines:
@@ -213,7 +205,7 @@ def parse_csharp_dotnet_test(output: str) -> List[Diagnostic]:
     return diagnostics
 
 
-def diagnose_errors(output: str, language_profile: Optional[Any] = None) -> List[Diagnostic]:
+def diagnose_errors(output: str, language_profile: Any | None = None) -> list[Diagnostic]:
     diagnostics = []
     diagnostics.extend(parse_python_traceback(output))
     diagnostics.extend(parse_pytest_failure(output))
@@ -226,7 +218,8 @@ def diagnose_errors(output: str, language_profile: Optional[Any] = None) -> List
     if language_profile:
         is_dict = isinstance(language_profile, dict)
         test_cmd = (
-            language_profile.get("test_command") if is_dict
+            language_profile.get("test_command")
+            if is_dict
             else getattr(language_profile, "test_command", None)
         )
         if test_cmd:
@@ -234,4 +227,3 @@ def diagnose_errors(output: str, language_profile: Optional[Any] = None) -> List
                 if diag.suggested_action:
                     diag.suggested_action += f" Run `{test_cmd}` to verify."
     return diagnostics
-

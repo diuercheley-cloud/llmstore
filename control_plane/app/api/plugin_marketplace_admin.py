@@ -1,6 +1,5 @@
 # Owner: platform-ops
 import uuid
-from typing import Optional
 
 from app.api.dependencies import get_current_admin, get_db
 from app.services.plugins.plugin_marketplace import PluginMarketplaceService
@@ -14,11 +13,11 @@ router = APIRouter(prefix="/admin/plugins", tags=["plugin_marketplace"])
 class ReviewCreate(BaseModel):
     version: str
     rating: int = Field(..., ge=1, le=5)
-    review_text: Optional[str] = None
+    review_text: str | None = None
 
 
 class PluginSettingsUpdate(BaseModel):
-    config: Optional[dict] = None
+    config: dict | None = None
 
 
 @router.get("/marketplace")
@@ -112,7 +111,9 @@ async def get_trust_report(
     service = PluginMarketplaceService(db)
     report = await service.get_trust_report(install_id)
     if not report:
-        raise HTTPException(status_code=404, detail="Trust report not found for this plugin version")
+        raise HTTPException(
+            status_code=404, detail="Trust report not found for this plugin version"
+        )
     return report
 
 

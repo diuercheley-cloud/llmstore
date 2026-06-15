@@ -64,6 +64,7 @@ async def setup_db(tmp_path, monkeypatch):
         import app.models.core.security_event  # noqa
         import app.models.plugins.marketplace  # noqa
         import app.models.operations.plugin_runtime  # noqa
+
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with engine.begin() as conn:
@@ -76,9 +77,13 @@ async def db_session():
         yield session
 
 
-async def _install_enabled_plugin(db_session, source: str, name: str = "runtime-plugin", version: str = "1.0.0"):
+async def _install_enabled_plugin(
+    db_session, source: str, name: str = "runtime-plugin", version: str = "1.0.0"
+):
     marketplace = PluginMarketplaceService(db_session)
-    install = await marketplace.install_plugin(_plugin_zip(source, name=name, version=version), "plugin.zip")
+    install = await marketplace.install_plugin(
+        _plugin_zip(source, name=name, version=version), "plugin.zip"
+    )
     await marketplace.enable_plugin(install.id)
     return install
 
@@ -106,9 +111,7 @@ async def test_governed_plugin_runtime_executes_real_plugin_code(db_session):
         }
     )
     db_session.add(contract)
-    db_session.add(
-        PluginIsolationPolicyService().create_default_policy(client.id)
-    )
+    db_session.add(PluginIsolationPolicyService().create_default_policy(client.id))
     db_session.add(
         PluginCapabilityBoundaryService().build_boundary(
             {

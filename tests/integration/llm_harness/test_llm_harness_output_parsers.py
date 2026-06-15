@@ -26,7 +26,7 @@ def test_ruff_parser_identifies_errors():
 
 
 def test_mypy_parser_identifies_errors():
-    output = "main.py:12: error: Incompatible return value type (got \"int\", expected \"str\")"
+    output = 'main.py:12: error: Incompatible return value type (got "int", expected "str")'
     parsed = parse_mypy_output(output, 1)
     assert parsed.kind == "mypy"
     assert parsed.error_count == 1

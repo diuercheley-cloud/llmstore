@@ -1,6 +1,5 @@
 import logging
 import uuid
-from typing import Optional
 
 from app.models.agents.agent_iam import AgentIdentityBinding
 from app.services.agents.iam.iam_audit import IAMAuditService
@@ -8,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
+
 
 class AgentIdentityService:
     def __init__(self, db: AsyncSession):
@@ -19,10 +19,10 @@ class AgentIdentityService:
         tenant_id: str,
         agent_id: uuid.UUID,
         identity_provider: str = "internal",
-        external_id: Optional[str] = None,
-        metadata: Optional[dict] = None,
-        actor_id: Optional[str] = None,
-        actor_type: Optional[str] = None,
+        external_id: str | None = None,
+        metadata: dict | None = None,
+        actor_id: str | None = None,
+        actor_type: str | None = None,
     ) -> AgentIdentityBinding:
         """
         Creates or updates a tenant-scoped sovereign identity binding for an agent.
@@ -67,7 +67,7 @@ class AgentIdentityService:
 
     async def get_identity_binding(
         self, tenant_id: str, agent_id: uuid.UUID
-    ) -> Optional[AgentIdentityBinding]:
+    ) -> AgentIdentityBinding | None:
         stmt = select(AgentIdentityBinding).where(
             AgentIdentityBinding.tenant_id == tenant_id,
             AgentIdentityBinding.agent_id == agent_id,

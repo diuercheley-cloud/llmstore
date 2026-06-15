@@ -87,9 +87,7 @@ class TestIngestionPipeline:
         "app.services.rag_enterprise.ingestion.record_rag_event",
         new_callable=AsyncMock,
     )
-    async def test_ingest_txt_success(
-        self, mock_record, mock_policy, tmp_path
-    ):
+    async def test_ingest_txt_success(self, mock_record, mock_policy, tmp_path):
         mock_policy.return_value = MagicMock()
         mock_policy.return_value.rag_enabled = True
         mock_policy.return_value.max_documents = None

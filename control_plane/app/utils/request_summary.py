@@ -10,7 +10,9 @@ def summarize_chat_request(
 ) -> str:
     roles = ",".join(message.get("role", "unknown") for message in messages[:8])
     total_chars = sum(len(str(message.get("content") or "")) for message in messages)
-    prompt_fingerprint = _fingerprint(" ".join(str(message.get("content") or "") for message in messages))
+    prompt_fingerprint = _fingerprint(
+        " ".join(str(message.get("content") or "") for message in messages)
+    )
     return (
         f"chat messages={len(messages)} roles={roles} chars={total_chars} "
         f"include_reasoning={str(include_reasoning).lower()} tools={tool_count} "

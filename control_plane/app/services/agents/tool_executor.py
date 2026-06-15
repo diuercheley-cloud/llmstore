@@ -5,7 +5,8 @@ import json
 import logging
 import time
 import uuid
-from typing import Any, Callable, Dict, Optional
+from collections.abc import Callable
+from typing import Any
 
 from app.core.config import get_settings
 from app.models.agents.agents import AgentRegistryEntry, AgentTool, AgentToolInvocation
@@ -19,14 +20,15 @@ from app.services.agents.tool_rollback import (
     register_side_effect,
     rollback_invocation_side_effects,
 )
-from app.services.billing.cost_attribution import CostAttributionService
 
 # Import security modules
 from app.services.agents.tool_sandbox import execute_in_sandbox
+from app.services.billing.cost_attribution import CostAttributionService
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
+
 
 def hash_payload(data: Any) -> str:
     try:
@@ -35,19 +37,20 @@ def hash_payload(data: Any) -> str:
         serialized = str(data)
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
+
 async def execute_tool(
     db: AsyncSession,
     tool: AgentTool,
-    parameters: Dict[str, Any],
-    run_id: Optional[uuid.UUID] = None,
-    agent: Optional[AgentRegistryEntry] = None,
-    agent_id: Optional[uuid.UUID] = None,
-    tenant_id: Optional[str] = None,
+    parameters: dict[str, Any],
+    run_id: uuid.UUID | None = None,
+    agent: AgentRegistryEntry | None = None,
+    agent_id: uuid.UUID | None = None,
+    tenant_id: str | None = None,
     is_dry_run: bool = False,
-    tool_callable: Optional[Callable[..., Any]] = None,
-    rollback_callable: Optional[Callable[..., Any]] = None,
-    executed_by: str = "agent"
-) -> Dict[str, Any]:
+    tool_callable: Callable[..., Any] | None = None,
+    rollback_callable: Callable[..., Any] | None = None,
+    executed_by: str = "agent",
+) -> dict[str, Any]:
     settings = get_settings()
     effective_tenant = tenant_id or "default"
     effective_agent_id = agent_id or (agent.agent_id if agent else None)
@@ -61,13 +64,14 @@ async def execute_tool(
     # 0. Check Execution Limits (Calls)
     if run_id:
         stmt_count = select(func.count(AgentToolInvocation.id)).where(
-            AgentToolInvocation.run_id == run_id,
-            AgentToolInvocation.agent_tool_id == tool.id
+            AgentToolInvocation.run_id == run_id, AgentToolInvocation.agent_tool_id == tool.id
         )
         res_count = await db.execute(stmt_count)
         call_count = res_count.scalar() or 0
         if call_count >= tool.max_calls_per_run:
-             raise ValueError(f"Tool {tool.name} exceeded max_calls_per_run ({tool.max_calls_per_run}) for run {run_id}.")
+            raise ValueError(
+                f"Tool {tool.name} exceeded max_calls_per_run ({tool.max_calls_per_run}) for run {run_id}."
+            )
 
     # 1. Prepare invocation record
     invocation = AgentToolInvocation(
@@ -78,15 +82,19 @@ async def execute_tool(
         executed_by=executed_by,
         is_dry_run=is_dry_run,
         is_rollback=False,
-        status="success"
+        status="success",
     )
     db.add(invocation)
     await db.flush()
 
     await log_audit_event(
-        db=db, tenant_id=effective_tenant, event_type="tool_invocation_started",
-        invocation_id=invocation.id, agent_id=effective_agent_id,
-        agent_tool_id=tool.id, details={"parameters": parameters, "is_dry_run": is_dry_run}
+        db=db,
+        tenant_id=effective_tenant,
+        event_type="tool_invocation_started",
+        invocation_id=invocation.id,
+        agent_id=effective_agent_id,
+        agent_tool_id=tool.id,
+        details={"parameters": parameters, "is_dry_run": is_dry_run},
     )
 
     resolved_secret = await resolve_credential(
@@ -120,29 +128,37 @@ async def execute_tool(
     retry_policy = tool.retry_policy or {}
     max_retries = retry_policy.get("max_attempts", 1) - 1
     backoff = retry_policy.get("initial_backoff", 1)
-    
+
     can_retry = tool.side_effect_level in ("none", "read")
-    if not can_retry: max_retries = 0
+    if not can_retry:
+        max_retries = 0
 
     attempt = 0
     while True:
         try:
             policy_decision = await evaluate_tool_policy(
-                db=db, tool=tool, agent=agent, agent_id=effective_agent_id, tenant_id=effective_tenant, is_dry_run=is_dry_run, run_id=run_id
+                db=db,
+                tool=tool,
+                agent=agent,
+                agent_id=effective_agent_id,
+                tenant_id=effective_tenant,
+                is_dry_run=is_dry_run,
+                run_id=run_id,
             )
 
             if not policy_decision.allowed:
                 raise ValueError(f"Policy evaluation denied access: {policy_decision.reason}")
-            
+
             if policy_decision.requires_approval:
                 has_approval = False
                 if executed_by in ("human", "admin"):
                     has_approval = True
                 elif run_id:
                     from app.models.agents.agents import AgentApprovalRequest
+
                     stmt_approval = select(AgentApprovalRequest).where(
                         AgentApprovalRequest.agent_run_id == run_id,
-                        AgentApprovalRequest.status == "approved"
+                        AgentApprovalRequest.status == "approved",
                     )
                     res_approval = await db.execute(stmt_approval)
                     approvals = res_approval.scalars().all()
@@ -171,7 +187,10 @@ async def execute_tool(
             if is_dry_run:
                 if eff_tool_callable and is_dry_callable:
                     if asyncio.iscoroutinefunction(eff_tool_callable):
-                        output = await asyncio.wait_for(eff_tool_callable(**modified_parameters), timeout=float(tool.timeout_seconds))
+                        output = await asyncio.wait_for(
+                            eff_tool_callable(**modified_parameters),
+                            timeout=float(tool.timeout_seconds),
+                        )
                     else:
                         output = eff_tool_callable(**modified_parameters)
                 else:
@@ -211,9 +230,13 @@ async def execute_tool(
 
                 if settings.agent_tool_sandbox_enabled:
                     output = await execute_in_sandbox(
-                        db=db, tenant_id=effective_tenant, invocation_id=invocation.id,
-                        tool_name=tool.name, tool_category=tool.category,
-                        parameters=modified_parameters, allowed_commands=["*"],
+                        db=db,
+                        tenant_id=effective_tenant,
+                        invocation_id=invocation.id,
+                        tool_name=tool.name,
+                        tool_category=tool.category,
+                        parameters=modified_parameters,
+                        allowed_commands=["*"],
                         timeout_seconds=int(tool.timeout_seconds),
                         tool_callable=eff_tool_callable,
                         sandbox_type="real",
@@ -221,9 +244,15 @@ async def execute_tool(
                 else:
                     if eff_tool_callable is not None:
                         if asyncio.iscoroutinefunction(eff_tool_callable):
-                            output = await asyncio.wait_for(eff_tool_callable(**modified_parameters), timeout=float(tool.timeout_seconds))
+                            output = await asyncio.wait_for(
+                                eff_tool_callable(**modified_parameters),
+                                timeout=float(tool.timeout_seconds),
+                            )
                         else:
-                            output = await asyncio.wait_for(asyncio.to_thread(lambda: eff_tool_callable(**modified_parameters)), timeout=float(tool.timeout_seconds))
+                            output = await asyncio.wait_for(
+                                asyncio.to_thread(lambda: eff_tool_callable(**modified_parameters)),
+                                timeout=float(tool.timeout_seconds),
+                            )
                     else:
                         raise ValueError(
                             f"Real execution requested for tool '{tool.name}', but no concrete implementation is registered."
@@ -242,20 +271,27 @@ async def execute_tool(
                     invocation.status = "rolled_back"
             if attempt < max_retries:
                 attempt += 1
-                logger.warning(f"Retrying tool {tool.name} (attempt {attempt}/{max_retries}) due to: {e}")
+                logger.warning(
+                    f"Retrying tool {tool.name} (attempt {attempt}/{max_retries}) due to: {e}"
+                )
                 await asyncio.sleep(backoff * (2 ** (attempt - 1)))
                 continue
-            
+
             latency_ms = int((time.monotonic() - start_time) * 1000)
             invocation.latency_ms = latency_ms
             if invocation.status != "rolled_back":
                 invocation.status = "failed"
             invocation.error_message = str(e)
-            
+
             await log_audit_event(
-                db=db, tenant_id=effective_tenant, event_type="tool_invocation_failed",
-                invocation_id=invocation.id, agent_id=effective_agent_id,
-                agent_tool_id=tool.id, decision="failed", reason=str(e)
+                db=db,
+                tenant_id=effective_tenant,
+                event_type="tool_invocation_failed",
+                invocation_id=invocation.id,
+                agent_id=effective_agent_id,
+                agent_tool_id=tool.id,
+                decision="failed",
+                reason=str(e),
             )
             await db.commit()
             raise e
@@ -263,11 +299,16 @@ async def execute_tool(
     latency_ms = int((time.monotonic() - start_time) * 1000)
     invocation.latency_ms = latency_ms
     invocation.output_hash = hash_payload(output)
-    
+
     await log_audit_event(
-        db=db, tenant_id=effective_tenant, event_type="tool_invocation_completed",
-        invocation_id=invocation.id, agent_id=effective_agent_id,
-        agent_tool_id=tool.id, decision="success", details={"output": output}
+        db=db,
+        tenant_id=effective_tenant,
+        event_type="tool_invocation_completed",
+        invocation_id=invocation.id,
+        agent_id=effective_agent_id,
+        agent_tool_id=tool.id,
+        decision="success",
+        details={"output": output},
     )
 
     # Record cost event for tool execution
@@ -280,7 +321,7 @@ async def execute_tool(
             tool_name=tool.name,
             latency_ms=latency_ms,
             estimated_cost=0.0,  # Tool cost estimation could be added later
-            currency="BRL"
+            currency="BRL",
         )
     except Exception as e:
         logger.warning(f"Failed to record unified CostEvent for tool {tool.name}: {e}")

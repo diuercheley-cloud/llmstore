@@ -1,6 +1,6 @@
 import logging
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 from app.services.billing.payments.payment_provider import PaymentProvider
 
@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import stripe
+
     HAS_STRIPE = True
 except ImportError:
     HAS_STRIPE = False
@@ -19,7 +20,7 @@ class StripePaymentProvider(PaymentProvider):
     Gracefully degrades when stripe library or API key is unavailable.
     """
 
-    def __init__(self, api_key: Optional[str] = None, webhook_secret: Optional[str] = None):
+    def __init__(self, api_key: str | None = None, webhook_secret: str | None = None):
         self.api_key = api_key
         self.webhook_secret = webhook_secret
         self._available = HAS_STRIPE and bool(api_key)
@@ -37,7 +38,7 @@ class StripePaymentProvider(PaymentProvider):
         self,
         client_id: uuid.UUID,
         name: str,
-        email: Optional[str] = None,
+        email: str | None = None,
     ) -> str:
         if not self._available:
             return f"mock_customer_{client_id}"
@@ -56,8 +57,8 @@ class StripePaymentProvider(PaymentProvider):
         amount_cents: int,
         currency: str,
         provider_customer_id: str,
-        idempotency_key: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
         if not self._available:
             return {
                 "id": f"mock_pi_{uuid.uuid4()}",
@@ -86,8 +87,8 @@ class StripePaymentProvider(PaymentProvider):
         client_id: uuid.UUID,
         amount_cents: int,
         currency: str,
-        idempotency_key: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
         if not self._available or currency.upper() != "BRL":
             return {
                 "id": f"mock_pix_{uuid.uuid4()}",
@@ -109,10 +110,16 @@ class StripePaymentProvider(PaymentProvider):
         intent = stripe.PaymentIntent.create(**kwargs)
         return {
             "id": intent.id,
-            "qr_code": intent.next_action.pix_display_qr_code if intent.next_action else "mock-qr-code",
-            "qr_code_base64": intent.next_action.pix_display_qr_code_data if intent.next_action else "mock-base64",
+            "qr_code": intent.next_action.pix_display_qr_code
+            if intent.next_action
+            else "mock-qr-code",
+            "qr_code_base64": intent.next_action.pix_display_qr_code_data
+            if intent.next_action
+            else "mock-base64",
             "status": intent.status,
-            "expires_at": intent.next_action.pix_display_qr_code_expires_at if intent.next_action else None,
+            "expires_at": intent.next_action.pix_display_qr_code_expires_at
+            if intent.next_action
+            else None,
         }
 
     async def create_card_payment(
@@ -121,8 +128,8 @@ class StripePaymentProvider(PaymentProvider):
         amount_cents: int,
         currency: str,
         payment_method_id: str,
-        idempotency_key: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
         if not self._available:
             return {
                 "id": f"mock_card_{uuid.uuid4()}",

@@ -1,7 +1,6 @@
 # Owner: agent-platform
 import logging
 import uuid
-from typing import Dict, List, Optional, Tuple
 
 from app.models.agents.agent_optimization_tournament import (
     AgentOptimizationTournament,
@@ -14,17 +13,17 @@ logger = logging.getLogger(__name__)
 
 
 class CandidateRanker:
-    def __init__(self, scoring_service: Optional[StatisticalScoringService] = None):
+    def __init__(self, scoring_service: StatisticalScoringService | None = None):
         self.scoring = scoring_service or StatisticalScoringService()
 
     def rank_candidates(
         self,
         tournament: AgentOptimizationTournament,
-        candidates: List[AgentOptimizationTournamentCandidate],
-        metrics_map: Dict[uuid.UUID, Dict],
-        baseline_metrics: Dict,
-    ) -> List[AgentOptimizationTournamentResult]:
-        scored: List[Tuple[float, int, AgentOptimizationTournamentCandidate, Dict]] = []
+        candidates: list[AgentOptimizationTournamentCandidate],
+        metrics_map: dict[uuid.UUID, dict],
+        baseline_metrics: dict,
+    ) -> list[AgentOptimizationTournamentResult]:
+        scored: list[tuple[float, int, AgentOptimizationTournamentCandidate, dict]] = []
 
         for idx, candidate in enumerate(candidates):
             raw_metrics = metrics_map.get(candidate.id, {})
@@ -41,9 +40,7 @@ class CandidateRanker:
             score -= raw_metrics.get("tool_error_rate", 0) * weights["tool_error_rate"]
             score -= raw_metrics.get("policy_denial_rate", 0) * weights["policy_denial_rate"]
             score -= (
-                raw_metrics.get("safety_failure_rate", 0)
-                * 2.0
-                * weights["safety_failure_rate"]
+                raw_metrics.get("safety_failure_rate", 0) * 2.0 * weights["safety_failure_rate"]
             )
 
             score += penalties
@@ -67,8 +64,8 @@ class CandidateRanker:
 
     def select_winner(
         self,
-        results: List[AgentOptimizationTournamentResult],
-    ) -> Optional[AgentOptimizationTournamentResult]:
+        results: list[AgentOptimizationTournamentResult],
+    ) -> AgentOptimizationTournamentResult | None:
         if not results:
             return None
         for r in results:
@@ -77,7 +74,7 @@ class CandidateRanker:
             return r
         return results[0]
 
-    def build_ranking_list(self, results: List[AgentOptimizationTournamentResult]) -> List[Dict]:
+    def build_ranking_list(self, results: list[AgentOptimizationTournamentResult]) -> list[dict]:
         return [
             {
                 "tournament_candidate_id": str(r.tournament_candidate_id),

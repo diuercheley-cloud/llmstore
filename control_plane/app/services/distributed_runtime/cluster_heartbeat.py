@@ -26,7 +26,11 @@ class ClusterHeartbeatService:
         status = data.get("status", "active")
 
         try:
-            node_uuid = uuid.UUID(node_id_str) if isinstance(node_id_str, str) and len(node_id_str) == 36 else uuid.uuid4()
+            node_uuid = (
+                uuid.UUID(node_id_str)
+                if isinstance(node_id_str, str) and len(node_id_str) == 36
+                else uuid.uuid4()
+            )
         except (ValueError, AttributeError):
             node_uuid = uuid.uuid4()
 
@@ -49,9 +53,13 @@ class ClusterHeartbeatService:
 
     async def get_cluster_health(self, cluster_id: str, minutes: int = 5) -> dict:
         cutoff = utc_now() - timedelta(minutes=minutes)
-        stmt = select(RuntimeNodeHeartbeat).where(
-            RuntimeNodeHeartbeat.created_at >= cutoff,
-        ).order_by(RuntimeNodeHeartbeat.created_at.desc())
+        stmt = (
+            select(RuntimeNodeHeartbeat)
+            .where(
+                RuntimeNodeHeartbeat.created_at >= cutoff,
+            )
+            .order_by(RuntimeNodeHeartbeat.created_at.desc())
+        )
         res = await self.db.execute(stmt)
         recent = list(res.scalars().all())
 
@@ -60,13 +68,19 @@ class ClusterHeartbeatService:
 
         cluster_heartbeats = [h for h in recent if h.metrics.get("cluster_id") == cluster_id]
         if not cluster_heartbeats:
-            return {"cluster_id": cluster_id, "healthy": False, "reason": f"no heartbeats for cluster {cluster_id}"}
+            return {
+                "cluster_id": cluster_id,
+                "healthy": False,
+                "reason": f"no heartbeats for cluster {cluster_id}",
+            }
 
         nodes = set(str(h.node_id) for h in cluster_heartbeats)
         avg_cpu = sum(h.cpu_usage_percent for h in cluster_heartbeats) / len(cluster_heartbeats)
         avg_mem = sum(h.memory_usage_mb for h in cluster_heartbeats) / len(cluster_heartbeats)
         avg_gpu_values = [
-            h.gpu_usage_percent.get("avg", 0) if isinstance(h.gpu_usage_percent, dict) else h.gpu_usage_percent
+            h.gpu_usage_percent.get("avg", 0)
+            if isinstance(h.gpu_usage_percent, dict)
+            else h.gpu_usage_percent
             for h in cluster_heartbeats
         ]
         avg_gpu = sum(avg_gpu_values) / len(avg_gpu_values) if avg_gpu_values else 0
@@ -79,7 +93,9 @@ class ClusterHeartbeatService:
             "avg_cpu": round(avg_cpu, 1),
             "avg_memory": round(avg_mem, 1),
             "avg_gpu": round(avg_gpu, 1),
-            "health_score": round(self._compute_health_score(avg_cpu, avg_mem, avg_gpu, "active"), 2),
+            "health_score": round(
+                self._compute_health_score(avg_cpu, avg_mem, avg_gpu, "active"), 2
+            ),
         }
 
     @staticmethod

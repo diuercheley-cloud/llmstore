@@ -25,9 +25,7 @@ async def test_e2e_code_mode_provider_real_cycle(tmp_path):
 
     test_py = ws_dir / "tests" / "test_app.py"
     test_py.parent.mkdir()
-    test_py.write_text(
-        "from app import add\ndef test_add():\n    assert add(2, 2) == 4\n"
-    )
+    test_py.write_text("from app import add\ndef test_add():\n    assert add(2, 2) == 4\n")
 
     # 2. Mock OpenAI-compatible response sequence
     responses = [
@@ -129,13 +127,13 @@ async def test_e2e_code_mode_provider_real_cycle(tmp_path):
 
         with patch.dict(os.environ, {"DUMMY": "test-key"}):
             agent_client = AgentClient(
-                agent_id="test-e2e", 
-                provider="openai-compatible", 
+                agent_id="test-e2e",
+                provider="openai-compatible",
                 base_url="http://localhost:8080/v1/chat/completions",
                 model="test-model",
                 api_key_env="DUMMY",
                 transport=mock_transport,
-                tool_calling="json"
+                tool_calling="json",
             )
 
             loop = CodingLoop(agent_client=agent_client, workspace=ws, max_steps=10)
@@ -157,12 +155,10 @@ async def test_e2e_code_mode_provider_real_cycle(tmp_path):
                 filename = reporter.generate_summary(
                     result, trace=result.trace, policy_info={"provider": "openai-compatible"}
                 )
-                
+
                 # Manually call markdown generation as it's usually done in CLI
                 md_content = reporter.generate_markdown_report(
-                    result, 
-                    blocked_actions=[], 
-                    provider="openai-compatible"
+                    result, blocked_actions=[], provider="openai-compatible"
                 )
                 md_filename = filename.replace(".json", ".md")
                 md_path = report_dir / md_filename
@@ -172,7 +168,7 @@ async def test_e2e_code_mode_provider_real_cycle(tmp_path):
                 report_path = report_dir / filename
                 assert report_path.exists()
 
-                with open(report_path, "r") as f:
+                with open(report_path) as f:
                     report_content = json.load(f)
                     assert report_content["success"] is True
 
@@ -181,9 +177,7 @@ async def test_e2e_code_mode_provider_real_cycle(tmp_path):
                     ]
                     assert len(run_completed_events) > 0
                     run_completed_event = run_completed_events[0]
-                    changed_files = run_completed_event.get("metadata", {}).get(
-                        "changed_files", []
-                    )
+                    changed_files = run_completed_event.get("metadata", {}).get("changed_files", [])
                     assert "app.py" in changed_files
 
                 # 7. Validate markdown report

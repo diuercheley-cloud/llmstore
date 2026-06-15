@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from ..context import ContextManager
 from ..memory import LocalMemory
@@ -13,8 +13,8 @@ class IDEChatSession:
         provider: Any,
         prompt_builder: PromptBuilder,
         policy_engine: PolicyEngine,
-        memory: Optional[LocalMemory] = None,
-        context_manager: Optional[ContextManager] = None,
+        memory: LocalMemory | None = None,
+        context_manager: ContextManager | None = None,
         token_budget: int = 4096,
         rules_context: str = "",
     ):
@@ -22,17 +22,17 @@ class IDEChatSession:
         self.prompt_builder = prompt_builder
         self.policy_engine = policy_engine
         self.memory = memory
-        
+
         self.tokenizer = TokenCounter(method="auto")
         self.context_manager = context_manager or ContextManager(
             max_context_tokens=token_budget,
             reserved_output_tokens=1024,
-            token_counter=self.tokenizer
+            token_counter=self.tokenizer,
         )
         self.rules_context = rules_context
         self.history: list[dict[str, Any]] = []
 
-    async def send_message(self, message: Any, context_bundle: Optional[Any] = None) -> str:
+    async def send_message(self, message: Any, context_bundle: Any | None = None) -> str:
         user_content: Any = None
         if isinstance(message, list):
             normalized_msg = []
@@ -54,7 +54,7 @@ class IDEChatSession:
         # Set the rules_context in PromptBuilder
         if self.rules_context:
             self.prompt_builder.rules_context = self.rules_context
-            
+
         system_prompt = self.prompt_builder.build_system_prompt()
 
         messages = [{"role": "system", "content": system_prompt}] + self.history
@@ -70,7 +70,7 @@ class IDEChatSession:
         if response and "choices" in response and response["choices"]:
             msg = response["choices"][0].get("message", {})
             assistant_content = msg.get("content", "")
-        
+
         self.history.append({"role": "assistant", "content": assistant_content})
 
         if self.memory:
@@ -80,10 +80,9 @@ class IDEChatSession:
                     "success": True,
                     "message": assistant_content,
                     "total_tokens": (
-                        response.get("usage", {}).get("total_tokens", 0)
-                        if response else 0
-                    )
-                }
+                        response.get("usage", {}).get("total_tokens", 0) if response else 0
+                    ),
+                },
             )
 
         return assistant_content

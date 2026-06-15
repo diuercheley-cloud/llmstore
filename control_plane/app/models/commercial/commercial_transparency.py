@@ -1,15 +1,14 @@
 import uuid
-from datetime import datetime, UTC
-
-from sqlalchemy import JSON, Boolean, Column, DateTime, String
-from sqlalchemy.dialects.postgresql import UUID
+from datetime import UTC, datetime
 
 from app.db.base import Base
+from sqlalchemy import JSON, Boolean, Column, DateTime, String
+from sqlalchemy.dialects.postgresql import UUID
 
 
 class CommercialTransparencyGossipPeer(Base):
     __tablename__ = "commercial_transparency_gossip_peers"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     peer_id = Column(String(255), unique=True, nullable=False, index=True)
     peer_type = Column(String(50), nullable=False)  # cluster|witness|auditor|offline
@@ -19,11 +18,14 @@ class CommercialTransparencyGossipPeer(Base):
     last_seen_at = Column(DateTime, nullable=True)
     metadata_json = Column(JSON, default={})
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
-    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
+    updated_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
+    )
+
 
 class CommercialTransparencyGossipRecord(Base):
     __tablename__ = "commercial_transparency_gossip_records"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     source_peer_id = Column(String(255), nullable=False, index=True)
     target_peer_id = Column(String(255), nullable=True, index=True)
@@ -34,11 +36,14 @@ class CommercialTransparencyGossipRecord(Base):
     verification_status = Column(String(50), default="unknown")  # valid|invalid|conflict|unknown
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
+
 class CommercialConsistencyCheckpoint(Base):
     __tablename__ = "commercial_consistency_checkpoints"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    checkpoint_type = Column(String(50), nullable=False)  # merkle_timeline|receipt_chain|witness_quorum|policy_bundle
+    checkpoint_type = Column(
+        String(50), nullable=False
+    )  # merkle_timeline|receipt_chain|witness_quorum|policy_bundle
     period_start = Column(DateTime, nullable=False)
     period_end = Column(DateTime, nullable=False)
     root_hash = Column(String(255), nullable=False, index=True)
@@ -46,11 +51,14 @@ class CommercialConsistencyCheckpoint(Base):
     witness_summary_json = Column(JSON, default={})
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
+
 class CommercialTransparencySplitViewAlert(Base):
     __tablename__ = "commercial_transparency_split_view_alerts"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    alert_type = Column(String(100), nullable=False)  # root_mismatch|missing_timeline|witness_conflict|checkpoint_conflict
+    alert_type = Column(
+        String(100), nullable=False
+    )  # root_mismatch|missing_timeline|witness_conflict|checkpoint_conflict
     severity = Column(String(50), nullable=False)  # low|medium|high|critical
     expected_hash = Column(String(255), nullable=True)
     observed_hash = Column(String(255), nullable=True)

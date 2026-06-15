@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from scripts.llm_harness.providers import create_code_agent, _RESPONSE_FORMAT_CACHE
+from scripts.llm_harness.providers import _RESPONSE_FORMAT_CACHE, create_code_agent
 
 
 def test_provider_unknown_fails():
@@ -326,7 +326,9 @@ async def test_provider_local_timeout_auto_increase_retries_once():
         ]
         mock_client_cls.return_value.__aenter__.return_value = mock_client
 
-        response = await agent._request_with_retry("POST", "http://localhost:1234/v1/chat/completions")
+        response = await agent._request_with_retry(
+            "POST", "http://localhost:1234/v1/chat/completions"
+        )
 
     assert response is success_response
     assert agent.timeout_adjusted is True
@@ -599,7 +601,9 @@ async def test_provider_local_400_retries_with_simplified_history():
     assert len(payloads) == 3
     assert payloads[2]["stream"] is False
     assert "tools" not in payloads[2]
-    system_messages = [message for message in payloads[2]["messages"] if message["role"] == "system"]
+    system_messages = [
+        message for message in payloads[2]["messages"] if message["role"] == "system"
+    ]
     assert len(system_messages) == 1
     assert all("tool_calls" not in message for message in payloads[2]["messages"])
     assert any(event["event"] == "llm.local_400_retry" for event in agent._provider_events)
@@ -620,6 +624,7 @@ async def test_provider_plain_chat_mode_bypasses_action_validation(monkeypatch):
     )
 
     payloads = []
+
     async def fake_request(method, url, **kwargs):
         payloads.append(kwargs.get("json", {}))
         if method == "GET":
@@ -687,7 +692,9 @@ async def test_provider_local_semantic_failure_retries_with_compat_mode():
         mock_resp.status_code = 200
         if len(payloads) == 2:
             mock_resp.json.return_value = {
-                "choices": [{"message": {"role": "assistant", "content": "I will help with that."}}],
+                "choices": [
+                    {"message": {"role": "assistant", "content": "I will help with that."}}
+                ],
                 "usage": {"total_tokens": 2},
             }
         else:
@@ -745,7 +752,20 @@ async def test_provider_local_native_empty_content_retries_with_compat_mode():
         if len(payloads) == 2:
             # Probe success
             mock_resp.json.return_value = {
-                "choices": [{"message": {"role": "assistant", "tool_calls": [{"id": "c1", "type": "function", "function": {"name": "final", "arguments": "{}"}}]}}],
+                "choices": [
+                    {
+                        "message": {
+                            "role": "assistant",
+                            "tool_calls": [
+                                {
+                                    "id": "c1",
+                                    "type": "function",
+                                    "function": {"name": "final", "arguments": "{}"},
+                                }
+                            ],
+                        }
+                    }
+                ],
                 "usage": {"total_tokens": 1},
             }
         elif len(payloads) == 3:
@@ -822,7 +842,19 @@ async def test_local_provider_auto_mode_uses_native_with_explicit_support():
     )
 
     mock_probe_ok = {
-        "choices": [{"message": {"tool_calls": [{"id": "c1", "type": "function", "function": {"name": "final", "arguments": "{}"}}]}}]
+        "choices": [
+            {
+                "message": {
+                    "tool_calls": [
+                        {
+                            "id": "c1",
+                            "type": "function",
+                            "function": {"name": "final", "arguments": "{}"},
+                        }
+                    ]
+                }
+            }
+        ]
     }
 
     async def fake_request(method, url, **kwargs):
@@ -1344,6 +1376,7 @@ async def test_provider_local_openai_reasoning_content_fallback(monkeypatch):
     }
 
     call_count = 0
+
     async def fake_request(method, url, **kwargs):
         nonlocal call_count
         call_count += 1
@@ -1497,6 +1530,7 @@ async def test_provider_openai_max_tokens_in_payload(monkeypatch):
     )
 
     sent_payloads = []
+
     async def capture_request(method, url, **kwargs):
         sent_payloads.append(kwargs.get("json", {}))
         mock_resp = MagicMock()
@@ -1538,6 +1572,7 @@ async def test_provider_openai_no_max_tokens_when_unset(monkeypatch):
     )
 
     sent_payloads = []
+
     async def capture_request(method, url, **kwargs):
         sent_payloads.append(kwargs.get("json", {}))
         mock_resp = MagicMock()
